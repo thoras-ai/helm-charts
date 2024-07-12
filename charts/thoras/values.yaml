@@ -52,12 +52,3 @@ thorasDashboard:
   port: 80
 
 thorasForecast: {}
-
-cronJobModelCollector:
-  schedule: "*/15 * * * *"
-  limits:
-    cpu: 1000m
-    memory: 1000Mi
-  requests:
-    cpu: 100m
-    memory: 100Mi

@@ -8,6 +8,8 @@ spec:
     kind: AIScaleTarget
     listKind: AIScaleTargetList
     plural: aiscaletargets
+    shortNames:
+      - ast
   group: thoras.ai
   scope: Namespaced
   versions:
@@ -234,25 +236,12 @@ spec:
                   properties:
                     mode:
                       type: string
-                    forecast_interval:
-                      type: integer
-                      format: int32
+                    forecast_cron:
+                      type: string
+                      pattern: '^(\d+|\*)(/\d+)?(\s+(\d+|\*)(/\d+)?){4}$'
+                      default: '*/15 * * * *'
                     forecast_blocks:
-                      anyOf:
-                        - type: integer
-                        - type: string
-                      x-kubernetes-int-or-string: true
-                    disable_windows:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          timezone:
-                            type: string
-                          start:
-                            type: string
-                          end:
-                            type: string
+                      type: string
             status:
               type: object
               properties:
@@ -268,3 +257,16 @@ spec:
           specReplicasPath: .spec.horizontal.replicas
           statusReplicasPath: .status.replicas
           labelSelectorPath: .status.labelSelector
+      additionalPrinterColumns:
+        - jsonPath: .spec.model.mode
+          name: Model
+          type: string
+        - jsonPath: .spec.horizontal.mode
+          name: Horizontal
+          type: string
+        - jsonPath: .spec.vertical.mode
+          name: Vertical
+          type: string
+        - jsonPath: .status.replicas
+          name: Replicas
+          type: number

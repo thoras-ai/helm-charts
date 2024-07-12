@@ -1,0 +1,22 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: purge-forecast-cronjobs
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    helm.sh/hook: pre-delete
+spec:
+  template:
+    spec:
+      serviceAccountName: thoras-operator
+      restartPolicy: OnFailure
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.image }}
+        imagePullPolicy: Always
+        name: metrics-collector
+        args:
+          - purgeCronjobs
