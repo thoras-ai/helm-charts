@@ -25,7 +25,7 @@ spec:
           secret:
             secretName: thoras-api-server-cert
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-external-metrics-server:{{ default .Values.thorasVersion .Values.thorasApiServer.image }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-external-metrics-server:{{ default .Values.thorasVersion .Values.thorasApiServer.imageTag }}
         imagePullPolicy: Always
         name: thoras-api-server
         env:
