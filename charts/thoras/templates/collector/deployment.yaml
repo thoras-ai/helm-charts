@@ -70,7 +70,7 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            # Don't start app until ES is available. Give it two minutes
+            # Don't start app until ES is available
             retries=0
             max_retries=48
             until [ $retries -eq $max_retries ]; do
