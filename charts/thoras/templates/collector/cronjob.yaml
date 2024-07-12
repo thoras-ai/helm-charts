@@ -23,7 +23,9 @@ spec:
                   secretKeyRef:
                     name: thoras-elastic-password
                     key: host
+            command: ["/bin/sh", "-c"]
             args:
-              - purge
-              - --es=${ES_HOST}
-              - --ttl={{ .Values.metricsCollector.purge.ttl }}
+              - |
+                purge \
+                --es=${ES_HOST} \
+                --ttl={{ .Values.metricsCollector.purge.ttl }}
