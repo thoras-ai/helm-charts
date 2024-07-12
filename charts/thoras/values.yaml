@@ -1,0 +1,63 @@
+---
+thorasVersion: "1.0.0"
+
+thorasOperator:
+  limits:
+    cpu: 1000m
+    memory: 1000Mi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+
+metricsCollector:
+  persistence:
+    enabled: false
+    volumeName: ""
+    storageClassName: ""
+  collector:
+    name: thoras-collector
+  search:
+    image: elasticsearch:8.12.1
+    name: elasticsearch
+    containerPort: 9200
+  purge:
+    ttl: 30d
+    schedule: "00 00 * * *"
+
+thorasApiServer:
+  containerPort: 8443
+  limits:
+    cpu: 1000m
+    memory: 1000Mi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+  port: 443
+
+thorasDashboard:
+  enabled: true
+  serviceAccount:
+    name: thoras-dashboard
+    create: true
+  rbac:
+    create: true
+  podAnnotations: {}
+  containerPort: 3000
+  limits:
+    cpu: 1000m
+    memory: 1000Mi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+  port: 80
+
+thorasForecast: {}
+
+cronJobModelCollector:
+  schedule: "*/15 * * * *"
+  limits:
+    cpu: 1000m
+    memory: 1000Mi
+  requests:
+    cpu: 100m
+    memory: 100Mi

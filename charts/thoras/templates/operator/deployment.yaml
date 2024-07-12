@@ -1,0 +1,47 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  name: thoras-operator
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thoras-operator
+  template:
+    metadata:
+      labels:
+        app: thoras-operator
+        name: thoras-operator
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      name: thoras-operator
+    spec:
+      serviceAccountName: thoras-operator
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/thoras-operator:{{ default .Values.thorasVersion .Values.thorasOperator.image }}
+        imagePullPolicy: Always
+        name: thoras-operator
+        env:
+          - name: "ES_HOST"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-elastic-password
+                key: host
+        args:
+          - start
+        resources:
+          limits:
+            cpu: {{ .Values.thorasOperator.limits.cpu }}
+            memory: {{ .Values.thorasOperator.limits.memory }}
+          requests:
+            cpu: {{ .Values.thorasOperator.requests.cpu }}
+            memory: {{ .Values.thorasOperator.requests.memory }}
