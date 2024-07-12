@@ -46,6 +46,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
+          - name: "MODEL_IMAGE"
+            value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         resources:
           limits:
             cpu: {{ .Values.thorasDashboard.limits.cpu }}

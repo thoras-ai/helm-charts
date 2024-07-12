@@ -36,6 +36,8 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
+          - name: "MODEL_IMAGE"
+            value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         args:
           - start
         resources:
