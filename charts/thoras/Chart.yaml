@@ -1,6 +1,6 @@
 apiVersion: v2
 name: thoras
-description: Helm Chart to install Thoras AIScale Application
+description: Helm chart to install the Thoras platform
 
 # A chart can be either an 'application' or a 'library' chart.
 #
