@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thoras-dashboard
+  template:
+    metadata:
+      labels:
+        app: thoras-dashboard
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- with .Values.thorasDashboard.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard:{{ default .Values.thorasVersion .Values.thorasDashboard.image }}
+        imagePullPolicy: Always
+        name: thoras-dashboard
+        ports:
+        - containerPort: {{ .Values.thorasDashboard.containerPort }}
+        env:
+          - name: "ES_INDEX"
+            value: "thoras-metrics"
+          - name: "ES_HOST"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-elastic-password
+                key: host
+          - name: THORAS_NS
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        resources:
+          limits:
+            cpu: {{ .Values.thorasDashboard.limits.cpu }}
+            memory: {{ .Values.thorasDashboard.limits.memory }}
+          requests:
+            cpu: {{ .Values.thorasDashboard.requests.cpu }}
+            memory: {{ .Values.thorasDashboard.requests.memory }}

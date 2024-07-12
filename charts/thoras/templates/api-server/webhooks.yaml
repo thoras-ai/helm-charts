@@ -1,0 +1,97 @@
+{{- $ca := genCA "thoras-api-server-ca" 3650 }}
+{{- $cn := "thoras-api-server" }}
+{{- $dns1 := printf "%s.%s" $cn .Release.Namespace }}
+{{- $dns2 := printf "%s.%s.svc" $cn .Release.Namespace }}
+{{- $cert := genSignedCert $cn nil (list $dns1 $dns2) 3650 $ca }}
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: thoras-api-server-cert
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  # Retrieve the TLS data
+  {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace "thoras-api-server-cert") }}
+  {{- $secretData := (get $secretObj "data") | default dict }}
+  # Set secret data or generate it if it doesn't exist
+  {{- $secretCert := (get $secretData "tls.crt") | default ($cert.Cert | b64enc) }}
+  {{- $secretKey := (get $secretData "tls.key") | default ($cert.Key | b64enc) }}
+  {{- $secretCaCert := (get $secretData "ca.crt") | default ($ca.Cert | b64enc) }}
+  tls.crt: {{ $secretCert | quote }}
+  tls.key: {{ $secretKey | quote }}
+  ca.crt: {{ $secretCaCert | quote }}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: "pods.thoras.ai"
+webhooks:
+- name: "pods.thoras.ai"
+  rules:
+  - apiGroups:   [""]
+    apiVersions: ["v1"]
+    operations:  ["CREATE"]
+    resources:   ["pods"]
+    scope:       "Namespaced"
+  clientConfig:
+    service:
+      namespace: {{ .Release.Namespace }}
+      name: thoras-api-server
+      path: /mutate
+    caBundle: {{ $secretCaCert | quote }}
+  sideEffects: None
+  failurePolicy: 'Ignore'
+  admissionReviewVersions:
+    - v1
+- name: "scale.thoras.ai"
+  rules:
+  - apiGroups:   ["thoras.ai"]
+    apiVersions: ["v1"]
+    operations:  ["UPDATE"]
+    resources:   ["aiscaletargets/scale"]
+    scope:       "Namespaced"
+  clientConfig:
+    service:
+      namespace: {{ .Release.Namespace }}
+      name: thoras-api-server
+      path: /mutate
+    caBundle: {{ $secretCaCert | quote }}
+  sideEffects: None
+  failurePolicy: 'Ignore'
+  admissionReviewVersions:
+    - v1
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "status.thoras.ai"
+webhooks:
+  - name: "status.thoras.ai"
+    namespaceSelector:
+      matchExpressions:
+        - key: runlevel
+          operator: NotIn
+          values: ["0","1"]
+    rules:
+      - operations: ["UPDATE"]
+        apiGroups: ["apps"]
+        apiVersions: ["*"]
+        resources: ["deployments/status"]
+        scope: "*"
+    clientConfig:
+      service:
+        namespace: {{ .Release.Namespace }}
+        name: thoras-api-server
+        path: /syncstatus
+      caBundle: {{ $secretCaCert | quote }}
+    sideEffects: None
+    failurePolicy: 'Ignore'
+    timeoutSeconds: 5
+    admissionReviewVersions:
+      - v1

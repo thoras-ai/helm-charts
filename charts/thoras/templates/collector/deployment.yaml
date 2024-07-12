@@ -1,0 +1,100 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-collector
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metrics-collector
+  template:
+    metadata:
+      labels:
+        app: metrics-collector
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: thoras-collector
+      {{- if .Values.metricsCollector.persistence.enabled }}
+      volumes:
+        - name: elastic-search-data
+          persistentVolumeClaim:
+            claimName:  elastic-search-data
+      initContainers:
+      - name: fix-dir-ownership
+        image: alpine:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            chown -R 1000:0 /usr/share/elasticsearch/data
+            rm -f /usr/share/elasticsearch/data/node.lock
+        volumeMounts:
+          - mountPath: /usr/share/elasticsearch/data
+            name: elastic-search-data
+      {{- end }}
+      containers:
+      - image: {{ .Values.metricsCollector.search.image }}
+        imagePullPolicy: Always
+        name: {{ .Values.metricsCollector.search.name }}
+        ports:
+        - containerPort: {{ .Values.metricsCollector.search.containerPort }}
+        env:
+          - name: ES_JAVA_OPTS
+            value: -Xms750m -Xmx750m
+          - name: discovery.type
+            value: single-node
+          - name: xpack.security.enabled
+            value: "true"
+          - name: bootstrap.memory_lock
+            value: "false"
+          - name: "ELASTIC_PASSWORD"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-elastic-password
+                key: password
+        {{- if .Values.metricsCollector.persistence.enabled }}
+        volumeMounts:
+          - mountPath: /usr/share/elasticsearch/data
+            name: elastic-search-data
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 0
+        {{- end }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.image }}
+        imagePullPolicy: Always
+        name: {{ .Values.metricsCollector.collector.name }}
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            # Don't start app until ES is available. Give it two minutes
+            retries=0
+            max_retries=48
+            until [ $retries -eq $max_retries ]; do
+              if curl -s --connect-timeout 5 --fail -XGET ${ES_HOST}; then
+                echo "elasticsearch ready"
+                break
+              else
+                echo "elasticsearch not ready"
+                retries=$((retries+1))
+                sleep 5
+              fi
+            done
+            if [ $retries -eq $max_retries ]; then
+                echo "fatal: giving up on elasticsearch availability"
+                exit 1
+            fi
+            node index.js start --es=${ES_HOST}
+        env:
+          - name: THORAS_NS
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: "ES_HOST"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-elastic-password
+                key: host

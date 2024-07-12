@@ -1,0 +1,29 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: thoras-metrics-purge
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ .Values.metricsCollector.purge.schedule | quote }}
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: thoras-collector
+          restartPolicy: OnFailure
+          containers:
+          - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.cronJobModelCollector.image }}
+            imagePullPolicy: Always
+            name: metrics-collector
+            env:
+              - name: "ES_HOST"
+                valueFrom:
+                  secretKeyRef:
+                    name: thoras-elastic-password
+                    key: host
+            args:
+              - purge
+              - --es=${ES_HOST}
+              - --ttl={{ .Values.metricsCollector.purge.ttl }}
