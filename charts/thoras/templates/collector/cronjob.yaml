@@ -14,7 +14,7 @@ spec:
           serviceAccountName: thoras-collector
           restartPolicy: OnFailure
           containers:
-          - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.image }}
+          - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
             imagePullPolicy: Always
             name: metrics-collector
             env:

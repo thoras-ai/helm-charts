@@ -27,7 +27,7 @@ spec:
     spec:
       serviceAccountName: thoras-operator
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-operator:{{ default .Values.thorasVersion .Values.thorasOperator.image }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-operator:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         imagePullPolicy: Always
         name: thoras-operator
         env:
@@ -36,6 +36,8 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
+          - name: "MODEL_IMAGE"
+            value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         args:
           - start
         resources:
