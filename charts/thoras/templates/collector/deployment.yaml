@@ -37,7 +37,7 @@ spec:
             name: elastic-search-data
       {{- end }}
       containers:
-      - image: {{ .Values.metricsCollector.search.image }}
+      - image: {{ .Values.metricsCollector.search.imageTag }}
         imagePullPolicy: Always
         name: {{ .Values.metricsCollector.search.name }}
         ports:
@@ -64,7 +64,7 @@ spec:
           runAsUser: 1000
           runAsGroup: 0
         {{- end }}
-      - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.image }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
         imagePullPolicy: Always
         name: {{ .Values.metricsCollector.collector.name }}
         command: ["/bin/sh", "-c"]

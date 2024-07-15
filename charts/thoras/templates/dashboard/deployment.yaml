@@ -29,7 +29,7 @@ spec:
     spec:
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard:{{ default .Values.thorasVersion .Values.thorasDashboard.image }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         imagePullPolicy: Always
         name: thoras-dashboard
         ports:
@@ -46,6 +46,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
+          - name: "MODEL_IMAGE"
+            value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         resources:
           limits:
             cpu: {{ .Values.thorasDashboard.limits.cpu }}
