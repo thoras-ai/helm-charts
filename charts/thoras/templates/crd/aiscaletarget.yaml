@@ -241,7 +241,10 @@ spec:
                       pattern: '^(\d+|\*)(/\d+)?(\s+(\d+|\*)(/\d+)?){4}$'
                       default: '*/15 * * * *'
                     forecast_blocks:
-                      type: string
+                      anyOf:
+                        - type: integer
+                        - type: string
+                      x-kubernetes-int-or-string: true
             status:
               type: object
               properties:
