@@ -39,7 +39,7 @@ spec:
             name: elastic-search-data
       {{- end }}
       containers:
-      - image: {{ .Values.metricsCollector.search.image }}
+      - image: thoras.docker.ai/elasticsearch:{{ .Values.metricsCollector.search.imageTag }}
         imagePullPolicy: Always
         name: {{ .Values.metricsCollector.search.name }}
         ports:
