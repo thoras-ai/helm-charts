@@ -17,12 +17,14 @@ metricsCollector:
   collector:
     name: thoras-collector
   search:
-    image: elasticsearch:8.12.1
+    imageTag: "8.12.1"
     name: elasticsearch
     containerPort: 9200
   purge:
     ttl: 30d
     schedule: "00 00 * * *"
+  init:
+    imageTag: "latest"
 
 thorasApiServer:
   containerPort: 8443
