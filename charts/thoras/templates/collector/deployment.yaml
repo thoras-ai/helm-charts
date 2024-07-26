@@ -28,7 +28,7 @@ spec:
             claimName:  elastic-search-data
       initContainers:
       - name: fix-dir-ownership
-        image: docker.thoras.ai/alpine:{{ .Values.metricsCollector.init.imageTag }}
+        image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -39,7 +39,7 @@ spec:
             name: elastic-search-data
       {{- end }}
       containers:
-      - image: docker.thoras.ai/elasticsearch:{{ .Values.metricsCollector.search.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/elasticsearch:{{ .Values.metricsCollector.search.imageTag }}
         imagePullPolicy: Always
         name: {{ .Values.metricsCollector.search.name }}
         ports:
