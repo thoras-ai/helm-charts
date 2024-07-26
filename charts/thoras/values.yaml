@@ -23,6 +23,8 @@ metricsCollector:
   purge:
     ttl: 30d
     schedule: "00 00 * * *"
+  init:
+    imageTag: "latest"
 
 thorasApiServer:
   containerPort: 8443

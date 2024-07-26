@@ -28,7 +28,7 @@ spec:
             claimName:  elastic-search-data
       initContainers:
       - name: fix-dir-ownership
-        image: alpine:latest
+        image: docker.thoras.ai/alpine:{{ .Values.metricsCollector.init.imageTag }}
         command: ["/bin/sh", "-c"]
         args:
           - |
