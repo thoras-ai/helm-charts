@@ -28,7 +28,7 @@ data:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: "pods.thoras.ai"
+  name: "thoras.ai"
 webhooks:
 - name: "pods.thoras.ai"
   rules:
@@ -49,10 +49,10 @@ webhooks:
     - v1
 - name: "scale.thoras.ai"
   rules:
-  - apiGroups:   ["thoras.ai"]
-    apiVersions: ["v1"]
+  - apiGroups:   ["*"]
+    apiVersions: ["*"]
     operations:  ["UPDATE"]
-    resources:   ["aiscaletargets/scale"]
+    resources:   ["*/scale"]
     scope:       "Namespaced"
   clientConfig:
     service:
