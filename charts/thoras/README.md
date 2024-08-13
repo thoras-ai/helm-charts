@@ -26,8 +26,8 @@ imageCredentials:
   password: <your license key>
 
 metricsCollector:
-	persistence:
-		enabled: false
+  persistence:
+    enabled: false
 ```
 
 #### Install Chart
