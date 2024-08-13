@@ -52,7 +52,7 @@ webhooks:
   - apiGroups:   ["*"]
     apiVersions: ["*"]
     operations:  ["UPDATE"]
-    resources:   ["*/scale"]
+    resources:   ["deployments/scale"]
     scope:       "Namespaced"
   clientConfig:
     service:
