@@ -10,6 +10,7 @@ metadata:
   annotations:
     helm.sh/hook: pre-delete
 spec:
+  ttlSecondsAfterFinished: 0
   template:
     spec:
       serviceAccountName: thoras-operator
