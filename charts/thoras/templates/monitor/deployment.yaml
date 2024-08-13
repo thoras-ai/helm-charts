@@ -1,0 +1,46 @@
+{{- if .Values.thorasMonitor.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-monitor
+  namespace: thoras
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thoras-monitor
+  template:
+    metadata:
+      labels:
+        app: thoras-monitor
+    spec:
+      serviceAccountName: thoras-operator
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/thoras-monitor:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
+        imagePullPolicy: Always
+        name: thoras-monitor
+        env:
+          - name: "ES_HOST"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-elastic-password
+                key: host
+          - name: "WEBHOOK_ID"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-slack
+                key: webhookID
+          - name: MONITOR_CADENCE
+            value:  "{{ .Values.thorasMonitor.monitorCadenceSeconds }}"
+          - name: MAX_JOB_LIFE
+            value: "{{ .Values.thorasMonitor.maxJobLifeSeconds }}"
+          - name: UNDERPROVISION_THRESHOLD
+            value: "{{ .Values.thorasMonitor.underProvisionThreshold }}"
+          - name: OVERPROVISION_THRESHOLD
+            value: "{{ .Values.thorasMonitor.overProvisionThreshold }}"
+          - name: SLACK_WORKSPACE_ID
+            value: {{ .Values.thorasMonitor.slackWorkspaceID }}
+          - name: SLACK_CHANNEL_ID
+            value: {{ .Values.thorasMonitor.slackChannelID }}
+{{- end }}

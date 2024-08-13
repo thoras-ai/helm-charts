@@ -60,4 +60,14 @@ thorasDashboard:
     memory: 100Mi
   port: 80
 
+thorasMonitor:
+  enabled: false
+  monitorCadenceSeconds: "15"
+  maxJobLifeSeconds: "600"
+  underProvisionThreshold: "0.1"
+  overProvisionThreshold: "10"
+  slackWorkspaceID: ""
+  slackChannelID: ""
+  slackWebhookID: ""
+
 thorasForecast: {}
