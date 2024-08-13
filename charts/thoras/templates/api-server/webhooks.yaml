@@ -28,7 +28,7 @@ data:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: "thoras.ai"
+  name: "pods.thoras.ai"
 webhooks:
 - name: "pods.thoras.ai"
   rules:
