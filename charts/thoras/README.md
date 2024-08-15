@@ -49,6 +49,11 @@ helm install
 | --- | --- | --- | --- |
 | thorasVersion | String | 1.1.5 | Thoras app version |
 
+### Thoras Forecast
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| thorasForecast.imageTag | String | .thorasVersion | Image tag for Thoras Forecast job |
+
 #### Thoras Operator
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
