@@ -26,6 +26,7 @@ spec:
             command: ["/bin/sh", "-c"]
             args:
               - |
+                node index.js \
                 purge \
                 --es=${ES_HOST} \
                 --ttl={{ .Values.metricsCollector.purge.ttl }}
