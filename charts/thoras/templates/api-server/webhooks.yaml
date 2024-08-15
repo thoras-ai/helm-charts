@@ -49,10 +49,10 @@ webhooks:
     - v1
 - name: "scale.thoras.ai"
   rules:
-  - apiGroups:   ["thoras.ai"]
-    apiVersions: ["v1"]
+  - apiGroups:   ["*"]
+    apiVersions: ["*"]
     operations:  ["UPDATE"]
-    resources:   ["aiscaletargets/scale"]
+    resources:   ["deployments/scale"]
     scope:       "Namespaced"
   clientConfig:
     service:
