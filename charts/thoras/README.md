@@ -21,9 +21,9 @@ helm repo update
 ```
 # values.yaml
 imageCredentials:
-  registry: docker.thoras.ai
-  username: thoras
-  password: <your license key>
+  registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
+  username: "_json_key_base64"
+  password: "<thoras license key>"
 
 metricsCollector:
   persistence:
@@ -38,13 +38,14 @@ Now let’s install Thoras with Helm! We recommend installing Thoras into the th
 helm install
   my-thoras-release \
   thoras/thoras \
-  -n thoras --create-namespace \
+  -n thoras \
+  --create-namespace \
   -f ./values.yaml
 ```
 
 # Values
 
-#### Global
+## Global
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | thorasVersion | String | 1.1.5 | Thoras app version |
@@ -52,12 +53,12 @@ helm install
 | imageCredentials.username | String | _json_key_base64 | Container registry username |
 | imageCredentials.password | String | "" | Container registry auth string |
 
-### Thoras Forecast
+## Thoras Forecast
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | thorasForecast.imageTag | String | .thorasVersion | Image tag for Thoras Forecast job |
 
-#### Thoras Operator
+## Thoras Operator
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | thorasOperator.limits.cpu | String | 1000m | Thoras Operator CPU limit |
@@ -65,7 +66,7 @@ helm install
 | thorasOperator.requests.cpu | String | 1000m | Thoras Operator CPU request |
 | thorasOperator.requests.memory | String | 1000Mi | Thoras Operator memory request |
 
-#### Thoras Metrics Collector
+## Thoras Metrics Collector
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | metricsCollector.persistence.enabled | Bool | false | Enables persistence for Thoras metrics collector |
@@ -79,7 +80,7 @@ helm install
 | metricsCollector.purge.schedule | String | 00 00 * * * | Cron expression for metrics purge job |
 | metricsCollector.init.imageTag | String | latest | Image tag for metrics collector init container |
 
-#### Thoras API Server
+## Thoras API Server
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | thorasApiServer.containerPort | Number | 8443 | Thoras API port |
@@ -89,7 +90,7 @@ helm install
 | thorasApiServer.requests.cpu | String | 1000Mi | Thoras API CPU request |
 | thorasApiServer.requests.memory | String | 1000Mi | Thoras API memory request |
 
-#### Thoras Dashboard
+## Thoras Dashboard
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | thorasDashboard.enabled | Bool | true | Enables the Thoras Dashboard |
@@ -103,3 +104,16 @@ helm install
 | thorasDashboard.limits.memory | String | 1000Mi | Thoras Dashboard memory limit |
 | thorasDashboard.requests.cpu | String | 1000Mi | Thoras Dashboard CPU request |
 | thorasDashboard.requests.memory | String | 1000Mi | Thoras Dashboard memory request |
+
+## Thoras Monitor
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| thorasMonitor.enabled | Bool | false | Enable Thoras monitoring |
+| thorasMonitor.monitorCadenceSeconds | String | 15 | Health check frequency in seconds |
+| thorasMonitor.maxJobLifeSeconds | String | 600 | Maximum job length before notification |
+| thorasMonitor.underProvisionThreshold | String | 0.1 | How underprovisioned forecasts can be before alerting |
+| thorasMonitor.overProvisionThreshold | String | 10 | How overprovisioned forecasts can be before alerting |
+| thorasMonitor.slackWorkspaceID | String | "" | Target slack workspace for alert notifications |
+| thorasMonitor.slackChannelID | String | "" | Target slack channel for alert notifications |
+| thorasMonitor.slackWebhookID | String | "" | Webhook destination for notifications |
+
