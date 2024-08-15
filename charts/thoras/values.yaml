@@ -1,6 +1,13 @@
 ---
 thorasVersion: "1.1.5"
 
+imageCredentials:
+  registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
+  username: "_json_key_base64"
+  password: ""
+
+imagePullPolicy: "IfNotPresent"
+
 thorasOperator:
   limits:
     cpu: 1000m

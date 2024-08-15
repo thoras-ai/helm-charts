@@ -30,8 +30,8 @@ spec:
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
-        imagePullPolicy: Always
         name: thoras-dashboard
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
         env:

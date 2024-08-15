@@ -28,8 +28,8 @@ spec:
       serviceAccountName: thoras-operator
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-operator:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
-        imagePullPolicy: Always
         name: thoras-operator
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         env:
           - name: "ES_HOST"
             valueFrom:

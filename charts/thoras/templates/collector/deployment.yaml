@@ -40,8 +40,8 @@ spec:
       {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/elasticsearch:{{ .Values.metricsCollector.search.imageTag }}
-        imagePullPolicy: Always
         name: {{ .Values.metricsCollector.search.name }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
         - containerPort: {{ .Values.metricsCollector.search.containerPort }}
         env:
