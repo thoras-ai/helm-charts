@@ -1,6 +1,13 @@
 ---
 thorasVersion: "1.1.5"
 
+imageCredentials:
+  registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
+  username: "_json_key_base64"
+  password: ""
+
+imagePullPolicy: "IfNotPresent"
+
 thorasOperator:
   limits:
     cpu: 1000m
@@ -52,5 +59,15 @@ thorasDashboard:
     cpu: 100m
     memory: 100Mi
   port: 80
+
+thorasMonitor:
+  enabled: false
+  monitorCadenceSeconds: "15"
+  maxJobLifeSeconds: "600"
+  underProvisionThreshold: "0.1"
+  overProvisionThreshold: "10"
+  slackWorkspaceID: ""
+  slackChannelID: ""
+  slackWebhookID: ""
 
 thorasForecast: {}
