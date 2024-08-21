@@ -85,6 +85,7 @@ helm install \
 ## Thoras API Server
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
+| thorasApiServer.podAnnotations | Object | {} | Pod Annotations for Thoras Thoras API |
 | thorasApiServer.containerPort | Number | 8443 | Thoras API port |
 | thorasApiServer.port | Number | 443 | Thoras API service port |
 | thorasApiServer.limits.cpu | String | 1000m | Thoras API CPU limit |

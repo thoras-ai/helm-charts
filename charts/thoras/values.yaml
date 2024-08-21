@@ -37,6 +37,7 @@ metricsCollector:
 
 thorasApiServer:
   containerPort: 8443
+  podAnnotations: {}
   limits:
     cpu: 1000m
     memory: 1000Mi
