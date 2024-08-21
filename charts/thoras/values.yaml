@@ -68,6 +68,7 @@ thorasDashboard:
 
 thorasMonitor:
   enabled: false
+  podAnnotations: {}
   monitorCadenceSeconds: "15"
   maxJobLifeSeconds: "600"
   underProvisionThreshold: "0.1"
