@@ -6,6 +6,12 @@ imageCredentials:
   username: "_json_key_base64"
   password: ""
 
+resourceQuota:
+  enabled: false
+  pods: 200
+  cronjobs: 200
+  jobs: 200
+
 imagePullPolicy: "IfNotPresent"
 
 thorasOperator:
