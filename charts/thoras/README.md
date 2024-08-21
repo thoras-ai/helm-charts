@@ -53,9 +53,9 @@ helm install \
 | imageCredentials.username | String | _json_key_base64 | Container registry username |
 | imageCredentials.password | String | "" | Container registry auth string |
 | resourceQuota.enabled | Bool | false | Enables resource quotas within Thoras |
-| resourceQuota.pods | Number | 200 | Pod total limit |
-| resourceQuota.cronjobs | Number | 200 | Cronjob total limit |
-| resourceQuota.jobs | Number | 200 | Job total limit |
+| resourceQuota.pods | Number | 200 | Maximum number of pods allowed|
+| resourceQuota.cronjobs | Number | 200 | Maximum number of cronjobs allowed |
+| resourceQuota.jobs | Number | 200 | Maximum number of jobs allowed |
 
 ## Thoras Forecast
 | Key | Type | Default | Description |
