@@ -13,7 +13,7 @@ spec:
   type: ClusterIP
   {{- if .Values.thorasDashboard.service.clusterIP }}
   clusterIP: {{ .Values.thorasDashboard.service.clusterIP }}
-  {{end}}
+  {{- end }}
 {{- else if eq .Values.thorasDashboard.service.type "LoadBalancer" }}
   type: {{ .Values.thorasDashboard.service.type }}
   {{- if .Values.thorasDashboard.service.loadBalancerIP }}
