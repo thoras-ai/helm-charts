@@ -74,6 +74,7 @@ helm install \
 | metricsCollector.persistence.volumeName | String | "" | PV name for PVC. Keep blank if using dynamic provisioning |
 | metricsCollector.persistence.storageClassName | String | "" | Storage class for PVC |
 | metricsCollector.collector.name | String | thoras-collector | Thoras collector container name |
+| metricsCollector.podAnnotations | Object | {} | Pod Annotations for Thoras metrics collector  |
 | metricsCollector.search.imageTag | String | 8.12.1 | Elasticsearch image tag |
 | metricsCollector.search.name | String | elasticsearch | Elasticsearch container name |
 | metricsCollector.search.containerPort | Number | 9200 | Elasticsearch port |
