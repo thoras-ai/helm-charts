@@ -9,6 +9,7 @@ imageCredentials:
 imagePullPolicy: "IfNotPresent"
 
 thorasOperator:
+  podAnnotations: {}
   limits:
     cpu: 1000m
     memory: 1000Mi
@@ -21,6 +22,7 @@ metricsCollector:
     enabled: false
     volumeName: ""
     storageClassName: ""
+  podAnnotations: {}
   collector:
     name: thoras-collector
   search:
@@ -35,6 +37,7 @@ metricsCollector:
 
 thorasApiServer:
   containerPort: 8443
+  podAnnotations: {}
   limits:
     cpu: 1000m
     memory: 1000Mi
@@ -59,9 +62,13 @@ thorasDashboard:
     cpu: 100m
     memory: 100Mi
   port: 80
+  service:
+    type: ClusterIP
+    annotations: {}
 
 thorasMonitor:
   enabled: false
+  podAnnotations: {}
   monitorCadenceSeconds: "15"
   maxJobLifeSeconds: "600"
   underProvisionThreshold: "0.1"

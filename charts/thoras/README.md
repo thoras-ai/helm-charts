@@ -35,7 +35,7 @@ metricsCollector:
 Now let’s install Thoras with Helm! We recommend installing Thoras into the thoras namespace:
 
 ```
-helm install
+helm install \
   my-thoras-release \
   thoras/thoras \
   -n thoras \
@@ -61,6 +61,7 @@ helm install
 ## Thoras Operator
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
+| thorasOperator.podAnnotations | Object | {} | Pod Annotations for Thoras Operator |
 | thorasOperator.limits.cpu | String | 1000m | Thoras Operator CPU limit |
 | thorasOperator.limits.memory | String | 1000Mi | Thoras Operator memory limit |
 | thorasOperator.requests.cpu | String | 1000m | Thoras Operator CPU request |
@@ -73,6 +74,7 @@ helm install
 | metricsCollector.persistence.volumeName | String | "" | PV name for PVC. Keep blank if using dynamic provisioning |
 | metricsCollector.persistence.storageClassName | String | "" | Storage class for PVC |
 | metricsCollector.collector.name | String | thoras-collector | Thoras collector container name |
+| metricsCollector.podAnnotations | Object | {} | Pod Annotations for Thoras metrics collector  |
 | metricsCollector.search.imageTag | String | 8.12.1 | Elasticsearch image tag |
 | metricsCollector.search.name | String | elasticsearch | Elasticsearch container name |
 | metricsCollector.search.containerPort | Number | 9200 | Elasticsearch port |
@@ -83,6 +85,7 @@ helm install
 ## Thoras API Server
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
+| thorasApiServer.podAnnotations | Object | {} | Pod Annotations for Thoras Thoras API |
 | thorasApiServer.containerPort | Number | 8443 | Thoras API port |
 | thorasApiServer.port | Number | 443 | Thoras API service port |
 | thorasApiServer.limits.cpu | String | 1000m | Thoras API CPU limit |
@@ -104,11 +107,18 @@ helm install
 | thorasDashboard.limits.memory | String | 1000Mi | Thoras Dashboard memory limit |
 | thorasDashboard.requests.cpu | String | 1000Mi | Thoras Dashboard CPU request |
 | thorasDashboard.requests.memory | String | 1000Mi | Thoras Dashboard memory request |
+| thorasDashboard.service.type | String | ClusterIP | Type of Service to use |
+| thorasDashboard.service.annotations | Object | {} | Service annotations |
+| thorasDashboard.service.clusterIP | String | nil | Service clusterIP when type is ClusterIP |
+| thorasDashboard.service.loadBalancerIP | String | nil | Service loadBalancerIP when type is LoadBalancer |
+| thorasDashboard.service.loadBalancerSourceRanges | List | nil | Service loadBalancerSourceRanges when type is LoadBalancer |
+| thorasDashboard.service.externalIPs | List | nil | Service externalIPs |
 
 ## Thoras Monitor
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | thorasMonitor.enabled | Bool | false | Enable Thoras monitoring |
+| thorasMonitor.podAnnotations | Object | {} | Pod Annotations for Thoras monitor |
 | thorasMonitor.monitorCadenceSeconds | String | 15 | Health check frequency in seconds |
 | thorasMonitor.maxJobLifeSeconds | String | 600 | Maximum job length before notification |
 | thorasMonitor.underProvisionThreshold | String | 0.1 | How underprovisioned forecasts can be before alerting |
