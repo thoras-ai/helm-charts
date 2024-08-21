@@ -109,7 +109,7 @@ helm install \
 | thorasDashboard.requests.memory | String | 1000Mi | Thoras Dashboard memory request |
 | thorasDashboard.service.type | String | ClusterIP | Type of Service to use |
 | thorasDashboard.service.annotations | Object | {} | Service annotations |
-| thorasDashboard.service.clusterIP | String | nil | Service cluserIP when type is ClusterIP |
+| thorasDashboard.service.clusterIP | String | nil | Service clusterIP when type is ClusterIP |
 | thorasDashboard.service.loadBalancerIP | String | nil | Service loadBalancerIP when type is LoadBalancer |
 | thorasDashboard.service.loadBalancerSourceRanges | List | nil | Service loadBalancerSourceRanges when type is LoadBalancer |
 | thorasDashboard.service.externalIPs | List | nil | Service externalIPs |
