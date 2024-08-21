@@ -52,6 +52,10 @@ helm install \
 | imageCredentials.registry | String | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name |
 | imageCredentials.username | String | _json_key_base64 | Container registry username |
 | imageCredentials.password | String | "" | Container registry auth string |
+| resourceQuota.enabled | Bool | false | Enables resource quotas within Thoras |
+| resourceQuota.pods | Number | 200 | Maximum number of pods allowed|
+| resourceQuota.cronjobs | Number | 200 | Maximum number of cronjobs allowed |
+| resourceQuota.jobs | Number | 200 | Maximum number of jobs allowed |
 
 ## Thoras Forecast
 | Key | Type | Default | Description |
