@@ -35,7 +35,7 @@ metricsCollector:
 Now let’s install Thoras with Helm! We recommend installing Thoras into the thoras namespace:
 
 ```
-helm install
+helm install \
   my-thoras-release \
   thoras/thoras \
   -n thoras \
@@ -104,6 +104,11 @@ helm install
 | thorasDashboard.limits.memory | String | 1000Mi | Thoras Dashboard memory limit |
 | thorasDashboard.requests.cpu | String | 1000Mi | Thoras Dashboard CPU request |
 | thorasDashboard.requests.memory | String | 1000Mi | Thoras Dashboard memory request |
+| thorasDashboard.service.type | String | ClusterIP | Type of Service to use |
+| thorasDashboard.service.annotations | object | {} | Service annotations |
+| thorasDashboard.service.clusterIP | string | nil | Service cluserIP when type is ClusterIP |
+| thorasDashboard.service.loadBalancerIP | string | nil | Service loadBalancerIP when type is LoadBalancer |
+| thorasDashboard.service.loadBalancerSourceRanges | list | nil | Service loadBalancerSourceRanges when type is LoadBalancer |
 
 ## Thoras Monitor
 | Key | Type | Default | Description |

@@ -4,7 +4,32 @@ kind: Service
 metadata:
   name: thoras-dashboard
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasDashboard.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
 spec:
+{{- if (or (eq .Values.thorasDashboard.service.type "ClusterIP") (empty .Values.thorasDashboard.service.type)) }}
+  type: ClusterIP
+  {{- if .Values.thorasDashboard.service.clusterIP }}
+  clusterIP: {{ .Values.thorasDashboard.service.clusterIP }}
+  {{end}}
+{{- else if eq .Values.thorasDashboard.service.type "LoadBalancer" }}
+  type: {{ .Values.thorasDashboard.service.type }}
+  {{- if .Values.thorasDashboard.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.thorasDashboard.service.loadBalancerIP }}
+  {{- end }}
+  {{- if .Values.thorasDashboard.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+{{ toYaml .Values.thorasDashboard.service.loadBalancerSourceRanges | indent 4 }}
+  {{- end -}}
+{{- else }}
+  type: {{ .Values.thorasDashboard.service.type }}
+{{- end }}
+{{- if .Values.thorasDashboard.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.thorasDashboard.service.externalIPs | indent 4 }}
+{{- end }}
   ports:
   - port: {{ .Values.thorasDashboard.port }}
     protocol: TCP
