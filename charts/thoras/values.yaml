@@ -9,6 +9,7 @@ imageCredentials:
 imagePullPolicy: "IfNotPresent"
 
 thorasOperator:
+  podAnnotations: {}
   limits:
     cpu: 1000m
     memory: 1000Mi

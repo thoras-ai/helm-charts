@@ -61,6 +61,7 @@ helm install \
 ## Thoras Operator
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
+| thorasOperator.podAnnotations | Object | {} | Pod Annotations for Thoras Operator |
 | thorasOperator.limits.cpu | String | 1000m | Thoras Operator CPU limit |
 | thorasOperator.limits.memory | String | 1000Mi | Thoras Operator memory limit |
 | thorasOperator.requests.cpu | String | 1000m | Thoras Operator CPU request |
