@@ -23,12 +23,37 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- with .Values.thorasMonitor.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       serviceAccountName: thoras-operator
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-monitor:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: Always
         name: thoras-monitor
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            # Don't start app until ES is available
+            retries=0
+            max_retries=48
+            until [ $retries -eq $max_retries ]; do
+              if curl -s --connect-timeout 5 --fail -XGET ${ES_HOST}; then
+                echo "elasticsearch ready"
+                break
+              else
+                echo "elasticsearch not ready"
+                retries=$((retries+1))
+                sleep 5
+              fi
+            done
+            if [ $retries -eq $max_retries ]; then
+                echo "fatal: giving up on elasticsearch availability"
+                exit 1
+            fi
+            node index.js
         env:
           - name: "ES_HOST"
             valueFrom:

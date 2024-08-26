@@ -1,14 +1,21 @@
 ---
-thorasVersion: "2.0.0"
+thorasVersion: "2.0.2"
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
   username: "_json_key_base64"
   password: ""
 
+resourceQuota:
+  enabled: false
+  pods: 200
+  cronjobs: 200
+  jobs: 200
+
 imagePullPolicy: "IfNotPresent"
 
 thorasOperator:
+  podAnnotations: {}
   limits:
     cpu: 1000m
     memory: 1000Mi
@@ -21,6 +28,7 @@ metricsCollector:
     enabled: false
     volumeName: ""
     storageClassName: ""
+  podAnnotations: {}
   collector:
     name: thoras-collector
   search:
@@ -35,6 +43,7 @@ metricsCollector:
 
 thorasApiServer:
   containerPort: 8443
+  podAnnotations: {}
   limits:
     cpu: 1000m
     memory: 1000Mi
@@ -59,9 +68,13 @@ thorasDashboard:
     cpu: 100m
     memory: 100Mi
   port: 80
+  service:
+    type: ClusterIP
+    annotations: {}
 
 thorasMonitor:
   enabled: false
+  podAnnotations: {}
   monitorCadenceSeconds: "15"
   maxJobLifeSeconds: "600"
   underProvisionThreshold: "0.1"

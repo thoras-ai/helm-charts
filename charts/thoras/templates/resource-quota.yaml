@@ -1,0 +1,19 @@
+
+{{- if .Values.resourceQuota.enabled }}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: thoras
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  hard:
+    pods: {{ .Values.resourceQuota.pods }}
+    count/cronjobs.batch: {{ .Values.resourceQuota.cronjobs }}
+    count/jobs.batch: {{ .Values.resourceQuota.jobs }}
+{{- end }}
