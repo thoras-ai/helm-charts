@@ -27,7 +27,9 @@ metricsCollector:
   persistence:
     enabled: false
     volumeName: ""
-    storageClassName: ""
+    storageClassName: "efs-sc-thoras"
+    createEFSStorageClass:
+      fileSystemId: ""
   podAnnotations: {}
   collector:
     name: thoras-collector
