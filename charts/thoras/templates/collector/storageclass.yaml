@@ -1,0 +1,17 @@
+{{- if and .Values.metricsCollector.persistence.enabled .Values.metricsCollector.persistence.createEFSStorageClass.fileSystemId }}
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: {{ .Values.metricsCollector.persistence.storageClassName }}
+provisioner: efs.csi.aws.com
+parameters:
+  fileSystemId: {{ .Values.metricsCollector.persistence.createEFSStorageClass.fileSystemId }}
+  provisioningMode: efs-ap
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/dynamic_provisioning"
+  subPathPattern: "${.PVC.namespace}/${.PVC.name}"
+  ensureUniqueDirectory: "true"
+  reuseAccessPoint: "false"
+{{- end }}

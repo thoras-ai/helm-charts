@@ -1,5 +1,5 @@
 ---
-thorasVersion: "2.0.2"
+thorasVersion: "2.0.3"
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
@@ -27,7 +27,9 @@ metricsCollector:
   persistence:
     enabled: false
     volumeName: ""
-    storageClassName: ""
+    storageClassName: "efs-sc-thoras"
+    createEFSStorageClass:
+      fileSystemId: ""
   podAnnotations: {}
   collector:
     name: thoras-collector

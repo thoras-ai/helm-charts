@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 3.1.0](https://img.shields.io/badge/Version-3.1.0-informational?style=flat-square) ![AppVersion: 2.0.2](https://img.shields.io/badge/AppVersion-2.0.2-informational?style=flat-square)
+![Version: 3.1.1](https://img.shields.io/badge/Version-3.1.1-informational?style=flat-square) ![AppVersion: 2.0.3](https://img.shields.io/badge/AppVersion-2.0.3-informational?style=flat-square)
 
 # Install
 Using [Helm](https://helm.sh), you can easily install and test Throas in a Kubernetes cluster by running the following:
@@ -76,6 +76,7 @@ helm install \
 | --- | --- | --- | --- |
 | metricsCollector.persistence.enabled | Bool | false | Enables persistence for Thoras metrics collector |
 | metricsCollector.persistence.volumeName | String | "" | PV name for PVC. Keep blank if using dynamic provisioning |
+| metricsCollector.persistence.createEFSStorageClass.fileSystemId | String | "" | Create dynamic PV provisioner for EFS by specifying EFS id  |
 | metricsCollector.persistence.storageClassName | String | "" | Storage class for PVC |
 | metricsCollector.collector.name | String | thoras-collector | Thoras collector container name |
 | metricsCollector.podAnnotations | Object | {} | Pod Annotations for Thoras metrics collector  |
