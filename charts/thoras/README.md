@@ -76,6 +76,7 @@ helm install \
 | --- | --- | --- | --- |
 | metricsCollector.persistence.enabled | Bool | false | Enables persistence for Thoras metrics collector |
 | metricsCollector.persistence.volumeName | String | "" | PV name for PVC. Keep blank if using dynamic provisioning |
+| metricsCollector.persistence.createEFSStorageClass.fileSystemId | String | "" | Create dynamic PV provisioner for EFS by specifying EFS id  |
 | metricsCollector.persistence.storageClassName | String | "" | Storage class for PVC |
 | metricsCollector.collector.name | String | thoras-collector | Thoras collector container name |
 | metricsCollector.podAnnotations | Object | {} | Pod Annotations for Thoras metrics collector  |
