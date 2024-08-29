@@ -124,10 +124,6 @@ helm install \
 | --- | --- | --- | --- |
 | thorasMonitor.enabled | Bool | false | Enable Thoras monitoring |
 | thorasMonitor.podAnnotations | Object | {} | Pod Annotations for Thoras monitor |
-| thorasMonitor.monitorCadenceSeconds | String | 15 | Health check frequency in seconds |
-| thorasMonitor.maxJobLifeSeconds | String | 600 | Maximum job length before notification |
-| thorasMonitor.underProvisionThreshold | String | 0.1 | How underprovisioned forecasts can be before alerting |
-| thorasMonitor.overProvisionThreshold | String | 10 | How overprovisioned forecasts can be before alerting |
 | thorasMonitor.slackWorkspaceID | String | "" | Target slack workspace for alert notifications |
 | thorasMonitor.slackChannelID | String | "" | Target slack channel for alert notifications |
 | thorasMonitor.slackWebhookID | String | "" | Webhook destination for notifications |
