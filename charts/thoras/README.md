@@ -131,3 +131,52 @@ helm install \
 | thorasMonitor.slackWorkspaceID | String | "" | Target slack workspace for alert notifications |
 | thorasMonitor.slackChannelID | String | "" | Target slack channel for alert notifications |
 | thorasMonitor.slackWebhookID | String | "" | Webhook destination for notifications |
+| thorasMonitor.config | String | "" | Thoras Monitor configuration yaml |
+
+## Example Thoras Monitor with default config
+
+```yaml
+# values.yaml
+
+...
+
+thorasMonitor:
+  enabled: true
+  slackWorkspaceID: "ABC123"
+  slackChannelID: "ABC123"
+  slackWebhookID: "SECRET_ABC123"
+  config: |
+    # General Settings
+    general:
+      name: Thoras
+      monitor_cadence: 15s
+    # Alert config
+    alerts:
+      - name: thoras_deployments
+        notification_cooldown: 15m
+        enabled: True
+      - name: thoras_jobs
+        notification_cooldown: 15m
+        enabled: True
+        options:
+          max_job_life: 10m
+      - name: metric_integrity
+        notification_cooldown: 15m
+        enabled: True
+      - name: auto_conflict
+        notification_cooldown: 15m
+        enabled: True
+      - name: no_suggestions
+        notification_cooldown: 15m
+        enabled: True
+      - name: under_provisioned
+        notification_cooldown: 15m
+        enabled: True
+        options:
+          threshold: 0.25
+      - name: over_provisioned
+        notification_cooldown: 15m
+        enabled: True
+        options:
+          threshold: 10
+```
