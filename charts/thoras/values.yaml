@@ -1,5 +1,5 @@
 ---
-thorasVersion: "2.0.3"
+thorasVersion: "2.0.4"
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
@@ -77,12 +77,9 @@ thorasDashboard:
 thorasMonitor:
   enabled: false
   podAnnotations: {}
-  monitorCadenceSeconds: "15"
-  maxJobLifeSeconds: "600"
-  underProvisionThreshold: "0.1"
-  overProvisionThreshold: "10"
   slackWorkspaceID: ""
   slackChannelID: ""
   slackWebhookID: ""
+  config: |
 
 thorasForecast: {}

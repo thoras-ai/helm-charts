@@ -23,16 +23,26 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-      {{- with .Values.thorasMonitor.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
+        {{- with .Values.thorasMonitor.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: thoras-operator
+      volumes:
+      - name: config
+        configMap:
+          name: thoras-monitor-config
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-monitor:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: Always
         name: thoras-monitor
+        volumeMounts:
+          - name: config
+            mountPath: /apps/packages/thoras-monitor/config.yaml
+            subPath: config.yaml
+            readOnly: true
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -65,14 +75,6 @@ spec:
               secretKeyRef:
                 name: thoras-slack
                 key: webhookID
-          - name: MONITOR_CADENCE
-            value:  "{{ .Values.thorasMonitor.monitorCadenceSeconds }}"
-          - name: MAX_JOB_LIFE
-            value: "{{ .Values.thorasMonitor.maxJobLifeSeconds }}"
-          - name: UNDERPROVISION_THRESHOLD
-            value: "{{ .Values.thorasMonitor.underProvisionThreshold }}"
-          - name: OVERPROVISION_THRESHOLD
-            value: "{{ .Values.thorasMonitor.overProvisionThreshold }}"
           - name: SLACK_WORKSPACE_ID
             value: {{ .Values.thorasMonitor.slackWorkspaceID }}
           - name: SLACK_CHANNEL_ID

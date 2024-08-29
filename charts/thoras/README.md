@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 3.1.1](https://img.shields.io/badge/Version-3.1.1-informational?style=flat-square) ![AppVersion: 2.0.3](https://img.shields.io/badge/AppVersion-2.0.3-informational?style=flat-square)
+![Version: 3.1.2](https://img.shields.io/badge/Version-3.1.2-informational?style=flat-square) ![AppVersion: 2.0.4](https://img.shields.io/badge/AppVersion-2.0.4-informational?style=flat-square)
 
 # Install
 Using [Helm](https://helm.sh), you can easily install and test Throas in a Kubernetes cluster by running the following:
@@ -124,10 +124,55 @@ helm install \
 | --- | --- | --- | --- |
 | thorasMonitor.enabled | Bool | false | Enable Thoras monitoring |
 | thorasMonitor.podAnnotations | Object | {} | Pod Annotations for Thoras monitor |
-| thorasMonitor.monitorCadenceSeconds | String | 15 | Health check frequency in seconds |
-| thorasMonitor.maxJobLifeSeconds | String | 600 | Maximum job length before notification |
-| thorasMonitor.underProvisionThreshold | String | 0.1 | How underprovisioned forecasts can be before alerting |
-| thorasMonitor.overProvisionThreshold | String | 10 | How overprovisioned forecasts can be before alerting |
 | thorasMonitor.slackWorkspaceID | String | "" | Target slack workspace for alert notifications |
 | thorasMonitor.slackChannelID | String | "" | Target slack channel for alert notifications |
 | thorasMonitor.slackWebhookID | String | "" | Webhook destination for notifications |
+| thorasMonitor.config | String | "" | Thoras Monitor configuration yaml |
+
+## Example Thoras Monitor with default config
+
+```yaml
+# values.yaml
+
+...
+
+thorasMonitor:
+  enabled: true
+  slackWorkspaceID: "ABC123"
+  slackChannelID: "ABC123"
+  slackWebhookID: "SECRET_ABC123"
+  config: |
+    # General Settings
+    general:
+      name: Thoras
+      monitor_cadence: 15s
+    # Alert config
+    alerts:
+      - name: thoras_deployments
+        notification_cooldown: 15m
+        enabled: True
+      - name: thoras_jobs
+        notification_cooldown: 15m
+        enabled: True
+        options:
+          max_job_life: 10m
+      - name: metric_integrity
+        notification_cooldown: 15m
+        enabled: True
+      - name: auto_conflict
+        notification_cooldown: 15m
+        enabled: True
+      - name: no_suggestions
+        notification_cooldown: 15m
+        enabled: True
+      - name: under_provisioned
+        notification_cooldown: 15m
+        enabled: True
+        options:
+          threshold: 0.25
+      - name: over_provisioned
+        notification_cooldown: 15m
+        enabled: True
+        options:
+          threshold: 10
+```
