@@ -1,4 +1,5 @@
 ---
+
 thorasVersion: "2.0.5"
 
 imageCredentials:
@@ -77,12 +78,9 @@ thorasDashboard:
 thorasMonitor:
   enabled: false
   podAnnotations: {}
-  monitorCadenceSeconds: "15"
-  maxJobLifeSeconds: "600"
-  underProvisionThreshold: "0.1"
-  overProvisionThreshold: "10"
   slackWorkspaceID: ""
   slackChannelID: ""
   slackWebhookID: ""
+  config: |
 
 thorasForecast: {}
