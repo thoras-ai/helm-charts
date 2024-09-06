@@ -71,6 +71,7 @@ thorasDashboard:
     cpu: 100m
     memory: 100Mi
   port: 80
+  replicas: 3
   service:
     type: ClusterIP
     annotations: {}
