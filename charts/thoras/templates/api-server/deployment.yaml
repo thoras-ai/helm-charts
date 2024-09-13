@@ -42,6 +42,8 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
+          - name: "LOGLEVEL"
+            value: {{ default .Values.logLevel .Values.thorasApiServer.logLevel }}
         volumeMounts:
           - name: tls
             mountPath: /apps/packages/thoras-external-metrics-server/cert.pem
