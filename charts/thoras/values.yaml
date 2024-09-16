@@ -1,6 +1,6 @@
 ---
 
-thorasVersion: "2.0.7"
+thorasVersion: "2.0.8"
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
@@ -14,6 +14,8 @@ resourceQuota:
   jobs: 200
 
 imagePullPolicy: "IfNotPresent"
+
+logLevel: info
 
 thorasOperator:
   podAnnotations: {}

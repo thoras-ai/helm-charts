@@ -104,3 +104,5 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
+          - name: "LOGLEVEL"
+            value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}

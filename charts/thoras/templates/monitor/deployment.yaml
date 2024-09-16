@@ -79,4 +79,6 @@ spec:
             value: {{ .Values.thorasMonitor.slackWorkspaceID }}
           - name: SLACK_CHANNEL_ID
             value: {{ .Values.thorasMonitor.slackChannelID }}
+          - name: "LOGLEVEL"
+            value: {{ default .Values.logLevel .Values.thorasMonitor.logLevel }}
 {{- end }}
