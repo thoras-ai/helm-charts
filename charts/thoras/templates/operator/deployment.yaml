@@ -44,6 +44,8 @@ spec:
             value: {{ .Chart.Version | replace "+" "_" }}
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
+          - name: "LOGLEVEL"
+            value: {{ default .Values.logLevel .Values.thorasOperator.logLevel }}
         args:
           - start
         resources:

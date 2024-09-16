@@ -23,6 +23,8 @@ spec:
                   secretKeyRef:
                     name: thoras-elastic-password
                     key: host
+              - name: "LOGLEVEL"
+                value: {{ default .Values.logLevel .Values.metricsCollector.purge.logLevel }}
             command: ["/bin/sh", "-c"]
             args:
               - |

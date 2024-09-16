@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 3.1.4](https://img.shields.io/badge/Version-3.1.4-informational?style=flat-square) ![AppVersion: 2.0.6](https://img.shields.io/badge/AppVersion-2.0.6-informational?style=flat-square)
+![Version: 3.1.6](https://img.shields.io/badge/Version-3.1.6-informational?style=flat-square) ![AppVersion: 2.0.8](https://img.shields.io/badge/AppVersion-2.0.8-informational?style=flat-square)
 
 # Install
 Using [Helm](https://helm.sh), you can easily install and test Throas in a Kubernetes cluster by running the following:
@@ -56,6 +56,7 @@ helm install \
 | resourceQuota.pods | Number | 200 | Maximum number of pods allowed|
 | resourceQuota.cronjobs | Number | 200 | Maximum number of cronjobs allowed |
 | resourceQuota.jobs | Number | 200 | Maximum number of jobs allowed |
+| logLevel | String | info | Default log level |
 
 ## Thoras Forecast
 | Key | Type | Default | Description |
@@ -70,6 +71,7 @@ helm install \
 | thorasOperator.limits.memory | String | 1000Mi | Thoras Operator memory limit |
 | thorasOperator.requests.cpu | String | 1000m | Thoras Operator CPU request |
 | thorasOperator.requests.memory | String | 1000Mi | Thoras Operator memory request |
+| thorasOperator.logLevel | String | Nil | Logging level |
 
 ## Thoras Metrics Collector
 | Key | Type | Default | Description |
@@ -79,12 +81,14 @@ helm install \
 | metricsCollector.persistence.createEFSStorageClass.fileSystemId | String | "" | Create dynamic PV provisioner for EFS by specifying EFS id  |
 | metricsCollector.persistence.storageClassName | String | "" | Storage class for PVC |
 | metricsCollector.collector.name | String | thoras-collector | Thoras collector container name |
+| metricsCollector.collector.logLevel | String | Nil | Logging level |
 | metricsCollector.podAnnotations | Object | {} | Pod Annotations for Thoras metrics collector  |
 | metricsCollector.search.imageTag | String | 8.12.1 | Elasticsearch image tag |
 | metricsCollector.search.name | String | elasticsearch | Elasticsearch container name |
 | metricsCollector.search.containerPort | Number | 9200 | Elasticsearch port |
 | metricsCollector.purge.ttl | String | 30d | How long to keep metrics data in Elasticsearch |
 | metricsCollector.purge.schedule | String | 00 00 * * * | Cron expression for metrics purge job |
+| metricsCollector.purge.logLevel | String | Nil | Logging level |
 | metricsCollector.init.imageTag | String | latest | Image tag for metrics collector init container |
 
 ## Thoras API Server
@@ -97,6 +101,7 @@ helm install \
 | thorasApiServer.limits.memory | String | 1000Mi | Thoras API memory limit |
 | thorasApiServer.requests.cpu | String | 1000Mi | Thoras API CPU request |
 | thorasApiServer.requests.memory | String | 1000Mi | Thoras API memory request |
+| thorasApiServer.logLevel | String | Nil | Logging level |
 
 ## Thoras Dashboard
 | Key | Type | Default | Description |
@@ -118,6 +123,7 @@ helm install \
 | thorasDashboard.service.loadBalancerIP | String | nil | Service loadBalancerIP when type is LoadBalancer |
 | thorasDashboard.service.loadBalancerSourceRanges | List | nil | Service loadBalancerSourceRanges when type is LoadBalancer |
 | thorasDashboard.service.externalIPs | List | nil | Service externalIPs |
+| thorasDashboard.logLevel | String | Nil | Logging level |
 
 ## Thoras Monitor
 | Key | Type | Default | Description |
@@ -128,6 +134,7 @@ helm install \
 | thorasMonitor.slackChannelID | String | "" | Target slack channel for alert notifications |
 | thorasMonitor.slackWebhookID | String | "" | Webhook destination for notifications |
 | thorasMonitor.config | String | "" | Thoras Monitor configuration yaml |
+| thorasMonitor.logLevel | String | Nil | Logging level |
 
 ## Example Thoras Monitor with default config
 
