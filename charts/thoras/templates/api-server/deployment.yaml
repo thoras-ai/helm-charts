@@ -42,6 +42,10 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
+          - name: SLACK_WEBHOOK_URL
+            value: {{ .Values.thorasApiServer.slackWebhookUrl | default .Values.slackWebhookUrl }}
+          - name: SLACK_ERRORS_ENABLED
+            value: {{ .Values.thorasApiServer.slackErrorsEnabled | default .Values.slackErrorsEnabled | default false }}
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasApiServer.logLevel }}
         volumeMounts:

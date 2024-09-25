@@ -7,7 +7,7 @@ This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 ![Version: 3.2.1](https://img.shields.io/badge/Version-3.2.1-informational?style=flat-square) ![AppVersion: 2.0.10](https://img.shields.io/badge/AppVersion-2.0.10-informational?style=flat-square)
 
 # Install
-Using [Helm](https://helm.sh), you can easily install and test Throas in a Kubernetes cluster by running the following:
+Using [Helm](https://helm.sh), you can easily install and test Thoras in a Kubernetes cluster by running the following:
 
 #### Add Helm repo
 First, add the repo if you haven't already done so:
@@ -57,6 +57,8 @@ helm install \
 | resourceQuota.cronjobs | Number | 200 | Maximum number of cronjobs allowed |
 | resourceQuota.jobs | Number | 200 | Maximum number of jobs allowed |
 | logLevel | String | info | Default log level |
+| slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications. |
+| slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 
 ## Thoras Forecast
 | Key | Type | Default | Description |
@@ -71,6 +73,8 @@ helm install \
 | thorasOperator.limits.memory | String | 1000Mi | Thoras Operator memory limit |
 | thorasOperator.requests.cpu | String | 1000m | Thoras Operator CPU request |
 | thorasOperator.requests.memory | String | 1000Mi | Thoras Operator memory request |
+| thorasOperator.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
+| thorasOperator.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasOperator.logLevel | String | Nil | Logging level |
 
 ## Thoras Metrics Collector
@@ -88,6 +92,8 @@ helm install \
 | metricsCollector.search.containerPort | Number | 9200 | Elasticsearch port |
 | metricsCollector.purge.ttl | String | 30d | How long to keep metrics data in Elasticsearch |
 | metricsCollector.purge.schedule | String | 00 00 * * * | Cron expression for metrics purge job |
+| metricsCollector.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
+| metricsCollector.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | metricsCollector.purge.logLevel | String | Nil | Logging level |
 | metricsCollector.init.imageTag | String | latest | Image tag for metrics collector init container |
 
@@ -101,6 +107,8 @@ helm install \
 | thorasApiServer.limits.memory | String | 1000Mi | Thoras API memory limit |
 | thorasApiServer.requests.cpu | String | 1000Mi | Thoras API CPU request |
 | thorasApiServer.requests.memory | String | 1000Mi | Thoras API memory request |
+| thorasApiServer.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
+| thorasApiServer.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasApiServer.logLevel | String | Nil | Logging level |
 
 ## Thoras Dashboard
@@ -123,6 +131,8 @@ helm install \
 | thorasDashboard.service.loadBalancerIP | String | nil | Service loadBalancerIP when type is LoadBalancer |
 | thorasDashboard.service.loadBalancerSourceRanges | List | nil | Service loadBalancerSourceRanges when type is LoadBalancer |
 | thorasDashboard.service.externalIPs | List | nil | Service externalIPs |
+| thorasDashboard.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
+| thorasDashboard.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasDashboard.logLevel | String | Nil | Logging level |
 
 ## Thoras Monitor
@@ -130,9 +140,8 @@ helm install \
 | --- | --- | --- | --- |
 | thorasMonitor.enabled | Bool | false | Enable Thoras monitoring |
 | thorasMonitor.podAnnotations | Object | {} | Pod Annotations for Thoras monitor |
-| thorasMonitor.slackWorkspaceID | String | "" | Target slack workspace for alert notifications |
-| thorasMonitor.slackChannelID | String | "" | Target slack channel for alert notifications |
-| thorasMonitor.slackWebhookID | String | "" | Webhook destination for notifications |
+| thorasMonitor.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
+| thorasMonitor.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasMonitor.config | String | "" | Thoras Monitor configuration yaml |
 | thorasMonitor.logLevel | String | Nil | Logging level |
 

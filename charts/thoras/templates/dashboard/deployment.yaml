@@ -48,6 +48,10 @@ spec:
                 fieldPath: metadata.namespace
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
+          - name: SLACK_WEBHOOK_URL
+            value: {{ .Values.thorasDashboard.slackWebhookUrl | default .Values.slackWebhookUrl }}
+          - name: SLACK_ERRORS_ENABLED
+            value: {{ .Values.thorasDashboard.slackErrorsEnabled | default .Values.slackErrorsEnabled | default false }}
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasDashboard.logLevel }}
         resources:
