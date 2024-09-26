@@ -51,7 +51,7 @@ spec:
           - name: SLACK_WEBHOOK_URL
             value: {{ .Values.thorasDashboard.slackWebhookUrl | default .Values.slackWebhookUrl }}
           - name: SLACK_ERRORS_ENABLED
-            value: {{ .Values.thorasDashboard.slackErrorsEnabled | default .Values.slackErrorsEnabled | default false }}
+            value: {{ .Values.thorasDashboard.slackErrorsEnabled | default .Values.slackErrorsEnabled }}
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasDashboard.logLevel }}
         resources:
