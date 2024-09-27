@@ -24,9 +24,12 @@ spec:
                     name: thoras-elastic-password
                     key: host
               - name: SLACK_WEBHOOK_URL
-                value: {{ .Values.metricsCollector.slackWebhookUrl | default .Values.slackWebhookUrl }}
+                valueFrom:
+                  secretKeyRef:
+                    name: thoras-slack
+                    key: webhookUrl
               - name: SLACK_ERRORS_ENABLED
-                value: {{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}
+                value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
               - name: "LOGLEVEL"
                 value: {{ default .Values.logLevel .Values.metricsCollector.purge.logLevel }}
             command: ["/bin/sh", "-c"]

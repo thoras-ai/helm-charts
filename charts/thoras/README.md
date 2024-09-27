@@ -73,7 +73,6 @@ helm install \
 | thorasOperator.limits.memory | String | 1000Mi | Thoras Operator memory limit |
 | thorasOperator.requests.cpu | String | 1000m | Thoras Operator CPU request |
 | thorasOperator.requests.memory | String | 1000Mi | Thoras Operator memory request |
-| thorasOperator.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
 | thorasOperator.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasOperator.logLevel | String | Nil | Logging level |
 
@@ -92,7 +91,6 @@ helm install \
 | metricsCollector.search.containerPort | Number | 9200 | Elasticsearch port |
 | metricsCollector.purge.ttl | String | 30d | How long to keep metrics data in Elasticsearch |
 | metricsCollector.purge.schedule | String | 00 00 * * * | Cron expression for metrics purge job |
-| metricsCollector.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
 | metricsCollector.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | metricsCollector.purge.logLevel | String | Nil | Logging level |
 | metricsCollector.init.imageTag | String | latest | Image tag for metrics collector init container |
@@ -107,7 +105,6 @@ helm install \
 | thorasApiServer.limits.memory | String | 1000Mi | Thoras API memory limit |
 | thorasApiServer.requests.cpu | String | 1000Mi | Thoras API CPU request |
 | thorasApiServer.requests.memory | String | 1000Mi | Thoras API memory request |
-| thorasApiServer.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
 | thorasApiServer.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasApiServer.logLevel | String | Nil | Logging level |
 
@@ -131,7 +128,6 @@ helm install \
 | thorasDashboard.service.loadBalancerIP | String | nil | Service loadBalancerIP when type is LoadBalancer |
 | thorasDashboard.service.loadBalancerSourceRanges | List | nil | Service loadBalancerSourceRanges when type is LoadBalancer |
 | thorasDashboard.service.externalIPs | List | nil | Service externalIPs |
-| thorasDashboard.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
 | thorasDashboard.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasDashboard.logLevel | String | Nil | Logging level |
 
@@ -140,7 +136,6 @@ helm install \
 | --- | --- | --- | --- |
 | thorasMonitor.enabled | Bool | false | Enable Thoras monitoring |
 | thorasMonitor.podAnnotations | Object | {} | Pod Annotations for Thoras monitor |
-| thorasMonitor.slackWebhookUrl | String | "" | Slack Webhook URL destination for notifications |
 | thorasMonitor.slackErrorsEnabled | Boolean | false | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasMonitor.config | String | "" | Thoras Monitor configuration yaml |
 | thorasMonitor.logLevel | String | Nil | Logging level |

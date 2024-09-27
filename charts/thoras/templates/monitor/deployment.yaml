@@ -36,7 +36,7 @@ spec:
           name: thoras-monitor-config
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-monitor:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
-        imagePullPolicy: Always
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-monitor
         volumeMounts:
           - name: config
@@ -70,15 +70,13 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
-          - name: "WEBHOOK_ID"
+          - name: SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
                 name: thoras-slack
-                key: webhookID
-          - name: SLACK_WEBHOOK_URL
-            value: {{ .Values.thorasMonitor.slackWebhookUrl | default .Values.slackWebhookUrl }}
+                key: webhookUrl
           - name: SLACK_ERRORS_ENABLED
-            value: {{ .Values.thorasMonitor.slackErrorsEnabled | default .Values.slackErrorsEnabled }}
+            value: "{{ .Values.thorasMonitor.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasMonitor.logLevel }}
 {{- end }}
