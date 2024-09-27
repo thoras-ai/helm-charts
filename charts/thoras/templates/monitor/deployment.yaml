@@ -75,10 +75,10 @@ spec:
               secretKeyRef:
                 name: thoras-slack
                 key: webhookID
-          - name: SLACK_WORKSPACE_ID
-            value: {{ .Values.thorasMonitor.slackWorkspaceID }}
-          - name: SLACK_CHANNEL_ID
-            value: {{ .Values.thorasMonitor.slackChannelID }}
+          - name: SLACK_WEBHOOK_URL
+            value: {{ .Values.thorasMonitor.slackWebhookUrl | default .Values.slackWebhookUrl }}
+          - name: SLACK_ERRORS_ENABLED
+            value: {{ .Values.thorasMonitor.slackErrorsEnabled | default .Values.slackErrorsEnabled }}
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasMonitor.logLevel }}
 {{- end }}

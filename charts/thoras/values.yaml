@@ -16,6 +16,8 @@ resourceQuota:
 imagePullPolicy: "IfNotPresent"
 
 logLevel: info
+slackWebhookUrl: ""
+slackErrorsEnabled: false
 
 thorasOperator:
   podAnnotations: {}
@@ -82,9 +84,6 @@ thorasDashboard:
 thorasMonitor:
   enabled: false
   podAnnotations: {}
-  slackWorkspaceID: ""
-  slackChannelID: ""
-  slackWebhookID: ""
   config: |
 
 thorasForecast: {}
