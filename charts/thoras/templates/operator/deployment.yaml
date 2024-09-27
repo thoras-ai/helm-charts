@@ -45,7 +45,10 @@ spec:
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
           - name: SLACK_WEBHOOK_URL
-            value: {{ .Values.thorasOperator.slackWebhookUrl | default .Values.slackWebhookUrl }}
+            valueFrom:
+              secretKeyRef:
+                name: thoras-slack
+                key: webhookUrl
           - name: SLACK_ERRORS_ENABLED
             value: {{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}
           - name: "LOGLEVEL"
