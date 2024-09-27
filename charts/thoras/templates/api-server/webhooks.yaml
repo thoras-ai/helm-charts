@@ -93,3 +93,27 @@ webhooks:
     timeoutSeconds: 5
     admissionReviewVersions:
       - v1
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "validation.thoras.ai"
+webhooks:
+  - name: "ast-validation.thoras.ai"
+    rules:
+    - apiGroups:   ["thoras.ai"]
+      apiVersions: ["v1"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["aiscaletargets"]
+      scope:       "Namespaced"
+    clientConfig:
+      service:
+        namespace: {{ .Release.Namespace }}
+        name: thoras-api-server
+        path: /validate
+      caBundle: {{ $secretCaCert | quote }}
+    sideEffects: None
+    failurePolicy: 'Ignore'
+    timeoutSeconds: 5
+    admissionReviewVersions:
+      - v1
