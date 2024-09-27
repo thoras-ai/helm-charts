@@ -36,7 +36,7 @@ spec:
           name: thoras-monitor-config
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-monitor:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
-        imagePullPolicy: Always
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-monitor
         volumeMounts:
           - name: config
