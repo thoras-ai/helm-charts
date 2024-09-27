@@ -50,7 +50,7 @@ spec:
                 name: thoras-slack
                 key: webhookUrl
           - name: SLACK_ERRORS_ENABLED
-            value: {{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}
+            value: "{{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasOperator.logLevel }}
         args:

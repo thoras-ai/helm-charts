@@ -48,7 +48,7 @@ spec:
                 name: thoras-slack
                 key: webhookUrl
           - name: SLACK_ERRORS_ENABLED
-            value: {{ .Values.thorasApiServer.slackErrorsEnabled | default .Values.slackErrorsEnabled }}
+            value: "{{ .Values.thorasApiServer.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasApiServer.logLevel }}
         volumeMounts:
