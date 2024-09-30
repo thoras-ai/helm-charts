@@ -60,6 +60,16 @@ thorasApiServer:
   port: 443
   logLevel: "debug"
 
+thorasApiServerV2:
+  enabled: false
+  containerPort: 8443
+  podAnnotations: {}
+  requests:
+    cpu: 128m
+    memory: 100Mi
+  port: 443
+  logLevel: "info"
+
 thorasDashboard:
   enabled: true
   serviceAccount:

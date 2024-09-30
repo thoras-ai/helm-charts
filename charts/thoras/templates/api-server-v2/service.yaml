@@ -1,0 +1,15 @@
+{{- if .Values.thorasApiServerV2.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-api-server-v2
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - port: {{ .Values.thorasApiServerV2.port }}
+    protocol: TCP
+    targetPort: {{ .Values.thorasApiServerV2.containerPort }}
+  selector:
+    app: thoras-api-server-v2
+{{- end}}
