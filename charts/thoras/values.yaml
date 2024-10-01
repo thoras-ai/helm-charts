@@ -22,8 +22,7 @@ slackErrorsEnabled: false
 thorasOperator:
   podAnnotations: {}
   limits:
-    cpu: 1000m
-    memory: 1000Mi
+    memory: 2000Mi
   requests:
     cpu: 100m
     memory: 100Mi
@@ -52,8 +51,7 @@ thorasApiServer:
   containerPort: 8443
   podAnnotations: {}
   limits:
-    cpu: 1000m
-    memory: 1000Mi
+    memory: 2000Mi
   requests:
     cpu: 100m
     memory: 100Mi
@@ -64,6 +62,8 @@ thorasApiServerV2:
   enabled: false
   containerPort: 8443
   podAnnotations: {}
+  limits:
+    memory: 2000Mi
   requests:
     cpu: 128m
     memory: 100Mi
@@ -80,8 +80,7 @@ thorasDashboard:
   podAnnotations: {}
   containerPort: 3000
   limits:
-    cpu: 1000m
-    memory: 1000Mi
+    memory: 2000Mi
   requests:
     cpu: 100m
     memory: 100Mi
