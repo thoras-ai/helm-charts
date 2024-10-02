@@ -57,7 +57,6 @@ spec:
           - start
         resources:
           limits:
-            cpu: {{ .Values.thorasOperator.limits.cpu }}
             memory: {{ .Values.thorasOperator.limits.memory }}
           requests:
             cpu: {{ .Values.thorasOperator.requests.cpu }}

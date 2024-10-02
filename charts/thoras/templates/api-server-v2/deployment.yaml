@@ -65,7 +65,6 @@ spec:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         resources:
           limits:
-            cpu: {{ .Values.thorasApiServerV2.limits.cpu }}
             memory: {{ .Values.thorasApiServerV2.limits.memory }}
           requests:
             cpu: {{ .Values.thorasApiServerV2.requests.cpu }}

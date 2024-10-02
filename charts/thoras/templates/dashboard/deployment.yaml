@@ -59,7 +59,6 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasDashboard.logLevel }}
         resources:
           limits:
-            cpu: {{ .Values.thorasDashboard.limits.cpu }}
             memory: {{ .Values.thorasDashboard.limits.memory }}
           requests:
             cpu: {{ .Values.thorasDashboard.requests.cpu }}
