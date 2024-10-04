@@ -71,7 +71,7 @@ spec:
           runAsGroup: 0
         {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
-        imagePullPolicy: Always
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: {{ .Values.metricsCollector.collector.name }}
         command: ["/bin/sh", "-c"]
         args:
@@ -104,5 +104,12 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
+          - name: SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: thoras-slack
+                key: webhookUrl
+          - name: SLACK_ERRORS_ENABLED
+            value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}

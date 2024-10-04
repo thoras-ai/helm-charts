@@ -1,6 +1,5 @@
 ---
-
-thorasVersion: "2.0.10"
+thorasVersion: "2.1.0"
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
@@ -16,12 +15,13 @@ resourceQuota:
 imagePullPolicy: "IfNotPresent"
 
 logLevel: info
+slackWebhookUrl: ""
+slackErrorsEnabled: false
 
 thorasOperator:
   podAnnotations: {}
   limits:
-    cpu: 1000m
-    memory: 1000Mi
+    memory: 2000Mi
   requests:
     cpu: 100m
     memory: 100Mi
@@ -50,13 +50,24 @@ thorasApiServer:
   containerPort: 8443
   podAnnotations: {}
   limits:
-    cpu: 1000m
-    memory: 1000Mi
+    memory: 2000Mi
   requests:
     cpu: 100m
     memory: 100Mi
   port: 443
   logLevel: "debug"
+
+thorasApiServerV2:
+  enabled: false
+  containerPort: 8443
+  podAnnotations: {}
+  limits:
+    memory: 2000Mi
+  requests:
+    cpu: 128m
+    memory: 100Mi
+  port: 443
+  logLevel: "info"
 
 thorasDashboard:
   enabled: true
@@ -68,8 +79,7 @@ thorasDashboard:
   podAnnotations: {}
   containerPort: 3000
   limits:
-    cpu: 1000m
-    memory: 1000Mi
+    memory: 2000Mi
   requests:
     cpu: 100m
     memory: 100Mi
@@ -82,9 +92,6 @@ thorasDashboard:
 thorasMonitor:
   enabled: false
   podAnnotations: {}
-  slackWorkspaceID: ""
-  slackChannelID: ""
-  slackWebhookID: ""
   config: |
 
 thorasForecast: {}

@@ -44,13 +44,19 @@ spec:
             value: {{ .Chart.Version | replace "+" "_" }}
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
+          - name: SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: thoras-slack
+                key: webhookUrl
+          - name: SLACK_ERRORS_ENABLED
+            value: "{{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasOperator.logLevel }}
         args:
           - start
         resources:
           limits:
-            cpu: {{ .Values.thorasOperator.limits.cpu }}
             memory: {{ .Values.thorasOperator.limits.memory }}
           requests:
             cpu: {{ .Values.thorasOperator.requests.cpu }}

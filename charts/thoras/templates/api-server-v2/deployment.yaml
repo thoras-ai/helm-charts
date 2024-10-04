@@ -1,8 +1,9 @@
+{{- if .Values.thorasApiServerV2.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: thoras-api-server
+  name: thoras-api-server-v2
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: {{ .Chart.Name }}
@@ -13,16 +14,16 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app: thoras-api-server
+      app: thoras-api-server-v2
   template:
     metadata:
       labels:
-        app: thoras-api-server
+        app: thoras-api-server-v2
         app.kubernetes.io/name: {{ .Chart.Name }}
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-      {{- with .Values.thorasApiServer.podAnnotations }}
+      {{- with .Values.thorasApiServerV2.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -33,9 +34,9 @@ spec:
           secret:
             secretName: thoras-api-server-cert
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-external-metrics-server:{{ default .Values.thorasVersion .Values.thorasApiServer.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        name: thoras-api-server
+        name: thoras-v2-api-server
         env:
           - name: "ES_HOST"
             valueFrom:
@@ -48,9 +49,9 @@ spec:
                 name: thoras-slack
                 key: webhookUrl
           - name: SLACK_ERRORS_ENABLED
-            value: "{{ .Values.thorasApiServer.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+            value: "{{ .Values.thorasApiServerV2.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
-            value: {{ default .Values.logLevel .Values.thorasApiServer.logLevel }}
+            value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
         volumeMounts:
           - name: tls
             mountPath: /apps/packages/thoras-external-metrics-server/cert.pem
@@ -61,10 +62,11 @@ spec:
             subPath: tls.key
             readOnly: true
         ports:
-        - containerPort: {{ .Values.thorasApiServer.containerPort }}
+        - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         resources:
           limits:
-            memory: {{ .Values.thorasApiServer.limits.memory }}
+            memory: {{ .Values.thorasApiServerV2.limits.memory }}
           requests:
-            cpu: {{ .Values.thorasApiServer.requests.cpu }}
-            memory: {{ .Values.thorasApiServer.requests.memory }}
+            cpu: {{ .Values.thorasApiServerV2.requests.cpu }}
+            memory: {{ .Values.thorasApiServerV2.requests.memory }}
+{{- end }}
