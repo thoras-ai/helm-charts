@@ -1,5 +1,5 @@
 ---
-thorasVersion: "2.1.0"
+thorasVersion: "2.1.1"
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
