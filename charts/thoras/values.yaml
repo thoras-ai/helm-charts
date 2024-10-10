@@ -58,14 +58,14 @@ thorasApiServer:
   logLevel: "debug"
 
 thorasApiServerV2:
-  containerPort: 8080
+  containerPort: 8443
   podAnnotations: {}
   limits:
     memory: 2000Mi
   requests:
     cpu: 128m
     memory: 100Mi
-  port: 80
+  port: 443
   logLevel: "info"
 
 thorasDashboard:
