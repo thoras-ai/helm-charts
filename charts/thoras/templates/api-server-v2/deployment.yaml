@@ -1,4 +1,3 @@
-{{- if .Values.thorasApiServerV2.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -37,8 +36,9 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-v2-api-server
+        command: ["/app/api-server", "-p", {{ .Values.thorasApiServerV2.containerPort | quote }}, "--certificate-file", "/app/cert.pem", "--key-file", "/app/key.pem"]
         env:
-          - name: "ES_HOST"
+          - name: "ELASTICSEARCH_URL"
             valueFrom:
               secretKeyRef:
                 name: thoras-elastic-password
@@ -54,11 +54,11 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
         volumeMounts:
           - name: tls
-            mountPath: /apps/packages/thoras-external-metrics-server/cert.pem
+            mountPath: /app/cert.pem
             subPath: tls.crt
             readOnly: true
           - name: tls
-            mountPath: /apps/packages/thoras-external-metrics-server/key.pem
+            mountPath: /app/key.pem
             subPath: tls.key
             readOnly: true
         ports:
@@ -69,4 +69,3 @@ spec:
           requests:
             cpu: {{ .Values.thorasApiServerV2.requests.cpu }}
             memory: {{ .Values.thorasApiServerV2.requests.memory }}
-{{- end }}
