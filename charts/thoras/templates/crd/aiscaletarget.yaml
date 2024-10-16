@@ -54,32 +54,41 @@ spec:
                   properties:
                     mode:
                       type: string
-                    cpu:
-                      type: object
-                      properties:
-                        lowerbound:
-                            anyOf:
-                              - type: integer
-                              - type: string
-                            x-kubernetes-int-or-string: true
-                        upperbound:
-                          anyOf:
-                            - type: integer
-                            - type: string
-                          x-kubernetes-int-or-string: true
-                    memory:
-                      type: object
-                      properties:
-                        lowerbound:
-                          anyOf:
-                            - type: integer
-                            - type: string
-                          x-kubernetes-int-or-string: true
-                        upperbound:
-                          anyOf:
-                            - type: integer
-                            - type: string
-                          x-kubernetes-int-or-string: true
+                    containers:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          cpu:
+                            type: object
+                            properties:
+                              lowerbound:
+                                  anyOf:
+                                    - type: integer
+                                    - type: string
+                                  x-kubernetes-int-or-string: true
+                              upperbound:
+                                anyOf:
+                                  - type: integer
+                                  - type: string
+                                x-kubernetes-int-or-string: true
+                          memory:
+                            type: object
+                            properties:
+                              lowerbound:
+                                anyOf:
+                                  - type: integer
+                                  - type: string
+                                x-kubernetes-int-or-string: true
+                              upperbound:
+                                anyOf:
+                                  - type: integer
+                                  - type: string
+                                x-kubernetes-int-or-string: true
+                        required:
+                          - name
                 model:
                   type: object
                   required:
