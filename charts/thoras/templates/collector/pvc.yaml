@@ -14,9 +14,7 @@ spec:
   {{- if .Values.metricsCollector.persistence.volumeName }}
   volumeName: {{ .Values.metricsCollector.persistence.volumeName }}
   {{- end }}
-  {{- if (not .Values.metricsCollector.persistence.volumeName) }}
   storageClassName: {{ .Values.metricsCollector.persistence.storageClassName }}
-  {{- end }}
   accessModes:
     - ReadWriteOnce
   resources:
