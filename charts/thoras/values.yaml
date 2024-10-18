@@ -93,4 +93,5 @@ thorasMonitor:
   podAnnotations: {}
   config: |
 
-thorasForecast: {}
+thorasForecast:
+  requestCpu:
