@@ -42,6 +42,10 @@ spec:
                 key: host
           - name: "THORAS_VERSION"
             value: {{ .Chart.Version | replace "+" "_" }}
+          {{- if .Values.thorasForecast.requestCpu }}
+          - name: "FORECAST_RESOURCE_REQUESTS_CPU"
+            value: {{ .Values.thorasForecast.requestCpu | quote }}
+          {{- end }}
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
           - name: SLACK_WEBHOOK_URL
