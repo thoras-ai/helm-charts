@@ -63,6 +63,8 @@ spec:
             value: "http://thoras-api-server-v2"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasDashboard.logLevel }}
+          - name: FORECAST_IMAGE_PULL_POLICY
+            value: "{{ .Values.imagePullPolicy }}"
         resources:
           limits:
             memory: {{ .Values.thorasDashboard.limits.memory }}
