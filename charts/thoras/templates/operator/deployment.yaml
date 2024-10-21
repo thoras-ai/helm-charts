@@ -57,6 +57,8 @@ spec:
             value: "{{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasOperator.logLevel }}
+          - name: FORECAST_IMAGE_PULL_POLICY
+            value: "{{ .Values.imagePullPolicy }}"
         args:
           - start
         resources:
