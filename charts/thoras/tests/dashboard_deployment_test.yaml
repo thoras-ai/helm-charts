@@ -1,16 +1,16 @@
-suite: test deployment
+suite: Dashboard
 templates:
   - dashboard/deployment.yaml
 tests:
-  - it: should work
+  - it: Deployment name and image should be correct
     set:
-      image.tag: latest
+      thorasVersion: TEST
     asserts:
       - isKind:
           of: Deployment
       - equal:
           path: metadata.name
           value: thoras-dashboard
-      - matchRegex:
+      - equal:
           path: spec.template.spec.containers[0].image
-          pattern: us-east4-docker\.pkg\.dev\/thoras-registry\/platform\/thoras-dashboard:.*
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard:TEST

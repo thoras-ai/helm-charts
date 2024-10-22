@@ -1,0 +1,34 @@
+suite: Dashboard
+templates:
+  - dashboard/service.yaml
+tests:
+  - it: Defaults to cluster IP
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.type
+          value: ClusterIP
+  
+  - it: Works with LoadBalancer
+    set:
+      thorasDashboard:
+        service:
+          type: LoadBalancer
+          LoadBalancerIP: TestIP
+          loadBalancerSourceRanges: 
+            - Range1
+            - Range2
+        
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+
+      - equal: 
+          path: spec.loadBalancerSourceRanges
+          value: 
+            - Range1
+            - Range2
+    
+      
