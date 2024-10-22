@@ -9,26 +9,61 @@ tests:
       - equal:
           path: spec.type
           value: ClusterIP
-  
   - it: Works with LoadBalancer
     set:
       thorasDashboard:
         service:
           type: LoadBalancer
           LoadBalancerIP: TestIP
-          loadBalancerSourceRanges: 
+          loadBalancerSourceRanges:
             - Range1
             - Range2
-        
     asserts:
       - equal:
           path: spec.type
           value: LoadBalancer
-
-      - equal: 
+      - equal:
           path: spec.loadBalancerSourceRanges
-          value: 
+          value:
             - Range1
             - Range2
-    
-      
+  - it: Works with NodePort
+    set:
+      thorasDashboard:
+        service:
+          type: NodePort
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+  - it: Allows externalIPs
+    set:
+      thorasDashboard:
+        service:
+          externalIPs:
+            - ExternalIP1
+            - ExternalIP2
+    asserts:
+      - equal:
+          path: spec.externalIPs
+          value:
+            - ExternalIP1
+            - ExternalIP2
+  - it: Allows sets ports correctly
+    set:
+      thorasDashboard:
+        port: 5000
+        containerPort: 4000
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 5000
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 4000
+  - it: uses correct label selector
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app: thoras-dashboard
