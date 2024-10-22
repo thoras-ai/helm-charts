@@ -1,0 +1,16 @@
+suite: test deployment
+templates:
+  - dashboard/deployment.yaml
+tests:
+  - it: should work
+    set:
+      image.tag: latest
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: thoras-dashboard
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: us-east4-docker\.pkg\.dev\/thoras-registry\/platform\/thoras-dashboard:.*
