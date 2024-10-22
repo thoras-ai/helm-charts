@@ -2,13 +2,9 @@ suite: Dashboard
 templates:
   - dashboard/service.yaml
 tests:
-  - it: Defaults to cluster IP
+  - it: Default matches snapshot
     asserts:
-      - isKind:
-          of: Service
-      - equal:
-          path: spec.type
-          value: ClusterIP
+      - matchSnapshot: {}
   - it: Works with LoadBalancer
     set:
       thorasDashboard:
