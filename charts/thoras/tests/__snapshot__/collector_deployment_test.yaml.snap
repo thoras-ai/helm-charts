@@ -1,0 +1,67 @@
+Default containers should match snapshots:
+  1: |
+    env:
+      - name: ES_JAVA_OPTS
+        value: -Xms750m -Xmx750m
+      - name: discovery.type
+        value: single-node
+      - name: xpack.security.enabled
+        value: "true"
+      - name: bootstrap.memory_lock
+        value: "false"
+      - name: ELASTIC_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: password
+            name: thoras-elastic-password
+    image: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.12.1
+    imagePullPolicy: IfNotPresent
+    name: elasticsearch
+    ports:
+      - containerPort: 9200
+  2: |
+    args:
+      - |
+        # Don't start app until ES is available
+        retries=0
+        max_retries=48
+        until [ $retries -eq $max_retries ]; do
+          if curl -s --connect-timeout 5 --fail -XGET ${ES_HOST}; then
+            echo "elasticsearch ready"
+            break
+          else
+            echo "elasticsearch not ready"
+            retries=$((retries+1))
+            sleep 5
+          fi
+        done
+        if [ $retries -eq $max_retries ]; then
+            echo "fatal: giving up on elasticsearch availability"
+            exit 1
+        fi
+        node index.js start --es=${ES_HOST}
+    command:
+      - /bin/sh
+      - -c
+    env:
+      - name: THORAS_NS
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+      - name: ES_HOST
+        valueFrom:
+          secretKeyRef:
+            key: host
+            name: thoras-elastic-password
+      - name: SLACK_WEBHOOK_URL
+        valueFrom:
+          secretKeyRef:
+            key: webhookUrl
+            name: thoras-slack
+      - name: SLACK_ERRORS_ENABLED
+        value: "false"
+      - name: LOGLEVEL
+        value: info
+    image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-collector:dev
+    imagePullPolicy: IfNotPresent
+    name: thoras-collector
