@@ -17,8 +17,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Helm
         uses: azure/setup-helm@v4.2.0
-      - name: Install Helm Unit
-        run: |
-          go install github.com/helm/helm-unit@latest
+      - name: Install Helm Unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
       - name: Run Helm Unit Tests
         run: helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
