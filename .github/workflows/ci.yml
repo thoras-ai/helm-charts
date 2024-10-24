@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
   helm-unit-tests:
@@ -14,11 +15,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install Helm
-        run: |
-          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-          chmod 700 get_helm.sh
-          ./get_helm.sh
+      - name: Setup Helm
+        uses: azure/setup-helm@v4.2.0
       - name: Install Helm Unit
         run: |
           go install github.com/helm/helm-unit@latest
