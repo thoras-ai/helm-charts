@@ -1,0 +1,65 @@
+suite: Dashboard
+templates:
+  - dashboard/service.yaml
+tests:
+  - it: Default matches snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Works with LoadBalancer
+    set:
+      thorasDashboard:
+        service:
+          type: LoadBalancer
+          LoadBalancerIP: TestIP
+          loadBalancerSourceRanges:
+            - Range1
+            - Range2
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+      - equal:
+          path: spec.loadBalancerSourceRanges
+          value:
+            - Range1
+            - Range2
+  - it: Works with NodePort
+    set:
+      thorasDashboard:
+        service:
+          type: NodePort
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+  - it: Allows externalIPs
+    set:
+      thorasDashboard:
+        service:
+          externalIPs:
+            - ExternalIP1
+            - ExternalIP2
+    asserts:
+      - equal:
+          path: spec.externalIPs
+          value:
+            - ExternalIP1
+            - ExternalIP2
+  - it: Allows sets ports correctly
+    set:
+      thorasDashboard:
+        port: 5000
+        containerPort: 4000
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 5000
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 4000
+  - it: uses correct label selector
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app: thoras-dashboard
