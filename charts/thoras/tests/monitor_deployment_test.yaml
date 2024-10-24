@@ -1,0 +1,38 @@
+suite: Monitor
+templates:
+  - monitor/deployment.yaml
+  - monitor/configmap.yaml
+set:
+  thorasVersion: 1.0.0-alpha
+  thorasMonitor:
+    enabled: true
+tests:
+  - it: Deployment name and image registry should be correct
+    template: monitor/deployment.yaml
+    asserts:
+      - isKind:
+          of: Deployment
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^us-east4-docker\.pkg\.dev\/thoras-registry\/platform\/.*$
+  - it: Should have the correct image tag
+    template: monitor/deployment.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^.*:1\.0\.0-alpha$
+  - it: Should have helm recommended labels
+    template: monitor/deployment.yaml
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: thoras
+      - matchRegex:
+          path: metadata.labels["helm.sh/chart"]
+          pattern: ^thoras-\d\.\d\.\d$
+      - equal:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+          value: Helm
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME
