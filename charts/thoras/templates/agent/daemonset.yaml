@@ -1,0 +1,56 @@
+{{- if .Values.thorasAgent.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: thoras-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: thoras-agent
+  template:
+    metadata:
+      labels:
+        app: thoras-agent
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- with .Values.thorasAgent.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: thoras-collector
+      containers:
+      - name: thoras-agent
+        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasAgent.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        command: ["/app/agent"]
+        env:
+          - name: "SERVICE_LOG_LEVEL"
+            value: {{ default .Values.logLevel .Values.thorasAgent.logLevel }}
+        name: thoras-agent
+        resources:
+          limits:
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      # drawn from https://github.com/kubeservice-stack/kubservice-charts/blob/6be7b9fb081abd2255dc83854dbed2d7d11e0973/charts/kubeservice-ebpf-exporter/values.yaml#L67-L69
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+      securityContext:
+        # the agent requires elevated privileges to collect ebpf traces
+        privileged: true
+      # it may be desirable to set a high priority class to ensure that a DaemonSet Pod
+      # preempts running Pods
+      # priorityClassName: important
+      terminationGracePeriodSeconds: 30
+{{- end }}

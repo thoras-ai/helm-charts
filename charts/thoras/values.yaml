@@ -95,3 +95,6 @@ thorasMonitor:
 
 thorasForecast:
   requestCpu:
+
+thorasAgent:
+  enabled: false
