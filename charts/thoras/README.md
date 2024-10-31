@@ -137,6 +137,12 @@ helm install \
 | thorasMonitor.config | String | "" | Thoras Monitor configuration yaml |
 | thorasMonitor.logLevel | String | Nil | Logging level |
 
+## Thoras Agent
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| thorasAgent.enabled | Bool | false | Enable the Thoras Agent (opt-in, for now) |
+| thorasAgent.imageTag | String | .thorasVersion | Image tag for Thoras Agent daemon set |
+
 ## Example Thoras Monitor with default config
 
 ```yaml
