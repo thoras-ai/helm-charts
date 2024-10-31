@@ -1,0 +1,15 @@
+{{ if $.Values.thorasReasoningApi.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-reasoning-api
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - port: {{ .Values.thorasReasoningApi.port }}
+    protocol: TCP
+    targetPort: {{ .Values.thorasReasoningApi.containerPort }}
+  selector:
+    app: thoras-reasoning-api
+{{ end }}

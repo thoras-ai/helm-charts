@@ -1,0 +1,60 @@
+{{ if $.Values.thorasReasoningApi.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-reasoning-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thoras-reasoning-api
+  template:
+    metadata:
+      labels:
+        app: thoras-reasoning-api
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- with .Values.thorasReasoningApi.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: thoras-collector
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasReasoningApi.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        name: thoras-reasoning-api
+        command: ["/usr/local/bin/reasoning_api"]
+        env:
+          - name: "ELASTICSEARCH_URL"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-elastic-password
+                key: host
+          - name: SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: thoras-slack
+                key: webhookUrl
+          - name: SLACK_ERRORS_ENABLED
+            value: "{{ .Values.thorasReasoningApi.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+          - name: "LOGLEVEL"
+            value: {{ default .Values.logLevel .Values.thorasReasoningApi.logLevel }}
+        ports:
+        - containerPort: {{ .Values.thorasReasoningApi.containerPort }}
+        resources:
+          limits:
+            memory: {{ .Values.thorasReasoningApi.limits.memory }}
+          requests:
+            cpu: {{ .Values.thorasReasoningApi.requests.cpu }}
+            memory: {{ .Values.thorasReasoningApi.requests.memory }}
+{{ end }}

@@ -98,3 +98,14 @@ thorasForecast:
 
 thorasAgent:
   enabled: false
+
+thorasReasoningApi:
+  enabled: false
+  podAnnotations: {}
+  containerPort: 8080
+  port: 80
+  limits:
+    memory: 2048Mi
+  requests:
+    cpu: 128m
+    memory: 8Mi

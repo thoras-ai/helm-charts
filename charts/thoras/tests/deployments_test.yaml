@@ -6,8 +6,11 @@ templates:
   - dashboard/deployment.yaml
   # - monitor/deployment.yaml
   - operator/deployment.yaml
+  - reasoning-api/deployment.yaml
 set:
   thorasVersion: 1.0.0-alpha
+  thorasReasoningApi:
+    enabled: true
 tests:
   - it: Deployment name and image registry should be correct
     asserts:

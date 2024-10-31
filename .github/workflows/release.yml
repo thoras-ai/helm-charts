@@ -16,12 +16,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Determine if we're bumping the version
+        shell: bash
+        id: version_bump
+        run: |
+          if git diff origin/main -- charts/*/Chart.yaml | grep -E '^version:'; then
+            echo "is_bump=true" >> $GITHUB_ENV
+          else
+            echo "is_bump=false" >> $GITHUB_ENV
+          fi
+
       - name: Configure Git
+        if: steps.version_bump.outputs.is_bump == 'true'
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Run chart-releaser
+        if: steps.version_bump.outputs.is_bump == 'true'
         uses: helm/chart-releaser-action@v1.6.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
