@@ -1,0 +1,19 @@
+suite: Deployments
+templates:
+  - reasoning-api/deployment.yaml
+set:
+  thorasVersion: 1.0.0-alpha
+tests:
+
+  - it: Renders Deployment when enabled
+    asserts:
+      - isKind:
+          of: Deployment
+    set:
+      thorasReasoningApi:
+        enabled: true
+
+  - it: Doesn't render Deployment when not enabled
+    asserts:
+      - hasDocuments:
+          count: 0
