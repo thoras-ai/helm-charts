@@ -38,6 +38,8 @@ spec:
         name: thoras-v2-api-server
         command: ["/app/api-server", "-p", {{ .Values.thorasApiServerV2.containerPort | quote }}]
         env:
+          - name: SERVICE_REASONING_API_URL
+            value: "http://thoras-reasoning-api.thoras.svc.cluster.local"
           - name: "ELASTICSEARCH_URL"
             valueFrom:
               secretKeyRef:
