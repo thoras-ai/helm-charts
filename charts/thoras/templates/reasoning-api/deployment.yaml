@@ -33,7 +33,15 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasReasoningApi.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-reasoning-api
-        command: ["/usr/local/bin/reasoning_api"]
+        command:
+          - "gunicorn"
+          - "--workers"
+          - "4"
+          - "-k"
+          - "gevent"
+          - "--bind"
+          - "0.0.0.0:8080"
+          - "forecast.api.routes:app"
         env:
           - name: "ELASTICSEARCH_URL"
             valueFrom:
