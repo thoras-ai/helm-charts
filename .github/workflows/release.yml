@@ -21,7 +21,7 @@ jobs:
         id: version_bump
         run: |
           # Diff HEAD against pre-merge state and look for version bump
-          if git diff $(git rev-parse HEAD^1)..HEAD charts/*/Chart.yaml | grep -E '^version:'; then
+          if git diff $(git rev-parse HEAD^1)..HEAD charts/*/Chart.yaml | grep -E '^\+version:'; then
             echo "is_bump=true" >> $GITHUB_ENV
           else
             echo "is_bump=false" >> $GITHUB_ENV
