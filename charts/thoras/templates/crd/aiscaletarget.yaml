@@ -105,6 +105,28 @@ spec:
                         - type: integer
                         - type: string
                       x-kubernetes-int-or-string: true
+                reasoning:
+                  type: object
+                  required:
+                    - metrics
+                  properties:
+                    metrics:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                            - type
+                            - name
+                            - query
+                        properties:
+                          type:
+                            type: string
+                            pattern: ^(prom)$
+                          name:
+                            type: string
+                            pattern: ^[a-zA-Z0-9_-]+$
+                          query:
+                            type: string
             status:
               type: object
               properties:
