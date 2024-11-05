@@ -41,13 +41,13 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
+        securityContext:
+          # the agent requires elevated privileges to collect ebpf traces
+          privileged: true
       # drawn from https://github.com/kubeservice-stack/kubservice-charts/blob/6be7b9fb081abd2255dc83854dbed2d7d11e0973/charts/kubeservice-ebpf-exporter/values.yaml#L67-L69
       tolerations:
         - effect: NoSchedule
           operator: Exists
-      securityContext:
-        # the agent requires elevated privileges to collect ebpf traces
-        privileged: true
       # it may be desirable to set a high priority class to ensure that a DaemonSet Pod
       # preempts running Pods
       # priorityClassName: important
