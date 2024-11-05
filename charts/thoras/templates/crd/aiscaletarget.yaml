@@ -89,9 +89,6 @@ spec:
                                 x-kubernetes-int-or-string: true
                         required:
                           - name
-
-
-
                 scale_metrics:
                   type: array
                   items:
@@ -234,6 +231,8 @@ spec:
                         properties:
                           metric:
                             type: object
+                            required:
+                              - name
                             properties:
                               name:
                                 type: string
@@ -246,10 +245,17 @@ spec:
                                       type: string
                           target:
                             type: object
+                            required:
+                              - type
                             properties:
                               type:
-
-
+                                type: string
+                              value:
+                                type: string
+                              averageValue:
+                                type: string
+                              averageUtilization:
+                                type: string
                 model:
                   type: object
                   required:
