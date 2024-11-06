@@ -284,16 +284,16 @@ spec:
                       items:
                         type: object
                         required:
-                            - type
+                            - connector
                             - name
                             - query
                         properties:
-                          type:
+                          connector:
                             type: string
-                            pattern: ^(prom)$
+                            pattern: '^(prometheus)$'
                           name:
                             type: string
-                            pattern: ^[a-zA-Z0-9_-]+$
+                            pattern: '^[a-zA-Z0-9_-]+$'
                           query:
                             type: string
             status:
