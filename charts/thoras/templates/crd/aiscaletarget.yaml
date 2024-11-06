@@ -274,7 +274,28 @@ spec:
                       x-kubernetes-int-or-string: true
                     forecast_buffer_percentage:
                       x-kubernetes-int-or-string: true
-
+                reasoning:
+                  type: object
+                  required:
+                    - metrics
+                  properties:
+                    metrics:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                            - connector
+                            - name
+                            - query
+                        properties:
+                          connector:
+                            type: string
+                            pattern: '^(prometheus)$'
+                          name:
+                            type: string
+                            pattern: '^[a-zA-Z0-9_-]+$'
+                          query:
+                            type: string
             status:
               type: object
               properties:
