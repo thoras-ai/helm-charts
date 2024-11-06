@@ -10,7 +10,11 @@ metadata:
   name: thoras-collector
   namespace: {{ .Release.Namespace }}
 imagePullSecrets:
+{{- if .Values.imageCredentials.secretRef }}
+  - name: {{ .Values.imageCredentials.secretRef }}
+{{- else }}
   - name: thoras-secret-registry
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

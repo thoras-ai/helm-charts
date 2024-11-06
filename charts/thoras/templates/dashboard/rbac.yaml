@@ -1,5 +1,22 @@
 {{- if and .Values.thorasDashboard.rbac.create .Values.thorasDashboard.enabled }}
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  name: {{ .Values.thorasDashboard.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+imagePullSecrets:
+{{- if .Values.imageCredentials.secretRef }}
+  - name: {{ .Values.imageCredentials.secretRef }}
+{{- else }}
+  - name: thoras-secret-registry
+{{- end }}
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -82,19 +99,6 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["delete"]
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    app.kubernetes.io/name: {{ .Chart.Name }}
-    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-  name: {{ .Values.thorasDashboard.serviceAccount.name }}
-  namespace: {{ .Release.Namespace }}
-imagePullSecrets:
-  - name: thoras-secret-registry
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

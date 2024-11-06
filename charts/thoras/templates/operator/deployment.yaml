@@ -40,6 +40,16 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
+          - name: SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
+                name: {{ .Values.slackWebhookUrlSecretRefName }}
+                key: {{ .Values.slackWebhookUrlSecretRefKey }}
+            {{- else }}
+                name: thoras-slack
+                key: webhookUrl
+            {{- end }}
           - name: "THORAS_VERSION"
             value: {{ .Chart.Version | replace "+" "_" }}
           {{- if .Values.thorasForecast.requestCpu }}
@@ -48,11 +58,6 @@ spec:
           {{- end }}
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
-          - name: SLACK_WEBHOOK_URL
-            valueFrom:
-              secretKeyRef:
-                name: thoras-slack
-                key: webhookUrl
           - name: SLACK_ERRORS_ENABLED
             value: "{{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
