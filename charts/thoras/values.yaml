@@ -4,7 +4,13 @@ thorasVersion: "3.2.0"
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
   username: "_json_key_base64"
+
+  # Set the license key directly as a variable (or alternatively
+  # use imageCredentials.secretRef to reference an existing secret
   password: ""
+
+  # Reference a pre-existing secret in the Thoras namespace
+  secretRef: ""
 
 resourceQuota:
   enabled: false
@@ -15,7 +21,11 @@ resourceQuota:
 imagePullPolicy: "IfNotPresent"
 
 logLevel: info
+
+# Set Slack notification Webhook URL directly (or alternatively use
+# use slackWebhookUrlSecretRef to reference an existing secret
 slackWebhookUrl: ""
+slackWebhookUrlSecretRef: ""
 slackErrorsEnabled: false
 
 thorasOperator:
