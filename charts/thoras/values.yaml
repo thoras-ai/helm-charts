@@ -22,11 +22,17 @@ imagePullPolicy: "IfNotPresent"
 
 logLevel: info
 
+# Enable Slack errors
+slackErrorsEnabled: false
+
 # Set Slack notification Webhook URL directly (or alternatively use
 # use slackWebhookUrlSecretRef to reference an existing secret
 slackWebhookUrl: ""
-slackWebhookUrlSecretRef: ""
-slackErrorsEnabled: false
+
+# If you'd like to reference an existing secret, use these two values
+# to indicate the secret name and data key
+slackWebhookUrlSecretRefName: ""
+slackWebhookUrlSecretRefKey: ""
 
 thorasOperator:
   podAnnotations: {}

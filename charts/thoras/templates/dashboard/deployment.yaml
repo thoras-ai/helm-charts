@@ -37,6 +37,16 @@ spec:
         env:
           - name: "ES_INDEX"
             value: "thoras-metrics"
+          - name: SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
+                name: {{ .Values.slackWebhookUrlSecretRefName }}
+                key: {{ .Values.slackWebhookUrlSecretRefKey }}
+            {{- else }}
+                name: thoras-slack
+                key: webhookUrl
+            {{- end }}
           - name: "ES_HOST"
             valueFrom:
               secretKeyRef:
@@ -52,11 +62,6 @@ spec:
           {{- end }}
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
-          - name: SLACK_WEBHOOK_URL
-            valueFrom:
-              secretKeyRef:
-                name: thoras-slack
-                key: webhookUrl
           - name: SLACK_ERRORS_ENABLED
             value: "{{ .Values.thorasDashboard.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: API_BASE_URL

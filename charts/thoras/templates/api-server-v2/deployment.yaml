@@ -38,8 +38,6 @@ spec:
         name: thoras-v2-api-server
         command: ["/app/api-server", "-p", {{ .Values.thorasApiServerV2.containerPort | quote }}]
         env:
-          - name: SERVICE_REASONING_API_URL
-            value: "http://thoras-reasoning-api.thoras.svc.cluster.local"
           - name: "ELASTICSEARCH_URL"
             valueFrom:
               secretKeyRef:
@@ -48,8 +46,15 @@ spec:
           - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
+            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
+                name: {{ .Values.slackWebhookUrlSecretRefName }}
+                key: {{ .Values.slackWebhookUrlSecretRefKey }}
+            {{- else }}
                 name: thoras-slack
                 key: webhookUrl
+            {{- end }}
+          - name: SERVICE_REASONING_API_URL
+            value: "http://thoras-reasoning-api.thoras.svc.cluster.local"
           - name: SERVICE_SLACK_ERRORS_ENABLED
             value: "{{ .Values.thorasApiServerV2.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "SERVICE_LOGLEVEL"
