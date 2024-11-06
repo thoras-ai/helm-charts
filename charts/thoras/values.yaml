@@ -125,3 +125,6 @@ thorasReasoningApi:
   requests:
     cpu: 128m
     memory: 8Mi
+  connectors:
+    prometheus:
+      baseUrl: "http://localhost"
