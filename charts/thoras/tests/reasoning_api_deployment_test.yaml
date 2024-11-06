@@ -1,0 +1,15 @@
+suite: Reasoning
+tests:
+  - it: Set prometheus URL correctly
+    templates:
+      - reasoning-api/deployment.yaml
+    set:
+      thorasReasoningApi:
+        enabled: true
+        connectors:
+          prometheus:
+            baseUrl: "http://whats-good"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: "http://whats-good"
