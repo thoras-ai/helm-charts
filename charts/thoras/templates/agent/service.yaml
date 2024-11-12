@@ -4,7 +4,7 @@ kind: Service
 metadata:
   name: thoras-agent
   namespace: {{ .Release.Namespace }}
-  labels:
+  annotations:
     prometheus.io/scrape: "true"
 spec:
   ports:

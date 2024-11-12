@@ -36,7 +36,7 @@ spec:
           - name: "SERVICE_LOG_LEVEL"
             value: {{ default .Values.logLevel .Values.thorasAgent.logLevel }}
           - name: "SERVICE_FREQUENCY"
-            value: {{ .Values.thorasAgent.Frequency | quote }}
+            value: {{ .Values.thorasAgent.frequency | quote }}
           - name: "SERVICE_PORT"
             value: {{ .Values.thorasAgent.containerPort | quote }}
         resources:
