@@ -57,7 +57,7 @@ metricsCollector:
     name: elasticsearch
     containerPort: 9200
   purge:
-    ttl: 30d
+    ttl: 30
     schedule: "00 00 * * *"
   init:
     imageTag: "latest"

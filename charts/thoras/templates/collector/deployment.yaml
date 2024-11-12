@@ -70,17 +70,16 @@ spec:
           runAsUser: 1000
           runAsGroup: 0
         {{- end }}
-      - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: {{ .Values.metricsCollector.collector.name }}
         command: ["/bin/sh", "-c"]
         args:
           - |
-            # Don't start app until ES is available
             retries=0
             max_retries=48
             until [ $retries -eq $max_retries ]; do
-              if curl -s --connect-timeout 5 --fail -XGET ${ES_HOST}; then
+              if wget --spider -T 5 -q ${ELASTICSEARCH_URL}; then
                 echo "elasticsearch ready"
                 break
               else
@@ -93,13 +92,13 @@ spec:
                 echo "fatal: giving up on elasticsearch availability"
                 exit 1
             fi
-            node index.js start --es=${ES_HOST}
+            ./metrics-collector collect -c 60
         env:
           - name: THORAS_NS
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          - name: "ES_HOST"
+          - name: "ELASTICSEARCH_URL"
             valueFrom:
               secretKeyRef:
                 name: thoras-elastic-password

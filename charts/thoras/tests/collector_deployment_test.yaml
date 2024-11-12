@@ -16,7 +16,7 @@ tests:
           value: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.12.1
       - equal:
           path: spec.template.spec.containers[1].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-collector:TEST
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
   - it: Default containers should match snapshots
     set:
       thorasVersion: dev

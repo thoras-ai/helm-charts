@@ -14,11 +14,11 @@ spec:
           serviceAccountName: thoras-collector
           restartPolicy: OnFailure
           containers:
-          - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
+          - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
             name: metrics-collector
             imagePullPolicy: "{{ .Values.imagePullPolicy }}"
             env:
-              - name: "ES_HOST"
+              - name: "ELASTICSEARCH_URL"
                 valueFrom:
                   secretKeyRef:
                     name: thoras-elastic-password
@@ -35,7 +35,5 @@ spec:
             command: ["/bin/sh", "-c"]
             args:
               - |
-                node index.js \
-                purge \
-                --es=${ES_HOST} \
+                ./metrics-collector purge metrics \
                 --ttl={{ .Values.metricsCollector.purge.ttl }}
