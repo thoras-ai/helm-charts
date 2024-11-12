@@ -16,8 +16,10 @@ spec:
       serviceAccountName: thoras-operator
       restartPolicy: OnFailure
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-collector:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
         name: metrics-collector
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        command: ["/bin/sh", "-c"]
         args:
-          - purgeCronjobs
+          - |
+            ./metrics-collector purge cronjobs
