@@ -1,4 +1,4 @@
----
+{{- if .Values.thorasAgent.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -13,3 +13,4 @@ spec:
     targetPort: {{ .Values.thorasAgent.containerPort }}
   selector:
     app: thoras-agent
+{{- end }}
