@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    prometheus.io/scrape: "true"
+spec:
+  ports:
+  - port: {{ .Values.thorasAgent.port }}
+    protocol: TCP
+    targetPort: {{ .Values.thorasAgent.containerPort }}
+  selector:
+    app: thoras-agent

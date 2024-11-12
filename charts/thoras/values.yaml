@@ -114,6 +114,9 @@ thorasForecast:
 
 thorasAgent:
   enabled: false
+  frequency: 15
+  containerPort: 9100
+  port: 9100
 
 thorasReasoningApi:
   enabled: false
