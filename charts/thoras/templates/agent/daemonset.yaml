@@ -21,8 +21,10 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-      {{- with .Values.thorasAgent.podAnnotations }}
       annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.thorasAgent.containerPort | quote}}
+      {{- with .Values.thorasAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:

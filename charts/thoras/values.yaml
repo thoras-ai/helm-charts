@@ -116,9 +116,7 @@ thorasAgent:
   enabled: false
   frequency: 15
   containerPort: 9100
-  port: 9100
-  podAnnotations:
-    prometheus.io/scrape: "true"
+  podAnnotations: {}
 
 thorasReasoningApi:
   enabled: false

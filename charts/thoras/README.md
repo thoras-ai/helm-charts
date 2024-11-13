@@ -142,7 +142,7 @@ helm install \
 | --- | --- | --- | --- |
 | thorasAgent.enabled | Bool | false | Enable the Thoras Agent (opt-in, for now) |
 | thorasAgent.imageTag | String | .thorasVersion | Image tag for Thoras Agent daemon set |
-| thorasAgent.frequency | Integer | 15 | Frequency of which the agent will poll for service map communications |
+| thorasAgent.frequency | Integer | 15 | Frequency, in seconds, of agent polling for service map communications |
 
 ## Example Thoras Monitor with default config
 
