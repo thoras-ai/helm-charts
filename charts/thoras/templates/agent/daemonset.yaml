@@ -39,6 +39,8 @@ spec:
             value: {{ .Values.thorasAgent.frequency | quote }}
           - name: "SERVICE_PORT"
             value: {{ .Values.thorasAgent.containerPort | quote }}
+        ports:
+          - containerPort: {{ .Values.thorasAgent.containerPort }}
         resources:
           limits:
             memory: 128Mi
