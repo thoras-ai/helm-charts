@@ -19,5 +19,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 3Gi
+      storage: {{ .Values.metricsCollector.persistence.pvcStorageRequestSize }}
 {{- end }}

@@ -1,0 +1,34 @@
+suite: PersistentVolumeClaim
+tests:
+  - it: Interpolates PVC storage request size
+    templates:
+      - collector/pvc.yaml
+    set:
+      metricsCollector:
+        persistence:
+          enabled: true
+          pvcStorageRequestSize: "10Gi"
+    asserts:
+      - equal:
+          path: spec.resources.requests.storage
+          value: "10Gi"
+
+  - it: Interpolates default PVC storage request size
+    templates:
+      - collector/pvc.yaml
+    set:
+      metricsCollector:
+        persistence:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.resources.requests.storage
+          value: "3Gi"
+
+  - it: Doesn't create PVC by default
+    templates:
+      - collector/pvc.yaml
+    set:
+    asserts:
+      - hasDocuments:
+          count: 0
