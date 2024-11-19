@@ -35,6 +35,8 @@ spec:
         name: thoras-reasoning-api
         command: ["/usr/local/bin/reasoning_api"]
         env:
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2"
           - name: "ELASTICSEARCH_URL"
             valueFrom:
               secretKeyRef:

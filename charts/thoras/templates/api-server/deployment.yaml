@@ -42,6 +42,8 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2"
           - name: SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
