@@ -49,6 +49,7 @@ metricsCollector:
     storageClassName: "efs-sc-thoras"
     createEFSStorageClass:
       fileSystemId: ""
+    pvcStorageRequestSize: "3Gi"
   podAnnotations: {}
   collector:
     name: thoras-collector
