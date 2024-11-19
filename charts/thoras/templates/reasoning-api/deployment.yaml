@@ -54,10 +54,10 @@ spec:
             value: "{{ .Values.thorasReasoningApi.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasReasoningApi.logLevel }}
-          - name: API_BASE_URL
-            value: "http://thoras-api-server-v2"
           - name: "PROMETHEUS_BASE_URL"
             value: {{ .Values.thorasReasoningApi.connectors.prometheus.baseUrl }}
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2"
         ports:
         - containerPort: {{ .Values.thorasReasoningApi.containerPort }}
         resources:
