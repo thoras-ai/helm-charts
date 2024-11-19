@@ -58,12 +58,12 @@ spec:
           {{- end }}
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
-          - name: API_BASE_URL
-            value: "http://thoras-api-server-v2"
           - name: SLACK_ERRORS_ENABLED
             value: "{{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasOperator.logLevel }}
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2"
           - name: FORECAST_IMAGE_PULL_POLICY
             value: "{{ .Values.imagePullPolicy }}"
         args:
