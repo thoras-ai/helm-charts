@@ -61,6 +61,8 @@ Default containers should match snapshots:
         value: "false"
       - name: LOGLEVEL
         value: info
+      - name: API_BASE_URL
+        value: http://thoras-api-server-v2
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     name: thoras-collector

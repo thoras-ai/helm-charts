@@ -56,6 +56,8 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasReasoningApi.logLevel }}
           - name: "PROMETHEUS_BASE_URL"
             value: {{ .Values.thorasReasoningApi.connectors.prometheus.baseUrl }}
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2"
         ports:
         - containerPort: {{ .Values.thorasReasoningApi.containerPort }}
         resources:

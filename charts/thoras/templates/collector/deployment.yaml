@@ -117,3 +117,5 @@ spec:
             value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2"

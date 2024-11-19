@@ -56,6 +56,8 @@ spec:
             value: "{{ .Values.thorasApiServer.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasApiServer.logLevel }}
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2"
         volumeMounts:
           - name: tls
             mountPath: /apps/packages/thoras-external-metrics-server/cert.pem
