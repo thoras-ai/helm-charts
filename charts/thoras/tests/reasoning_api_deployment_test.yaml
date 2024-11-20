@@ -11,5 +11,5 @@ tests:
             baseUrl: "http://whats-good"
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[4].value
+          path: $..spec.containers[0].env[?(@.name == 'PROMETHEUS_BASE_URL')].value
           value: "http://whats-good"
