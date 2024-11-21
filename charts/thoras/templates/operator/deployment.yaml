@@ -10,7 +10,7 @@ metadata:
   name: thoras-operator
   namespace: {{ .Release.Namespace }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.thorasOperator.replicas }}
   selector:
     matchLabels:
       app: thoras-operator
