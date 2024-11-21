@@ -5,6 +5,8 @@ tests:
   - it: Deployment name and image should be correct
     set:
       thorasVersion: TEST
+      thorasDashboard:
+        replicas: 12
     asserts:
       - isKind:
           of: Deployment
@@ -14,3 +16,6 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard:TEST
+      - equal:
+          path: spec.replicas
+          value: 12

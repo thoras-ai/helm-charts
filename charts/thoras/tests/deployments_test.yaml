@@ -11,6 +11,15 @@ set:
   thorasVersion: 1.0.0-alpha
   thorasReasoningApi:
     enabled: true
+    replicas: 12
+  thorasOperator:
+    replicas: 12
+  thorasDashboard:
+    replicas: 12
+  thorasApiServer:
+    replicas: 12
+  thorasApiServerV2:
+    replicas: 12
 tests:
   - it: Deployment name and image registry should be correct
     asserts:
@@ -38,3 +47,8 @@ tests:
       - equal:
           path: metadata.labels["app.kubernetes.io/instance"]
           value: RELEASE-NAME
+  - it: Sets replicas
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 12

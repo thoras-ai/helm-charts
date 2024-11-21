@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  replicas: 3
+  replicas: {{ .Values.thorasApiServer.replicas }}
   selector:
     matchLabels:
       app: thoras-api-server
