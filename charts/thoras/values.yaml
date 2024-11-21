@@ -78,6 +78,10 @@ thorasApiServer:
   logLevel: "debug"
 
 thorasApiServerV2:
+  rbac:
+    create: true
+  serviceAccount:
+    name: thoras-api
   containerPort: 8080
   podAnnotations: {}
   replicas: 1

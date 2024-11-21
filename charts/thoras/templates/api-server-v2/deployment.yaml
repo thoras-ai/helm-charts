@@ -27,7 +27,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: thoras-collector
+      serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
       volumes:
         - name: tls
           secret:
