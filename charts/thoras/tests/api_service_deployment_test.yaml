@@ -10,5 +10,7 @@ set:
       create: true
 tests:
   - it: Default matches snapshot
+    chart:
+      version: "4.7.0"
     asserts:
       - matchSnapshot: {}
