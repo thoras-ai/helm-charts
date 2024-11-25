@@ -214,48 +214,60 @@ spec:
                                     type: string
                                   averageUtilization:
                                     type: string
-                  vertical:
-                    type: object
-                    required:
-                      - mode
-                    properties:
-                      mode:
-                        type: string
-                      containers:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            cpu:
-                              type: object
-                              properties:
-                                lowerbound:
-                                    anyOf:
-                                      - type: integer
-                                      - type: string
-                                    x-kubernetes-int-or-string: true
-                                upperbound:
+                    exclude_metrics:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - name
+                          - type
+                        properties:
+                          name:
+                            type: string
+                          type:
+                            type: string
+                vertical:
+                  type: object
+                  required:
+                    - mode
+                  properties:
+                    mode:
+                      type: string
+                    containers:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          cpu:
+                            type: object
+                            properties:
+                              lowerbound:
                                   anyOf:
                                     - type: integer
                                     - type: string
                                   x-kubernetes-int-or-string: true
-                            memory:
-                              type: object
-                              properties:
-                                lowerbound:
-                                  anyOf:
-                                    - type: integer
-                                    - type: string
-                                  x-kubernetes-int-or-string: true
-                                upperbound:
-                                  anyOf:
-                                    - type: integer
-                                    - type: string
-                                  x-kubernetes-int-or-string: true
-                          required:
-                            - name
+                              upperbound:
+                                anyOf:
+                                  - type: integer
+                                  - type: string
+                                x-kubernetes-int-or-string: true
+                          memory:
+                            type: object
+                            properties:
+                              lowerbound:
+                                anyOf:
+                                  - type: integer
+                                  - type: string
+                                x-kubernetes-int-or-string: true
+                              upperbound:
+                                anyOf:
+                                  - type: integer
+                                  - type: string
+                                x-kubernetes-int-or-string: true
+                        required:
+                          - name
                 model:
                   type: object
                   required:
