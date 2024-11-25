@@ -29,7 +29,7 @@ tests:
           value: thoras
       - matchRegex:
           path: metadata.labels["helm.sh/chart"]
-          pattern: ^thoras-\d\.\d\.\d$
+          pattern: ^thoras-\d+\.\d+\.\d+$
       - equal:
           path: metadata.labels["app.kubernetes.io/managed-by"]
           value: Helm
