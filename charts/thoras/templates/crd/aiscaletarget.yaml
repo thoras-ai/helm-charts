@@ -47,6 +47,185 @@ spec:
                   properties:
                     mode:
                       type: string
+                    additional_metrics:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            pattern: '^(Object|Resource|Pods|External)$'
+                          object:
+                            type: object
+                            required:
+                              - metric
+                              - describedObject
+                              - target
+                            properties:
+                              metric:
+                                type: object
+                                required:
+                                  - name
+                                properties:
+                                  name:
+                                    type: string
+                                  selector:
+                                    type: string
+                              describedObject:
+                                type: object
+                                required:
+                                  - kind
+                                  - name
+                                properties:
+                                  apiVersion:
+                                    type: string
+                                  kind:
+                                    type: string
+                                  name:
+                                    type: string
+                              target:
+                                type: object
+                                required:
+                                  - type
+                                properties:
+                                  type:
+                                    type: string
+                                    pattern: '^(Utilization|Value|AverageValue)$'
+                                  averageUtilization:
+                                    anyOf:
+                                      - type: integer
+                                      - type: string
+                                    x-kubernetes-int-or-string: true
+                                  averageValue:
+                                    anyOf:
+                                      - type: integer
+                                      - type: string
+                                    x-kubernetes-int-or-string: true
+                                  value:
+                                    anyOf:
+                                      - type: integer
+                                      - type: string
+                                    x-kubernetes-int-or-string: true
+                          pods:
+                            type: object
+                            required:
+                              - metric
+                              - describedObject
+                              - target
+                            properties:
+                              metric:
+                                type: object
+                                required:
+                                  - name
+                                properties:
+                                  name:
+                                    type: string
+                                  selector:
+                                    type: string
+                              describedObject:
+                                type: object
+                                required:
+                                  - kind
+                                  - name
+                                properties:
+                                  apiVersion:
+                                    type: string
+                                  kind:
+                                    type: string
+                                  name:
+                                    type: string
+                                  namespace:
+                                    type: string
+                              target:
+                                type: object
+                                required:
+                                  - type
+                                properties:
+                                  type:
+                                    type: string
+                                    pattern: '^(Utilization|Value|AverageValue)$'
+                                  averageUtilization:
+                                    anyOf:
+                                      - type: integer
+                                      - type: string
+                                    x-kubernetes-int-or-string: true
+                                  averageValue:
+                                    anyOf:
+                                      - type: integer
+                                      - type: string
+                                    x-kubernetes-int-or-string: true
+                                  value:
+                                    anyOf:
+                                      - type: integer
+                                      - type: string
+                                    x-kubernetes-int-or-string: true
+                          resource:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              target:
+                                type: object
+                                required:
+                                  - type
+                                properties:
+                                  type:
+                                    type: string
+                                  averageUtilization:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    x-kubernetes-int-or-string: true
+                                  averageValue:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    x-kubernetes-int-or-string: true
+                          external:
+                            type: object
+                            required:
+                              - metric
+                              - target
+                            properties:
+                              metric:
+                                type: object
+                                required:
+                                  - name
+                                properties:
+                                  name:
+                                    type: string
+                                  selector:
+                                    type: object
+                                    properties:
+                                      matchLabels:
+                                        type: object
+                                        additionalProperties:
+                                          type: string
+                              target:
+                                type: object
+                                required:
+                                  - type
+                                properties:
+                                  type:
+                                    type: string
+                                  value:
+                                    type: string
+                                  averageValue:
+                                    type: string
+                                  averageUtilization:
+                                    type: string
+                    exclude_metrics:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - name
+                          - type
+                        properties:
+                          name:
+                            type: string
+                          type:
+                            type: string
                 vertical:
                   type: object
                   required:
@@ -89,173 +268,6 @@ spec:
                                 x-kubernetes-int-or-string: true
                         required:
                           - name
-                scale_metrics:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        pattern: '^(Object|Resource|Pods|External)$'
-                      object:
-                        type: object
-                        required:
-                          - metric
-                          - describedObject
-                          - target
-                        properties:
-                          metric:
-                            type: object
-                            required:
-                              - name
-                            properties:
-                              name:
-                                type: string
-                              selector:
-                                type: string
-                          describedObject:
-                            type: object
-                            required:
-                              - kind
-                              - name
-                            properties:
-                              apiVersion:
-                                type: string
-                              kind:
-                                type: string
-                              name:
-                                type: string
-                          target:
-                            type: object
-                            required:
-                              - type
-                            properties:
-                              type:
-                                type: string
-                                pattern: '^(Utilization|Value|AverageValue)$'
-                              averageUtilization:
-                                anyOf:
-                                  - type: integer
-                                  - type: string
-                                x-kubernetes-int-or-string: true
-                              averageValue:
-                                anyOf:
-                                  - type: integer
-                                  - type: string
-                                x-kubernetes-int-or-string: true
-                              value:
-                                anyOf:
-                                  - type: integer
-                                  - type: string
-                                x-kubernetes-int-or-string: true
-                      pods:
-                        type: object
-                        required:
-                          - metric
-                          - describedObject
-                          - target
-                        properties:
-                          metric:
-                            type: object
-                            required:
-                              - name
-                            properties:
-                              name:
-                                type: string
-                              selector:
-                                type: string
-                          describedObject:
-                            type: object
-                            required:
-                              - kind
-                              - name
-                            properties:
-                              apiVersion:
-                                type: string
-                              kind:
-                                type: string
-                              name:
-                                type: string
-                              namespace:
-                                type: string
-                          target:
-                            type: object
-                            required:
-                              - type
-                            properties:
-                              type:
-                                type: string
-                                pattern: '^(Utilization|Value|AverageValue)$'
-                              averageUtilization:
-                                anyOf:
-                                  - type: integer
-                                  - type: string
-                                x-kubernetes-int-or-string: true
-                              averageValue:
-                                anyOf:
-                                  - type: integer
-                                  - type: string
-                                x-kubernetes-int-or-string: true
-                              value:
-                                anyOf:
-                                  - type: integer
-                                  - type: string
-                                x-kubernetes-int-or-string: true
-                      resource:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          target:
-                            type: object
-                            required:
-                              - type
-                            properties:
-                              type:
-                                type: string
-                              averageUtilization:
-                                anyOf:
-                                - type: integer
-                                - type: string
-                                x-kubernetes-int-or-string: true
-                              averageValue:
-                                anyOf:
-                                - type: integer
-                                - type: string
-                                x-kubernetes-int-or-string: true
-                      external:
-                        type: object
-                        required:
-                          - metric
-                          - target
-                        properties:
-                          metric:
-                            type: object
-                            required:
-                              - name
-                            properties:
-                              name:
-                                type: string
-                              selector:
-                                type: object
-                                properties:
-                                  matchLabels:
-                                    type: object
-                                    additionalProperties:
-                                      type: string
-                          target:
-                            type: object
-                            required:
-                              - type
-                            properties:
-                              type:
-                                type: string
-                              value:
-                                type: string
-                              averageValue:
-                                type: string
-                              averageUtilization:
-                                type: string
                 model:
                   type: object
                   required:
