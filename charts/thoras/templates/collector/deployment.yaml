@@ -75,7 +75,7 @@ spec:
           runAsGroup: 0
         {{- end }}
       {{- if .Values.metricsCollector.timescale.enabled }}
-      - image: timescale/timescaledb:latest-pg17
+      - image: {{ .Values.imageCredentials.registry }}/timescaledb:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
