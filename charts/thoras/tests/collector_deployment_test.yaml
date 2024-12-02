@@ -42,12 +42,21 @@ tests:
           value:
             - mountPath: /var/lib/share/elasticsearch
               name: elastic-search-data
+  - it: Should not create timescale container when not enabled
+    asserts:
+      - notContains:
+          path: $..spec.containers
+          content:
+            name: timescaledb
+          any: true
   - it: Should create timescale container when enabled
     set:
       metricsCollector:
         timescale:
           enabled: true
     asserts:
-      - equal:
-          path: $..spec.containers[?(@.name == 'timescaledb')].name
-          value: timescaledb
+      - contains:
+          path: $..spec.containers
+          content:
+            name: timescaledb
+          any: true
