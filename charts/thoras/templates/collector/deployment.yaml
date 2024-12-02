@@ -36,10 +36,12 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            chown -R 1000:0 /usr/share/elasticsearch/data
-            rm -f /usr/share/elasticsearch/data/node.lock
+            mkdir -p /var/lib/share/elasticsearch/data
+            find /var/lib/share/elasticsearch -not -name postgresql -not -name data -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/elasticsearch/data \;
+            chown -R 1000:0 /var/lib/share/elasticsearch/data
+            rm -f /var/lib/share/elasticsearch/data/node.lock
         volumeMounts:
-          - mountPath: /usr/share/elasticsearch/data
+          - mountPath: /var/lib/share/elasticsearch
             name: elastic-search-data
       {{- end }}
       containers:
@@ -57,6 +59,8 @@ spec:
             value: "true"
           - name: bootstrap.memory_lock
             value: "false"
+          - name: path.data
+            value: /var/lib/share/elasticsearch/data
           - name: "ELASTIC_PASSWORD"
             valueFrom:
               secretKeyRef:
@@ -64,12 +68,35 @@ spec:
                 key: password
         {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
-          - mountPath: /usr/share/elasticsearch/data
+          - mountPath: /var/lib/share/elasticsearch
             name: elastic-search-data
         securityContext:
           runAsUser: 1000
           runAsGroup: 0
         {{- end }}
+      {{- if .Values.metricsCollector.timescale.enabled }}
+      - image: timescale/timescaledb:latest-pg17
+        name: timescaledb
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        ports:
+        - containerPort: 5432
+        env:
+          - name: "POSTGRES_PASSWORD"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: password
+          - name: "PGDATA"
+            value: /var/lib/share/postgresql
+        {{- if .Values.metricsCollector.persistence.enabled }}
+        volumeMounts:
+          - mountPath: /var/lib/share
+            name: elastic-search-data
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 0
+        {{- end }}
+      {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: {{ .Values.metricsCollector.collector.name }}

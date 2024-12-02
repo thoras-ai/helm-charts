@@ -40,5 +40,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].volumeMounts
           value:
-            - mountPath: /usr/share/elasticsearch/data
+            - mountPath: /var/lib/share/elasticsearch
               name: elastic-search-data
+  - it: Should create timescale container when enabled
+    set:
+      metricsCollector:
+        timescale:
+          enabled: true
+    asserts:
+      - equal:
+          path: $..spec.containers[?(@.name == 'timescaledb')].name
+          value: timescaledb
