@@ -11,3 +11,16 @@ spec:
     targetPort: {{ .Values.metricsCollector.search.containerPort }}
   selector:
     app: metrics-collector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.metricsCollector.timescale.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - port: {{ .Values.metricsCollector.timescale.containerPort }}
+    protocol: TCP
+    targetPort: {{ .Values.metricsCollector.timescale.containerPort }}
+  selector:
+    app: metrics-collector

@@ -64,6 +64,11 @@ metricsCollector:
     schedule: "00 00 * * *"
   init:
     imageTag: "latest"
+  timescale:
+    enabled: false
+    imageTag: "2.17.2-pg16"
+    name: timescale
+    containerPort: 5432
 
 thorasApiServer:
   containerPort: 8443
