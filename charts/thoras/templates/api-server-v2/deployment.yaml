@@ -32,6 +32,27 @@ spec:
         - name: tls
           secret:
             secretName: thoras-api-server-cert
+      {{- if .Values.metricsCollector.timescale.enabled }}
+      initContainers:
+      - name: migrate-database
+        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.migration.imageTag }}
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            until /app/goose up -dir /app/migrations/
+            do
+              echo "Waiting for timescaledb...";
+              sleep 10
+            done
+        env:
+          - name: GOOSE_DRIVER
+            value: postgres
+          - name: GOOSE_DBSTRING
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+      {{- end}}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
