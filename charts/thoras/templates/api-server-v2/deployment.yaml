@@ -32,12 +32,36 @@ spec:
         - name: tls
           secret:
             secretName: thoras-api-server-cert
+      {{- if .Values.metricsCollector.timescale.enabled }}
+      initContainers:
+      - name: migrate-database
+        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.migration.imageTag }}
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            until /app/dbmate --migrations-dir /app/migrations/ migrate
+            do
+              echo "Waiting for timescaledb...";
+              sleep 10
+            done
+        env:
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+      {{- end}}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-v2-api-server
         command: ["/app/api-server", "-p", {{ .Values.thorasApiServerV2.containerPort | quote }}]
         env:
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
           - name: "ELASTICSEARCH_URL"
             valueFrom:
               secretKeyRef:
