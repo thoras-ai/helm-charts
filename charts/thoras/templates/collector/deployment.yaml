@@ -59,8 +59,10 @@ spec:
             value: "true"
           - name: bootstrap.memory_lock
             value: "false"
+          {{- if .Values.metricsCollector.persistence.enabled }}
           - name: path.data
             value: /var/lib/share/elasticsearch/data
+          {{- end}}
           - name: "ELASTIC_PASSWORD"
             valueFrom:
               secretKeyRef:
