@@ -87,7 +87,7 @@ thorasApiServerV2:
     create: true
   serviceAccount:
     name: thoras-api
-  containerPort: 8080
+  containerPort: 8443
   podAnnotations: {}
   replicas: 1
   limits:
@@ -95,7 +95,7 @@ thorasApiServerV2:
   requests:
     cpu: 128m
     memory: 100Mi
-  port: 80
+  port: 443
   logLevel: "info"
 
 thorasDashboard:

@@ -28,6 +28,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
+      volumes:
+        - name: tls
+          secret:
+            secretName: thoras-api-server-cert
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard
@@ -67,9 +71,16 @@ spec:
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasDashboard.logLevel }}
           - name: API_BASE_URL
-            value: "http://thoras-api-server-v2"
+            value: "https://thoras-api-server-v2"
           - name: FORECAST_IMAGE_PULL_POLICY
             value: "{{ .Values.imagePullPolicy }}"
+          - name: NODE_EXTRA_CA_CERTS
+            value: /app/tls.crt
+        volumeMounts:
+          - name: tls
+            mountPath: /app/tls.crt
+            subPath: tls.crt
+            readOnly: true
         resources:
           limits:
             memory: {{ .Values.thorasDashboard.limits.memory }}
