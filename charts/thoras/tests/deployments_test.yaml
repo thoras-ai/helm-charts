@@ -1,6 +1,5 @@
 suite: Deployments
 templates:
-  - api-server/deployment.yaml
   - api-server-v2/deployment.yaml
   # - collector/deployment.yaml
   - dashboard/deployment.yaml

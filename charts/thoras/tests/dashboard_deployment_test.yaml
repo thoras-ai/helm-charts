@@ -19,3 +19,6 @@ tests:
       - equal:
           path: spec.replicas
           value: 12
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /etc/config
