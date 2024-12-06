@@ -9,8 +9,6 @@ Default containers should match snapshots:
         value: "true"
       - name: bootstrap.memory_lock
         value: "false"
-      - name: path.data
-        value: /var/lib/share/elasticsearch/data
       - name: ELASTIC_PASSWORD
         valueFrom:
           secretKeyRef:
