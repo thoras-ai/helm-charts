@@ -9,9 +9,10 @@ templates:
   - reasoning-api/deployment.yaml
 set:
   thorasVersion: 1.0.0-alpha
-  thorasReasoningApi:
-    enabled: true
-    replicas: 12
+  thorasReasoning:
+    api:
+      enabled: true
+      replicas: 12
   thorasOperator:
     replicas: 12
   thorasDashboard:

@@ -1,4 +1,4 @@
-{{ if $.Values.thorasReasoningApi.enabled }}
+{{ if $.Values.thorasReasoning.api.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  replicas: {{ .Values.thorasReasoningApi.replicas }}
+  replicas: {{ .Values.thorasReasoning.api.replicas }}
   selector:
     matchLabels:
       app: thoras-reasoning-api
@@ -23,14 +23,14 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-      {{- with .Values.thorasReasoningApi.podAnnotations }}
+      {{- with .Values.thorasReasoning.api.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
       serviceAccountName: thoras-collector
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasReasoningApi.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasReasoning.api.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-reasoning-api
         command:
@@ -59,19 +59,19 @@ spec:
                 key: webhookUrl
             {{- end }}
           - name: SLACK_ERRORS_ENABLED
-            value: "{{ .Values.thorasReasoningApi.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+            value: "{{ .Values.thorasReasoning.api.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
-            value: {{ default .Values.logLevel .Values.thorasReasoningApi.logLevel }}
+            value: {{ default .Values.logLevel .Values.thorasReasoning.api.logLevel }}
           - name: "PROMETHEUS_BASE_URL"
-            value: {{ .Values.thorasReasoningApi.connectors.prometheus.baseUrl }}
+            value: {{ .Values.thorasReasoning.connectors.prometheus.baseUrl }}
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
         ports:
-        - containerPort: {{ .Values.thorasReasoningApi.containerPort }}
+        - containerPort: {{ .Values.thorasReasoning.api.containerPort }}
         resources:
           limits:
-            memory: {{ .Values.thorasReasoningApi.limits.memory }}
+            memory: {{ .Values.thorasReasoning.api.limits.memory }}
           requests:
-            cpu: {{ .Values.thorasReasoningApi.requests.cpu }}
-            memory: {{ .Values.thorasReasoningApi.requests.memory }}
+            cpu: {{ .Values.thorasReasoning.api.requests.cpu }}
+            memory: {{ .Values.thorasReasoning.api.requests.memory }}
 {{ end }}
