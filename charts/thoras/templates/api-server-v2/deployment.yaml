@@ -59,6 +59,8 @@ spec:
             value: "{{ .Values.thorasApiServerV2.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "SERVICE_LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
+          - name: "SERVICE_PROMETHEUS_API_URL"
+            value: {{ .Values.thorasReasoningApi.connectors.prometheus.baseUrl }}
         volumeMounts:
           - name: tls
             mountPath: /app/cert.pem
