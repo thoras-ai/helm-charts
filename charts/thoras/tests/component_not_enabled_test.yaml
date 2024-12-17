@@ -10,8 +10,9 @@ tests:
       - isKind:
           of: Deployment
     set:
-      thorasReasoningApi:
-        enabled: true
+      thorasReasoning:
+        api:
+          enabled: true
 
   - it: Doesn't render Deployment when not enabled
     asserts:

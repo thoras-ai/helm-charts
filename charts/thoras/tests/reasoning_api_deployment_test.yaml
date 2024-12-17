@@ -4,8 +4,9 @@ tests:
     templates:
       - reasoning-api/deployment.yaml
     set:
-      thorasReasoningApi:
-        enabled: true
+      thorasReasoning:
+        api:
+          enabled: true
         connectors:
           prometheus:
             baseUrl: "http://whats-good"
