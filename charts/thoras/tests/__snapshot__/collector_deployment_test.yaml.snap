@@ -63,6 +63,13 @@ Default containers should match snapshots:
         value: info
       - name: API_BASE_URL
         value: http://thoras-api-server-v2
+      - name: DATABASE_HOST
+        valueFrom:
+          secretKeyRef:
+            key: host
+            name: thoras-timescale-password
+      - name: DATABASE_URL
+        value: $(DATABASE_HOST)/thoras?sslmode=disable
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     name: thoras-collector
