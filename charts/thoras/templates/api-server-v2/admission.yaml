@@ -1,8 +1,8 @@
-{{- $ca := genCA "thoras-api-server-ca" 3650 }}
-{{- $cn := "thoras-api-server" }}
+{{- $ca := genCA "thoras-api-server-v2-ca" 3650 }}
+{{- $cn := "thoras-api-server-v2" }}
 {{- $dns1 := printf "%s.%s" $cn .Release.Namespace }}
 {{- $dns2 := printf "%s.%s.svc" $cn .Release.Namespace }}
-{{- $cert := genSignedCert $cn nil (list $dns1 $dns2) 3650 $ca }}
+{{- $cert := genSignedCert $cn nil (list "thoras-api-server-v2" $dns1 $dns2) 3650 $ca }}
 ---
 apiVersion: v1
 kind: Secret
@@ -18,7 +18,8 @@ metadata:
 data:
   {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace "thoras-api-server-cert") }}
   {{- $secretData := (get $secretObj "data") | default dict }}
-  {{- $secretCert := (get $secretData "tls.crt") | default ($cert.Cert | b64enc) }}
+
+  {{- $secretCert := (get $secretData "tls.crt") | default (printf "%s\n%s" $cert.Cert $ca.Cert | b64enc) }}
   {{- $secretKey := (get $secretData "tls.key") | default ($cert.Key | b64enc) }}
   {{- $secretCaCert := (get $secretData "ca.crt") | default ($ca.Cert | b64enc) }}
   tls.crt: {{ $secretCert | quote }}
@@ -40,7 +41,7 @@ webhooks:
   clientConfig:
     service:
       namespace: {{ .Release.Namespace }}
-      name: thoras-api-server
+      name: thoras-api-server-v2
       path: /mutate
     caBundle: {{ $secretCaCert | quote }}
   sideEffects: None
@@ -57,42 +58,13 @@ webhooks:
   clientConfig:
     service:
       namespace: {{ .Release.Namespace }}
-      name: thoras-api-server
+      name: thoras-api-server-v2
       path: /mutate
     caBundle: {{ $secretCaCert | quote }}
   sideEffects: None
   failurePolicy: 'Ignore'
   admissionReviewVersions:
     - v1
----
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: "status.thoras.ai"
-webhooks:
-  - name: "status.thoras.ai"
-    namespaceSelector:
-      matchExpressions:
-        - key: runlevel
-          operator: NotIn
-          values: ["0","1"]
-    rules:
-      - operations: ["UPDATE"]
-        apiGroups: ["apps"]
-        apiVersions: ["*"]
-        resources: ["deployments/status"]
-        scope: "*"
-    clientConfig:
-      service:
-        namespace: {{ .Release.Namespace }}
-        name: thoras-api-server
-        path: /syncstatus
-      caBundle: {{ $secretCaCert | quote }}
-    sideEffects: None
-    failurePolicy: 'Ignore'
-    timeoutSeconds: 5
-    admissionReviewVersions:
-      - v1
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -109,7 +81,7 @@ webhooks:
     clientConfig:
       service:
         namespace: {{ .Release.Namespace }}
-        name: thoras-api-server
+        name: thoras-api-server-v2
         path: /validate
       caBundle: {{ $secretCaCert | quote }}
     sideEffects: None
