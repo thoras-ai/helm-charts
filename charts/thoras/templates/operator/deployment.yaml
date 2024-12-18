@@ -31,7 +31,7 @@ spec:
     spec:
       serviceAccountName: thoras-operator
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-operator:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: thoras-operator
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         env:
@@ -70,8 +70,9 @@ spec:
             value: "http://thoras-api-server-v2"
           - name: FORECAST_IMAGE_PULL_POLICY
             value: "{{ .Values.imagePullPolicy }}"
-        args:
-          - start
+        command: [
+          "/app/operator"
+        ]
         resources:
           limits:
             memory: {{ .Values.thorasOperator.limits.memory }}
