@@ -31,7 +31,7 @@ spec:
     spec:
       serviceAccountName: thoras-operator
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: thoras-operator
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         env:
