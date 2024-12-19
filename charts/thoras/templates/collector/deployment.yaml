@@ -59,8 +59,10 @@ spec:
             value: "true"
           - name: bootstrap.memory_lock
             value: "false"
+          {{- if .Values.metricsCollector.persistence.enabled }}
           - name: path.data
             value: /var/lib/share/elasticsearch/data
+          {{- end}}
           - name: "ELASTIC_PASSWORD"
             valueFrom:
               secretKeyRef:
@@ -119,6 +121,12 @@ spec:
                 echo "fatal: giving up on elasticsearch availability"
                 exit 1
             fi
+        {{- if .Values.metricsCollector.timescale.enabled }}
+            # try to create the "thoras" database if it doesn't exist
+            psql ${DATABASE_HOST} -tc "SELECT 1 FROM pg_database WHERE datname = 'thoras'" | grep -q 1 || psql ${DATABASE_HOST} -c "CREATE DATABASE thoras"
+            # run any migrations, accounting for upgrade/downgrade scenarios
+            ./scripts/migrate_database.sh
+        {{- end}}
             ./metrics-collector collect -c 60
         env:
           - name: THORAS_NS
@@ -146,3 +154,10 @@ spec:
             value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+          - name: DATABASE_URL
+            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
