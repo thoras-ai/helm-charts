@@ -43,7 +43,7 @@ spec:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: host
-          - name: DATABASE_URL
+          - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras"
           - name: "ELASTICSEARCH_URL"
             valueFrom:
