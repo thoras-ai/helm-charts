@@ -284,6 +284,7 @@ spec:
                         - type: integer
                         - type: string
                       x-kubernetes-int-or-string: true
+                      default: "15m"
                     forecast_buffer_percentage:
                       x-kubernetes-int-or-string: true
                       default: "0"
