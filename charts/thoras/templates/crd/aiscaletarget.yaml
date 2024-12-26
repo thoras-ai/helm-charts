@@ -286,6 +286,7 @@ spec:
                       x-kubernetes-int-or-string: true
                     forecast_buffer_percentage:
                       x-kubernetes-int-or-string: true
+                      default: "0"
                 reasoning:
                   type: object
                   required:
