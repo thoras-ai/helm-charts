@@ -15,7 +15,7 @@ tests:
           path: spec.template.spec.containers[0].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.12.1
       - equal:
-          path: spec.template.spec.containers[1].image
+          path: spec.template.spec.containers[2].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
   - it: Default containers should match snapshots
     set:
@@ -24,7 +24,7 @@ tests:
       - matchSnapshot:
           path: spec.template.spec.containers[0]
       - matchSnapshot:
-          path: spec.template.spec.containers[1]
+          path: spec.template.spec.containers[2]
   - it: Should mount pvc when in persistence mode
     set:
       metricsCollector:
@@ -42,18 +42,7 @@ tests:
           value:
             - mountPath: /var/lib/share/elasticsearch
               name: elastic-search-data
-  - it: Should not create timescale container when not enabled
-    asserts:
-      - notContains:
-          path: $..spec.containers
-          content:
-            name: timescaledb
-          any: true
-  - it: Should create timescale container when enabled
-    set:
-      metricsCollector:
-        timescale:
-          enabled: true
+  - it: Should always create timescale container 
     asserts:
       - contains:
           path: $..spec.containers
