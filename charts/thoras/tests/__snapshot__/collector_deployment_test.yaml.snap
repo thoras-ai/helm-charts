@@ -38,6 +38,7 @@ Default containers should match snapshots:
             echo "fatal: giving up on elasticsearch availability"
             exit 1
         fi
+        ./metrics-collector init
         ./metrics-collector collect -c 60
     command:
       - /bin/sh
