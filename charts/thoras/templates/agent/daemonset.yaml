@@ -28,7 +28,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: thoras-collector
+      serviceAccountName: {{ .Values.thorasAgent.serviceAccount.name }}
       containers:
       - name: thoras-agent
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasAgent.imageTag }}

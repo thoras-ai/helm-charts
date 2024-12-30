@@ -1,0 +1,55 @@
+{{- if .Values.thorasAgent.enabled }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+imagePullSecrets:
+{{- if .Values.imageCredentials.secretRef }}
+  - name: {{ .Values.imageCredentials.secretRef }}
+{{- else }}
+  - name: thoras-secret-registry
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+rules:
+- apiGroups:
+  - thoras.ai
+  resources:
+  - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
