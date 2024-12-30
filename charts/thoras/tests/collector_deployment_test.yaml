@@ -15,8 +15,8 @@ tests:
           path: spec.template.spec.containers[0].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.12.1
       - equal:
-          path: spec.template.spec.containers[2].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.17.2-pg16
   - it: Default containers should match snapshots
     set:
       thorasVersion: dev
@@ -24,7 +24,7 @@ tests:
       - matchSnapshot:
           path: spec.template.spec.containers[0]
       - matchSnapshot:
-          path: spec.template.spec.containers[2]
+          path: spec.template.spec.containers[?(@.name == 'thoras-collector')]
   - it: Should mount pvc when in persistence mode
     set:
       metricsCollector:
