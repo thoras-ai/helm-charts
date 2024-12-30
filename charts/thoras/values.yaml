@@ -127,6 +127,8 @@ thorasForecast:
 
 thorasAgent:
   enabled: false
+  serviceAccount:
+    name: thoras-agent
   frequency: 15
   containerPort: 9100
   podAnnotations: {}
