@@ -76,7 +76,6 @@ spec:
           runAsUser: 1000
           runAsGroup: 0
         {{- end }}
-      {{- if .Values.metricsCollector.timescale.enabled }}
       - image: {{ .Values.imageCredentials.registry }}/timescaledb:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -98,7 +97,6 @@ spec:
           runAsUser: 1000
           runAsGroup: 0
         {{- end }}
-      {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: {{ .Values.metricsCollector.collector.name }}
@@ -121,12 +119,12 @@ spec:
                 echo "fatal: giving up on elasticsearch availability"
                 exit 1
             fi
-        {{- if .Values.metricsCollector.timescale.enabled }}
+
             # try to create the "thoras" database if it doesn't exist
             psql ${DATABASE_HOST} -tc "SELECT 1 FROM pg_database WHERE datname = 'thoras'" | grep -q 1 || psql ${DATABASE_HOST} -c "CREATE DATABASE thoras"
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
-        {{- end}}
+
             ./metrics-collector init
             ./metrics-collector collect -c 60
         env:
