@@ -1,5 +1,7 @@
 ---
 thorasVersion: "4.1.0"
+cluster: 
+  name: ""
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"

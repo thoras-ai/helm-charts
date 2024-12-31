@@ -68,6 +68,8 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
           - name: "SERVICE_PROMETHEUS_API_URL"
             value: {{ .Values.thorasReasoning.connectors.prometheus.baseUrl }}
+          - name: SERVICE_CLUSTER_NAME
+            value: "{{ .Values.cluster.name }}"
         volumeMounts:
           - name: tls
             mountPath: /app/cert.pem
