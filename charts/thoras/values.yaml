@@ -1,6 +1,6 @@
 ---
-thorasVersion: "4.1.0"
-cluster: 
+thorasVersion: "4.2.0"
+cluster:
   name: ""
 
 imageCredentials:
