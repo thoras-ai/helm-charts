@@ -60,4 +60,5 @@ spec:
       # preempts running Pods
       # priorityClassName: important
       terminationGracePeriodSeconds: 30
+      hostNetwork: true
 {{- end }}
