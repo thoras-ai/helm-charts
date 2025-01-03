@@ -132,7 +132,7 @@ thorasAgent:
   serviceAccount:
     name: thoras-agent
   frequency: 15
-  containerPort: 9100
+  containerPort: 9101
   podAnnotations: {}
 
 thorasReasoning:

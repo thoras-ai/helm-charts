@@ -28,6 +28,13 @@ metadata:
   name: {{ .Values.thorasAgent.serviceAccount.name }}
 rules:
 - apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+- apiGroups:
   - thoras.ai
   resources:
   - '*'
