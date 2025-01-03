@@ -26,6 +26,7 @@ spec:
       serviceAccountName: thoras-monitor-v2
       containers:
         - name: thoras-monitor-v2
-          image: {{ .Values.imageCredentials.registry }}/thoras-monitor-v2:{{ default .Values.thorasVersion .Values.thorasMonitorV2.imageTag }}
+          image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitorV2.imageTag }}
           imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+          command: ["/app/monitor"]
       {{- end }}
