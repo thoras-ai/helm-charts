@@ -1,0 +1,32 @@
+{{- if .Values.thorasMonitorV2.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-monitor-v2
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thoras-monitor-v2
+  template:
+    metadata:
+      labels:
+        app: thoras-monitor-v2
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: thoras-monitor-v2
+      containers:
+        - name: thoras-monitor-v2
+          image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitorV2.imageTag }}
+          imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+          command: ["/app/monitor"]
+{{- end }}

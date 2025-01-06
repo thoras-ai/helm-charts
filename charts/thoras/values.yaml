@@ -124,6 +124,9 @@ thorasMonitor:
   podAnnotations: {}
   config: |
 
+thorasMonitorV2:
+  enabled: false
+
 thorasForecast:
   requestCpu:
 
