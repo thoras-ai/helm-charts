@@ -1,0 +1,24 @@
+suite: Monitor-V2
+templates:
+  - monitor-v2/deployment.yaml
+set:
+  thorasVersion: 1.0.0-alpha
+tests:
+  - it: Should create deployment when thorasMonitorV2.enabled is true
+    template: monitor-v2/deployment.yaml
+    set:
+      thorasMonitorV2:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: thoras-monitor-v2
+  - it: Should create deployment when thorasMonitorV2.enabled is false
+    template: monitor-v2/deployment.yaml
+    set:
+      thorasMonitorV2:
+        enabled: false
+    asserts:
+      - notExists:
+          path: $..kind
+          value: Deployment
