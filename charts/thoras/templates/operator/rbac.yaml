@@ -24,7 +24,7 @@ metadata:
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-  name: thoras-collector-thoras-operator
+  name: thoras-operator
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -32,5 +32,5 @@ roleRef:
   name: thoras-operator
 subjects:
 - kind: ServiceAccount
-  name: thoras-collector
+  name: thoras-operator
   namespace: {{ .Release.Namespace }}
