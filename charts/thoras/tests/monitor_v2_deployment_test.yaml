@@ -13,12 +13,11 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].name
           value: thoras-monitor-v2
-  - it: Should create deployment when thorasMonitorV2.enabled is false
+  - it: Should not create deployment when thorasMonitorV2.enabled is false
     template: monitor-v2/deployment.yaml
     set:
       thorasMonitorV2:
         enabled: false
     asserts:
-      - notExists:
-          path: $..kind
-          value: Deployment
+      - hasDocuments:
+          count: 0
