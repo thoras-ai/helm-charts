@@ -11,8 +11,7 @@ tests:
           of: Deployment
     set:
       thorasReasoning:
-        api:
-          enabled: true
+        enabled: true
 
   - it: Doesn't render Deployment when not enabled
     asserts:

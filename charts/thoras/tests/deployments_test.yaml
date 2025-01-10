@@ -10,8 +10,8 @@ templates:
 set:
   thorasVersion: 1.0.0-alpha
   thorasReasoning:
+    enabled: true
     api:
-      enabled: true
       replicas: 12
   thorasOperator:
     replicas: 12

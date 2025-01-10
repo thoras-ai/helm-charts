@@ -66,8 +66,10 @@ spec:
             value: "{{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasOperator.logLevel }}
-          - name: API_BASE_URL
+          - name: OPERATOR_THORAS_API_BASE_URL
             value: "http://thoras-api-server-v2"
+          - name: OPERATOR_REASONING_ENABLED
+            value: "{{ .Values.thorasReasoning.enabled }}"
           - name: FORECAST_IMAGE_PULL_POLICY
             value: "{{ .Values.imagePullPolicy }}"
         command: [

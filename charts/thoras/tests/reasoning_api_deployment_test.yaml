@@ -1,16 +1,26 @@
 suite: Reasoning
+templates:
+  - reasoning-api/deployment.yaml
 tests:
   - it: Set prometheus URL correctly
-    templates:
-      - reasoning-api/deployment.yaml
     set:
       thorasReasoning:
-        api:
-          enabled: true
+        enabled: true
         connectors:
           prometheus:
             baseUrl: "http://whats-good"
     asserts:
       - equal:
-          path: $..spec.containers[0].env[?(@.name == 'PROMETHEUS_BASE_URL')].value
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'PROMETHEUS_BASE_URL')].value
           value: "http://whats-good"
+  - it: Disabling reasoning still disables the reasoning API deployment and service objects
+    set:
+      thorasReasoning:
+        enabled: false
+    asserts:
+      - notExists:
+          kind: Deployment
+          name: reasoning-api
+      - notExists:
+          kind: Service
+          name: reasoning-api

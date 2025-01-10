@@ -1,0 +1,21 @@
+suite: Operator
+templates:
+  - operator/deployment.yaml
+tests:
+  - it: Ensure OPERATOR_REASONING_ENABLED not exists when reasoning is disabled
+    set:
+      thorasReasoning:
+        enabled: false
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'OPERATOR_REASONING_ENABLED')].value
+          value: "false"
+  - it: Ensure OPERATOR_REASONING_ENABLED not exists when reasoning is enabled
+    set:
+      thorasReasoning:
+        enabled: true
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'OPERATOR_REASONING_ENABLED')].value
+          value: "true"
+
