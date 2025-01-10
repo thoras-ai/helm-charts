@@ -139,11 +139,11 @@ thorasAgent:
   podAnnotations: {}
 
 thorasReasoning:
+  enabled: false
   connectors:
     prometheus:
       baseUrl: "http://localhost"
   api:
-    enabled: false
     podAnnotations: {}
     containerPort: 8080
     port: 80

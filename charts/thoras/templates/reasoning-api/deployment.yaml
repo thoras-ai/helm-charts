@@ -1,4 +1,4 @@
-{{ if $.Values.thorasReasoning.api.enabled }}
+{{ if $.Values.thorasReasoning.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
