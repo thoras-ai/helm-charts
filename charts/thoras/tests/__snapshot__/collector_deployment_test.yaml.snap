@@ -40,9 +40,15 @@ Default containers should match snapshots:
         fi
 
         # try to create the "thoras" database if it doesn't exist
-        psql ${DATABASE_HOST} -tc "SELECT 1 FROM pg_database WHERE datname = 'thoras'" | grep -q 1 || psql ${DATABASE_HOST} -c "CREATE DATABASE thoras"
+        if ! psql -U postgres -h localhost -tc "SELECT 1 FROM pg_database WHERE datname = 'thoras'" | grep -q 1; then
+            echo "creating database 'thoras'"
+            psql -U postgres -h localhost -c "CREATE DATABASE thoras"
+            echo "setting password"
+            psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
+        fi
         # run any migrations, accounting for upgrade/downgrade scenarios
         ./scripts/migrate_database.sh
+
 
         ./metrics-collector init
         ./metrics-collector collect -c 60
@@ -59,6 +65,11 @@ Default containers should match snapshots:
           secretKeyRef:
             key: host
             name: thoras-elastic-password
+      - name: POSTGRES_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: password
+            name: thoras-timescale-password
       - name: SLACK_WEBHOOK_URL
         valueFrom:
           secretKeyRef:
