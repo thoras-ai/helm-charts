@@ -130,6 +130,7 @@ spec:
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
 
+
             ./metrics-collector init
             ./metrics-collector collect -c 60
         env:
