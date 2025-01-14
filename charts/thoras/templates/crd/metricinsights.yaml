@@ -1,0 +1,93 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.1
+  name: metricinsights.thoras.ai
+spec:
+  group: thoras.ai
+  names:
+    kind: MetricInsights
+    listKind: MetricInsightsList
+    plural: metricinsights
+    singular: metricinsights
+  scope: Namespaced
+  versions:
+    - name: v1
+      schema:
+        openAPIV3Schema:
+          properties:
+            apiVersion:
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              properties:
+                compute:
+                  properties:
+                    concurrency:
+                      anyOf:
+                        - type: integer
+                        - type: string
+                      description:
+                        Number of workers allowed to process metrics at one
+                        time
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                  type: object
+                connectorRefs:
+                  description:
+                    List of MetricInsightsConnector names in this namespace
+                    to use for this insight
+                  items:
+                    type: string
+                  type: array
+              type: object
+            status:
+              properties:
+                events:
+                  description: List of relevant events for this MetricInsights job.
+                  items:
+                    properties:
+                      message:
+                        type: string
+                      type:
+                        description: Type of event
+                        type: string
+                    type: object
+                  type: array
+                metricsProcessed:
+                  anyOf:
+                    - type: integer
+                    - type: string
+                  description: Metrics processed so far this job
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                totalMetrics:
+                  anyOf:
+                    - type: integer
+                    - type: string
+                  description: Total Metrics to process this job
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+              type: object
+          required:
+            - metadata
+            - spec
+          type: object
+      served: true
+      storage: true
