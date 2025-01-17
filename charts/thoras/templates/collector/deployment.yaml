@@ -143,11 +143,6 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
-          - name: "POSTGRES_PASSWORD"
-            valueFrom:
-              secretKeyRef:
-                name: thoras-timescale-password
-                key: password
           - name: SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
@@ -160,8 +155,6 @@ spec:
             {{- end }}
           - name: SLACK_ERRORS_ENABLED
             value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
-          - name: "LOGLEVEL"
-            value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
           - name: DATABASE_HOST
@@ -169,8 +162,6 @@ spec:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: host
-          - name: DATABASE_URL
-            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
           - name: "SERVICE_LOGLEVEL"

@@ -65,11 +65,6 @@ Default containers should match snapshots:
           secretKeyRef:
             key: host
             name: thoras-elastic-password
-      - name: POSTGRES_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            key: password
-            name: thoras-timescale-password
       - name: SLACK_WEBHOOK_URL
         valueFrom:
           secretKeyRef:
@@ -77,8 +72,6 @@ Default containers should match snapshots:
             name: thoras-slack
       - name: SLACK_ERRORS_ENABLED
         value: "false"
-      - name: LOGLEVEL
-        value: info
       - name: API_BASE_URL
         value: http://thoras-api-server-v2
       - name: DATABASE_HOST
@@ -86,8 +79,6 @@ Default containers should match snapshots:
           secretKeyRef:
             key: host
             name: thoras-timescale-password
-      - name: DATABASE_URL
-        value: $(DATABASE_HOST)/thoras?sslmode=disable
       - name: SERVICE_POSTGRESQL_DSN
         value: $(DATABASE_HOST)/thoras?sslmode=disable
       - name: SERVICE_LOGLEVEL
