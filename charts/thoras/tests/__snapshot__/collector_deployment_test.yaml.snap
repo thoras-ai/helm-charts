@@ -51,7 +51,7 @@ Default containers should match snapshots:
 
 
         ./metrics-collector init
-        ./metrics-collector collect -c 60
+        ./metrics-collector collect -c 60s
     command:
       - /bin/sh
       - -c
@@ -88,6 +88,12 @@ Default containers should match snapshots:
             name: thoras-timescale-password
       - name: DATABASE_URL
         value: $(DATABASE_HOST)/thoras?sslmode=disable
+      - name: SERVICE_POSTGRESQL_DSN
+        value: $(DATABASE_HOST)/thoras?sslmode=disable
+      - name: SERVICE_LOGLEVEL
+        value: info
+      - name: SERVICE_CLUSTER_NAME
+        value: ""
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     name: thoras-collector

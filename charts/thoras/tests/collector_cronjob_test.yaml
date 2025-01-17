@@ -39,3 +39,8 @@ tests:
           content:
             name: "DATABASE_URL"
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+      - contains:
+          path: .spec.jobTemplate.spec.template.spec.containers[?(@.name == 'metrics-collector')].env
+          content:
+            name: "DATABASE_URL"
+            value: "$(DATABASE_HOST)/thoras?sslmode=disable"

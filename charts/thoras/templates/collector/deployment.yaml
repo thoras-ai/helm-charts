@@ -132,7 +132,7 @@ spec:
 
 
             ./metrics-collector init
-            ./metrics-collector collect -c 60
+            ./metrics-collector collect -c 60s
         env:
           - name: THORAS_NS
             valueFrom:
@@ -171,3 +171,9 @@ spec:
                 key: host
           - name: DATABASE_URL
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+          - name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+          - name: "SERVICE_LOGLEVEL"
+            value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}
+          - name: SERVICE_CLUSTER_NAME
+            value: "{{ .Values.cluster.name }}"

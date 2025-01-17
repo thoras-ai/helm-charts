@@ -44,8 +44,14 @@ spec:
                     key: host
               - name: DATABASE_URL
                 value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+              - name: SERVICE_POSTGRESQL_DSN
+                value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+              - name: "SERVICE_LOGLEVEL"
+                value: {{ default .Values.logLevel .Values.metricsCollector.purge.logLevel }}
+              - name: SERVICE_CLUSTER_NAME
+                value: "{{ .Values.cluster.name }}"
             command: ["/bin/sh", "-c"]
             args:
               - |
                 ./metrics-collector purge metrics \
-                --ttl={{ .Values.metricsCollector.purge.ttl }}
+                --metric-ttl={{ .Values.metricsCollector.purge.ttl }}
