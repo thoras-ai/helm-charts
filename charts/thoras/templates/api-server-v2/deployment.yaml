@@ -32,6 +32,33 @@ spec:
         - name: tls
           secret:
             secretName: thoras-api-server-cert
+      initContainers:
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
+        name: wait-for-postgres
+        env:
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            retries=0
+            max_retries=48
+            until [ $retries -ge $max_retries ]; do
+              if pg_isready -q -d ${DATABASE_HOST}/thoras; then
+                break
+              else
+                echo "postgres not ready"
+                retries=$((retries+1))
+                sleep 5
+              fi
+            done
+            if [ $retries -ge $max_retries ]; then
+              echo "Failed to connect to database after $max_retries retries"
+              exit 1
+            fi
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
