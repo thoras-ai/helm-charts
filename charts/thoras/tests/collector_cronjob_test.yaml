@@ -21,21 +21,13 @@ tests:
       - contains:
           path: .spec.jobTemplate.spec.template.spec.containers[0].env
           content:
-            name: "POSTGRES_PASSWORD"
-            valueFrom:
-              secretKeyRef:
-                key: password
-                name: thoras-timescale-password
-      - contains:
-          path: .spec.jobTemplate.spec.template.spec.containers[0].env
-          content:
             name: "DATABASE_HOST"
             valueFrom:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: host
       - contains:
-          path: .spec.jobTemplate.spec.template.spec.containers[0].env
+          path: .spec.jobTemplate.spec.template.spec.containers[?(@.name == 'metrics-collector')].env
           content:
-            name: "DATABASE_URL"
+            name: "SERVICE_POSTGRESQL_DSN"
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"

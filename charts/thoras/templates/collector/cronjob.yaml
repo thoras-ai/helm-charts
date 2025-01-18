@@ -30,22 +30,19 @@ spec:
                     key: webhookUrl
               - name: SLACK_ERRORS_ENABLED
                 value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
-              - name: "LOGLEVEL"
-                value: {{ default .Values.logLevel .Values.metricsCollector.purge.logLevel }}
-              - name: "POSTGRES_PASSWORD"
-                valueFrom:
-                  secretKeyRef:
-                    name: thoras-timescale-password
-                    key: password
               - name: DATABASE_HOST
                 valueFrom:
                   secretKeyRef:
                     name: thoras-timescale-password
                     key: host
-              - name: DATABASE_URL
+              - name: SERVICE_POSTGRESQL_DSN
                 value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+              - name: "SERVICE_LOGLEVEL"
+                value: {{ default .Values.logLevel .Values.metricsCollector.purge.logLevel }}
+              - name: SERVICE_CLUSTER_NAME
+                value: "{{ .Values.cluster.name }}"
             command: ["/bin/sh", "-c"]
             args:
               - |
                 ./metrics-collector purge metrics \
-                --ttl={{ .Values.metricsCollector.purge.ttl }}
+                --metric-ttl={{ .Values.metricsCollector.purge.ttl }}
