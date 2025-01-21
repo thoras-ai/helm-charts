@@ -47,6 +47,12 @@ spec:
                       type: object
                     prometheus:
                       properties:
+                        limit_to_single_metric:
+                          description: >-
+                            Optional prometheus query to limit the scope of data ingestion. 
+                            This is used for internal development and allows specifying 
+                            a subset of the time series data.
+                          type: string
                         BasicAuth:
                           description:
                             Basic authentication credentials. Can be a Secret
