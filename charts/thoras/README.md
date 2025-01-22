@@ -150,12 +150,12 @@ helm install \
 
 ## Thoras Agent
 
-| Key                   | Type    | Default        | Description                                                            |
-| --------------------- | ------- | -------------- | ---------------------------------------------------------------------- |
-| thorasAgent.enabled   | Bool    | false          | Enable the Thoras Agent (opt-in, for now)                              |
-| thorasAgent.imageTag  | String  | .thorasVersion | Image tag for Thoras Agent daemon set                                  |
-| thorasAgent.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasAgent.frequency | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
+| Key                            | Type    | Default        | Description                                                            |
+| ------------------------------ | ------- | -------------- | ---------------------------------------------------------------------- |
+| thorasAgent.enabled            | Bool    | false          | Enable the Thoras Agent (opt-in, for now)                              |
+| thorasAgent.imageTag           | String  | .thorasVersion | Image tag for Thoras Agent daemon set                                  |
+| thorasAgent.slackErrorsEnabled | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
+| thorasAgent.frequency          | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
 
 ## Example Thoras Monitor with default config
 
