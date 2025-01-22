@@ -143,7 +143,7 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: host
-          - name: SLACK_WEBHOOK_URL
+          - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
             {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
@@ -153,8 +153,12 @@ spec:
                 name: thoras-slack
                 key: webhookUrl
             {{- end }}
-          - name: SLACK_ERRORS_ENABLED
+          - name: SERVICE_SLACK_ERRORS_ENABLED
             value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+          - name: SERVICE_CLUSTER_NAME
+            value: "{{ .Values.cluster.name }}"
+          - name: SERVICE_LOG_LEVEL
+            value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
           - name: DATABASE_HOST

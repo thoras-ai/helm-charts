@@ -25,8 +25,25 @@ spec:
     spec:
       serviceAccountName: thoras-monitor-v2
       containers:
-        - name: thoras-monitor-v2
-          image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitorV2.imageTag }}
-          imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-          command: ["/app/monitor"]
+      - name: thoras-monitor-v2
+        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitorV2.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        command: ["/app/monitor"]
+        env:
+          - name: SERVICE_LOG_LEVEL
+            value: {{ default .Values.logLevel .Values.thorasMonitor.logLevel }}
+          - name: SERVICE_SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
+                name: {{ .Values.slackWebhookUrlSecretRefName }}
+                key: {{ .Values.slackWebhookUrlSecretRefKey }}
+            {{- else }}
+                name: thoras-slack
+                key: webhookUrl
+            {{- end }}
+          - name: SERVICE_SLACK_ERRORS_ENABLED
+            value: "{{ .Values.thorasMonitor.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+          - name: SERVICE_CLUSTER_NAME
+            value: "{{ .Values.cluster.name }}"
 {{- end }}
