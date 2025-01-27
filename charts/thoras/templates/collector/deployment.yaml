@@ -166,9 +166,9 @@ spec:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: host
+          - name: DATABASE_URL
+            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
           - name: "SERVICE_LOGLEVEL"
             value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}
-          - name: SERVICE_CLUSTER_NAME
-            value: "{{ .Values.cluster.name }}"
