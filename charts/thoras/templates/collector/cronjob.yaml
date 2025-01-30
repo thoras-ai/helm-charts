@@ -37,7 +37,7 @@ spec:
                     key: host
               - name: SERVICE_POSTGRESQL_DSN
                 value: "$(DATABASE_HOST)/thoras?sslmode=disable"
-              - name: "SERVICE_LOGLEVEL"
+              - name: "SERVICE_LOG_LEVEL"
                 value: {{ default .Values.logLevel .Values.metricsCollector.purge.logLevel }}
               - name: SERVICE_CLUSTER_NAME
                 value: "{{ .Values.cluster.name }}"
