@@ -87,7 +87,7 @@ Default containers should match snapshots:
         value: $(DATABASE_HOST)/thoras?sslmode=disable
       - name: SERVICE_POSTGRESQL_DSN
         value: $(DATABASE_HOST)/thoras?sslmode=disable
-      - name: SERVICE_LOGLEVEL
+      - name: SERVICE_LOG_LEVEL
         value: info
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
