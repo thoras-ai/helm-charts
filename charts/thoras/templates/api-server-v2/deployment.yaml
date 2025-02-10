@@ -32,6 +32,11 @@ spec:
         - name: tls
           secret:
             secretName: thoras-api-server-cert
+        {{- if .Values.metricsCollector.persistence.enabled }}
+        - name: elastic-search-data
+          persistentVolumeClaim:
+            claimName:  elastic-search-data
+        {{- end }}
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-postgres
@@ -58,7 +63,14 @@ spec:
             if [ $retries -ge $max_retries ]; then
               echo "Failed to connect to database after $max_retries retries"
               exit 1
+            else
+              mkdir -p /var/lib/share/blobs
             fi
+        {{- if .Values.metricsCollector.persistence.enabled }}
+        volumeMounts:
+          - name: elastic-search-data
+            mountPath: /var/lib/share
+        {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -97,6 +109,8 @@ spec:
             value: {{ .Values.thorasReasoning.connectors.prometheus.baseUrl }}
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
+          - name: SERVICE_STORAGE_FILE_PATH
+            value: "/var/lib/share"
         volumeMounts:
           - name: tls
             mountPath: /app/cert.pem
@@ -106,6 +120,10 @@ spec:
             mountPath: /app/key.pem
             subPath: tls.key
             readOnly: true
+          {{- if .Values.metricsCollector.persistence.enabled }}
+          - name: elastic-search-data
+            mountPath: /var/lib/share
+          {{- end }}
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         resources:
