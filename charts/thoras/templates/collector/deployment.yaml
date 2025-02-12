@@ -172,3 +172,8 @@ spec:
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
           - name: "SERVICE_LOG_LEVEL"
             value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}
+          - name: "POSTGRES_PASSWORD"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: password

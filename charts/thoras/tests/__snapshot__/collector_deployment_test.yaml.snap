@@ -89,6 +89,11 @@ Default containers should match snapshots:
         value: $(DATABASE_HOST)/thoras?sslmode=disable
       - name: SERVICE_LOG_LEVEL
         value: info
+      - name: POSTGRES_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: password
+            name: thoras-timescale-password
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     name: thoras-collector
