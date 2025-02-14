@@ -46,4 +46,6 @@ spec:
             value: "{{ .Values.thorasMonitorV2.slackErrorsEnabled | default .Values.thorasMonitor.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
+          - name: SERVICE_THORAS_API_BASE_URL
+            value: "http://thoras-api-server-v2"
 {{- end }}
