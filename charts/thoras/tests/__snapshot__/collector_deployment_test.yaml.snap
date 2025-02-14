@@ -76,7 +76,7 @@ Default containers should match snapshots:
         value: ""
       - name: SERVICE_LOG_LEVEL
         value: info
-      - name: API_BASE_URL
+      - name: SERVICE_THORAS_API_BASE_URL
         value: http://thoras-api-server-v2
       - name: DATABASE_HOST
         valueFrom:
