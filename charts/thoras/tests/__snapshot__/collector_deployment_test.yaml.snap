@@ -87,8 +87,6 @@ Default containers should match snapshots:
         value: $(DATABASE_HOST)/thoras?sslmode=disable
       - name: SERVICE_POSTGRESQL_DSN
         value: $(DATABASE_HOST)/thoras?sslmode=disable
-      - name: SERVICE_LOG_LEVEL
-        value: info
       - name: POSTGRES_PASSWORD
         valueFrom:
           secretKeyRef:
