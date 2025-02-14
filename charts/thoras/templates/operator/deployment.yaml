@@ -30,6 +30,10 @@ spec:
       name: thoras-operator
     spec:
       serviceAccountName: thoras-operator
+      volumes:
+        - name: tls
+          secret:
+            secretName: thoras-webhooks-cert
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: thoras-operator
@@ -87,6 +91,17 @@ spec:
         command: [
           "/app/operator"
         ]
+        volumeMounts:
+          - name: tls
+            mountPath: /tmp/k8s-webhook-server/serving-certs/tls.crt
+            subPath: tls.crt
+            readOnly: true
+          - name: tls
+            mountPath: /tmp/k8s-webhook-server/serving-certs/tls.key
+            subPath: tls.key
+            readOnly: true
+        ports:
+          - containerPort: 9443
         resources:
           limits:
             memory: {{ .Values.thorasOperator.limits.memory }}
