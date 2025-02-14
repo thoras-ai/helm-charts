@@ -29,9 +29,6 @@ spec:
     spec:
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
       volumes:
-        - name: tls
-          secret:
-            secretName: thoras-api-server-cert
         {{- if .Values.metricsCollector.persistence.enabled }}
         - name: elastic-search-data
           persistentVolumeClaim:
@@ -112,14 +109,6 @@ spec:
           - name: SERVICE_STORAGE_FILE_PATH
             value: "/var/lib/share"
         volumeMounts:
-          - name: tls
-            mountPath: /app/cert.pem
-            subPath: tls.crt
-            readOnly: true
-          - name: tls
-            mountPath: /app/key.pem
-            subPath: tls.key
-            readOnly: true
           {{- if .Values.metricsCollector.persistence.enabled }}
           - name: elastic-search-data
             mountPath: /var/lib/share
