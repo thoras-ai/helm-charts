@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-      - 'release**'
+  # Allows manual triggering in the GitHub UI
+  workflow_dispatch:
 
 jobs:
   release:
