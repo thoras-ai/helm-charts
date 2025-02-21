@@ -43,6 +43,16 @@ spec:
         volumeMounts:
           - mountPath: /var/lib/share/elasticsearch
             name: elastic-search-data
+      - name: fix-timescale-dir-ownership
+        image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /var/lib/share/postgresql
+            chown -R 1000:1000 /var/lib/share/postgresql
+        volumeMounts:
+          - mountPath: /var/lib/share
+            name: elastic-search-data
       {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/elasticsearch:{{ .Values.metricsCollector.search.imageTag }}
