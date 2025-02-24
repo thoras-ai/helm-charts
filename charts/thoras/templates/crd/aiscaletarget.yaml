@@ -517,6 +517,19 @@ spec:
                       - type
                       type: object
                     type: array
+                  exclude_metrics:
+                    description: Metrics from HPA for thoras to ignore
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        type:
+                          type: string
+                      required:
+                      - name
+                      - type
+                      type: object
+                    type: array
                   mode:
                     enum:
                     - autonomous
