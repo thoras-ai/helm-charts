@@ -37,7 +37,7 @@ spec:
         args:
           - |
             mkdir -p /var/lib/share/elasticsearch/data
-            find /var/lib/share/elasticsearch -not -name postgresql -not -name data -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/elasticsearch/data \;
+            find /var/lib/share/elasticsearch -not -name postgresql -not -name data -not -name blobs -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/elasticsearch/data \;
             chown -R 1000:0 /var/lib/share/elasticsearch/data
             rm -f /var/lib/share/elasticsearch/data/node.lock
         volumeMounts:
