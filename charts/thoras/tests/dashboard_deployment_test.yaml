@@ -17,5 +17,20 @@ tests:
           path: spec.template.spec.containers[0].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard:TEST
       - equal:
+          path: spec.template.spec.containers[1].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/nginx:alpine
+      - equal:
+          path: spec.template.spec.containers[1].volumeMounts[0]
+          value:
+            name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+      - equal:
           path: spec.replicas
           value: 12
+      - equal:
+          path: spec.template.spec.volumes[0]
+          value:
+            name: nginx-config
+            configMap:
+              name: thoras-dashboard-nginx-config

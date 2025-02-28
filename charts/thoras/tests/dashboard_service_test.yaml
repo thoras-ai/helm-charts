@@ -49,7 +49,7 @@ tests:
     set:
       thorasDashboard:
         port: 5000
-        containerPort: 4000
+        nginxContainerPort: 4000
     asserts:
       - equal:
           path: spec.ports[0].port

@@ -28,6 +28,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: thoras-dashboard-nginx-config
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard
@@ -76,3 +80,12 @@ spec:
           requests:
             cpu: {{ .Values.thorasDashboard.requests.cpu }}
             memory: {{ .Values.thorasDashboard.requests.memory }}
+      - name: thoras-api-proxy
+        image: {{ .Values.imageCredentials.registry }}/nginx:{{ .Values.thorasDashboard.nginx.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        ports:
+        - containerPort: {{ .Values.thorasDashboard.nginxContainerPort }}
+        volumeMounts:
+          - name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
