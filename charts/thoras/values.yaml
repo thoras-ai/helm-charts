@@ -108,6 +108,9 @@ thorasDashboard:
     create: true
   podAnnotations: {}
   containerPort: 3000
+  nginxContainerPort: 80
+  nginx:
+    imageTag: "alpine"
   limits:
     memory: 2000Mi
   requests:

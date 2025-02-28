@@ -9,7 +9,7 @@ Default matches snapshot:
       ports:
         - port: 80
           protocol: TCP
-          targetPort: 3000
+          targetPort: 80
       selector:
         app: thoras-dashboard
       type: ClusterIP

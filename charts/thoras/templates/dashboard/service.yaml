@@ -33,6 +33,6 @@ spec:
   ports:
   - port: {{ .Values.thorasDashboard.port }}
     protocol: TCP
-    targetPort: {{ .Values.thorasDashboard.containerPort }}
+    targetPort: {{ .Values.thorasDashboard.nginxContainerPort }}
   selector:
     app: thoras-dashboard
