@@ -55,6 +55,10 @@ spec:
             value: "{{ .Values.thorasAgent.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
+          {{- if (.Values.thorasAgent.queries_per_second | default .Values.queries_per_second) }}
+          - name: SERVICE_QUERIES_PER_SECOND
+            value: {{ .Values.thorasAgent.queries_per_second | default .Values.queries_per_second | quote }}
+          {{- end }}
         ports:
           - containerPort: {{ .Values.thorasAgent.containerPort }}
         resources:
