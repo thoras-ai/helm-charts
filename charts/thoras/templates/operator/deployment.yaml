@@ -88,6 +88,8 @@ spec:
             value: "{{ .Values.thorasReasoning.enabled }}"
           - name: FORECAST_IMAGE_PULL_POLICY
             value: "{{ .Values.imagePullPolicy }}"
+          - name: MODEL_SKIP_CACHE
+            value: "{{ .Values.thorasForecast.skipCache }}"
         command: [
           "/app/operator"
         ]
