@@ -108,10 +108,8 @@ spec:
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_STORAGE_FILE_PATH
             value: "/var/lib/share"
-          {{- if .Values.thorasApiServerV2.timescalePrimary }}
           - name: SERVICE_TIMESCALE_PRIMARY
-            value: "true"
-          {{- end }}
+            value: {{ .Values.thorasApiServerV2.timescalePrimary | quote}}
           {{- if (.Values.thorasApiServerV2.queries_per_second | default .Values.queries_per_second) }}
           - name: SERVICE_QUERIES_PER_SECOND
             value: {{ .Values.thorasApiServerV2.queries_per_second | default .Values.queries_per_second | quote }}
