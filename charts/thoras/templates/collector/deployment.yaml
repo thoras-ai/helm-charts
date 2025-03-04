@@ -185,3 +185,5 @@ spec:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: password
+          - name: SERVICE_COLLECTION_PARALLELIZATION
+            value: "{{ .Values.metricsCollector.collector.parallelization | default 20}}"
