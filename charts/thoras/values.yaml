@@ -131,6 +131,7 @@ thorasMonitorV2:
   enabled: false
 
 thorasForecast:
+  skipCache: false
   requestCpu:
 
 thorasAgent:

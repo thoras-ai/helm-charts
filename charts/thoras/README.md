@@ -66,9 +66,10 @@ helm install \
 
 ## Thoras Forecast
 
-| Key                     | Type   | Default        | Description                       |
-| ----------------------- | ------ | -------------- | --------------------------------- |
-| thorasForecast.imageTag | String | .thorasVersion | Image tag for Thoras Forecast job |
+| Key                      | Type    | Default        | Description                                   |
+| ------------------------ | ------- | -------------- | --------------------------------------------- |
+| thorasForecast.imageTag  | String  | .thorasVersion | Image tag for Thoras Forecast job             |
+| thorasForecast.skipCache | Boolean |  false         | Directs the forecaster to skip to model cache |
 
 ## Thoras Operator
 
