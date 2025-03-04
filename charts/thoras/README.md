@@ -115,6 +115,7 @@ helm install \
 | thorasApiServer.requests.memory    | String  | 1000Mi  | Thoras API memory request                                    |
 | thorasApiServer.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasApiServer.logLevel           | String  | Nil     | Logging level                                                |
+| thorasApiServer.timescalePrimary   | Boolean | false   | Use timescale as the primary data source, not elastic        |
 
 ## Thoras Dashboard
 

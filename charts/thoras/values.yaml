@@ -98,6 +98,7 @@ thorasApiServerV2:
     memory: 100Mi
   port: 80
   logLevel: "info"
+  timescalePrimary: false
 
 thorasDashboard:
   enabled: true
