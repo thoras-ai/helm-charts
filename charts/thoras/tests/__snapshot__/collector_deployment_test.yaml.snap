@@ -92,6 +92,8 @@ Default containers should match snapshots:
           secretKeyRef:
             key: password
             name: thoras-timescale-password
+      - name: SERVICE_COLLECTION_PARALLELIZATION
+        value: "20"
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     name: thoras-collector
