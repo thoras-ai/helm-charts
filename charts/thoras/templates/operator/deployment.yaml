@@ -90,9 +90,9 @@ spec:
             value: "{{ .Values.imagePullPolicy }}"
           - name: MODEL_SKIP_CACHE
             value: "{{ .Values.thorasForecast.skipCache }}"
-          {{- if (.Values.thorasOperator.queries_per_second | default .Values.queries_per_second) }}
+          {{- if (.Values.thorasOperator.queriesPerSecond | default .Values.queriesPerSecond) }}
           - name: SERVICE_QUERIES_PER_SECOND
-            value: {{ .Values.thorasOperator.queries_per_second | default .Values.queries_per_second | quote }}
+            value: {{ .Values.thorasOperator.queriesPerSecond | default .Values.queriesPerSecond | quote }}
           {{- end }}
         command: [
           "/app/operator"
