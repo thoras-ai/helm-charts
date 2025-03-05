@@ -26,6 +26,11 @@ data:
           proxy_set_header X-Forwarded-Proto $scheme;
         }
 
+        location /config.json {
+            default_type application/json;
+            return 200 '{ "api_base_url": "" }';
+        }
+
         location / {
           proxy_pass http://localhost:{{ .Values.thorasDashboard.containerPort }};
           proxy_set_header Host $host;
