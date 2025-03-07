@@ -63,6 +63,7 @@ helm install \
 | logLevel                  | String  | info                                             | Default log level                                            |
 | slackWebhookUrl           | String  | ""                                               | Slack Webhook URL destination for notifications.             |
 | slackErrorsEnabled        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl` |
+| queriesPerSecond          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                     |
 
 ## Thoras Forecast
 
@@ -81,6 +82,7 @@ helm install \
 | thorasOperator.requests.memory    | String  | 1000Mi  | Thoras Operator memory request                               |
 | thorasOperator.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasOperator.logLevel           | String  | Nil     | Logging level                                                |
+| thorasOperator.queriesPerSecond   | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
 
 ## Thoras Metrics Collector
 
@@ -116,6 +118,7 @@ helm install \
 | thorasApiServer.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasApiServer.logLevel           | String  | Nil     | Logging level                                                |
 | thorasApiServer.timescalePrimary   | Boolean | false   | Use timescale as the primary data source, not elastic        |
+| thorasApiServer.queriesPerSecond   | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
 
 ## Thoras Dashboard
 
@@ -158,6 +161,7 @@ helm install \
 | thorasAgent.imageTag           | String  | .thorasVersion | Image tag for Thoras Agent daemon set                                  |
 | thorasAgent.slackErrorsEnabled | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
 | thorasAgent.frequency          | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
+| thorasAgent.queriesPerSecond   | String  | "50"           | Sets a maximum threshold for K8s API qps                               |
 
 ## Example Thoras Monitor with default config
 
