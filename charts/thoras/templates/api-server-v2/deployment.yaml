@@ -62,6 +62,7 @@ spec:
               exit 1
             else
               mkdir -p /var/lib/share/blobs
+              chown -R 1000:1000 /var/lib/share/blobs
             fi
         {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
