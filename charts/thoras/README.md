@@ -87,39 +87,41 @@ helm install \
 
 ## Thoras Metrics Collector
 
-| Key                                                             | Type    | Default          | Description                                                  |
-| --------------------------------------------------------------- | ------- | ---------------- | ------------------------------------------------------------ |
-| metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector             |
-| metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning    |
-| metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id   |
-| metricsCollector.persistence.storageClassName                   | String  | ""               | Storage class for PVC                                        |
-| metricsCollector.persistence.pvcStorageRequestSize              | String  | "3Gi"            | Inform PV backend of minimal volume requirements             |
-| metricsCollector.collector.name                                 | String  | thoras-collector | Thoras collector container name                              |
-| metricsCollector.collector.logLevel                             | String  | Nil              | Logging level                                                |
-| metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                 |
-| metricsCollector.search.imageTag                                | String  | 8.12.1           | Elasticsearch image tag                                      |
-| metricsCollector.search.name                                    | String  | elasticsearch    | Elasticsearch container name                                 |
-| metricsCollector.search.containerPort                           | Number  | 9200             | Elasticsearch port                                           |
-| metricsCollector.purge.ttl                                      | String  | 30d              | How long to keep metrics data in Elasticsearch               |
-| metricsCollector.purge.schedule                                 | String  | 00 00 \* \* \*   | Cron expression for metrics purge job                        |
-| metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl` |
-| metricsCollector.purge.logLevel                                 | String  | Nil              | Logging level                                                |
-| metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container               |
+| Key                                                             | Type    | Default          | Description                                                                   |
+| --------------------------------------------------------------- | ------- | ---------------- | ------------------------------------------------------------------------------|
+| metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector                              |
+| metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning                     |
+| metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id                    |
+| metricsCollector.persistence.storageClassName                   | String  | ""               | Storage class for PVC                                                         |
+| metricsCollector.persistence.pvcStorageRequestSize              | String  | "3Gi"            | Inform PV backend of minimal volume requirements                              |
+| metricsCollector.collector.name                                 | String  | thoras-collector | Thoras collector container name                                               |
+| metricsCollector.collector.logLevel                             | String  | Nil              | Logging level                                                                 |
+| metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                  |
+| metricsCollector.search.imageTag                                | String  | 8.12.1           | Elasticsearch image tag                                                       |
+| metricsCollector.search.name                                    | String  | elasticsearch    | Elasticsearch container name                                                  |
+| metricsCollector.search.containerPort                           | Number  | 9200             | Elasticsearch port                                                            |
+| metricsCollector.purge.ttl                                      | String  | 30d              | How long to keep metrics data in Elasticsearch                                |
+| metricsCollector.purge.schedule                                 | String  | 00 00 \* \* \*   | Cron expression for metrics purge job                                         |
+| metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`                  |
+| metricsCollector.purge.logLevel                                 | String  | Nil              | Logging level                                                                 |
+| metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container                                |
+| metricsCollector.additionalPvSecurityContext                    | Object  | {}               | Allows assigning additional securityContext objects to workloads that use PVs |
 
 ## Thoras API Server
 
-| Key                                | Type    | Default | Description                                                  |
-| ---------------------------------- | ------- | ------- | ------------------------------------------------------------ |
-| thorasApiServer.podAnnotations     | Object  | {}      | Pod Annotations for Thoras Thoras API                        |
-| thorasApiServer.containerPort      | Number  | 8443    | Thoras API port                                              |
-| thorasApiServer.port               | Number  | 443     | Thoras API service port                                      |
-| thorasApiServer.limits.memory      | String  | 2000Mi  | Thoras API memory limit                                      |
-| thorasApiServer.requests.cpu       | String  | 1000Mi  | Thoras API CPU request                                       |
-| thorasApiServer.requests.memory    | String  | 1000Mi  | Thoras API memory request                                    |
-| thorasApiServer.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasApiServer.logLevel           | String  | Nil     | Logging level                                                |
-| thorasApiServer.timescalePrimary   | Boolean | false   | Use timescale as the primary data source, not elastic        |
-| thorasApiServer.queriesPerSecond   | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
+| Key                                           |  Type   | Default | Description                                                                   |
+| -------------------------------------         | ------- | ------- | ------------------------------------------------------------------------------|
+| thorasApiServerV2.podAnnotations              | Object  | {}      | Pod Annotations for Thoras Thoras API                                         |
+| thorasApiServerV2.containerPort               | Number  | 8443    | Thoras API port                                                               |
+| thorasApiServerV2.port                        | Number  | 443     | Thoras API service port                                                       |
+| thorasApiServerV2.limits.memory               | String  | 2000Mi  | Thoras API memory limit                                                       |
+| thorasApiServerV2.requests.cpu                | String  | 1000Mi  | Thoras API CPU request                                                        |
+| thorasApiServerV2.requests.memory             | String  | 1000Mi  | Thoras API memory request                                                     |
+| thorasApiServerV2.slackErrorsEnabled          | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl`                  |
+| thorasApiServerV2.logLevel                    | String  | Nil     | Logging level                                                                 |
+| thorasApiServerV2.timescalePrimary            | Boolean | false   | Use timescale as the primary data source, not elastic                         |
+| thorasApiServerV2.queriesPerSecond            | String  | "50"    | Sets a maximum threshold for K8s API qps                                      |
+| thorasApiServerV2.additionalPvSecurityContext | Object  | {}      | Allows assigning additional securityContext objects to workloads that use PVs |
 
 ## Thoras Dashboard
 

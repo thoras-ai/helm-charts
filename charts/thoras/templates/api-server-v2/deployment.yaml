@@ -28,12 +28,12 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
+      {{- if .Values.metricsCollector.persistence.enabled }}
       volumes:
-        {{- if .Values.metricsCollector.persistence.enabled }}
         - name: elastic-search-data
           persistentVolumeClaim:
             claimName:  elastic-search-data
-        {{- end }}
+      {{- end }}
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-postgres
@@ -68,6 +68,10 @@ spec:
         volumeMounts:
           - name: elastic-search-data
             mountPath: /var/lib/share
+          {{- with .Values.thorasApiServerV2.additionalPvSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
         {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
@@ -113,11 +117,17 @@ spec:
             value: {{ .Values.thorasApiServerV2.timescalePrimary | quote}}
           - name: SERVICE_QUERIES_PER_SECOND
             value: {{ .Values.thorasApiServerV2.queriesPerSecond | default .Values.queriesPerSecond | quote }}
+        {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
-          {{- if .Values.metricsCollector.persistence.enabled }}
           - name: elastic-search-data
             mountPath: /var/lib/share
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 0
+          {{- with .Values.thorasApiServerV2.additionalPvSecurityContext }}
+            {{- toYaml . | nindent 10 }}
           {{- end }}
+        {{- end }}
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         resources:

@@ -42,10 +42,47 @@ tests:
           value:
             - mountPath: /var/lib/share/elasticsearch
               name: elastic-search-data
-  - it: Should always create timescale container 
+  - it: Should always create timescale container
     asserts:
       - contains:
           path: $..spec.containers
           content:
             name: timescaledb
           any: true
+
+### Security context tests
+  - it: Should use additional securityContext if specified
+    set:
+      metricsCollector:
+        persistence:
+          enabled: true
+        additionalPvSecurityContext:
+          additionalField: "additionalValue"
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0,1].securityContext
+          content:
+            runAsUser: 1000
+            runAsGroup: 0
+            additionalField: "additionalValue"
+      - isSubset:
+          path: spec.template.spec.initContainers[0,1].securityContext
+          content:
+            additionalField: "additionalValue"
+  - it: Should not use additional securityContext if not specified
+    set:
+      metricsCollector:
+        persistence:
+          enabled: true
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0,1].securityContext
+          content:
+            runAsUser: 1000
+            runAsGroup: 0
+      - notExists:
+          path: spec.template.spec.initContainers[*].securityContext
+  - it: Should not have any securityContext if persistence is disabled
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[*].securityContext

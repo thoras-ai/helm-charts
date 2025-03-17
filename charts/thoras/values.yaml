@@ -70,6 +70,7 @@ metricsCollector:
     imageTag: "2.17.2-pg16"
     name: timescale
     containerPort: 5432
+  additionalPvSecurityContext: {}
 
 thorasApiServer:
   containerPort: 8443
@@ -99,6 +100,7 @@ thorasApiServerV2:
   port: 80
   logLevel: "info"
   timescalePrimary: false
+  additionalPvSecurityContext: {}
 
 thorasDashboard:
   enabled: true

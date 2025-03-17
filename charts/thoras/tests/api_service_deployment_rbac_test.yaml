@@ -1,0 +1,16 @@
+suite: API Service Layer RBAC
+templates:
+  - api-server-v2/rbac.yaml
+set:
+  thorasVersion: TEST
+  imageCredentials:
+    secretRef: test-secret-registry
+  thorasApiServerV2:
+    rbac:
+      create: true
+tests:
+  - it: Default matches snapshot
+    chart:
+      version: "4.7.0"
+    asserts:
+      - matchSnapshot: {}
