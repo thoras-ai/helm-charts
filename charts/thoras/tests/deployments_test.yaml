@@ -1,9 +1,7 @@
 suite: Deployments
 templates:
   - api-server-v2/deployment.yaml
-  # - collector/deployment.yaml
   - dashboard/deployment.yaml
-  # - monitor/deployment.yaml
   - operator/deployment.yaml
   - reasoning-api/deployment.yaml
 set:
@@ -52,3 +50,13 @@ tests:
       - equal:
           path: spec.replicas
           value: 12
+  - it: Has nodeSelector set when nodeSelector specified
+    set:
+      nodeSelector:
+        color: green
+    asserts:
+      - isSubset:
+          path: .spec.template.spec
+          content:
+            nodeSelector:
+              color: green

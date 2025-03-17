@@ -126,3 +126,7 @@ spec:
           requests:
             cpu: {{ .Values.thorasApiServerV2.requests.cpu }}
             memory: {{ .Values.thorasApiServerV2.requests.memory }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

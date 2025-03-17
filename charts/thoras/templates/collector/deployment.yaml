@@ -187,3 +187,7 @@ spec:
                 key: password
           - name: SERVICE_COLLECTION_PARALLELIZATION
             value: "{{ .Values.metricsCollector.collector.parallelization | default 20}}"
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

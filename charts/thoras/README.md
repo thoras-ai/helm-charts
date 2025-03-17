@@ -64,6 +64,7 @@ helm install \
 | slackWebhookUrl           | String  | ""                                               | Slack Webhook URL destination for notifications.             |
 | slackErrorsEnabled        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl` |
 | queriesPerSecond          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                     |
+| nodeSelector              | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads |
 
 ## Thoras Forecast
 
