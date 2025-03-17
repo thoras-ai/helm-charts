@@ -54,3 +54,14 @@ tests:
               secretKeyRef:
                 name: someSecretName
                 key: someSecretKey
+
+  - it: Has nodeSelector set when nodeSelector specified
+    set:
+      nodeSelector:
+        color: green
+    asserts:
+      - isSubset:
+          path: .spec.jobTemplate.spec.template.spec
+          content:
+            nodeSelector:
+              color: green

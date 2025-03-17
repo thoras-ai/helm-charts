@@ -51,3 +51,7 @@ spec:
               - |
                 ./metrics-collector purge metrics \
                 --metric-ttl={{ .Values.metricsCollector.purge.ttl }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

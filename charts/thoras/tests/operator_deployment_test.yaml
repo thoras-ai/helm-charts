@@ -26,3 +26,12 @@ tests:
       - equal:
           path: $.spec.template.spec.containers[0].env[?(@.name == 'MODEL_SKIP_CACHE')].value
           value: "true"
+  - it: Has FORECAST_NODE_SELECTOR set when nodeSelector specified
+    set:
+      nodeSelector:
+        color: green
+        bestGame: sekiro
+    asserts:
+      - equal:
+          path: .spec.template.spec.containers[0].env[?(@.name == 'FORECAST_NODE_SELECTOR')].value
+          value: "bestGame:sekiro,color:green"

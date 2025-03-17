@@ -92,6 +92,15 @@ spec:
             value: "{{ .Values.thorasForecast.skipCache }}"
           - name: SERVICE_QUERIES_PER_SECOND
             value: {{ .Values.thorasOperator.queriesPerSecond | default .Values.queriesPerSecond | quote }}
+          {{- with .Values.nodeSelector }}
+            {{- $result := list -}}
+            {{- range $key, $value := . }}
+              {{- $result = append $result (printf "%s:%s" $key $value) }}
+            {{- end }}
+            {{- $finalString := join "," $result }}
+          - name: FORECAST_NODE_SELECTOR
+            value: {{ $finalString }}
+          {{- end }}
         command: [
           "/app/operator"
         ]
@@ -112,3 +121,7 @@ spec:
           requests:
             cpu: {{ .Values.thorasOperator.requests.cpu }}
             memory: {{ .Values.thorasOperator.requests.memory }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

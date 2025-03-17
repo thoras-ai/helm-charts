@@ -160,3 +160,6 @@ thorasReasoning:
 
 # K8s client max queries per second
 queriesPerSecond: "50"
+
+# nodeSelector is used to assign components to specific nodes
+nodeSelector: {}

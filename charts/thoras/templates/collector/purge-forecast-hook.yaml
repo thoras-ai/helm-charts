@@ -23,3 +23,7 @@ spec:
         args:
           - |
             ./metrics-collector purge cronjobs
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
