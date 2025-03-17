@@ -26,8 +26,13 @@ spec:
               - name: SLACK_WEBHOOK_URL
                 valueFrom:
                   secretKeyRef:
+                  {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
+                    name: {{ .Values.slackWebhookUrlSecretRefName }}
+                    key: {{ .Values.slackWebhookUrlSecretRefKey }}
+                  {{- else }}
                     name: thoras-slack
                     key: webhookUrl
+                  {{- end }}
               - name: SLACK_ERRORS_ENABLED
                 value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
               - name: DATABASE_HOST

@@ -31,3 +31,26 @@ tests:
           content:
             name: "SERVICE_POSTGRESQL_DSN"
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+  - it: Uses default slack URL when no value is set
+    asserts:
+      - contains:
+          path: .spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: "SLACK_WEBHOOK_URL"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-slack
+                key: webhookUrl
+  - it: Uses custom slack secret reference when slackWebhookUrlSecretRefName set
+    set:
+      slackWebhookUrlSecretRefName: someSecretName
+      slackWebhookUrlSecretRefKey: someSecretKey
+    asserts:
+      - contains:
+          path: .spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: "SLACK_WEBHOOK_URL"
+            valueFrom:
+              secretKeyRef:
+                name: someSecretName
+                key: someSecretKey
