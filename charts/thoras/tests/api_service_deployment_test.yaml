@@ -1,16 +1,40 @@
-suite: API Service Layer
+suite: API Service Layer Deployment
 templates:
-  - api-server-v2/rbac.yaml
-set:
-  thorasVersion: TEST
-  imageCredentials:
-    secretRef: test-secret-registry
-  thorasApiServerV2:
-    rbac:
-      create: true
+  - api-server-v2/deployment.yaml
 tests:
-  - it: Default matches snapshot
-    chart:
-      version: "4.7.0"
+  - it: Should use additional securityContext if specified
+    set:
+      metricsCollector:
+        persistence:
+          enabled: true
+      thorasApiServerV2:
+        additionalPvSecurityContext:
+          additionalField: "additionalValue"
     asserts:
-      - matchSnapshot: {}
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            runAsUser: 1000
+            runAsGroup: 0
+            additionalField: "additionalValue"
+      - isSubset:
+          path: spec.template.spec.initContainers[*].securityContext
+          content:
+            additionalField: "additionalValue"
+  - it: Should not use additional securityContext if not specified
+    set:
+      metricsCollector:
+        persistence:
+          enabled: true
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[*].securityContext
+          content:
+            runAsUser: 1000
+            runAsGroup: 0
+      - notExists:
+          path: spec.template.spec.initContainers[*].securityContext
+  - it: Should not have any securityContext if persistence is disabled
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[*].securityContext
