@@ -51,6 +51,7 @@ metricsCollector:
     enabled: false
     volumeName: ""
     storageClassName: "efs-sc-thoras"
+    accessMode: "ReadWriteOnce"
     createEFSStorageClass:
       fileSystemId: ""
     pvcStorageRequestSize: "3Gi"
