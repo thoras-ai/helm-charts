@@ -36,7 +36,7 @@ tests:
       - equal:
           path: metadata.labels["app.kubernetes.io/instance"]
           value: RELEASE-NAME
-  - it: Should tolerations if specified
+  - it: Should set tolerations if specified
     template: monitor/deployment.yaml
     set:
       tolerations:

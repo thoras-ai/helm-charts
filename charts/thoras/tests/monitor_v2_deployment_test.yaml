@@ -20,7 +20,7 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
-  - it: Should tolerations if specified
+  - it: Should set tolerations if specified
     template: monitor-v2/deployment.yaml
     set:
       tolerations:

@@ -26,7 +26,7 @@ tests:
       - notExists:
           kind: Service
           name: reasoning-api
-  - it: Should tolerations if specified
+  - it: Should set tolerations if specified
     set:
       tolerations:
         - key: "example-key"

@@ -35,7 +35,7 @@ tests:
       - equal:
           path: .spec.template.spec.containers[0].env[?(@.name == 'FORECAST_NODE_SELECTOR')].value
           value: "bestGame:sekiro,color:green"
-  - it: Should tolerations if specified
+  - it: Should set tolerations if specified
     set:
       tolerations:
         - key: "example-key"

@@ -34,7 +34,7 @@ tests:
             name: nginx-config
             configMap:
               name: thoras-dashboard-nginx-config
-  - it: Should tolerations if specified
+  - it: Should set tolerations if specified
     set:
       tolerations:
         - key: "example-key"

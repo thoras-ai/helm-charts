@@ -38,7 +38,7 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.containers[*].securityContext
-  - it: Should tolerations if specified
+  - it: Should set tolerations if specified
     set:
       tolerations:
         - key: "example-key"
