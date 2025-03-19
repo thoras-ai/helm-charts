@@ -48,7 +48,13 @@ tests:
             key: "example-key"
             operator: "Exists"
             effect: "NoSchedule"
+      - equal:
+          path: .spec.template.spec.containers[0].env[?(@.name == 'SERVICE_FORECAST_TOLERATIONS')].value
+          value: '[{"effect":"NoSchedule","key":"example-key","operator":"Exists"}]'
   - it: Should not have tolerations if not specified
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
+      - equal:
+          path: .spec.template.spec.containers[0].env[?(@.name == 'SERVICE_FORECAST_TOLERATIONS')].value
+          value: "[]"
