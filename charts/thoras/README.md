@@ -50,28 +50,29 @@ helm install \
 
 ## Global
 
-| Key                       | Type    | Default                                          | Description                                                  |
-| ------------------------- | ------- | ------------------------------------------------ | ------------------------------------------------------------ |
-| thorasVersion             | String  | 4.7.0                                            | Thoras app version                                           |
-| imageCredentials.registry | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                      |
-| imageCredentials.username | String  | \_json_key_base64                                | Container registry username                                  |
-| imageCredentials.password | String  | ""                                               | Container registry auth string                               |
-| resourceQuota.enabled     | Bool    | false                                            | Enables resource quotas within Thoras                        |
-| resourceQuota.pods        | Number  | 200                                              | Maximum number of pods allowed                               |
-| resourceQuota.cronjobs    | Number  | 200                                              | Maximum number of cronjobs allowed                           |
-| resourceQuota.jobs        | Number  | 200                                              | Maximum number of jobs allowed                               |
-| logLevel                  | String  | info                                             | Default log level                                            |
-| slackWebhookUrl           | String  | ""                                               | Slack Webhook URL destination for notifications.             |
-| slackErrorsEnabled        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl` |
-| queriesPerSecond          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                     |
+| Key                       | Type    | Default                                          | Description                                                        |
+| ------------------------- | ------- | ------------------------------------------------ | ------------------------------------------------------------------ |
+| thorasVersion             | String  | 4.7.0                                            | Thoras app version                                                 |
+| imageCredentials.registry | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                            |
+| imageCredentials.username | String  | \_json_key_base64                                | Container registry username                                        |
+| imageCredentials.password | String  | ""                                               | Container registry auth string                                     |
+| resourceQuota.enabled     | Bool    | false                                            | Enables resource quotas within Thoras                              |
+| resourceQuota.pods        | Number  | 200                                              | Maximum number of pods allowed                                     |
+| resourceQuota.cronjobs    | Number  | 200                                              | Maximum number of cronjobs allowed                                 |
+| resourceQuota.jobs        | Number  | 200                                              | Maximum number of jobs allowed                                     |
+| logLevel                  | String  | info                                             | Default log level                                                  |
+| slackWebhookUrl           | String  | ""                                               | Slack Webhook URL destination for notifications.                   |
+| slackErrorsEnabled        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`       |
+| queriesPerSecond          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                           |
 | nodeSelector              | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads |
+| tolerations               | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads   |
 
 ## Thoras Forecast
 
 | Key                      | Type    | Default        | Description                                   |
 | ------------------------ | ------- | -------------- | --------------------------------------------- |
 | thorasForecast.imageTag  | String  | .thorasVersion | Image tag for Thoras Forecast job             |
-| thorasForecast.skipCache | Boolean |  false         | Directs the forecaster to skip to model cache |
+| thorasForecast.skipCache | Boolean | false          | Directs the forecaster to skip to model cache |
 
 ## Thoras Operator
 
@@ -88,7 +89,7 @@ helm install \
 ## Thoras Metrics Collector
 
 | Key                                                             | Type    | Default          | Description                                                                   |
-| --------------------------------------------------------------- | ------- | ---------------- | ------------------------------------------------------------------------------|
+| --------------------------------------------------------------- | ------- | ---------------- | ----------------------------------------------------------------------------- |
 | metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector                              |
 | metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning                     |
 | metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id                    |
@@ -109,8 +110,8 @@ helm install \
 
 ## Thoras API Server
 
-| Key                                           |  Type   | Default | Description                                                                   |
-| -------------------------------------         | ------- | ------- | ------------------------------------------------------------------------------|
+| Key                                           | Type    | Default | Description                                                                   |
+| --------------------------------------------- | ------- | ------- | ----------------------------------------------------------------------------- |
 | thorasApiServerV2.podAnnotations              | Object  | {}      | Pod Annotations for Thoras Thoras API                                         |
 | thorasApiServerV2.containerPort               | Number  | 8443    | Thoras API port                                                               |
 | thorasApiServerV2.port                        | Number  | 443     | Thoras API service port                                                       |
