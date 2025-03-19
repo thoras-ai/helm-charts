@@ -54,6 +54,7 @@ metricsCollector:
     createEFSStorageClass:
       fileSystemId: ""
     pvcStorageRequestSize: "3Gi"
+    accessMode: "ReadWriteOnce"
   podAnnotations: {}
   collector:
     name: thoras-collector
