@@ -36,3 +36,21 @@ tests:
       - equal:
           path: metadata.labels["app.kubernetes.io/instance"]
           value: RELEASE-NAME
+  - it: Should tolerations if specified
+    template: monitor/deployment.yaml
+    set:
+      tolerations:
+        - key: "example-key"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "example-key"
+            operator: "Exists"
+            effect: "NoSchedule"
+  - it: Should not have tolerations if not specified
+    asserts:
+      - notExists:
+          path: spec.template.spec.tolerations

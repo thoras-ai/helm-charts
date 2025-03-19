@@ -36,7 +36,7 @@ tests:
           value:
             - name: elastic-search-data
               persistentVolumeClaim:
-                claimName:  elastic-search-data
+                claimName: elastic-search-data
       - equal:
           path: spec.template.spec.containers[0].volumeMounts
           value:
@@ -50,7 +50,7 @@ tests:
             name: timescaledb
           any: true
 
-### Security context tests
+  ### Security context tests
   - it: Should use additional securityContext if specified
     set:
       metricsCollector:
@@ -86,3 +86,20 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.containers[*].securityContext
+  - it: Should tolerations if specified
+    set:
+      tolerations:
+        - key: "example-key"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "example-key"
+            operator: "Exists"
+            effect: "NoSchedule"
+  - it: Should not have tolerations if not specified
+    asserts:
+      - notExists:
+          path: spec.template.spec.tolerations
