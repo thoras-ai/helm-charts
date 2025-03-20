@@ -35,3 +35,26 @@ tests:
       - equal:
           path: .spec.template.spec.containers[0].env[?(@.name == 'FORECAST_NODE_SELECTOR')].value
           value: "bestGame:sekiro,color:green"
+  - it: Should set tolerations if specified
+    set:
+      tolerations:
+        - key: "example-key"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "example-key"
+            operator: "Exists"
+            effect: "NoSchedule"
+      - equal:
+          path: .spec.template.spec.containers[0].env[?(@.name == 'SERVICE_FORECAST_TOLERATIONS')].value
+          value: '[{"effect":"NoSchedule","key":"example-key","operator":"Exists"}]'
+  - it: Should not have tolerations if not specified
+    asserts:
+      - notExists:
+          path: spec.template.spec.tolerations
+      - equal:
+          path: .spec.template.spec.containers[0].env[?(@.name == 'SERVICE_FORECAST_TOLERATIONS')].value
+          value: "[]"

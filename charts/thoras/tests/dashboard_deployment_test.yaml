@@ -34,3 +34,20 @@ tests:
             name: nginx-config
             configMap:
               name: thoras-dashboard-nginx-config
+  - it: Should set tolerations if specified
+    set:
+      tolerations:
+        - key: "example-key"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "example-key"
+            operator: "Exists"
+            effect: "NoSchedule"
+  - it: Should not have tolerations if not specified
+    asserts:
+      - notExists:
+          path: spec.template.spec.tolerations

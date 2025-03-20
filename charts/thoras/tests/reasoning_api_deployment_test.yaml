@@ -1,11 +1,13 @@
 suite: Reasoning
 templates:
   - reasoning-api/deployment.yaml
+set:
+  thorasReasoning:
+    enabled: true
 tests:
   - it: Set prometheus URL correctly
     set:
       thorasReasoning:
-        enabled: true
         connectors:
           prometheus:
             baseUrl: "http://whats-good"
@@ -24,3 +26,20 @@ tests:
       - notExists:
           kind: Service
           name: reasoning-api
+  - it: Should set tolerations if specified
+    set:
+      tolerations:
+        - key: "example-key"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "example-key"
+            operator: "Exists"
+            effect: "NoSchedule"
+  - it: Should not have tolerations if not specified
+    asserts:
+      - notExists:
+          path: spec.template.spec.tolerations
