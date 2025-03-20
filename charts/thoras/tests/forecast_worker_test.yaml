@@ -1,0 +1,49 @@
+suite: forecast-worker
+templates:
+  - forecast-worker/deployment.yaml
+set:
+  thorasForecast:
+    imageTag: "TEST"
+    worker:
+      enabled: true
+tests:
+  - it: Ensure SERVICE_REASONING_ENABLED not exists when reasoning is disabled
+    set:
+      thorasForecast:
+        worker:
+          replicas: 10
+          pollingInterval: 30
+          limits:
+            memory: 2.5Gi
+            cpu: 4
+          requests:
+            cpu: 1500m
+            memory: 100Mi
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: thoras-forecast-worker
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:TEST
+      - equal:
+          path: spec.replicas
+          value: 10
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests
+          value:
+            cpu: 1500m
+            memory: 100Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits
+          value:
+            memory: 2.5Gi
+            cpu: 4
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value:
+            - "worker"
+            - "--polling_interval"
+            - "30"
