@@ -1,0 +1,61 @@
+{{- if .Values.thorasForecast.worker.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-forecast-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas:  {{ .Values.thorasForecast.worker.replicas }}
+  selector:
+    matchLabels:
+      app: thoras-forecast-worker
+  template:
+    metadata:
+      labels:
+        app: thoras-forecast-worker
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        {{- with .Values.thorasForecast.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: thoras-operator
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        name: thoras-forecast-worker
+        command: [
+          "worker",
+          "--polling_interval",
+          "{{ .Values.thorasForecast.worker.pollingInterval }}"
+        ]
+        env:
+          - name: "LOGLEVEL"
+            value: {{ default .Values.logLevel .Values.thorasForecast.logLevel }}
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2"
+        resources:
+          requests:
+            cpu: {{ .Values.thorasForecast.worker.requests.cpu }}
+            memory: {{ .Values.thorasForecast.worker.requests.memory }}
+          limits:
+            cpu: {{ .Values.thorasForecast.worker.limits.cpu }}
+            memory: {{ .Values.thorasForecast.worker.limits.memory }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

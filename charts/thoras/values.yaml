@@ -136,6 +136,17 @@ thorasMonitorV2:
 thorasForecast:
   skipCache: false
   requestCpu:
+  worker:
+    enabled: false
+    replicas: 1
+    pollingInterval: 15
+    podAnnotations: {}
+    limits:
+      memory: 2Gi
+      cpu: 2
+    requests:
+      cpu: 1
+      memory: 250Mi
 
 thorasAgent:
   enabled: false
