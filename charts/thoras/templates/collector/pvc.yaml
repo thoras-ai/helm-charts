@@ -16,7 +16,7 @@ spec:
   {{- end }}
   storageClassName: {{ .Values.metricsCollector.persistence.storageClassName }}
   accessModes:
-    - ReadWriteOnce
+    - {{ .Values.metricsCollector.persistence.accessMode | default "ReadWriteOnce" }}
   resources:
     requests:
       storage: {{ .Values.metricsCollector.persistence.pvcStorageRequestSize }}
