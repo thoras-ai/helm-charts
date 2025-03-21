@@ -101,7 +101,7 @@ spec:
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
-        - containerPort: 5432
+        - containerPort: {{ .Values.metricsCollector.timescale.containerPort }}
         env:
           - name: "POSTGRES_PASSWORD"
             valueFrom:
