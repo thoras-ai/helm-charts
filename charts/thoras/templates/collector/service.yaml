@@ -24,3 +24,16 @@ spec:
     targetPort: {{ .Values.metricsCollector.timescale.containerPort }}
   selector:
     app: metrics-collector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-blob-api
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - port: {{ .Values.metricsCollector.blobService.containerPort }}
+    protocol: TCP
+    targetPort: {{ .Values.metricsCollector.blobService.containerPort }}
+  selector:
+    app: metrics-collector

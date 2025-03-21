@@ -71,6 +71,8 @@ metricsCollector:
     imageTag: "2.17.2-pg16"
     name: timescale
     containerPort: 5432
+  blobService:
+    containerPort: 80
   additionalPvSecurityContext: {}
 
 thorasApiServerV2:

@@ -37,7 +37,10 @@ spec:
         args:
           - |
             mkdir -p /var/lib/share/elasticsearch/data
+
+            # migrate non-elastic data to the new location
             find /var/lib/share/elasticsearch -not -name postgresql -not -name data -not -name blobs -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/elasticsearch/data \;
+
             chown -R 1000:0 /var/lib/share/elasticsearch/data
             rm -f /var/lib/share/elasticsearch/data/node.lock
         {{- with .Values.metricsCollector.additionalPvSecurityContext }}
@@ -47,13 +50,18 @@ spec:
         volumeMounts:
           - mountPath: /var/lib/share/elasticsearch
             name: elastic-search-data
-      - name: fix-timescale-dir-ownership
+      - name: fix-dir-ownership
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
         command: ["/bin/sh", "-c"]
         args:
           - |
+            # fix timescale directory
             mkdir -p /var/lib/share/postgresql
             chown -R 1000:1000 /var/lib/share/postgresql
+
+            # fix blobs directory
+            mkdir -p /var/lib/share/blobs
+            chown -R 1000:1000 /var/lib/share/blobs
         {{- with .Values.metricsCollector.additionalPvSecurityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
@@ -201,6 +209,38 @@ spec:
                 key: password
           - name: SERVICE_COLLECTION_PARALLELIZATION
             value: "{{ .Values.metricsCollector.collector.parallelization | default 20}}"
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        name: thoras-blob-api
+        command: ["/app/blob-service", "-p", "80"]
+        env:
+          - name: SERVICE_SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
+                name: {{ .Values.slackWebhookUrlSecretRefName }}
+                key: {{ .Values.slackWebhookUrlSecretRefKey }}
+            {{- else }}
+                name: thoras-slack
+                key: webhookUrl
+            {{- end }}
+          - name: SERVICE_SLACK_ERRORS_ENABLED
+            value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+          - name: "SERVICE_LOG_LEVEL"
+            value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
+          - name: SERVICE_STORAGE_FILE_PATH
+            value: "/var/lib/share"
+        {{- if .Values.metricsCollector.persistence.enabled }}
+        volumeMounts:
+          - mountPath: /var/lib/share
+            name: elastic-search-data
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 0
+          {{- with .Values.metricsCollector.additionalPvSecurityContext }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
