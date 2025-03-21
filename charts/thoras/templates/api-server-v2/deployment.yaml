@@ -59,13 +59,15 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-v2-api-server
-        command: ["/app/api-server", "-p", {{ .Values.thorasApiServerV2.containerPort | quote }}]
+        command: ["/app/api-server"]
         env:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: host
+          - name: SERVICE_PORT
+            value: {{ .Values.thorasApiServerV2.containerPort | quote }}
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras"
           - name: "ELASTICSEARCH_URL"

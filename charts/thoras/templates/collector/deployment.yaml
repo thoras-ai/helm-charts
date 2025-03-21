@@ -212,8 +212,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
-        command: ["/app/blob-service", "-p", "80"]
+        command: ["/app/blob-service"]
         env:
+          - name: SERVICE_PORT
+            value: {{ .Values.metricsCollector.blobService.containerPort | quote }}
           - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:

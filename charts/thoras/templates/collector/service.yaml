@@ -32,7 +32,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   ports:
-  - port: {{ .Values.metricsCollector.blobService.containerPort }}
+  - port: {{ .Values.metricsCollector.blobService.port }}
     protocol: TCP
     targetPort: {{ .Values.metricsCollector.blobService.containerPort }}
   selector:

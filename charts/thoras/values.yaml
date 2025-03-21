@@ -72,7 +72,8 @@ metricsCollector:
     name: timescale
     containerPort: 5432
   blobService:
-    containerPort: 80
+    containerPort: 8080
+    port: 80
   additionalPvSecurityContext: {}
 
 thorasApiServerV2:
