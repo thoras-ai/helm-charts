@@ -15,12 +15,25 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.metricsCollector.timescale.name }}
+  name: timescale
   namespace: {{ .Release.Namespace }}
 spec:
   ports:
   - port: {{ .Values.metricsCollector.timescale.containerPort }}
     protocol: TCP
     targetPort: {{ .Values.metricsCollector.timescale.containerPort }}
+  selector:
+    app: metrics-collector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-blob-api
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - port: {{ .Values.metricsCollector.blobService.port }}
+    protocol: TCP
+    targetPort: {{ .Values.metricsCollector.blobService.containerPort }}
   selector:
     app: metrics-collector

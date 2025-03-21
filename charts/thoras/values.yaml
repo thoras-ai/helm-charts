@@ -71,19 +71,10 @@ metricsCollector:
     imageTag: "2.17.2-pg16"
     name: timescale
     containerPort: 5432
+  blobService:
+    containerPort: 8080
+    port: 80
   additionalPvSecurityContext: {}
-
-thorasApiServer:
-  containerPort: 8443
-  replicas: 1
-  podAnnotations: {}
-  limits:
-    memory: 2000Mi
-  requests:
-    cpu: 100m
-    memory: 100Mi
-  port: 443
-  logLevel: "debug"
 
 thorasApiServerV2:
   rbac:

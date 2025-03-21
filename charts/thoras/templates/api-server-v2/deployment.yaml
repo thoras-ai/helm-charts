@@ -28,12 +28,6 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
-      {{- if .Values.metricsCollector.persistence.enabled }}
-      volumes:
-        - name: elastic-search-data
-          persistentVolumeClaim:
-            claimName:  elastic-search-data
-      {{- end }}
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-postgres
@@ -60,30 +54,20 @@ spec:
             if [ $retries -ge $max_retries ]; then
               echo "Failed to connect to database after $max_retries retries"
               exit 1
-            else
-              mkdir -p /var/lib/share/blobs
-              chown -R 1000:1000 /var/lib/share/blobs
             fi
-        {{- if .Values.metricsCollector.persistence.enabled }}
-        volumeMounts:
-          - name: elastic-search-data
-            mountPath: /var/lib/share
-          {{- with .Values.thorasApiServerV2.additionalPvSecurityContext }}
-        securityContext:
-          {{- toYaml . | nindent 10 }}
-          {{- end }}
-        {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-v2-api-server
-        command: ["/app/api-server", "-p", {{ .Values.thorasApiServerV2.containerPort | quote }}]
+        command: ["/app/api-server"]
         env:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: host
+          - name: SERVICE_PORT
+            value: {{ .Values.thorasApiServerV2.containerPort | quote }}
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras"
           - name: "ELASTICSEARCH_URL"
@@ -111,23 +95,12 @@ spec:
             value: {{ .Values.thorasReasoning.connectors.prometheus.baseUrl }}
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
-          - name: SERVICE_STORAGE_FILE_PATH
-            value: "/var/lib/share"
+          - name: SERVICE_BLOB_SERVICE_API_URL
+            value: "http://thoras-blob-api.thoras.svc.cluster.local"
           - name: SERVICE_TIMESCALE_PRIMARY
             value: {{ .Values.thorasApiServerV2.timescalePrimary | quote}}
           - name: SERVICE_QUERIES_PER_SECOND
             value: {{ .Values.thorasApiServerV2.queriesPerSecond | default .Values.queriesPerSecond | quote }}
-        {{- if .Values.metricsCollector.persistence.enabled }}
-        volumeMounts:
-          - name: elastic-search-data
-            mountPath: /var/lib/share
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 0
-          {{- with .Values.thorasApiServerV2.additionalPvSecurityContext }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-        {{- end }}
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         resources:
