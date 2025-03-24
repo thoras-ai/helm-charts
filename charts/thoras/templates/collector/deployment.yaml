@@ -36,31 +36,15 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /var/lib/share/elasticsearch/data
+            mkdir -p /var/lib/share/data
 
             # migrate non-elastic data to the new location
-            find /var/lib/share/elasticsearch -not -name postgresql -not -name data -not -name blobs -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/elasticsearch/data \;
+            find /var/lib/share -not -name postgresql -not -name data -not -name blobs -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/data \;
 
-            chown -R 1000:0 /var/lib/share/elasticsearch/data
-            rm -f /var/lib/share/elasticsearch/data/node.lock
-        resources:
-          limits:
-            memory: {{ .Values.metricsCollector.init.limits.memory }}
-          requests:
-            cpu: {{ .Values.metricsCollector.init.requests.cpu }}
-            memory: {{ .Values.metricsCollector.init.requests.memory }}
-        {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-        securityContext:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
-        volumeMounts:
-          - mountPath: /var/lib/share/elasticsearch
-            name: elastic-search-data
-      - name: fix-dir-ownership-postgresql
-        image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
+            # fix elastic directory permissions
+            chown -R 1000:1000 /var/lib/share/data
+            rm -f /var/lib/share/data/node.lock
+
             # fix timescale directory
             mkdir -p /var/lib/share/postgresql
             chown -R 1000:1000 /var/lib/share/postgresql
