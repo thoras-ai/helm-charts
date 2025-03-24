@@ -50,7 +50,7 @@ spec:
         volumeMounts:
           - mountPath: /var/lib/share/elasticsearch
             name: elastic-search-data
-      - name: fix-dir-ownership
+      - name: fix-dir-ownership-postgresql
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
         command: ["/bin/sh", "-c"]
         args:
