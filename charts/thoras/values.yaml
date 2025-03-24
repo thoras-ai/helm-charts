@@ -58,22 +58,47 @@ metricsCollector:
   podAnnotations: {}
   collector:
     name: thoras-collector
+    limits:
+      memory: "8192Mi"
+    requests:
+      cpu: "16m"
+      memory: "32Mi"
   search:
     imageTag: "8.12.1"
     name: elasticsearch
     containerPort: 9200
+    limits:
+      memory: "8192Mi"
+    requests:
+      cpu: "16m"
+      memory: "1536Mi"
   purge:
     ttl: 30
     schedule: "00 00 * * *"
   init:
     imageTag: "latest"
+    limits:
+      memory: "8192Mi"
+    requests:
+      cpu: "16m"
+      memory: "32Mi"
   timescale:
     imageTag: "2.17.2-pg16"
     name: timescale
     containerPort: 5432
+    limits:
+      memory: "8192Mi"
+    requests:
+      cpu: "16m"
+      memory: "128Mi"
   blobService:
     containerPort: 8080
     port: 80
+    limits:
+      memory: "8192Mi"
+    requests:
+      cpu: "16m"
+      memory: "128Mi"
   additionalPvSecurityContext: {}
 
 thorasApiServerV2:
@@ -119,11 +144,23 @@ thorasDashboard:
 
 thorasMonitor:
   enabled: false
+  unittesting: false
+  limits:
+    memory: "8192Mi"
+  requests:
+    cpu: "16m"
+    memory: "64Mi"
   podAnnotations: {}
   config: |
 
 thorasMonitorV2:
   enabled: false
+  unittesting: false
+  limits:
+    memory: "8192Mi"
+  requests:
+    cpu: "16m"
+    memory: "32Mi"
 
 thorasForecast:
   skipCache: false

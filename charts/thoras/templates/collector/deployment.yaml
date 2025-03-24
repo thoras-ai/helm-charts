@@ -43,6 +43,12 @@ spec:
 
             chown -R 1000:0 /var/lib/share/elasticsearch/data
             rm -f /var/lib/share/elasticsearch/data/node.lock
+        resources:
+          limits:
+            memory: {{ .Values.metricsCollector.init.limits.memory }}
+          requests:
+            cpu: {{ .Values.metricsCollector.init.requests.cpu }}
+            memory: {{ .Values.metricsCollector.init.requests.memory }}
         {{- with .Values.metricsCollector.additionalPvSecurityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
@@ -62,6 +68,12 @@ spec:
             # fix blobs directory
             mkdir -p /var/lib/share/blobs
             chown -R 1000:1000 /var/lib/share/blobs
+        resources:
+          limits:
+            memory: {{ .Values.metricsCollector.init.limits.memory }}
+          requests:
+            cpu: {{ .Values.metricsCollector.init.requests.cpu }}
+            memory: {{ .Values.metricsCollector.init.requests.memory }}
         {{- with .Values.metricsCollector.additionalPvSecurityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
@@ -94,6 +106,12 @@ spec:
               secretKeyRef:
                 name: thoras-elastic-password
                 key: password
+        resources:
+          limits:
+            memory: {{ .Values.metricsCollector.search.limits.memory }}
+          requests:
+            cpu: {{ .Values.metricsCollector.search.requests.cpu }}
+            memory: {{ .Values.metricsCollector.search.requests.memory }}
         {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
           - mountPath: /var/lib/share/elasticsearch
@@ -118,6 +136,12 @@ spec:
                 key: password
           - name: "PGDATA"
             value: /var/lib/share/postgresql
+        resources:
+          limits:
+            memory: {{ .Values.metricsCollector.timescale.limits.memory }}
+          requests:
+            cpu: {{ .Values.metricsCollector.timescale.requests.cpu }}
+            memory: {{ .Values.metricsCollector.timescale.requests.memory }}
         {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
           - mountPath: /var/lib/share
@@ -209,6 +233,12 @@ spec:
                 key: password
           - name: SERVICE_COLLECTION_PARALLELIZATION
             value: "{{ .Values.metricsCollector.collector.parallelization | default 20}}"
+        resources:
+          limits:
+            memory: {{ .Values.metricsCollector.collector.limits.memory }}
+          requests:
+            cpu: {{ .Values.metricsCollector.collector.requests.cpu }}
+            memory: {{ .Values.metricsCollector.collector.requests.memory }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
@@ -232,6 +262,12 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
           - name: SERVICE_STORAGE_FILE_PATH
             value: "/var/lib/share"
+        resources:
+          limits:
+            memory: {{ .Values.metricsCollector.blobService.limits.memory }}
+          requests:
+            cpu: {{ .Values.metricsCollector.blobService.requests.cpu }}
+            memory: {{ .Values.metricsCollector.blobService.requests.memory }}
         {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
           - mountPath: /var/lib/share

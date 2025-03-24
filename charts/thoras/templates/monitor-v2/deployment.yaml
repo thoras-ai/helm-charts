@@ -48,6 +48,12 @@ spec:
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_THORAS_API_BASE_URL
             value: "http://thoras-api-server-v2"
+        resources:
+          limits:
+            memory: {{ .Values.thorasMonitorV2.limits.memory }}
+          requests:
+            cpu: {{ .Values.thorasMonitorV2.requests.cpu }}
+            memory: {{ .Values.thorasMonitorV2.requests.memory }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

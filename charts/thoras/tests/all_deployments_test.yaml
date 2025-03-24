@@ -1,0 +1,27 @@
+suite: All Deployments
+templates:
+  - "*/deployment.yaml"
+set:
+  # Enable all deployments
+  thorasForecast:
+    worker:
+      enabled: true
+  thorasMonitor:
+    enabled: true
+    unittesting: true
+  thorasMonitorV2:
+    enabled: true
+    unittesting: true
+  thorasReasoning:
+    enabled: true
+tests:
+  - it: Object type correct
+    asserts:
+      - isKind:
+          of: Deployment
+  - it: Ensure resource requests and limits set
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[*].resources.limits
+      - exists:
+          path: spec.template.spec.containers[*].resources.requests
