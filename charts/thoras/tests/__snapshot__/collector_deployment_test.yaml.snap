@@ -19,6 +19,12 @@ Default containers should match snapshots:
     name: elasticsearch
     ports:
       - containerPort: 9200
+    resources:
+      limits:
+        memory: 8192Mi
+      requests:
+        cpu: 16m
+        memory: 1536Mi
   2: |
     args:
       - |
@@ -97,3 +103,9 @@ Default containers should match snapshots:
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     name: thoras-collector
+    resources:
+      limits:
+        memory: 8192Mi
+      requests:
+        cpu: 16m
+        memory: 32Mi

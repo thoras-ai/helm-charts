@@ -24,7 +24,9 @@ spec:
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
       annotations:
+        {{- if not .Values.thorasMonitor.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
+        {{- end }}
         {{- with .Values.thorasMonitor.podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -86,6 +88,12 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasMonitor.logLevel }}
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
+        resources:
+          limits:
+            memory: {{ .Values.thorasMonitor.limits.memory }}
+          requests:
+            cpu: {{ .Values.thorasMonitor.requests.cpu }}
+            memory: {{ .Values.thorasMonitor.requests.memory }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

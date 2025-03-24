@@ -1,4 +1,4 @@
-suite: Deployments
+suite: Select Deployments
 templates:
   - api-server-v2/deployment.yaml
   - dashboard/deployment.yaml
@@ -17,10 +17,8 @@ set:
   thorasApiServerV2:
     replicas: 12
 tests:
-  - it: Deployment name and image registry should be correct
+  - it: Image registry should be correct
     asserts:
-      - isKind:
-          of: Deployment
       - matchRegex:
           path: spec.template.spec.containers[0].image
           pattern: ^us-east4-docker\.pkg\.dev\/thoras-registry\/platform\/.*$

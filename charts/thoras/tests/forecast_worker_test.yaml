@@ -1,4 +1,4 @@
-suite: forecast-worker
+suite: Forecast Worker
 templates:
   - forecast-worker/deployment.yaml
 set:
