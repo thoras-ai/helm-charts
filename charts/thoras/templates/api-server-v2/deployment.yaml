@@ -101,6 +101,10 @@ spec:
             value: {{ .Values.thorasApiServerV2.timescalePrimary | quote}}
           - name: SERVICE_QUERIES_PER_SECOND
             value: {{ .Values.thorasApiServerV2.queriesPerSecond | default .Values.queriesPerSecond | quote }}
+          - name: SERVICE_THORAS_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         resources:
