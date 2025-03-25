@@ -14,11 +14,6 @@ set:
     unittesting: true
   thorasReasoning:
     enabled: true
-  tolerations:
-    - key: "key"
-      operator: "Equal"
-      value: "value"
-      effect: "NoSchedule"
 tests:
   - it: Object type correct
     asserts:
@@ -31,6 +26,12 @@ tests:
       - exists:
           path: spec.template.spec.containers[*].resources.requests
   - it: Has correct tolerations
+    set:
+      tolerations:
+        - key: "key"
+          operator: "Equal"
+          value: "value"
+          effect: "NoSchedule"
     asserts:
       - contains:
           path: spec.template.spec.tolerations
@@ -39,3 +40,13 @@ tests:
             operator: "Equal"
             value: "value"
             effect: "NoSchedule"
+  - it: Has nodeSelector set when nodeSelector specified
+    set:
+      nodeSelector:
+        color: green
+    asserts:
+      - isSubset:
+          path: .spec.template.spec
+          content:
+            nodeSelector:
+              color: green

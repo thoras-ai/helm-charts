@@ -46,13 +46,3 @@ tests:
       - equal:
           path: spec.replicas
           value: 12
-  - it: Has nodeSelector set when nodeSelector specified
-    set:
-      nodeSelector:
-        color: green
-    asserts:
-      - isSubset:
-          path: .spec.template.spec
-          content:
-            nodeSelector:
-              color: green
