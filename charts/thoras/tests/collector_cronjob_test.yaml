@@ -1,6 +1,12 @@
 suite: CollectorCronjob
 templates:
   - collector/cronjob.yaml
+set:
+  tolerations:
+    - key: "key"
+      operator: "Equal"
+      value: "value"
+      effect: "NoSchedule"
 tests:
   - it: Should have the correct kind, name and image
     set:
@@ -65,3 +71,13 @@ tests:
           content:
             nodeSelector:
               color: green
+
+  - it: Has correct node tolerations
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.tolerations
+          content:
+            key: "key"
+            operator: "Equal"
+            value: "value"
+            effect: "NoSchedule"
