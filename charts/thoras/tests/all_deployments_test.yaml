@@ -14,6 +14,11 @@ set:
     unittesting: true
   thorasReasoning:
     enabled: true
+  tolerations:
+    - key: "key"
+      operator: "Equal"
+      value: "value"
+      effect: "NoSchedule"
 tests:
   - it: Object type correct
     asserts:
@@ -25,3 +30,12 @@ tests:
           path: spec.template.spec.containers[*].resources.limits
       - exists:
           path: spec.template.spec.containers[*].resources.requests
+  - it: Has correct tolerations
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "key"
+            operator: "Equal"
+            value: "value"
+            effect: "NoSchedule"
