@@ -45,6 +45,8 @@ thorasOperator:
   requests:
     cpu: 100m
     memory: 100Mi
+  forecastQueue:
+    enabled: false
 
 metricsCollector:
   persistence:

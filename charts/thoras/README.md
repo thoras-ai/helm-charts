@@ -76,15 +76,16 @@ helm install \
 
 ## Thoras Operator
 
-| Key                               | Type    | Default | Description                                                  |
-| --------------------------------- | ------- | ------- | ------------------------------------------------------------ |
-| thorasOperator.podAnnotations     | Object  | {}      | Pod Annotations for Thoras Operator                          |
-| thorasOperator.limits.memory      | String  | 2000Mi  | Thoras Operator memory limit                                 |
-| thorasOperator.requests.cpu       | String  | 1000m   | Thoras Operator CPU request                                  |
-| thorasOperator.requests.memory    | String  | 1000Mi  | Thoras Operator memory request                               |
-| thorasOperator.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasOperator.logLevel           | String  | Nil     | Logging level                                                |
-| thorasOperator.queriesPerSecond   | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
+| Key                                  | Type    | Default | Description                                                  |
+| ------------------------------------ | ------- | ------- | ------------------------------------------------------------ |
+| thorasOperator.podAnnotations        | Object  | {}      | Pod Annotations for Thoras Operator                          |
+| thorasOperator.limits.memory         | String  | 2000Mi  | Thoras Operator memory limit                                 |
+| thorasOperator.requests.cpu          | String  | 1000m   | Thoras Operator CPU request                                  |
+| thorasOperator.requests.memory       | String  | 1000Mi  | Thoras Operator memory request                               |
+| thorasOperator.slackErrorsEnabled    | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
+| thorasOperator.logLevel              | String  | Nil     | Logging level                                                |
+| thorasOperator.queriesPerSecond      | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
+| thorasOperator.forecastQueue.enabled | Boolean | false   | Determines if forecasts will be queued by the operator       |
 
 ## Thoras Metrics Collector
 
