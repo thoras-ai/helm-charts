@@ -56,10 +56,14 @@ spec:
             {{- end }}
           - name: "THORAS_VERSION"
             value: {{ .Chart.Version | replace "+" "_" }}
-          {{- if .Values.thorasForecast.requestCpu }}
           - name: "FORECAST_RESOURCE_REQUESTS_CPU"
-            value: {{ .Values.thorasForecast.requestCpu | quote }}
-          {{- end }}
+            value: {{ .Values.thorasForecast.requests.cpu | quote }}
+          - name: "FORECAST_RESOURCE_LIMITS_CPU"
+            value: {{ .Values.thorasForecast.limits.cpu | quote }}
+          - name: "FORECAST_RESOURCE_REQUESTS_MEMORY"
+            value: {{ .Values.thorasForecast.requests.memory | quote }}
+          - name: "FORECAST_RESOURCE_LIMITS_MEMORY"
+            value: {{ .Values.thorasForecast.limits.memory | quote }}
           - name: "MODEL_IMAGE"
             value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
           - name: THORAS_NS
