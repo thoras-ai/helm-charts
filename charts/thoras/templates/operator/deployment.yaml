@@ -105,10 +105,8 @@ spec:
           - name: FORECAST_NODE_SELECTOR
             value: {{ $finalString }}
           {{- end }}
-          {{- if .Values.thorasOperator.forecastQueue.enabled }}
           - name: SERVICE_ENQUEUE_FORECASTS
-            value: true
-          {{- end }}
+            value: {{ .Values.thorasOperator.forecastQueue.enabled | quote }}
           - name: SERVICE_FORECAST_TOLERATIONS
             value: {{ .Values.tolerations | toJson | quote }}
         command: [
