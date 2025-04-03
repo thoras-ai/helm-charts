@@ -73,6 +73,13 @@ helm install \
 | ------------------------ | ------- | -------------- | --------------------------------------------- |
 | thorasForecast.imageTag  | String  | .thorasVersion | Image tag for Thoras Forecast job             |
 | thorasForecast.skipCache | Boolean | false          | Directs the forecaster to skip to model cache |
+| thorasForecast.worker.enabled | Boolean | false          | Determines whether or not to spin up `thoras-forecast-worker` deployment (required if `thorasOperator.forecastQueue.enabled = true`) |
+| thorasForecast.worker.replicas  | Number  | 1 | Number of `thoras-forecast-worker` replicas to use             |
+| thorasForecast.worker.pollingInterval  | Number  | 15 | Polling interval to check for work for `thoras-forecast-workers`      |
+| thorasForecast.worker.forecastTimeout  | Number  | 600 | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`   |
+
+
+
 
 ## Thoras Operator
 
