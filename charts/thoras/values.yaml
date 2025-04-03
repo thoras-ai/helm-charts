@@ -183,6 +183,7 @@ thorasForecast:
     requests:
       cpu: 1
       memory: 250Mi
+    forecastTimeout: 600
 
 thorasAgent:
   enabled: false

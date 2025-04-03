@@ -43,6 +43,8 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasForecast.logLevel }}
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
+          - name: FORECAST_TIMEOUT
+            value: "{{ default 600 .Values.thorasForecast.worker.forecastTimeout }}"
         resources:
           requests:
             cpu: {{ .Values.thorasForecast.worker.requests.cpu }}

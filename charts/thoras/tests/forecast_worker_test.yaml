@@ -19,6 +19,7 @@ tests:
           requests:
             cpu: 1500m
             memory: 100Mi
+          forecastTimeout: 600
     asserts:
       - isKind:
           of: Deployment
@@ -47,3 +48,12 @@ tests:
             - "worker"
             - "--polling_interval"
             - "30"
+      - equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: "LOGLEVEL"
+              value: info
+            - name: API_BASE_URL
+              value: "http://thoras-api-server-v2"
+            - name: FORECAST_TIMEOUT
+              value: "600"
