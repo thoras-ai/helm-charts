@@ -99,6 +99,11 @@ spec:
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         command: ["/app/monitor"]
+        volumeMounts:
+          - name: config
+            mountPath: /app/config.yaml
+            subPath: config.yaml
+            readOnly: true
         env:
           - name: SERVICE_LOG_LEVEL
             value: {{ .Values.thorasMonitor.logLevel | default .Values.thorasMonitor.logLevel | default .Values.logLevel | quote }}
