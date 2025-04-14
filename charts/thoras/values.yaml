@@ -157,12 +157,6 @@ thorasMonitor:
 
 thorasMonitorV2:
   enabled: false
-  unittesting: false
-  limits:
-    memory: "8192Mi"
-  requests:
-    cpu: "16m"
-    memory: "32Mi"
 
 thorasForecast:
   skipCache: false

@@ -118,8 +118,10 @@ spec:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: password
+        {{- if .Values.metricsCollector.persistence.enabled }}
           - name: "PGDATA"
             value: /var/lib/share/postgresql
+        {{- end }}
         resources:
           limits:
             memory: {{ .Values.metricsCollector.timescale.limits.memory }}

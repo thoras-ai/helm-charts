@@ -36,6 +36,23 @@ tests:
       - equal:
           path: metadata.labels["app.kubernetes.io/instance"]
           value: RELEASE-NAME
+  - it: Should not create v2 monitor container when not enabled
+    template: monitor/deployment.yaml
+    asserts:
+      - exists:
+          path: $..spec.containers[?(@.name == 'thoras-monitor')]
+      - notExists:
+          path: $..spec.containers[?(@.name == 'thoras-monitor-v2')]
+  - it: Should create v2 monitor container when enabled
+    template: monitor/deployment.yaml
+    set:
+      thorasMonitorV2:
+        enabled: true
+    asserts:
+      - exists:
+          path: $..spec.containers[?(@.name == 'thoras-monitor')]
+      - exists:
+          path: $..spec.containers[?(@.name == 'thoras-monitor-v2')]
   - it: Should set tolerations if specified
     template: monitor/deployment.yaml
     set:
