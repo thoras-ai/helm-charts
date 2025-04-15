@@ -1,4 +1,4 @@
-{{- if .Values.thorasMonitorV2.enabled }}
+{{- if .Values.thorasMonitor.enabled }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -8,7 +8,7 @@ metadata:
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-  name: thoras-monitor-v2
+  name: thoras-monitor
   namespace: {{ .Release.Namespace }}
 imagePullSecrets:
 {{- if .Values.imageCredentials.secretRef }}
@@ -25,7 +25,7 @@ metadata:
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-  name: thoras-monitor-v2
+  name: thoras-monitor
 rules:
 - apiGroups:
   - '*'
@@ -79,14 +79,14 @@ metadata:
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-  name: thoras-monitor-v2
+  name: thoras-monitor
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: thoras-monitor-v2
+  name: thoras-monitor
 subjects:
 - kind: ServiceAccount
-  name: thoras-monitor-v2
+  name: thoras-monitor
   namespace: {{ .Release.Namespace }}
 {{- end }}
