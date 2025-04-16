@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.17.1
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: aiscaletargets.thoras.ai
 spec:
   group: thoras.ai
@@ -538,6 +538,37 @@ spec:
                     - recommend
                     - rec
                     type: string
+                  scaling_behavior:
+                    description: Rules for how large a proposed scale event must be
+                      before triggering
+                    properties:
+                      scale_down:
+                        properties:
+                          percent:
+                            format: int32
+                            minimum: 0
+                            type: integer
+                          type:
+                            enum:
+                            - percent
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      scale_up:
+                        properties:
+                          percent:
+                            format: int32
+                            minimum: 0
+                            type: integer
+                          type:
+                            enum:
+                            - percent
+                            type: string
+                        required:
+                        - type
+                        type: object
+                    type: object
                 required:
                 - mode
                 type: object
@@ -647,6 +678,37 @@ spec:
                     - recommend
                     - rec
                     type: string
+                  scaling_behavior:
+                    description: Rules for how large a proposed scale event must be
+                      before triggering
+                    properties:
+                      scale_down:
+                        properties:
+                          percent:
+                            format: int32
+                            minimum: 0
+                            type: integer
+                          type:
+                            enum:
+                            - percent
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      scale_up:
+                        properties:
+                          percent:
+                            format: int32
+                            minimum: 0
+                            type: integer
+                          type:
+                            enum:
+                            - percent
+                            type: string
+                        required:
+                        - type
+                        type: object
+                    type: object
                 required:
                 - containers
                 - mode
