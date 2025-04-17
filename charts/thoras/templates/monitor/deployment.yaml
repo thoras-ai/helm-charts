@@ -88,6 +88,8 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasMonitor.logLevel }}
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
+          - name: V2_MONITOR_ENABLED
+            value: {{ .Values.thorasMonitorV2.enabled | default false | quote }}
         resources:
           limits:
             memory: {{ .Values.thorasMonitor.limits.memory }}
