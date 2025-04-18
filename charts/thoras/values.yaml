@@ -63,7 +63,7 @@ metricsCollector:
     limits:
       memory: "8192Mi"
     requests:
-      cpu: "16m"
+      cpu: "200m"
       memory: "32Mi"
   search:
     imageTag: "8.17.4"
@@ -72,7 +72,7 @@ metricsCollector:
     limits:
       memory: "8192Mi"
     requests:
-      cpu: "16m"
+      cpu: "200m"
       memory: "1536Mi"
   purge:
     ttl: 30
@@ -91,7 +91,7 @@ metricsCollector:
     limits:
       memory: "8192Mi"
     requests:
-      cpu: "16m"
+      cpu: "400m"
       memory: "128Mi"
   blobService:
     containerPort: 8080
