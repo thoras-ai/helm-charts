@@ -23,7 +23,7 @@ Default containers should match snapshots:
       limits:
         memory: 8192Mi
       requests:
-        cpu: 16m
+        cpu: 200m
         memory: 1536Mi
   2: |
     args:
@@ -107,5 +107,5 @@ Default containers should match snapshots:
       limits:
         memory: 8192Mi
       requests:
-        cpu: 16m
+        cpu: 200m
         memory: 32Mi
