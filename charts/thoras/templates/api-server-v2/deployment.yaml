@@ -101,6 +101,10 @@ spec:
             value: {{ .Values.thorasApiServerV2.timescalePrimary | quote}}
           - name: SERVICE_QUERIES_PER_SECOND
             value: {{ .Values.thorasApiServerV2.queriesPerSecond | default .Values.queriesPerSecond | quote }}
+          - name: SERVICE_CATALOG_REFRESH_INTERVAL
+            value: {{ .Values.thorasApiServerV2.catalogRefreshInterval | quote }}
+          - name: SERVICE_CACHE_WINDOW
+            value: {{ .Values.thorasApiServerV2.cacheWindow | quote }}
           - name: SERVICE_THORAS_NAMESPACE
             valueFrom:
               fieldRef:

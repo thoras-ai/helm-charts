@@ -133,6 +133,8 @@ helm install \
 | thorasApiServerV2.logLevel                    | String  | Nil     | Logging level                                                                 |
 | thorasApiServerV2.timescalePrimary            | Boolean | false   | Use timescale as the primary data source, not elastic                         |
 | thorasApiServerV2.queriesPerSecond            | String  | "50"    | Sets a maximum threshold for K8s API qps                                      |
+| thorasApiServerV2.catalogRefreshInterval      | String  | "60s"   | Frequency of updates to catalog following k8s updates                         |
+| thorasApiServerV2.cacheWindow                 | String  | "10s"   | Maximum staleness of data before querying k8s for updates                     |
 | thorasApiServerV2.additionalPvSecurityContext | Object  | {}      | Allows assigning additional securityContext objects to workloads that use PVs |
 
 ## Thoras Dashboard
