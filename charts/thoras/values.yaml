@@ -46,7 +46,7 @@ thorasOperator:
     cpu: 100m
     memory: 100Mi
   forecastQueue:
-    enabled: false
+    enabled: true
 
 metricsCollector:
   persistence:
@@ -169,7 +169,7 @@ thorasForecast:
     memory: "8Gi"
     cpu: "4"
   worker:
-    enabled: false
+    enabled: true
     replicas: 1
     pollingInterval: 15
     podAnnotations: {}
