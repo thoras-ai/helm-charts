@@ -24,6 +24,10 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
       {{- with .Values.thorasApiServerV2.podAnnotations }}
       annotations:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
