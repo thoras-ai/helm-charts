@@ -122,6 +122,8 @@ thorasApiServerV2:
   catalogRefreshInterval: "60s"
   cacheWindow: "10s"
   additionalPvSecurityContext: {}
+  prometheus:
+    enabled: true
 
 thorasDashboard:
   enabled: true

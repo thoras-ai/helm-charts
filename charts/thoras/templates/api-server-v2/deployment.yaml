@@ -24,11 +24,15 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
       {{- with .Values.thorasApiServerV2.podAnnotations }}
       annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.thorasApiServerV2.prometheus.enabled }}
+      {{- if not .Values.thorasApiServerV2.podAnnotations }}
       annotations:
+      {{- end }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
-        {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
