@@ -22,12 +22,11 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-      {{- with .Values.thorasApiServerV2.podAnnotations }}
-      annotations:
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
+      {{- with .Values.thorasApiServerV2.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
