@@ -4,10 +4,7 @@ metadata:
   name: thoras-dashboard-nginx-config
   namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: {{ .Chart.Name }}
-    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "labels" . | nindent 4 }}
 data:
   nginx.conf: |
     events {

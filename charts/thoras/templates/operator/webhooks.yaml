@@ -11,10 +11,7 @@ metadata:
   name: thoras-webhooks-cert
   namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: {{ .Chart.Name }}
-    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "labels" . | nindent 4 }}
 data:
   {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace "thoras-webhooks-cert") }}
   {{- $secretData := (get $secretObj "data") | default dict }}

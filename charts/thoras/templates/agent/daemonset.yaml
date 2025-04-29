@@ -5,10 +5,7 @@ metadata:
   name: thoras-agent
   namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: {{ .Chart.Name }}
-    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
@@ -17,10 +14,7 @@ spec:
     metadata:
       labels:
         app: thoras-agent
-        app.kubernetes.io/name: {{ .Chart.Name }}
-        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-        app.kubernetes.io/managed-by: {{ .Release.Service }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- include "labels" . | nindent 8 }}
         {{- with .Values.thorasAgent.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
