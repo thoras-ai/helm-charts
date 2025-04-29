@@ -4,6 +4,10 @@ kind: Service
 metadata:
   name: thoras-webhooks
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasOperator.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - port: 443
