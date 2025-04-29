@@ -169,8 +169,6 @@ thorasMonitorV2:
 
 thorasForecast:
   skipCache: false
-  podAnnotations: {}
-  labels: {}
   requests:
     cpu: "256m"
     memory: "256Mi"
@@ -182,6 +180,7 @@ thorasForecast:
     replicas: 1
     pollingInterval: 15
     podAnnotations: {}
+    labels: {}
     limits:
       memory: 2Gi
       cpu: 2
@@ -201,13 +200,12 @@ thorasAgent:
 
 thorasReasoning:
   enabled: false
-  podAnnotations: {}
-  labels: {}
   connectors:
     prometheus:
       baseUrl: "http://localhost"
   api:
     podAnnotations: {}
+    labels: {}
     containerPort: 8080
     port: 80
     limits:
