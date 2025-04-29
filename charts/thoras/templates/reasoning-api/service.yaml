@@ -5,6 +5,10 @@ kind: Service
 metadata:
   name: thoras-reasoning-api
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasReasoning.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - port: {{ .Values.thorasReasoning.api.port }}

@@ -17,6 +17,10 @@ kind: Service
 metadata:
   name: timescale
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.metricsCollector.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ports:
   - port: {{ .Values.metricsCollector.timescale.containerPort }}
@@ -30,6 +34,10 @@ kind: Service
 metadata:
   name: thoras-blob-api
   namespace: {{ .Release.Namespace }}
+{{- with .Values.metricsCollector.labels }}
+  labels:
+  {{- toYaml . | nindent 4 }}
+{{- end }}
 spec:
   ports:
   - port: {{ .Values.metricsCollector.blobService.port }}
