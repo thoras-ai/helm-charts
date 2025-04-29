@@ -89,6 +89,8 @@ kind: RoleBinding
 metadata:
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
 roleRef:
   kind: Role
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}

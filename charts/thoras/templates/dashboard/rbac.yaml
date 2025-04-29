@@ -93,6 +93,8 @@ kind: RoleBinding
 metadata:
   name: thoras-dashboard
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
 roleRef:
   kind: Role
   name: {{ .Values.thorasDashboard.serviceAccount.name }}-role
