@@ -23,6 +23,9 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- with .Values.thorasMonitor.labels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         {{- if not .Values.thorasMonitor.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}

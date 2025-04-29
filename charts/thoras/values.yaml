@@ -40,6 +40,7 @@ thorasOperator:
   # Operator is a singleton -- don't change this :)
   replicas: 1
   podAnnotations: {}
+  labels: {}
   limits:
     memory: 2000Mi
   requests:
@@ -58,6 +59,7 @@ metricsCollector:
       fileSystemId: ""
     pvcStorageRequestSize: "3Gi"
   podAnnotations: {}
+  labels: {}
   collector:
     name: thoras-collector
     limits:
@@ -110,6 +112,7 @@ thorasApiServerV2:
     name: thoras-api
   containerPort: 8080
   podAnnotations: {}
+  labels: {}
   replicas: 1
   limits:
     memory: 2000Mi
@@ -133,6 +136,7 @@ thorasDashboard:
   rbac:
     create: true
   podAnnotations: {}
+  labels: {}
   containerPort: 3000
   nginxContainerPort: 80
   nginx:
@@ -157,6 +161,7 @@ thorasMonitor:
     cpu: "16m"
     memory: "64Mi"
   podAnnotations: {}
+  labels: {}
   config: |
 
 thorasMonitorV2:
@@ -164,6 +169,8 @@ thorasMonitorV2:
 
 thorasForecast:
   skipCache: false
+  podAnnotations: {}
+  labels: {}
   requests:
     cpu: "256m"
     memory: "256Mi"
@@ -190,9 +197,12 @@ thorasAgent:
   frequency: 15
   containerPort: 9101
   podAnnotations: {}
+  labels: {}
 
 thorasReasoning:
   enabled: false
+  podAnnotations: {}
+  labels: {}
   connectors:
     prometheus:
       baseUrl: "http://localhost"

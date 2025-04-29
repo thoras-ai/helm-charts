@@ -23,6 +23,9 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- with .Values.thorasForecast.labels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       annotations:
         {{- with .Values.thorasForecast.podAnnotations }}
           {{- toYaml . | nindent 8 }}

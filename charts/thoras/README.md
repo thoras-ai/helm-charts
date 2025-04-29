@@ -69,14 +69,16 @@ helm install \
 
 ## Thoras Forecast
 
-| Key                      | Type    | Default        | Description                                   |
-| ------------------------ | ------- | -------------- | --------------------------------------------- |
-| thorasForecast.imageTag  | String  | .thorasVersion | Image tag for Thoras Forecast job             |
-| thorasForecast.skipCache | Boolean | false          | Directs the forecaster to skip to model cache |
-| thorasForecast.worker.enabled | Boolean | false          | Determines whether or not to spin up `thoras-forecast-worker` deployment (required if `thorasOperator.forecastQueue.enabled = true`) |
-| thorasForecast.worker.replicas  | Number  | 1 | Number of `thoras-forecast-worker` replicas to use             |
-| thorasForecast.worker.pollingInterval  | Number  | 15 | Polling interval to check for work for `thoras-forecast-workers`      |
-| thorasForecast.worker.forecastTimeout  | Number  | 600 | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`   |
+| Key                                    | Type    | Default        | Description                                                                            |
+| -------------------------------------- | ------- | -------------- | -------------------------------------------------------------------------------------- |
+| thorasForecast.podAnnotations          | Object  | {}             | Pod Annotations for Thoras Forecast                                                    |
+| thorasForecast.labels                  | Object  | {}             | Pod Labels for Thoras Forecast                                                         |
+| thorasForecast.imageTag                | String  | .thorasVersion | Image tag for Thoras Forecast job                                                      |
+| thorasForecast.skipCache               | Boolean | false          | Directs the forecaster to skip to model cache                                          |
+| thorasForecast.worker.enabled          | Boolean | false          | Determines whether or not to spin up `thoras-forecast-worker` deployment (required if `thorasOperator.forecastQueue.enabled = true`) |
+| thorasForecast.worker.replicas         | Number  | 1              | Number of `thoras-forecast-worker` replicas to use                                     |
+| thorasForecast.worker.pollingInterval  | Number  | 15             | Polling interval to check for work for `thoras-forecast-workers`                       |
+| thorasForecast.worker.forecastTimeout  | Number  | 600            | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`   |
 
 
 
@@ -86,6 +88,7 @@ helm install \
 | Key                                  | Type    | Default | Description                                                  |
 | ------------------------------------ | ------- | ------- | ------------------------------------------------------------ |
 | thorasOperator.podAnnotations        | Object  | {}      | Pod Annotations for Thoras Operator                          |
+| thorasOperator.labels                | Object  | {}      | Pod Labels for Thoras Operator                               |
 | thorasOperator.limits.memory         | String  | 2000Mi  | Thoras Operator memory limit                                 |
 | thorasOperator.requests.cpu          | String  | 1000m   | Thoras Operator CPU request                                  |
 | thorasOperator.requests.memory       | String  | 1000Mi  | Thoras Operator memory request                               |
@@ -107,6 +110,7 @@ helm install \
 | metricsCollector.collector.name                                 | String  | thoras-collector | Thoras collector container name                                               |
 | metricsCollector.collector.logLevel                             | String  | Nil              | Logging level                                                                 |
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                  |
+| metricsCollector.labels                                         | Object  | {}               | Pod Labels for Thoras metrics      collector                                  |
 | metricsCollector.search.imageTag                                | String  | 8.12.1           | Elasticsearch image tag                                                       |
 | metricsCollector.search.name                                    | String  | elasticsearch    | Elasticsearch container name                                                  |
 | metricsCollector.search.containerPort                           | Number  | 9200             | Elasticsearch port                                                            |
@@ -123,7 +127,8 @@ helm install \
 
 | Key                                           | Type    | Default | Description                                                                   |
 | --------------------------------------------- | ------- | ------- | ----------------------------------------------------------------------------- |
-| thorasApiServerV2.podAnnotations              | Object  | {}      | Pod Annotations for Thoras Thoras API                                         |
+| thorasApiServerV2.podAnnotations              | Object  | {}      | Pod Annotations for Thoras API                                                |
+| thorasApiServerV2.labels                      | Object  | {}      | Pod labels for Thoras API                                                     |
 | thorasApiServerV2.containerPort               | Number  | 8443    | Thoras API port                                                               |
 | thorasApiServerV2.port                        | Number  | 443     | Thoras API service port                                                       |
 | thorasApiServerV2.limits.memory               | String  | 2000Mi  | Thoras API memory limit                                                       |
@@ -147,6 +152,7 @@ helm install \
 | thorasDashboard.serviceAccount.name              | String  | thoras-dashboard | Service account name for Thoras Dashboard pod                            |
 | thorasDashboard.rbac.create                      | Bool    | true             | Creates cluster role for Thoras Dashboard pod                            |
 | thorasDashboard.podAnnotations                   | Object  | {}               | Pod Annotations for Thoras Dashboard                                     |
+| thorasDashboard.labels                           | Object  | {}               | Pod labels for Thoras      Dashboard                                     |
 | thorasDashboard.containerPort                    | Number  | 3000             | Thoras Dashboard port                                                    |
 | thorasDashboard.port                             | Number  | 3000             | Thoras Dashboard service port                                            |
 | thorasDashboard.limits.memory                    | String  | 2000Mi           | Thoras Dashboard memory limit                                            |
@@ -167,6 +173,7 @@ helm install \
 | -------------------------------- | ------- | ------- | ------------------------------------------------------------ |
 | thorasMonitor.enabled            | Bool    | false   | Enable Thoras monitoring                                     |
 | thorasMonitor.podAnnotations     | Object  | {}      | Pod Annotations for Thoras monitor                           |
+| thorasMonitor.labels             | Object  | {}      | Pod labels for Thoras monitor                                |
 | thorasMonitor.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasMonitor.config             | String  | ""      | Thoras Monitor configuration yaml                            |
 | thorasMonitor.logLevel           | String  | Nil     | Logging level                                                |
@@ -176,6 +183,8 @@ helm install \
 | Key                            | Type    | Default        | Description                                                            |
 | ------------------------------ | ------- | -------------- | ---------------------------------------------------------------------- |
 | thorasAgent.enabled            | Bool    | false          | Enable the Thoras Agent (opt-in, for now)                              |
+| thorasAgent.podAnnotations     | Object  | {}             | Pod Annotations for Thoras Agent                                       |
+| thorasAgent.labels             | Object  | {}             | Pod labels for Thoras Agent                                            |
 | thorasAgent.imageTag           | String  | .thorasVersion | Image tag for Thoras Agent daemon set                                  |
 | thorasAgent.slackErrorsEnabled | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
 | thorasAgent.frequency          | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |

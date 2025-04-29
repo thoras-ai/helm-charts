@@ -2,6 +2,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
   name: metrics-collector
   namespace: {{ .Release.Namespace }}
 spec:
@@ -19,6 +24,9 @@ spec:
         helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- with .Values.metricsCollector.labels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with .Values.metricsCollector.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
