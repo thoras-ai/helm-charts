@@ -38,16 +38,16 @@ tests:
           value: RELEASE-NAME
   - it: Should not create v2 monitor container when not enabled
     template: monitor/deployment.yaml
+    set:
+      thorasMonitorV2:
+        enabled: false
     asserts:
       - exists:
           path: $..spec.containers[?(@.name == 'thoras-monitor')]
       - notExists:
           path: $..spec.containers[?(@.name == 'thoras-monitor-v2')]
-  - it: Should create v2 monitor container when enabled
+  - it: Should create v2 monitor container when enabled (default)
     template: monitor/deployment.yaml
-    set:
-      thorasMonitorV2:
-        enabled: true
     asserts:
       - exists:
           path: $..spec.containers[?(@.name == 'thoras-monitor')]
