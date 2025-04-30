@@ -48,6 +48,9 @@ thorasOperator:
     memory: 100Mi
   forecastQueue:
     enabled: true
+  prometheus:
+    enabled: true
+    port: 9101
 
 metricsCollector:
   persistence:
