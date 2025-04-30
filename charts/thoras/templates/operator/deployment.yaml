@@ -3,10 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/name: {{ .Chart.Name }}
-    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "labels" . | nindent 4 }}
   name: thoras-operator
   namespace: {{ .Release.Namespace }}
 spec:
@@ -19,10 +16,7 @@ spec:
       labels:
         app: thoras-operator
         name: thoras-operator
-        app.kubernetes.io/name: {{ .Chart.Name }}
-        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-        app.kubernetes.io/managed-by: {{ .Release.Service }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- include "labels" . | nindent 8 }}
         {{- with .Values.thorasOperator.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}

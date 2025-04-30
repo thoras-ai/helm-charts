@@ -4,6 +4,8 @@ kind: CronJob
 metadata:
   name: thoras-metrics-purge
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
 spec:
   schedule: {{ .Values.metricsCollector.purge.schedule | quote }}
   jobTemplate:

@@ -5,6 +5,8 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.1
   name: metricconnectors.thoras.ai
+  labels:
+    {{- include "labels" . | nindent 4 }}
 spec:
   group: thoras.ai
   names:
@@ -49,8 +51,8 @@ spec:
                       properties:
                         limit_to_single_metric:
                           description: >-
-                            Optional prometheus query to limit the scope of data ingestion. 
-                            This is used for internal development and allows specifying 
+                            Optional prometheus query to limit the scope of data ingestion.
+                            This is used for internal development and allows specifying
                             a subset of the time series data.
                           type: string
                         BasicAuth:

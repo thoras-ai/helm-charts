@@ -5,10 +5,7 @@ metadata:
   name: thoras-api-server-v2
   namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: {{ .Chart.Name }}
-    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.thorasApiServerV2.replicas }}
   selector:
@@ -18,10 +15,7 @@ spec:
     metadata:
       labels:
         app: thoras-api-server-v2
-        app.kubernetes.io/name: {{ .Chart.Name }}
-        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-        app.kubernetes.io/managed-by: {{ .Release.Service }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- include "labels" . | nindent 8 }}
         {{- with .Values.thorasApiServerV2.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}

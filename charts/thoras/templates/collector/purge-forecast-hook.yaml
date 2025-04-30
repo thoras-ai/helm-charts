@@ -4,9 +4,7 @@ kind: Job
 metadata:
   name: purge-forecast-cronjobs
   labels:
-    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
-    app.kubernetes.io/instance: {{ .Release.Name | quote }}
-    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    {{- include "labels" . | nindent 4 }}
   annotations:
     helm.sh/hook: pre-delete
 spec:
