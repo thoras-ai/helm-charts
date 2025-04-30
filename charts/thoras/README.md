@@ -96,6 +96,8 @@ helm install \
 | thorasOperator.logLevel              | String  | Nil     | Logging level                                                |
 | thorasOperator.queriesPerSecond      | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
 | thorasOperator.forecastQueue.enabled | Boolean | false   | Determines if forecasts will be queued by the operator       |
+| thorasOperator.prometheus.enabled    | Boolean | true    | Enables a prometheus metric exporter                         |
+| thorasOperator.prometheus.port       | Number  | 9101    | Port for the prometheus metric exporter                      |
 
 ## Thoras Metrics Collector
 

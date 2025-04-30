@@ -20,9 +20,17 @@ spec:
         {{- with .Values.thorasOperator.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.thorasOperator.podAnnotations }}
+      {{- with .Values.thorasOperator.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.thorasOperator.prometheus.enabled }}
+      {{- if not .Values.thorasOperator.podAnnotations }}
+      annotations:
+      {{- end }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: {{ .Values.thorasOperator.prometheus.port | quote}}
       {{- end }}
       name: thoras-operator
     spec:
@@ -106,6 +114,8 @@ spec:
             value: {{ .Values.thorasOperator.forecastQueue.enabled | quote }}
           - name: SERVICE_FORECAST_TOLERATIONS
             value: {{ .Values.tolerations | toJson | quote }}
+          - name: SERVICE_PORT
+            value: {{ .Values.thorasOperator.prometheus.port | quote }}
         command: [
           "/app/operator"
         ]
