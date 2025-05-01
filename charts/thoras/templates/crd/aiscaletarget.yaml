@@ -28,6 +28,9 @@ spec:
     - jsonPath: .spec.vertical.mode
       name: Vertical
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1
     schema:
       openAPIV3Schema:
