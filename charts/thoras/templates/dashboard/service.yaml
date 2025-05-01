@@ -35,7 +35,8 @@ spec:
 {{ toYaml .Values.thorasDashboard.service.externalIPs | indent 4 }}
 {{- end }}
   ports:
-  - port: {{ .Values.thorasDashboard.port }}
+  - name: http
+    port: {{ .Values.thorasDashboard.port }}
     protocol: TCP
     targetPort: {{ .Values.thorasDashboard.nginxContainerPort }}
   selector:

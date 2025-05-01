@@ -11,7 +11,8 @@ metadata:
   {{- end }}
 spec:
   ports:
-  - port: {{ .Values.thorasReasoning.api.port }}
+  - name: http
+    port: {{ .Values.thorasReasoning.api.port }}
     protocol: TCP
     targetPort: {{ .Values.thorasReasoning.api.containerPort }}
   selector:

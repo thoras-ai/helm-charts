@@ -10,7 +10,8 @@ metadata:
 {{- end }}
 spec:
   ports:
-  - port: {{ .Values.thorasApiServerV2.port }}
+  - name: http
+    port: {{ .Values.thorasApiServerV2.port }}
     protocol: TCP
     targetPort: {{ .Values.thorasApiServerV2.containerPort }}
   selector:

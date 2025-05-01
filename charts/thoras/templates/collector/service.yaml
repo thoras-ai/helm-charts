@@ -6,7 +6,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   ports:
-  - port: {{ .Values.metricsCollector.search.containerPort }}
+  - name: http
+    port: {{ .Values.metricsCollector.search.containerPort }}
     protocol: TCP
     targetPort: {{ .Values.metricsCollector.search.containerPort }}
   selector:
@@ -23,7 +24,8 @@ metadata:
   {{- end }}
 spec:
   ports:
-  - port: {{ .Values.metricsCollector.timescale.containerPort }}
+  - name: postgres
+    port: {{ .Values.metricsCollector.timescale.containerPort }}
     protocol: TCP
     targetPort: {{ .Values.metricsCollector.timescale.containerPort }}
   selector:
@@ -40,7 +42,8 @@ metadata:
 {{- end }}
 spec:
   ports:
-  - port: {{ .Values.metricsCollector.blobService.port }}
+  - name: http
+    port: {{ .Values.metricsCollector.blobService.port }}
     protocol: TCP
     targetPort: {{ .Values.metricsCollector.blobService.containerPort }}
   selector:
