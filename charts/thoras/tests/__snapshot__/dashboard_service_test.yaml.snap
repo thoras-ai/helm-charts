@@ -7,7 +7,7 @@ Default matches snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
-        helm.sh/chart: thoras-4.32.2
+        helm.sh/chart: thoras-4.33.0
       name: thoras-dashboard
       namespace: NAMESPACE
     spec:
