@@ -144,6 +144,7 @@ helm install \
 | thorasApiServerV2.cacheWindow                 | String  | "10s"   | Maximum staleness of data before querying k8s for updates                     |
 | thorasApiServerV2.additionalPvSecurityContext | Object  | {}      | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled          | Boolean | true    | Enables a prometheus metric scrape point                                      |
+| thorasApiServerV2.forecastQueue.enabled       | Boolean | false   | Determines if forecasts requests should use the queue                         |
 
 ## Thoras Dashboard
 
