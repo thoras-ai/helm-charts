@@ -129,7 +129,10 @@ spec:
             subPath: tls.key
             readOnly: true
         ports:
-          - containerPort: 9443
+          - name: https-web-hooks
+            containerPort: 9443
+          - name: http-metrics
+            containerPort: {{ .Values.thorasOperator.prometheus.port }}
         resources:
           limits:
             memory: {{ .Values.thorasOperator.limits.memory }}

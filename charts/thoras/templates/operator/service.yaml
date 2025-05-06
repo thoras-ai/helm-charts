@@ -11,9 +11,13 @@ metadata:
     {{- end }}
 spec:
   ports:
-  - name: https
+  - name: https-web-hooks
     port: 443
     protocol: TCP
     targetPort: 9443
+  - name: http-metrics
+    port: {{ .Values.thorasOperator.prometheus.port }}
+    protocol: TCP
+    targetPort: {{ .Values.thorasOperator.prometheus.port }}
   selector:
     app: thoras-operator
