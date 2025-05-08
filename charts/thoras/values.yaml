@@ -71,7 +71,7 @@ metricsCollector:
       cpu: "200m"
       memory: "32Mi"
   search:
-    imageTag: "8.17.4"
+    imageTag: "8.18.0"
     name: elasticsearch
     containerPort: 9200
     limits:
@@ -83,14 +83,14 @@ metricsCollector:
     ttl: 30
     schedule: "00 00 * * *"
   init:
-    imageTag: "latest"
+    imageTag: "3.21.3"
     limits:
       memory: "8192Mi"
     requests:
       cpu: "16m"
       memory: "32Mi"
   timescale:
-    imageTag: "2.19.2-pg16"
+    imageTag: "2.19.3-pg16"
     name: timescale
     containerPort: 5432
     limits:
@@ -145,7 +145,7 @@ thorasDashboard:
   containerPort: 3000
   nginxContainerPort: 80
   nginx:
-    imageTag: "alpine"
+    imageTag: "stable-alpine3.21"
   limits:
     memory: 2000Mi
   requests:
