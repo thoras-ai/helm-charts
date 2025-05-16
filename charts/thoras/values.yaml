@@ -46,8 +46,6 @@ thorasOperator:
   requests:
     cpu: 100m
     memory: 100Mi
-  forecastQueue:
-    enabled: true
   prometheus:
     enabled: true
     port: 9101
@@ -125,8 +123,6 @@ thorasApiServerV2:
   port: 80
   logLevel: "info"
   timescalePrimary: false
-  forecastQueue:
-    enabled: true
   catalogRefreshInterval: "60s"
   cacheWindow: "10s"
   additionalPvSecurityContext: {}
@@ -184,7 +180,6 @@ thorasForecast:
     memory: "8Gi"
     cpu: "4"
   worker:
-    enabled: true
     replicas: 1
     pollingInterval: 15
     podAnnotations: {}
