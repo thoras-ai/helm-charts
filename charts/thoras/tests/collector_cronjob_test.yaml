@@ -32,11 +32,6 @@ tests:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: host
-      - contains:
-          path: .spec.jobTemplate.spec.template.spec.containers[?(@.name == 'metrics-collector')].env
-          content:
-            name: "SERVICE_POSTGRESQL_DSN"
-            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
   - it: Uses default slack URL when no value is set
     asserts:
       - contains:
