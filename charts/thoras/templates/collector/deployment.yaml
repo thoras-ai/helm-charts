@@ -178,10 +178,6 @@ spec:
             ./metrics-collector init
             ./metrics-collector collect -c 60s
         env:
-          - name: THORAS_NS
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
           - name: "ELASTICSEARCH_URL"
             valueFrom:
               secretKeyRef:
@@ -211,8 +207,6 @@ spec:
                 name: thoras-timescale-password
                 key: host
           - name: DATABASE_URL
-            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
-          - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
           - name: "POSTGRES_PASSWORD"
             valueFrom:
