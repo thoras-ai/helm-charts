@@ -7,6 +7,7 @@ tests:
       thorasVersion: TEST
       thorasDashboard:
         replicas: 12
+        unittesting: true
     asserts:
       - isKind:
           of: Deployment
@@ -18,9 +19,12 @@ tests:
           value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard:TEST
       - equal:
           path: spec.template.spec.containers[1].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
+      - equal:
+          path: spec.template.spec.containers[2].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/nginx:stable-alpine3.21
       - equal:
-          path: spec.template.spec.containers[1].volumeMounts[0]
+          path: spec.template.spec.containers[2].volumeMounts[0]
           value:
             name: nginx-config
             mountPath: /etc/nginx/nginx.conf
@@ -36,6 +40,8 @@ tests:
               name: thoras-dashboard-nginx-config
   - it: Should set tolerations if specified
     set:
+      thorasDashboard:
+        unittesting: true
       tolerations:
         - key: "example-key"
           operator: "Exists"
@@ -48,6 +54,9 @@ tests:
             operator: "Exists"
             effect: "NoSchedule"
   - it: Should not have tolerations if not specified
+    set:
+      thorasDashboard:
+        unittesting: true
     asserts:
       - notExists:
           path: spec.template.spec.tolerations

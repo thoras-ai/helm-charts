@@ -14,6 +14,7 @@ set:
     replicas: 12
   thorasDashboard:
     replicas: 12
+    unittesting: true
   thorasApiServerV2:
     replicas: 12
 tests:

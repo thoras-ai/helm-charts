@@ -135,6 +135,9 @@ thorasApiServerV2:
 
 thorasDashboard:
   enabled: true
+  v2:
+    enabled: true
+    containerPort: 5173
   serviceAccount:
     name: thoras-dashboard
     create: true

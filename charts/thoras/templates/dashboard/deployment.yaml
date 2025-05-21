@@ -19,8 +19,11 @@ spec:
         {{- with .Values.thorasDashboard.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.thorasDashboard.podAnnotations }}
       annotations:
+        {{- if not .Values.thorasDashboard.unittesting }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/dashboard/nginx-config-map.yaml") . | sha256sum }}
+        {{- end }}
+      {{- with .Values.thorasDashboard.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
@@ -77,6 +80,21 @@ spec:
           requests:
             cpu: {{ .Values.thorasDashboard.requests.cpu }}
             memory: {{ .Values.thorasDashboard.requests.memory }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.v2.imageTag }}
+        name: thoras-dashboard-v2
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        ports:
+        - containerPort: {{ .Values.thorasDashboard.v2.containerPort }}
+        resources:
+          limits:
+            memory: {{ .Values.thorasDashboard.limits.memory }}
+          requests:
+            cpu: {{ .Values.thorasDashboard.requests.cpu }}
+            memory: {{ .Values.thorasDashboard.requests.memory }}
+        volumeMounts:
+          - name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: dashboard-v2.nginx.conf
       - name: thoras-api-proxy
         image: {{ .Values.imageCredentials.registry }}/nginx:{{ .Values.thorasDashboard.nginx.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"

@@ -12,6 +12,8 @@ set:
   thorasMonitorV2:
     enabled: true
     unittesting: true
+  thorasDashboard:
+    unittesting: true
   thorasReasoning:
     enabled: true
 tests:
