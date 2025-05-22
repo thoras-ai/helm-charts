@@ -2,9 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: thoras-dashboard-nginx-config
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "labels" . | nindent 4 }}
+  namespace: { { .Release.Namespace } }
+  labels: { { - include "labels" . | nindent 4 } }
 data:
   nginx.conf: |
     events {
@@ -48,9 +47,17 @@ data:
         listen       {{ .Values.thorasDashboard.v2.containerPort }};
         server_name  localhost;
 
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+
         location / {
-          root   /usr/share/nginx/html;
-          index  index.html index.htm;
+          try_files $uri /index.html;
+        }
+
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|otf|ttf|map)$ {
+          expires 1y;
+          access_log off;
+          add_header Cache-Control "public";
         }
 
         error_page   500 502 503 504  /50x.html;
