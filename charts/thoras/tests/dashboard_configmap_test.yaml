@@ -1,0 +1,19 @@
+suite: Dashboard
+templates:
+  - dashboard/nginx-config-map.yaml
+tests:
+  - it: Should default to v2 port
+    set:
+      thorasVersion: TEST
+    asserts:
+      - matchSnapshot:
+        path: data.nginx.conf
+  - it: Should use the v1 port if v2 is disabled
+    set:
+      thorasVersion: TEST
+      thorasDashboard:
+        v2:
+          enabled: false
+    asserts:
+      - matchSnapshot:
+        path: data.nginx.conf

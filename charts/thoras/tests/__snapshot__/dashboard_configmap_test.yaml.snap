@@ -1,0 +1,132 @@
+Should default to v2 port:
+  1: |
+    apiVersion: v1
+    data:
+      dashboard-v2.nginx.conf: |
+        events {
+          worker_connections 1024;
+        }
+
+        http {
+          include       mime.types;
+
+          server {
+            listen       5173;
+            server_name  localhost;
+
+            location / {
+              root   /usr/share/nginx/html;
+              index  index.html index.htm;
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+              root   /usr/share/nginx/html;
+            }
+          }
+        }
+      nginx.conf: |
+        events {
+          worker_connections 1024;
+        }
+
+        http {
+          server {
+            listen 80;
+
+            location /v1/ {
+              proxy_pass http://thoras-api-server-v2;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            location /config.json {
+                default_type application/json;
+                return 200 '{ "api_base_url": "" }';
+            }
+
+            location / {
+              proxy_pass http://localhost:5173;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;       }
+          }
+        }
+    kind: ConfigMap
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.35.1
+      name: thoras-dashboard-nginx-config
+      namespace: NAMESPACE
+Should use the v1 port if v2 is disabled:
+  1: |
+    apiVersion: v1
+    data:
+      dashboard-v2.nginx.conf: |
+        events {
+          worker_connections 1024;
+        }
+
+        http {
+          include       mime.types;
+
+          server {
+            listen       5173;
+            server_name  localhost;
+
+            location / {
+              root   /usr/share/nginx/html;
+              index  index.html index.htm;
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+              root   /usr/share/nginx/html;
+            }
+          }
+        }
+      nginx.conf: |
+        events {
+          worker_connections 1024;
+        }
+
+        http {
+          server {
+            listen 80;
+
+            location /v1/ {
+              proxy_pass http://thoras-api-server-v2;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            location /config.json {
+                default_type application/json;
+                return 200 '{ "api_base_url": "" }';
+            }
+
+            location / {
+              proxy_pass http://localhost:3000;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;       }
+          }
+        }
+    kind: ConfigMap
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.35.1
+      name: thoras-dashboard-nginx-config
+      namespace: NAMESPACE

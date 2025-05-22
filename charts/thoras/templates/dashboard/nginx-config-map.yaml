@@ -29,11 +29,33 @@ data:
         }
 
         location / {
-          proxy_pass http://localhost:{{ .Values.thorasDashboard.containerPort }};
+          proxy_pass http://localhost:{{ ternary .Values.thorasDashboard.v2.containerPort .Values.thorasDashboard.containerPort .Values.thorasDashboard.v2.enabled }};
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto $scheme;       }
+      }
+    }
+  dashboard-v2.nginx.conf: |
+    events {
+      worker_connections 1024;
+    }
+
+    http {
+      include       mime.types;
+
+      server {
+        listen       {{ .Values.thorasDashboard.v2.containerPort }};
+        server_name  localhost;
+
+        location / {
+          root   /usr/share/nginx/html;
+          index  index.html index.htm;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+          root   /usr/share/nginx/html;
         }
       }
     }
