@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.35.1](https://img.shields.io/badge/Version-4.35.1-informational?style=flat-square) ![AppVersion: 4.20.1](https://img.shields.io/badge/AppVersion-4.20.1-informational?style=flat-square)
+![Version: 4.35.2](https://img.shields.io/badge/Version-4.35.2-informational?style=flat-square) ![AppVersion: 4.21.0](https://img.shields.io/badge/AppVersion-4.21.0-informational?style=flat-square)
 
 # Install
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                       | Type    | Default                                          | Description                                                        |
 | ------------------------- | ------- | ------------------------------------------------ | ------------------------------------------------------------------ |
-| thorasVersion             | String  | 4.20.1                                           | Thoras app version                                                 |
+| thorasVersion             | String  | 4.21.0                                           | Thoras app version                                                 |
 | imageCredentials.registry | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                            |
 | imageCredentials.username | String  | \_json_key_base64                                | Container registry username                                        |
 | imageCredentials.password | String  | ""                                               | Container registry auth string                                     |
@@ -69,19 +69,16 @@ helm install \
 
 ## Thoras Forecast
 
-| Key                                    | Type    | Default        | Description                                                                            |
-| -------------------------------------- | ------- | -------------- | -------------------------------------------------------------------------------------- |
-| thorasForecast.imageTag                | String  | .thorasVersion | Image tag for Thoras Forecast job                                                      |
-| thorasForecast.skipCache               | Boolean | false          | Directs the forecaster to skip to model cache                                          |
-| thorasForecast.worker.enabled          | Boolean | false          | Determines whether or not to spin up `thoras-forecast-worker` deployment (required if `thorasOperator.forecastQueue.enabled = true`) |
-| thorasForecast.worker.podAnnotations   | Object  | {}             | Pod Annotations for Thoras Forecast                                                    |
-| thorasForecast.worker.labels           | Object  | {}             | Pod labels for Thoras Forecast                                                         |
-| thorasForecast.worker.replicas         | Number  | 1              | Number of `thoras-forecast-worker` replicas to use                                     |
-| thorasForecast.worker.pollingInterval  | Number  | 15             | Polling interval to check for work for `thoras-forecast-workers`                       |
-| thorasForecast.worker.forecastTimeout  | Number  | 600            | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`   |
-
-
-
+| Key                                   | Type    | Default        | Description                                                                                                                          |
+| ------------------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| thorasForecast.imageTag               | String  | .thorasVersion | Image tag for Thoras Forecast job                                                                                                    |
+| thorasForecast.skipCache              | Boolean | false          | Directs the forecaster to skip to model cache                                                                                        |
+| thorasForecast.worker.enabled         | Boolean | false          | Determines whether or not to spin up `thoras-forecast-worker` deployment (required if `thorasOperator.forecastQueue.enabled = true`) |
+| thorasForecast.worker.podAnnotations  | Object  | {}             | Pod Annotations for Thoras Forecast                                                                                                  |
+| thorasForecast.worker.labels          | Object  | {}             | Pod labels for Thoras Forecast                                                                                                       |
+| thorasForecast.worker.replicas        | Number  | 1              | Number of `thoras-forecast-worker` replicas to use                                                                                   |
+| thorasForecast.worker.pollingInterval | Number  | 15             | Polling interval to check for work for `thoras-forecast-workers`                                                                     |
+| thorasForecast.worker.forecastTimeout | Number  | 600            | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`                                                 |
 
 ## Thoras Operator
 
@@ -155,7 +152,7 @@ helm install \
 | thorasDashboard.serviceAccount.name              | String  | thoras-dashboard | Service account name for Thoras Dashboard pod                            |
 | thorasDashboard.rbac.create                      | Bool    | true             | Creates cluster role for Thoras Dashboard pod                            |
 | thorasDashboard.podAnnotations                   | Object  | {}               | Pod Annotations for Thoras Dashboard                                     |
-| thorasDashboard.labels                           | Object  | {}               | Pod/service labels for Thoras      Dashboard                             |
+| thorasDashboard.labels                           | Object  | {}               | Pod/service labels for Thoras Dashboard                                  |
 | thorasDashboard.containerPort                    | Number  | 3000             | Thoras Dashboard port                                                    |
 | thorasDashboard.port                             | Number  | 3000             | Thoras Dashboard service port                                            |
 | thorasDashboard.limits.memory                    | String  | 2000Mi           | Thoras Dashboard memory limit                                            |
@@ -169,6 +166,8 @@ helm install \
 | thorasDashboard.service.externalIPs              | List    | nil              | Service externalIPs                                                      |
 | thorasDashboard.slackErrorsEnabled               | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`             |
 | thorasDashboard.logLevel                         | String  | Nil              | Logging level                                                            |
+| thorasDashboard.v2.enabled                       | Bool    | true             | Use v2 dashboard                                                         |
+| thorasDashboard.v2.containerPort                 | Number  | 5173             | V2 Dashboard port                                                        |
 
 ## Thoras Monitor
 
