@@ -166,6 +166,8 @@ helm install \
 | thorasDashboard.service.externalIPs              | List    | nil              | Service externalIPs                                                      |
 | thorasDashboard.slackErrorsEnabled               | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`             |
 | thorasDashboard.logLevel                         | String  | Nil              | Logging level                                                            |
+| thorasDashboard.v2.enabled                       | Bool    | true             | Use v2 dashboard                                                         |
+| thorasDashboard.v2.containerPort                 | Number  | 5173             | V2 Dashboard port                                                        |
 
 ## Thoras Monitor
 
