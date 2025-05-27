@@ -69,16 +69,15 @@ helm install \
 
 ## Thoras Forecast
 
-| Key                                   | Type    | Default        | Description                                                                                                                          |
-| ------------------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| thorasForecast.imageTag               | String  | .thorasVersion | Image tag for Thoras Forecast job                                                                                                    |
-| thorasForecast.skipCache              | Boolean | false          | Directs the forecaster to skip to model cache                                                                                        |
-| thorasForecast.worker.enabled         | Boolean | false          | Determines whether or not to spin up `thoras-forecast-worker` deployment (required if `thorasOperator.forecastQueue.enabled = true`) |
-| thorasForecast.worker.podAnnotations  | Object  | {}             | Pod Annotations for Thoras Forecast                                                                                                  |
-| thorasForecast.worker.labels          | Object  | {}             | Pod labels for Thoras Forecast                                                                                                       |
-| thorasForecast.worker.replicas        | Number  | 1              | Number of `thoras-forecast-worker` replicas to use                                                                                   |
-| thorasForecast.worker.pollingInterval | Number  | 15             | Polling interval to check for work for `thoras-forecast-workers`                                                                     |
-| thorasForecast.worker.forecastTimeout | Number  | 600            | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`                                                 |
+| Key                                   | Type    | Default        | Description                                                                          |
+| ------------------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------ |
+| thorasForecast.imageTag               | String  | .thorasVersion | Image tag for Thoras Forecast job                                                    |
+| thorasForecast.skipCache              | Boolean | false          | Directs the forecaster to skip to model cache                                        |
+| thorasForecast.worker.podAnnotations  | Object  | {}             | Pod Annotations for Thoras Forecast                                                  |
+| thorasForecast.worker.labels          | Object  | {}             | Pod labels for Thoras Forecast                                                       |
+| thorasForecast.worker.replicas        | Number  | 1              | Number of `thoras-forecast-worker` replicas to use                                   |
+| thorasForecast.worker.pollingInterval | Number  | 15             | Polling interval to check for work for `thoras-forecast-workers`                     |
+| thorasForecast.worker.forecastTimeout | Number  | 600            | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker` |
 
 ## Thoras Operator
 
@@ -92,7 +91,6 @@ helm install \
 | thorasOperator.slackErrorsEnabled    | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasOperator.logLevel              | String  | Nil     | Logging level                                                |
 | thorasOperator.queriesPerSecond      | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
-| thorasOperator.forecastQueue.enabled | Boolean | false   | Determines if forecasts will be queued by the operator       |
 | thorasOperator.prometheus.enabled    | Boolean | true    | Enables a prometheus metric exporter                         |
 | thorasOperator.prometheus.port       | Number  | 9101    | Port for the prometheus metric exporter                      |
 
@@ -141,7 +139,6 @@ helm install \
 | thorasApiServerV2.cacheWindow                 | String  | "10s"   | Maximum staleness of data before querying k8s for updates                     |
 | thorasApiServerV2.additionalPvSecurityContext | Object  | {}      | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled          | Boolean | true    | Enables a prometheus metric scrape point                                      |
-| thorasApiServerV2.forecastQueue.enabled       | Boolean | false   | Determines if forecasts requests should use the queue                         |
 
 ## Thoras Dashboard
 
