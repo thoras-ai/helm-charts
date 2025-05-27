@@ -62,10 +62,6 @@ Default containers should match snapshots:
       - /bin/sh
       - -c
     env:
-      - name: THORAS_NS
-        valueFrom:
-          fieldRef:
-            fieldPath: metadata.namespace
       - name: ELASTICSEARCH_URL
         valueFrom:
           secretKeyRef:
@@ -90,8 +86,6 @@ Default containers should match snapshots:
             key: host
             name: thoras-timescale-password
       - name: DATABASE_URL
-        value: $(DATABASE_HOST)/thoras?sslmode=disable
-      - name: SERVICE_POSTGRESQL_DSN
         value: $(DATABASE_HOST)/thoras?sslmode=disable
       - name: POSTGRES_PASSWORD
         valueFrom:
