@@ -5,8 +5,6 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.2
   name: aiscaletargets.thoras.ai
-  labels:
-    {{- include "labels" . | nindent 4 }}
 spec:
   group: thoras.ai
   names:
@@ -751,6 +749,8 @@ spec:
           status:
             properties:
               labelSelector:
+                type: string
+              previousVerticalMode:
                 type: string
               replicas:
                 anyOf:
