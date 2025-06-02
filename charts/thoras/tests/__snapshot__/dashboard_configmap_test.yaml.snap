@@ -69,7 +69,7 @@ Should default to v2 port:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
-        helm.sh/chart: thoras-4.35.2
+        helm.sh/chart: thoras-4.36.0
       name: thoras-dashboard-nginx-config
       namespace: NAMESPACE
 Should use the v1 port if v2 is disabled:
@@ -143,6 +143,6 @@ Should use the v1 port if v2 is disabled:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
-        helm.sh/chart: thoras-4.35.2
+        helm.sh/chart: thoras-4.36.0
       name: thoras-dashboard-nginx-config
       namespace: NAMESPACE
