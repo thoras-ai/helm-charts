@@ -41,6 +41,8 @@ spec:
             value: "http://thoras-api-server-v2"
           - name: FORECAST_TIMEOUT
             value: "{{ default 600 .Values.thorasForecast.worker.forecastTimeout }}"
+          - name: OMP_NUM_THREADS
+            value: "1"
         resources:
           requests:
             cpu: {{ .Values.thorasForecast.worker.requests.cpu }}
