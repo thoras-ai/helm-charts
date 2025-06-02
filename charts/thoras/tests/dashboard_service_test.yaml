@@ -1,6 +1,8 @@
 suite: Dashboard
 templates:
   - dashboard/service.yaml
+chart:
+  version: "4.36.0"
 tests:
   - it: Default matches snapshot
     asserts:

@@ -1,6 +1,8 @@
 suite: Dashboard
 templates:
   - dashboard/nginx-config-map.yaml
+chart:
+  version: "4.36.0"
 tests:
   - it: Should default to v2 port
     set:
@@ -14,6 +16,7 @@ tests:
       thorasDashboard:
         v2:
           enabled: false
+
     asserts:
       - matchSnapshot:
         path: data.nginx.conf
