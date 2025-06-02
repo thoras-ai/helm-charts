@@ -57,3 +57,5 @@ tests:
               value: "http://thoras-api-server-v2"
             - name: FORECAST_TIMEOUT
               value: "600"
+            - name: OMP_NUM_THREADS
+              value: "1"
