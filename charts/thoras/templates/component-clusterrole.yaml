@@ -50,3 +50,9 @@ rules:
   - cronjobs
   verbs:
   - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - patch
