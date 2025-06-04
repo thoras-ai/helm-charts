@@ -96,6 +96,8 @@ spec:
             value: "{{ .Values.thorasApiServerV2.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "SERVICE_LOG_LEVEL"
             value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
+          - name: SERVICE_POD_LOG_LABEL
+            value: {{ (printf "app.kubernetes.io/name=%s" .Chart.Name) | quote }}
           - name: "SERVICE_PROMETHEUS_API_URL"
             value: {{ .Values.thorasReasoning.connectors.prometheus.baseUrl }}
           - name: SERVICE_CLUSTER_NAME

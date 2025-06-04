@@ -19,3 +19,8 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
+  - it: Ensure SERVICE_POD_LOG_LABEL is correct
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POD_LOG_LABEL')].value
+          value: "app.kubernetes.io/name=thoras"
