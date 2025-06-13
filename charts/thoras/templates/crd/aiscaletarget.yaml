@@ -593,16 +593,15 @@ spec:
                     default: '*/15 * * * *'
                     type: string
                   mode:
-                    description: While Thoras models always bias for reliability,
-                      you have the option to set a "mode" for the model to inform
-                      the level of aggression in scaling.
+                    description: |-
+                      While Thoras models always bias for reliability, you have the option to set a "mode" for the model to inform the level of aggression in scaling.
+
+                      Deprecated: No longer considered.
                     enum:
                     - balanced
                     - cost_savings
                     - max_assurance
                     type: string
-                required:
-                - mode
                 type: object
               reasoning:
                 properties:
