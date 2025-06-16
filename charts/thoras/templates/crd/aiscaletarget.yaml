@@ -601,8 +601,6 @@ spec:
                     - cost_savings
                     - max_assurance
                     type: string
-                required:
-                - mode
                 type: object
               reasoning:
                 properties:
