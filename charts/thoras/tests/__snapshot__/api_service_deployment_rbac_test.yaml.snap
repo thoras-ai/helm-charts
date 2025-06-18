@@ -53,6 +53,7 @@ Default matches snapshot:
           - '*'
       - apiGroups:
           - apps
+          - argoproj.io
         resources:
           - '*'
         verbs:

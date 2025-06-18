@@ -51,6 +51,7 @@ rules:
   - '*'
 - apiGroups:
   - apps
+  - argoproj.io
   resources:
   - '*'
   verbs:
