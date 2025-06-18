@@ -54,7 +54,7 @@ Default matches snapshot:
       - apiGroups:
           - apps
         resources:
-          - deployments
+          - '*'
         verbs:
           - patch
   3: |

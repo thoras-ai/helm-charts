@@ -53,6 +53,6 @@ rules:
 - apiGroups:
   - apps
   resources:
-  - deployments
+  - '*'
   verbs:
   - patch

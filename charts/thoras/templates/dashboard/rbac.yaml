@@ -53,12 +53,6 @@ rules:
   - jobs
   verbs:
   - '*'
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
