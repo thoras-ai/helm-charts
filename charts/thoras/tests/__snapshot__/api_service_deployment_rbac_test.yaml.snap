@@ -53,8 +53,9 @@ Default matches snapshot:
           - '*'
       - apiGroups:
           - apps
+          - argoproj.io
         resources:
-          - deployments
+          - '*'
         verbs:
           - patch
   3: |
