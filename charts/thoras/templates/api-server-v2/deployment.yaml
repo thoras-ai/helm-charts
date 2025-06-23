@@ -118,6 +118,10 @@ spec:
                 fieldPath: metadata.namespace
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.thorasApiServerV2.containerPort }}
         resources:
           limits:
             memory: {{ .Values.thorasApiServerV2.limits.memory }}
