@@ -95,7 +95,7 @@ metricsCollector:
       memory: "8192Mi"
     requests:
       cpu: "400m"
-      memory: "128Mi"
+      memory: "1536Mi"
   blobService:
     containerPort: 8080
     port: 80
