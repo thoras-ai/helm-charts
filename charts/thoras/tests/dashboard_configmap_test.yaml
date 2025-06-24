@@ -3,20 +3,21 @@ templates:
   - dashboard/nginx-config-map.yaml
 chart:
   version: "4.36.0"
+set:
+  thorasVersion: TEST
+  cluster:
+    name: phantom-assassin
 tests:
   - it: Should default to v2 port
     set:
-      thorasVersion: TEST
     asserts:
       - matchSnapshot:
         path: data.nginx.conf
   - it: Should use the v1 port if v2 is disabled
     set:
-      thorasVersion: TEST
       thorasDashboard:
         v2:
           enabled: false
-
     asserts:
       - matchSnapshot:
         path: data.nginx.conf
