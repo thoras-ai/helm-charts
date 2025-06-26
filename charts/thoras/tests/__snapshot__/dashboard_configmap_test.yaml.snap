@@ -52,7 +52,7 @@ Should default to v2 port:
 
             location /config.json {
                 default_type application/json;
-                return 200 '{ "api_base_url": "", "cluster_name": "phantom-assassin" }';
+                return 200 '{ "api_base_url": "", "extras": {"cluster_name":"phantom-assassin"} }';
             }
 
             location / {
@@ -126,11 +126,85 @@ Should use the v1 port if v2 is disabled:
 
             location /config.json {
                 default_type application/json;
-                return 200 '{ "api_base_url": "", "cluster_name": "phantom-assassin" }';
+                return 200 '{ "api_base_url": "", "extras": {"cluster_name":"phantom-assassin"} }';
             }
 
             location / {
               proxy_pass http://localhost:3000;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;       }
+          }
+        }
+    kind: ConfigMap
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.36.0
+      name: thoras-dashboard-nginx-config
+      namespace: NAMESPACE
+should set extras in config.json:
+  1: |
+    apiVersion: v1
+    data:
+      dashboard-v2.nginx.conf: |
+        events {
+          worker_connections 1024;
+        }
+
+        http {
+          include       mime.types;
+
+          server {
+            listen       5173;
+            server_name  localhost;
+
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+
+            location / {
+              try_files $uri /index.html;
+            }
+
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|otf|ttf|map)$ {
+              expires 1y;
+              access_log off;
+              add_header Cache-Control "public";
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+              root   /usr/share/nginx/html;
+            }
+          }
+        }
+      nginx.conf: |
+        events {
+          worker_connections 1024;
+        }
+
+        http {
+          server {
+            listen 80;
+
+            location /v1/ {
+              proxy_pass http://thoras-api-server-v2;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            location /config.json {
+                default_type application/json;
+                return 200 '{ "api_base_url": "", "extras": {"cluster_name":"phantom-assassin","feature":true,"foo":"bar"} }';
+            }
+
+            location / {
+              proxy_pass http://localhost:5173;
               proxy_set_header Host $host;
               proxy_set_header X-Real-IP $remote_addr;
               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
