@@ -21,3 +21,13 @@ tests:
     asserts:
       - matchSnapshot:
         path: data.nginx.conf
+  - it: should set extras in config.json
+    set:
+      thorasDashboard:
+        extras:
+          cluster_name: phantom-assassin
+          foo: bar
+          feature: true
+    asserts:
+      - matchSnapshot:
+        path: data.nginx.conf

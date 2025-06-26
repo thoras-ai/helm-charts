@@ -165,6 +165,7 @@ helm install \
 | thorasDashboard.logLevel                         | String  | Nil              | Logging level                                                            |
 | thorasDashboard.v2.enabled                       | Bool    | true             | Use v2 dashboard                                                         |
 | thorasDashboard.v2.containerPort                 | Number  | 5173             | V2 Dashboard port                                                        |
+| thorasDashboard.extras                           | Object  | {}               | Additional values to be injected into the Thoras Dashboard config        |
 
 ## Thoras Monitor
 
