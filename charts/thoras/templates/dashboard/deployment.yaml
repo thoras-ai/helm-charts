@@ -32,6 +32,20 @@ spec:
         - name: nginx-config
           configMap:
             name: thoras-dashboard-nginx-config
+      initContainers:
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
+        name: wait-for-api-service
+        env:
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2.thoras.svc.cluster.local/health"
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_BASE_URL}
+            if [ $? -ne 0 ]; then
+              echo "Failed to connect to API service"
+              exit 1
+            fi
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard

@@ -39,6 +39,20 @@ spec:
         - name: tls
           secret:
             secretName: thoras-webhooks-cert
+      initContainers:
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+        name: wait-for-api-service
+        env:
+          - name: API_BASE_URL
+            value: "http://thoras-api-server-v2.thoras.svc.cluster.local/health"
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_BASE_URL}
+            if [ $? -ne 0 ]; then
+              echo "Failed to connect to API service"
+              exit 1
+            fi
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: thoras-operator
@@ -92,7 +106,7 @@ spec:
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_THORAS_API_BASE_URL
-            value: "http://thoras-api-server-v2"
+            value: "http://thoras-api-server-v2.thoras.svc.cluster.local"
           - name: SERVICE_REASONING_ENABLED
             value: "{{ .Values.thorasReasoning.enabled }}"
           - name: FORECAST_IMAGE_PULL_POLICY
