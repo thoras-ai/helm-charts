@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: thoras-dashboard-nginx-config
   namespace: {{ .Release.Namespace }}
-  labels: 
+  labels:
     {{- include "labels" . | nindent 4 }}
 data:
   nginx.conf: |
