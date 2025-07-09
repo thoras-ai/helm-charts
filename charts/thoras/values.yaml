@@ -155,7 +155,8 @@ thorasDashboard:
   service:
     type: ClusterIP
     annotations: {}
-  extras: {}
+  extras:
+    show_savings: true
 
 thorasMonitor:
   enabled: false
