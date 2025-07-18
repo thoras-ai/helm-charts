@@ -13,10 +13,10 @@ tests:
           value: metrics-collector
       - equal:
           path: spec.template.spec.containers[0].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.18.2
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.18.3
       - equal:
           path: spec.template.spec.containers[?(@.name == 'timescaledb')].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.20.2-pg16
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.21.0-pg16
   - it: Default containers should match snapshots
     set:
       thorasVersion: dev
