@@ -14,7 +14,7 @@ Default containers should match snapshots:
           secretKeyRef:
             key: password
             name: thoras-elastic-password
-    image: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.18.2
+    image: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.18.3
     imagePullPolicy: IfNotPresent
     name: elasticsearch
     ports:
