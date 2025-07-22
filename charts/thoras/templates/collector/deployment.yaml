@@ -215,6 +215,10 @@ spec:
                 key: password
           - name: SERVICE_COLLECTION_PARALLELIZATION
             value: "{{ .Values.metricsCollector.collector.parallelization | default 20}}"
+          - name: SERVICE_THORAS_VERSION
+            value: "{{ .Values.metricsCollector.collector.imageTag | default .Values.thorasVersion }}"
+          - name: SERVICE_CHART_VERSION
+            value: "{{ .Chart.Version }}"
         resources:
           limits:
             memory: {{ .Values.metricsCollector.collector.limits.memory }}
