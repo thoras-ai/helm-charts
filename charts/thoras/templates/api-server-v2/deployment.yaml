@@ -116,6 +116,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
+          - name: SERVICE_RESTART_WORKLOAD_ON_CPU
+            value: {{ .Values.thorasApiServerV2.restartWorkloadOnCpu | quote }}
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         livenessProbe:
