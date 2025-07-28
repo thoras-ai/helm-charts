@@ -128,6 +128,7 @@ thorasApiServerV2:
   additionalPvSecurityContext: {}
   prometheus:
     enabled: true
+  restartWorkloadOnCpu: false
 
 thorasDashboard:
   enabled: true
