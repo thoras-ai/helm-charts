@@ -147,6 +147,7 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
+            # wait for elasticsearch to be available
             retries=0
             max_retries=48
             until [ $retries -eq $max_retries ]; do
@@ -164,13 +165,33 @@ spec:
                 exit 1
             fi
 
+            # wait for postgres to be available
+            retries=0
+            max_retries=48
+            until [ $retries -ge $max_retries ]; do
+              if pg_isready -h localhost ; then
+                break
+              else
+                echo "postgres not ready"
+                retries=$((retries+1))
+                sleep 5
+              fi
+            done
+            if [ $retries -ge $max_retries ]; then
+              echo "Failed to connect to database after $max_retries retries"
+              exit 1
+            fi
+
             # try to create the "thoras" database if it doesn't exist
             if ! psql -U postgres -h localhost -tc "SELECT 1 FROM pg_database WHERE datname = 'thoras'" | grep -q 1; then
                 echo "creating database 'thoras'"
                 psql -U postgres -h localhost -c "CREATE DATABASE thoras"
-                echo "setting password"
-                psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
             fi
+
+            # ensure the postgres user has the correct password
+            echo "setting password"
+            psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
+
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
 
