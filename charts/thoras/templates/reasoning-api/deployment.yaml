@@ -6,7 +6,7 @@ metadata:
   name: thoras-reasoning-api
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.thorasReasoning.api.replicas }}
   selector:
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app: thoras-reasoning-api
-        {{- include "labels" . | nindent 8 }}
+        {{- include "thoras.labels" . | nindent 8 }}
         {{- with .Values.thorasReasoning.api.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}

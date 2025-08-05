@@ -9,7 +9,7 @@ metadata:
     {{- toYaml . | nindent 8 }}
   {{- end }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
     {{- with .Values.thorasDashboard.labels }}
       {{- toYaml . | nindent 4 }}
     {{- end }}

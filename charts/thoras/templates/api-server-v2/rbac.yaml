@@ -4,7 +4,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 imagePullSecrets:
@@ -18,7 +18,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
 rules:
 - apiGroups:
@@ -61,7 +61,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 roleRef:
@@ -79,7 +79,7 @@ metadata:
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 rules:
 - apiGroups: [""]
   resources: ["pods"]
@@ -91,7 +91,7 @@ metadata:
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 roleRef:
   kind: Role
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}

@@ -6,7 +6,7 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.17.1
   name: metricinsights.thoras.ai
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 spec:
   group: thoras.ai
   names:

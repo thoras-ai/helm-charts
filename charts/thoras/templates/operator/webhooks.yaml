@@ -11,7 +11,7 @@ metadata:
   name: thoras-webhooks-cert
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 data:
   {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace "thoras-webhooks-cert") }}
   {{- $secretData := (get $secretObj "data") | default dict }}
@@ -27,7 +27,7 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: "pods.thoras.ai"
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 webhooks:
 - name: "pods.thoras.ai"
   rules:
@@ -69,7 +69,7 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: "validation.thoras.ai"
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 webhooks:
   - name: "ast-validation.thoras.ai"
     rules:

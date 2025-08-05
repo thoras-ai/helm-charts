@@ -3,9 +3,9 @@
 {{- end }}
 
 {{/*
-Labels that should be added on each resource
+Common labels
 */}}
-{{- define "labels" -}}
+{{- define "thoras.labels" -}}
 app.kubernetes.io/name: {{ .Chart.Name }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}

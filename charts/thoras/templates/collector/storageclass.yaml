@@ -4,7 +4,7 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: {{ .Values.metricsCollector.persistence.storageClassName }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 provisioner: efs.csi.aws.com
 parameters:
   fileSystemId: {{ .Values.metricsCollector.persistence.createEFSStorageClass.fileSystemId }}

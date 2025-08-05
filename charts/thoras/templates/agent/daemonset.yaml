@@ -5,7 +5,7 @@ metadata:
   name: thoras-agent
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
@@ -14,7 +14,7 @@ spec:
     metadata:
       labels:
         app: thoras-agent
-        {{- include "labels" . | nindent 8 }}
+        {{- include "thoras.labels" . | nindent 8 }}
         {{- with .Values.thorasAgent.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
