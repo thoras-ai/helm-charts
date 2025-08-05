@@ -1,25 +1,18 @@
-{{- if .Values.thorasMonitor.enabled }}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-  name: thoras-monitor
-  namespace: {{ .Release.Namespace }}
-imagePullSecrets:
-{{- if .Values.imageCredentials.secretRef }}
-  - name: {{ .Values.imageCredentials.secretRef }}
-{{- else }}
-  - name: thoras-secret-registry
-{{- end }}
+{{- define "thoras.monitor.roles" }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: Role
+metadata:
+  name: {{ print "thoras-monitor-" .rbacNamespace }}
+  namespace: {{ .rbacNamespace }}
+{{- else }}
 kind: ClusterRole
 metadata:
+  name: thoras-monitor
+{{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
-  name: thoras-monitor
 rules:
 - apiGroups:
   - '*'
@@ -66,18 +59,54 @@ rules:
   - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: RoleBinding
+metadata:
+  name: {{ print "thoras-monitor-" .rbacNamespace }}
+{{- else }}
 kind: ClusterRoleBinding
+metadata:
+  name: thoras-monitor
+{{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+{{- if .rbacNamespace }}
+  kind: Role
+  name: {{ print "thoras-monitor-" .rbacNamespace }}
+  namespace: {{ .rbacNamespace }}
+{{- else }}
+  kind: ClusterRole
+  name: thoras-monitor
+{{- end }}
+subjects:
+- kind: ServiceAccount
+  name: thoras-monitor
+  namespace: {{ .Release.Namespace }}
+{{- end}}
+
+{{- if .Values.thorasMonitor.enabled }}
+  {{- if .Values.rbac.namespaces}}
+    {{- range $idx, $namespace := .Values.rbac.namespaces }}
+      {{- template "thoras.monitor.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
+    {{- end}}
+  {{- else }}
+    {{- template "thoras.monitor.roles" $ }}
+  {{- end }}
+---
+apiVersion: v1
+kind: ServiceAccount
 metadata:
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
   name: thoras-monitor
   namespace: {{ .Release.Namespace }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: thoras-monitor
-subjects:
-- kind: ServiceAccount
-  name: thoras-monitor
-  namespace: {{ .Release.Namespace }}
+imagePullSecrets:
+{{- if .Values.imageCredentials.secretRef }}
+  - name: {{ .Values.imageCredentials.secretRef }}
+{{- else }}
+  - name: thoras-secret-registry
+{{- end }}
 {{- end }}

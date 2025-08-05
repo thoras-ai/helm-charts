@@ -1,3 +1,99 @@
+{{- define "thoras.collector.roles" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: Role
+metadata:
+  name: {{ print "thoras-collector-" .rbacNamespace }}
+  namespace: {{ .rbacNamespace }}
+{{- else }}
+kind: ClusterRole
+metadata:
+  name: thoras-collector
+{{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - '*'
+  resources:
+  - '*/scale'
+  - '*/status'
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - '*'
+- apiGroups:
+  - autoscaling.k8s.io
+  resources:
+  - verticalpodautoscalers
+  verbs:
+  - '*'
+- apiGroups:
+  - thoras.ai
+  resources:
+  - 'AIScaleTarget'
+  - 'aiscaletargets/status'
+  - 'aiscaletargets'
+  verbs:
+  - '*'
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  - argoproj.io
+  resources:
+  - '*'
+  verbs:
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+{{- if .namespace }}
+kind: RoleBinding
+metadata:
+  name: {{ print "thoras-collector-" .rbacNamespace }}
+{{- else }}
+kind: ClusterRoleBinding
+metadata:
+  name: thoras-collector
+{{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+{{- if .rbacNamespace }}
+  kind: Role
+  namespace: {{ .rbacNamespace }}
+  name: {{ print "thoras-collector-" .rbacNamespace }}
+{{- else }}
+  kind: ClusterRole
+  name: thoras-collector
+{{- end }}
+subjects:
+- kind: ServiceAccount
+  name: thoras-collector
+  namespace: {{ .Release.Namespace }}
+{{- end }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -27,19 +123,11 @@ subjects:
 - kind: ServiceAccount
   name: thoras-collector
   namespace: {{ .Release.Namespace }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-  name: thoras-collector-thoras-operator
-  namespace: {{ .Release.Namespace }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: thoras-operator
-subjects:
-- kind: ServiceAccount
-  name: thoras-collector
-  namespace: {{ .Release.Namespace }}
+
+{{- if .Values.rbac.namespaces}}
+  {{- range $idx, $namespace := .Values.rbac.namespaces }}
+    {{- template "thoras.collector.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
+  {{- end}}
+{{- else }}
+  {{- template "thoras.collector.roles" $ }}
+{{- end }}

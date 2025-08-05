@@ -1,4 +1,3 @@
-{{- if and .Values.thorasDashboard.rbac.create .Values.thorasDashboard.enabled }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -13,13 +12,22 @@ imagePullSecrets:
 {{- else }}
   - name: thoras-secret-registry
 {{- end }}
+
+{{- define "thoras.dashboard.roles" }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: Role
+metadata:
+  name: {{ print .Values.thorasDashboard.serviceAccount.name "-" .rbacNamespace }}
+  namespace: {{ .rbacNamespace }}
+{{- else }}
 kind: ClusterRole
 metadata:
+  name: {{ .Values.thorasDashboard.serviceAccount.name }}
+{{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
-  name: {{ .Values.thorasDashboard.serviceAccount.name }}
 rules:
 - apiGroups:
   - '*'
@@ -55,20 +63,42 @@ rules:
   - '*'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: RoleBinding
+metadata:
+  name: {{ print "thoras-dashboard-" .rbacNamespace }}
+{{- else }}
 kind: ClusterRoleBinding
 metadata:
+  name: thoras-dashboard
+{{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
-  name: thoras-dashboard
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
+{{- if .rbacNamespace }}
+  kind: Role
+  namespace: {{ .rbacNamespace }}
+  name: {{ print .Values.thorasDashboard.serviceAccount.name "-" .rbacNamespace }}
+{{- else }}
   kind: ClusterRole
   name: {{ .Values.thorasDashboard.serviceAccount.name }}
+{{- end }}
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasDashboard.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
+{{- end }}
+
+{{- if and .Values.thorasDashboard.rbac.create .Values.thorasDashboard.enabled }}
+  {{- if .Values.rbac.namespaces}}
+    {{- range $idx, $namespace := .Values.rbac.namespaces }}
+      {{- template "thoras.dashboard.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
+    {{- end}}
+  {{- else }}
+    {{- template "thoras.dashboard.roles" $ }}
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
