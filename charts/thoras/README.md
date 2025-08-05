@@ -50,22 +50,23 @@ helm install \
 
 ## Global
 
-| Key                       | Type    | Default                                          | Description                                                        |
-| ------------------------- | ------- | ------------------------------------------------ | ------------------------------------------------------------------ |
-| thorasVersion             | String  | 4.32.1                                           | Thoras app version                                                 |
-| imageCredentials.registry | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                            |
-| imageCredentials.username | String  | \_json_key_base64                                | Container registry username                                        |
-| imageCredentials.password | String  | ""                                               | Container registry auth string                                     |
-| resourceQuota.enabled     | Bool    | false                                            | Enables resource quotas within Thoras                              |
-| resourceQuota.pods        | Number  | 200                                              | Maximum number of pods allowed                                     |
-| resourceQuota.cronjobs    | Number  | 200                                              | Maximum number of cronjobs allowed                                 |
-| resourceQuota.jobs        | Number  | 200                                              | Maximum number of jobs allowed                                     |
-| logLevel                  | String  | info                                             | Default log level                                                  |
-| slackWebhookUrl           | String  | ""                                               | Slack Webhook URL destination for notifications.                   |
-| slackErrorsEnabled        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`       |
-| queriesPerSecond          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                           |
-| nodeSelector              | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads |
-| tolerations               | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads   |
+| Key                       | Type    | Default                                          | Description                                                                                                          |
+| ------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| thorasVersion             | String  | 4.32.1                                           | Thoras app version                                                                                                   |
+| imageCredentials.registry | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
+| imageCredentials.username | String  | \_json_key_base64                                | Container registry username                                                                                          |
+| imageCredentials.password | String  | ""                                               | Container registry auth string                                                                                       |
+| resourceQuota.enabled     | Bool    | false                                            | Enables resource quotas within Thoras                                                                                |
+| resourceQuota.pods        | Number  | 200                                              | Maximum number of pods allowed                                                                                       |
+| resourceQuota.cronjobs    | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                   |
+| resourceQuota.jobs        | Number  | 200                                              | Maximum number of jobs allowed                                                                                       |
+| logLevel                  | String  | info                                             | Default log level                                                                                                    |
+| slackWebhookUrl           | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                     |
+| slackErrorsEnabled        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                         |
+| queriesPerSecond          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
+| nodeSelector              | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
+| tolerations               | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
+| rbac.namespaces           | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead |
 
 ## Thoras Forecast
 
