@@ -67,7 +67,7 @@ rules:
   - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-{{- if .namespace }}
+{{- if .rbacNamespace }}
 kind: RoleBinding
 metadata:
   name: {{ print "thoras-collector-" .rbacNamespace }}
