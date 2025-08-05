@@ -71,19 +71,19 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ print "thoras-collector-" .rbacNamespace }}
+  namespace: {{ .rbacNamespace }}
 {{- else }}
 kind: ClusterRoleBinding
 metadata:
   name: thoras-collector
+  namespace: {{ .Release.Namespace }}
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
-  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
 {{- if .rbacNamespace }}
   kind: Role
-  namespace: {{ .rbacNamespace }}
   name: {{ print "thoras-collector-" .rbacNamespace }}
 {{- else }}
   kind: ClusterRole
