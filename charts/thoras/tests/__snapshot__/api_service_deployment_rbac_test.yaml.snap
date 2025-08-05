@@ -8,7 +8,7 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api
+      name: thoras-api-role
     rules:
       - apiGroups:
           - '*'
@@ -26,12 +26,6 @@ Default matches snapshot:
           - get
           - list
           - watch
-      - apiGroups:
-          - thoras.ai
-        resources:
-          - '*'
-        verbs:
-          - '*'
       - apiGroups:
           - batch
         resources:
@@ -54,12 +48,12 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api
+      name: thoras-api-role
       namespace: NAMESPACE
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
-      name: thoras-api
+      name: thoras-api-role
     subjects:
       - kind: ServiceAccount
         name: thoras-api
@@ -79,6 +73,43 @@ Default matches snapshot:
       namespace: NAMESPACE
   4: |
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - '*'
+  5: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-api
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  6: |
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
       labels:
@@ -95,7 +126,7 @@ Default matches snapshot:
           - pods
         verbs:
           - delete
-  5: |
+  7: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:

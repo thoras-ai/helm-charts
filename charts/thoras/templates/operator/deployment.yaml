@@ -30,7 +30,7 @@ spec:
       {{- end }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
-        prometheus.io/port: {{ .Values.thorasOperator.prometheus.port | quote}}
+        prometheus.io/port: {{ .Values.thorasOperator.prometheus.port | quote }}
       {{- end }}
       name: thoras-operator
     spec:

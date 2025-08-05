@@ -20,7 +20,7 @@ spec:
         {{- end }}
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: {{ .Values.thorasAgent.containerPort | quote}}
+        prometheus.io/port: {{ .Values.thorasAgent.containerPort | quote }}
       {{- with .Values.thorasAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
