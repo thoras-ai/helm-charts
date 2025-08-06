@@ -8,7 +8,7 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api-role
+      name: thoras-api
     rules:
       - apiGroups:
           - '*'
@@ -48,12 +48,12 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api-role
+      name: thoras-api
       namespace: NAMESPACE
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
-      name: thoras-api-role
+      name: thoras-api
     subjects:
       - kind: ServiceAccount
         name: thoras-api
@@ -80,7 +80,7 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api
+      name: thoras-api-thoras
       namespace: NAMESPACE
     rules:
       - apiGroups:
@@ -98,12 +98,12 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api
+      name: thoras-api-thoras
       namespace: NAMESPACE
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
-      name: thoras-api
+      name: thoras-api-thoras
     subjects:
       - kind: ServiceAccount
         name: thoras-api
@@ -117,7 +117,7 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api
+      name: thoras-api-thoras
       namespace: NAMESPACE
     rules:
       - apiGroups:
@@ -135,12 +135,12 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api
+      name: thoras-api-thoras
       namespace: NAMESPACE
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: Role
-      name: thoras-api
+      name: thoras-api-thoras
     subjects:
       - kind: ServiceAccount
         name: thoras-api
