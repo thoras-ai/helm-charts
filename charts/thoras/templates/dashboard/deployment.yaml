@@ -47,58 +47,11 @@ spec:
               exit 1
             fi
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
-        env:
-          - name: "ES_INDEX"
-            value: "thoras-metrics"
-          - name: SLACK_WEBHOOK_URL
-            valueFrom:
-              secretKeyRef:
-            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
-                name: {{ .Values.slackWebhookUrlSecretRefName }}
-                key: {{ .Values.slackWebhookUrlSecretRefKey }}
-            {{- else }}
-                name: thoras-slack
-                key: webhookUrl
-            {{- end }}
-          - name: "ES_HOST"
-            valueFrom:
-              secretKeyRef:
-                name: thoras-elastic-password
-                key: host
-          - name: THORAS_NS
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          {{- if .Values.thorasForecast.requestCpu }}
-          - name: "FORECAST_RESOURCE_REQUESTS_CPU"
-            value: {{ .Values.thorasForecast.requestCpu | quote }}
-          {{- end }}
-          - name: "MODEL_IMAGE"
-            value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
-          - name: SLACK_ERRORS_ENABLED
-            value: "{{ .Values.thorasDashboard.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
-          - name: "LOGLEVEL"
-            value: {{ default .Values.logLevel .Values.thorasDashboard.logLevel }}
-          - name: API_BASE_URL
-            value: "http://thoras-api-server-v2"
-          - name: FORECAST_IMAGE_PULL_POLICY
-            value: "{{ .Values.imagePullPolicy }}"
-        resources:
-          limits:
-            memory: {{ .Values.thorasDashboard.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasDashboard.requests.cpu }}
-            memory: {{ .Values.thorasDashboard.requests.memory }}
-      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.v2.imageTag }}
-        name: thoras-dashboard-v2
-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        ports:
-        - containerPort: {{ .Values.thorasDashboard.v2.containerPort }}
         resources:
           limits:
             memory: {{ .Values.thorasDashboard.limits.memory }}
