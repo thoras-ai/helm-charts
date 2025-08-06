@@ -4,15 +4,14 @@ apiVersion: rbac.authorization.k8s.io/v1
 {{- if .rbacNamespace }}
 kind: Role
 metadata:
-  name: {{ print "thoras-collector-" .rbacNamespace }}
   namespace: {{ .rbacNamespace }}
 {{- else }}
 kind: ClusterRole
 metadata:
-  name: thoras-collector
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+  name: "thoras-collector"
 rules:
 - apiGroups:
   - '*'
@@ -70,24 +69,22 @@ apiVersion: rbac.authorization.k8s.io/v1
 {{- if .rbacNamespace }}
 kind: RoleBinding
 metadata:
-  name: {{ print "thoras-collector-" .rbacNamespace }}
   namespace: {{ .rbacNamespace }}
 {{- else }}
 kind: ClusterRoleBinding
 metadata:
-  name: thoras-collector
   namespace: {{ .Release.Namespace }}
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+  name: "thoras-collector"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
+  name: "thoras-collector"
 {{- if .rbacNamespace }}
   kind: Role
-  name: {{ print "thoras-collector-" .rbacNamespace }}
 {{- else }}
   kind: ClusterRole
-  name: thoras-collector
 {{- end }}
 subjects:
 - kind: ServiceAccount

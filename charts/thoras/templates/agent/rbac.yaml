@@ -4,15 +4,14 @@ apiVersion: rbac.authorization.k8s.io/v1
 {{- if .rbacNamespace }}
 kind: Role
 metadata:
-  name: {{ print .Values.thorasAgent.serviceAccount.name "-" .rbacNamespace }}
   namespace: {{ .rbacNamespace }}
 {{- else }}
 kind: ClusterRole
 metadata:
-  name: {{ print .Values.thorasAgent.serviceAccount.name "-role" }}
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
 rules:
 - apiGroups:
   - '*'
@@ -26,24 +25,22 @@ apiVersion: rbac.authorization.k8s.io/v1
 {{- if .rbacNamespace }}
 kind: RoleBinding
 metadata:
-  name: {{ print .Values.thorasAgent.serviceAccount.name "-" .rbacNamespace }}
   namespace: {{ .rbacNamespace }}
 {{- else }}
 kind: ClusterRoleBinding
 metadata:
-  name: {{ print .Values.thorasAgent.serviceAccount.name "-role" }}
   namespace: {{ .Release.Namespace }}
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
 {{- if .rbacNamespace }}
   kind: Role
-  name: {{ print .Values.thorasAgent.serviceAccount.name "-" .rbacNamespace }}
 {{- else }}
   kind: ClusterRole
-  name: {{ print .Values.thorasAgent.serviceAccount.name "-role" }}
 {{- end }}
 subjects:
 - kind: ServiceAccount
@@ -70,7 +67,7 @@ imagePullSecrets:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ .Values.thorasAgent.serviceAccount.name }}
+  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
@@ -85,14 +82,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ .Values.thorasAgent.serviceAccount.name }}
+  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ .Values.thorasAgent.serviceAccount.name }}
+  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras"}}
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasAgent.serviceAccount.name }}
