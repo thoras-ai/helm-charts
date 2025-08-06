@@ -67,10 +67,9 @@ imagePullSecrets:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
 rules:
 - apiGroups:
   - thoras.ai
@@ -82,10 +81,10 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
