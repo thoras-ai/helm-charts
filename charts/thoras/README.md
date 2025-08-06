@@ -152,8 +152,8 @@ helm install \
 | thorasDashboard.rbac.create                      | Bool    | true             | Creates cluster role for Thoras Dashboard pod                            |
 | thorasDashboard.podAnnotations                   | Object  | {}               | Pod Annotations for Thoras Dashboard                                     |
 | thorasDashboard.labels                           | Object  | {}               | Pod/service labels for Thoras Dashboard                                  |
-| thorasDashboard.containerPort                    | Number  | 3000             | Thoras Dashboard port                                                    |
-| thorasDashboard.port                             | Number  | 3000             | Thoras Dashboard service port                                            |
+| thorasDashboard.containerPort                    | Number  | 5173             | Thoras Dashboard port                                                    |
+| thorasDashboard.port                             | Number  | 80.              | Thoras Dashboard service port                                            |
 | thorasDashboard.limits.memory                    | String  | 2000Mi           | Thoras Dashboard memory limit                                            |
 | thorasDashboard.requests.cpu                     | String  | 1000Mi           | Thoras Dashboard CPU request                                             |
 | thorasDashboard.requests.memory                  | String  | 1000Mi           | Thoras Dashboard memory request                                          |
@@ -165,8 +165,6 @@ helm install \
 | thorasDashboard.service.externalIPs              | List    | nil              | Service externalIPs                                                      |
 | thorasDashboard.slackErrorsEnabled               | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`             |
 | thorasDashboard.logLevel                         | String  | Nil              | Logging level                                                            |
-| thorasDashboard.v2.enabled                       | Bool    | true             | Use v2 dashboard                                                         |
-| thorasDashboard.v2.containerPort                 | Number  | 5173             | V2 Dashboard port                                                        |
 | thorasDashboard.extras                           | Object  | {}               | Additional values to be injected into the Thoras Dashboard config        |
 
 ## Thoras Monitor

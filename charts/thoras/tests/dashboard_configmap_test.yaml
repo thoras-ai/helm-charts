@@ -13,14 +13,6 @@ tests:
     asserts:
       - matchSnapshot:
         path: data.nginx.conf
-  - it: Should use the v1 port if v2 is disabled
-    set:
-      thorasDashboard:
-        v2:
-          enabled: false
-    asserts:
-      - matchSnapshot:
-        path: data.nginx.conf
   - it: should set extras in config.json
     set:
       thorasDashboard:

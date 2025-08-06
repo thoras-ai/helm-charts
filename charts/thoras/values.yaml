@@ -135,9 +135,6 @@ thorasApiServerV2:
 
 thorasDashboard:
   enabled: true
-  v2:
-    enabled: true
-    containerPort: 5173
   serviceAccount:
     name: thoras-dashboard
     create: true
@@ -145,7 +142,7 @@ thorasDashboard:
     create: true
   podAnnotations: {}
   labels: {}
-  containerPort: 3000
+  containerPort: 5173
   nginxContainerPort: 80
   nginx:
     imageTag: "stable-alpine3.21"

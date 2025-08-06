@@ -47,11 +47,11 @@ spec:
               exit 1
             fi
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.v2.imageTag }}
-        name: thoras-dashboard-v2
+      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
+        name: thoras-dashboard
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
-        - containerPort: {{ .Values.thorasDashboard.v2.containerPort }}
+        - containerPort: {{ .Values.thorasDashboard.containerPort }}
         resources:
           limits:
             memory: {{ .Values.thorasDashboard.limits.memory }}
