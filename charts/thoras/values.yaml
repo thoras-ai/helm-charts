@@ -42,6 +42,8 @@ rbac:
 thorasOperator:
   # Operator is a singleton -- don't change this :)
   replicas: 1
+  serviceAccount:
+    name: thoras-operator
   podAnnotations: {}
   labels: {}
   limits:
@@ -163,6 +165,8 @@ thorasDashboard:
 
 thorasMonitor:
   enabled: false
+  serviceAccount:
+    name: thoras-monitor
   unittesting: false
   limits:
     memory: "8192Mi"
@@ -177,6 +181,8 @@ thorasMonitorV2:
   enabled: true
 
 thorasForecast:
+  serviceAccount:
+    name: thoras-forecast-worker
   skipCache: false
   requests:
     cpu: "256m"
@@ -208,6 +214,8 @@ thorasAgent:
 
 thorasReasoning:
   enabled: false
+  serviceAccount:
+    name: thoras-reasoning-api
   connectors:
     prometheus:
       baseUrl: "http://localhost"

@@ -70,7 +70,7 @@ roleRef:
 {{- end }}
 subjects:
 - kind: ServiceAccount
-  name: thoras-monitor
+  name: {{ .Values.thorasMonitor.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 {{- end}}
 
@@ -82,20 +82,6 @@ subjects:
   {{- else }}
     {{- template "thoras.monitor.roles" $ }}
   {{- end }}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-  name: thoras-monitor
-  namespace: {{ .Release.Namespace }}
-imagePullSecrets:
-{{- if .Values.imageCredentials.secretRef }}
-  - name: {{ .Values.imageCredentials.secretRef }}
-{{- else }}
-  - name: thoras-secret-registry
-{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -129,6 +115,6 @@ roleRef:
   name: thoras-monitor-thoras
 subjects:
 - kind: ServiceAccount
-  name: thoras-monitor
+  name: {{ .Values.thorasMonitor.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 {{- end }}
