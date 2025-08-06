@@ -64,6 +64,8 @@ metricsCollector:
     pvcStorageRequestSize: "3Gi"
   podAnnotations: {}
   labels: {}
+  serviceAccount:
+    name: thoras-collector
   collector:
     name: thoras-collector
     limits:

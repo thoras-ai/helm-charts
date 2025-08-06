@@ -26,7 +26,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: thoras-collector
+      serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
       {{- if .Values.metricsCollector.persistence.enabled }}
       volumes:
         - name: elastic-search-data

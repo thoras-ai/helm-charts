@@ -99,6 +99,8 @@ helm install \
 
 | Key                                                             | Type    | Default          | Description                                                                   |
 | --------------------------------------------------------------- | ------- | ---------------- | ----------------------------------------------------------------------------- |
+| metricsCollector.serviceAccount.create                          | Bool    | true             | Creates a Thoras-maintained service account for the Thoras collector pod      |
+| metricsCollector.serviceAccount.name                            | String  | thoras-collector | Service account name for Thoras collector pod                                 |
 | metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector                              |
 | metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning                     |
 | metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id                    |
