@@ -34,7 +34,7 @@ spec:
       {{- end }}
       name: thoras-operator
     spec:
-      serviceAccountName: thoras-operator
+      serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
       volumes:
         - name: tls
           secret:

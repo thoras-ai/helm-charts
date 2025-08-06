@@ -24,7 +24,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: thoras-forecast-worker
+      serviceAccountName: {{ .Values.thorasForecast.serviceAccount.name }}
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service
