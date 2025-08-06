@@ -58,12 +58,12 @@ metadata:
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
 {{- if .rbacNamespace }}
   kind: Role
 {{- else }}
   kind: ClusterRole
 {{- end }}
+  name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}

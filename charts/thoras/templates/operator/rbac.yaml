@@ -72,12 +72,12 @@ metadata:
   name: thoras-operator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  name: thoras-operator
 {{- if .rbacNamespace }}
   kind: Role
 {{- else }}
   kind: ClusterRole
 {{- end }}
+  name: thoras-operator
 subjects:
 - kind: ServiceAccount
   name: thoras-operator
