@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
   name: metrics-collector
   namespace: {{ .Release.Namespace }}
 spec:
@@ -17,7 +17,7 @@ spec:
     metadata:
       labels:
         app: metrics-collector
-        {{- include "labels" . | nindent 8 }}
+        {{- include "thoras.labels" . | nindent 8 }}
         {{- with .Values.metricsCollector.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}

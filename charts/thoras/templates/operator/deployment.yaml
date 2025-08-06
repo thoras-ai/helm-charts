@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
   name: thoras-operator
   namespace: {{ .Release.Namespace }}
 spec:
@@ -16,7 +16,7 @@ spec:
       labels:
         app: thoras-operator
         name: thoras-operator
-        {{- include "labels" . | nindent 8 }}
+        {{- include "thoras.labels" . | nindent 8 }}
         {{- with .Values.thorasOperator.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -30,7 +30,7 @@ spec:
       {{- end }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
-        prometheus.io/port: {{ .Values.thorasOperator.prometheus.port | quote}}
+        prometheus.io/port: {{ .Values.thorasOperator.prometheus.port | quote }}
       {{- end }}
       name: thoras-operator
     spec:

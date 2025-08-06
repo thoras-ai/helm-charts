@@ -1,10 +1,9 @@
-{{- if and .Values.thorasDashboard.rbac.create .Values.thorasDashboard.enabled }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
   name: {{ .Values.thorasDashboard.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 imagePullSecrets:
@@ -13,12 +12,20 @@ imagePullSecrets:
 {{- else }}
   - name: thoras-secret-registry
 {{- end }}
+
+{{- define "thoras.dashboard.roles" }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: Role
+metadata:
+  namespace: {{ .rbacNamespace }}
+{{- else }}
 kind: ClusterRole
 metadata:
+{{- end }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
   name: {{ .Values.thorasDashboard.serviceAccount.name }}
 rules:
 - apiGroups:
@@ -42,12 +49,6 @@ rules:
   verbs:
   - '*'
 - apiGroups:
-  - thoras.ai
-  resources:
-  - 'AIScaleTarget'
-  verbs:
-  - '*'
-- apiGroups:
   - batch
   resources:
   - jobs
@@ -55,16 +56,67 @@ rules:
   - '*'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: RoleBinding
+metadata:
+  namespace: {{ .rbacNamespace }}
+{{- else }}
 kind: ClusterRoleBinding
 metadata:
-  labels:
-    {{- include "labels" . | nindent 4 }}
-  name: thoras-dashboard
   namespace: {{ .Release.Namespace }}
+{{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ .Values.thorasDashboard.serviceAccount.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
+{{- if .rbacNamespace }}
+  kind: Role
+{{- else }}
   kind: ClusterRole
+{{- end }}
   name: {{ .Values.thorasDashboard.serviceAccount.name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasDashboard.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+
+{{- if and .Values.thorasDashboard.rbac.create .Values.thorasDashboard.enabled }}
+  {{- if .Values.rbac.namespaces}}
+    {{- range $idx, $namespace := .Values.rbac.namespaces }}
+      {{- template "thoras.dashboard.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
+    {{- end}}
+  {{- else }}
+    {{- template "thoras.dashboard.roles" $ }}
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ print .Values.thorasDashboard.serviceAccount.name "-thoras" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - thoras.ai
+  resources:
+  - 'AIScaleTarget'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ print .Values.thorasDashboard.serviceAccount.name "-thoras" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+roleRef:
+  kind: ClusterRole
+  name: {{ print .Values.thorasDashboard.serviceAccount.name "-thoras" }}
+  apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasDashboard.serviceAccount.name }}
@@ -73,10 +125,10 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ .Values.thorasDashboard.serviceAccount.name }}-role
+  name: {{ print .Values.thorasDashboard.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 rules:
 - apiGroups: [""]
   resources: ["pods"]
@@ -85,13 +137,13 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: thoras-dashboard
+  name: {{ print .Values.thorasDashboard.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 roleRef:
   kind: Role
-  name: {{ .Values.thorasDashboard.serviceAccount.name }}-role
+  name: {{ print .Values.thorasDashboard.serviceAccount.name "-thoras" }}
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: ServiceAccount

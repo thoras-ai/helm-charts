@@ -1,25 +1,17 @@
-{{- if .Values.thorasMonitor.enabled }}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    {{- include "labels" . | nindent 4 }}
-  name: thoras-monitor
-  namespace: {{ .Release.Namespace }}
-imagePullSecrets:
-{{- if .Values.imageCredentials.secretRef }}
-  - name: {{ .Values.imageCredentials.secretRef }}
-{{- else }}
-  - name: thoras-secret-registry
-{{- end }}
+{{- define "thoras.monitor.roles" }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: Role
+metadata:
+  namespace: {{ .rbacNamespace }}
+{{- else }}
 kind: ClusterRole
 metadata:
+{{- end }}
   labels:
-    {{- include "labels" . | nindent 4 }}
-  name: thoras-monitor
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: "thoras-monitor"
 rules:
 - apiGroups:
   - '*'
@@ -46,16 +38,6 @@ rules:
   - list
   - watch
 - apiGroups:
-  - thoras.ai
-  resources:
-  - 'AIScaleTarget'
-  - 'aiscaletargets/status'
-  - 'aiscaletargets'
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
   - batch
   resources:
   - jobs
@@ -66,16 +48,85 @@ rules:
   - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: RoleBinding
+metadata:
+  namespace: {{ .rbacNamespace }}
+{{- else }}
 kind: ClusterRoleBinding
 metadata:
+  namespace: {{ .Release.Namespace }}
+{{- end }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: "thoras-monitor"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  name: "thoras-monitor"
+{{- if .rbacNamespace }}
+  kind: Role
+{{- else }}
+  kind: ClusterRole
+{{- end }}
+subjects:
+- kind: ServiceAccount
   name: thoras-monitor
   namespace: {{ .Release.Namespace }}
+{{- end}}
+
+{{- if .Values.thorasMonitor.enabled }}
+  {{- if .Values.rbac.namespaces}}
+    {{- range $idx, $namespace := .Values.rbac.namespaces }}
+      {{- template "thoras.monitor.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
+    {{- end}}
+  {{- else }}
+    {{- template "thoras.monitor.roles" $ }}
+  {{- end }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: thoras-monitor
+  namespace: {{ .Release.Namespace }}
+imagePullSecrets:
+{{- if .Values.imageCredentials.secretRef }}
+  - name: {{ .Values.imageCredentials.secretRef }}
+{{- else }}
+  - name: thoras-secret-registry
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: thoras-monitor-thoras
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - thoras.ai
+  resources:
+  - 'AIScaleTarget'
+  - 'aiscaletargets/status'
+  - 'aiscaletargets'
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: thoras-monitor-thoras
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: thoras-monitor
+  name: thoras-monitor-thoras
 subjects:
 - kind: ServiceAccount
   name: thoras-monitor

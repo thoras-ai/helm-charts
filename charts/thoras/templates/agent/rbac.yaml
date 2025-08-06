@@ -1,10 +1,60 @@
+{{- define "thoras.agent.roles" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: Role
+metadata:
+  namespace: {{ .rbacNamespace }}
+{{- else }}
+kind: ClusterRole
+metadata:
+{{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: RoleBinding
+metadata:
+  namespace: {{ .rbacNamespace }}
+{{- else }}
+kind: ClusterRoleBinding
+metadata:
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+{{- if .rbacNamespace }}
+  kind: Role
+{{- else }}
+  kind: ClusterRole
+{{- end }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasAgent.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+
 {{- if .Values.thorasAgent.enabled }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
   name: {{ .Values.thorasAgent.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 imagePullSecrets:
@@ -18,16 +68,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
-  name: {{ .Values.thorasAgent.serviceAccount.name }}
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
 rules:
-- apiGroups:
-  - '*'
-  resources:
-  - '*'
-  verbs:
-  - get
-  - list
 - apiGroups:
   - thoras.ai
   resources:
@@ -39,15 +82,23 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    {{- include "labels" . | nindent 4 }}
-  name: {{ .Values.thorasAgent.serviceAccount.name }}
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ .Values.thorasAgent.serviceAccount.name }}
+  name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras"}}
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasAgent.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
+
+  {{- if .Values.rbac.namespaces}}
+    {{- range $idx, $namespace := .Values.rbac.namespaces }}
+      {{- template "thoras.agent.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
+    {{- end}}
+  {{- else }}
+    {{- template "thoras.agent.roles" $ }}
+  {{- end }}
 {{- end }}

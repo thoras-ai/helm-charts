@@ -1,18 +1,5 @@
 Default matches snapshot:
   1: |
-    apiVersion: v1
-    imagePullSecrets:
-      - name: test-secret-registry
-    kind: ServiceAccount
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-api
-      namespace: NAMESPACE
-  2: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -40,12 +27,6 @@ Default matches snapshot:
           - list
           - watch
       - apiGroups:
-          - thoras.ai
-        resources:
-          - '*'
-        verbs:
-          - '*'
-      - apiGroups:
           - batch
         resources:
           - jobs
@@ -58,7 +39,7 @@ Default matches snapshot:
           - '*'
         verbs:
           - patch
-  3: |
+  2: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -77,7 +58,57 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-api
         namespace: NAMESPACE
+  3: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api
+      namespace: NAMESPACE
   4: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - '*'
+  5: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-api-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  6: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -86,7 +117,7 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api
+      name: thoras-api-thoras
       namespace: NAMESPACE
     rules:
       - apiGroups:
@@ -95,7 +126,7 @@ Default matches snapshot:
           - pods
         verbs:
           - delete
-  5: |
+  7: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -104,12 +135,12 @@ Default matches snapshot:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
         helm.sh/chart: thoras-4.7.0
-      name: thoras-api
+      name: thoras-api-thoras
       namespace: NAMESPACE
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: Role
-      name: thoras-api
+      name: thoras-api-thoras
     subjects:
       - kind: ServiceAccount
         name: thoras-api

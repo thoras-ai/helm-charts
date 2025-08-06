@@ -4,7 +4,7 @@ metadata:
   name: thoras-dashboard-nginx-config
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 data:
   nginx.conf: |
     events {

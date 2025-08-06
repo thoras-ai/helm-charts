@@ -36,6 +36,9 @@ slackWebhookUrl: ""
 slackWebhookUrlSecretRefName: ""
 slackWebhookUrlSecretRefKey: ""
 
+rbac:
+  namespaces: []
+
 thorasOperator:
   # Operator is a singleton -- don't change this :)
   replicas: 1

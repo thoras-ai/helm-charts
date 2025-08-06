@@ -5,7 +5,7 @@ metadata:
   name: thoras-monitor-config
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "labels" . | nindent 4 }}
+    {{- include "thoras.labels" . | nindent 4 }}
 data:
   config.yaml: |
 {{ .Values.thorasMonitor.config | indent 4 }}
