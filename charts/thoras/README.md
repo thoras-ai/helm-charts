@@ -153,7 +153,7 @@ helm install \
 | thorasDashboard.podAnnotations                   | Object  | {}               | Pod Annotations for Thoras Dashboard                                     |
 | thorasDashboard.labels                           | Object  | {}               | Pod/service labels for Thoras Dashboard                                  |
 | thorasDashboard.containerPort                    | Number  | 5173             | Thoras Dashboard port                                                    |
-| thorasDashboard.port                             | Number  | 80.              | Thoras Dashboard service port                                            |
+| thorasDashboard.port                             | Number  | 80               | Thoras Dashboard service port                                            |
 | thorasDashboard.limits.memory                    | String  | 2000Mi           | Thoras Dashboard memory limit                                            |
 | thorasDashboard.requests.cpu                     | String  | 1000Mi           | Thoras Dashboard CPU request                                             |
 | thorasDashboard.requests.memory                  | String  | 1000Mi           | Thoras Dashboard memory request                                          |
