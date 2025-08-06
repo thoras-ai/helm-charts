@@ -70,12 +70,12 @@ metadata:
   name: {{ .Values.thorasDashboard.serviceAccount.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  name: {{ .Values.thorasDashboard.serviceAccount.name }}
 {{- if .rbacNamespace }}
   kind: Role
 {{- else }}
   kind: ClusterRole
 {{- end }}
+  name: {{ .Values.thorasDashboard.serviceAccount.name }}
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasDashboard.serviceAccount.name }}
