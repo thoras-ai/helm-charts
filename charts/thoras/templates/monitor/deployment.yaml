@@ -37,12 +37,12 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         name: wait-for-api-service
         env:
-          - name: API_BASE_URL
-            value: "http://thoras-api-server-v2.thoras.svc.cluster.local/health"
+          - name: API_HEALTH_URL
+            value: "http://thoras-api-server-v2/health"
         command: ["/bin/sh", "-c"]
         args:
           - |
-            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_BASE_URL}
+            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
             if [ $? -ne 0 ]; then
               echo "Failed to connect to API service"
               exit 1
