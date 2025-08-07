@@ -89,6 +89,12 @@ Default matches snapshot:
           - '*'
         verbs:
           - '*'
+      - apiGroups:
+          - ""
+        resources:
+          - namespaces
+        verbs:
+          - list
   5: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
