@@ -186,6 +186,7 @@ thorasForecast:
     replicas: 1
     pollingInterval: 15
     podAnnotations: {}
+    retrainSteadyStateHours: null
     labels: {}
     limits:
       memory: 2Gi
