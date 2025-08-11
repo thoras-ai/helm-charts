@@ -120,6 +120,12 @@ spec:
             value: {{ .Values.thorasApiServerV2.restartWorkloadOnCpu | quote }}
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
+        startupProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.thorasApiServerV2.containerPort }}
+          failureThreshold: 12
+          periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /health
