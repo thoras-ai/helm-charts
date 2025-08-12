@@ -57,10 +57,10 @@ spec:
             value: "{{ default 600 .Values.thorasForecast.worker.forecastTimeout }}"
           - name: OMP_NUM_THREADS
             value: "1"
-          {{- with .Values.thorasForecast.worker.retrainSteadyStateHours }}
+            {{- with .Values.thorasForecast.worker.retrainSteadyStateHours }}
           - name: RETRAIN_STEADY_STATE_HOURS
-            value: {{ printf "%.3f" (max (float64 .) 1.0) | quote }}
-          {{- end }}
+            value: {{ (max (float64 (printf "%v" .)) 1.0) | quote }}
+            {{- end }}
         resources:
           requests:
             cpu: {{ .Values.thorasForecast.worker.requests.cpu }}
