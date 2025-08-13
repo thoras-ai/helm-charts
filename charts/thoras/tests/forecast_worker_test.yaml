@@ -83,7 +83,7 @@ tests:
           content:
             name: RETRAIN_STEADY_STATE_HOURS
             value: "10"
-            
+
   - it: omits RETRAIN_STEADY_STATE_HOURS when value is null
     set:
       thorasForecast:
@@ -117,4 +117,3 @@ tests:
           content:
             name: RETRAIN_STEADY_STATE_HOURS
             value: "1"
-
