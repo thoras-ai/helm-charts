@@ -21,8 +21,9 @@ spec:
         {{- with .Values.metricsCollector.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.metricsCollector.podAnnotations }}
       annotations:
+        karpenter.sh/do-not-disrupt: "true"
+      {{- with .Values.metricsCollector.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
