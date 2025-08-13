@@ -61,6 +61,10 @@ spec:
           - name: RETRAIN_STEADY_STATE_HOURS
             value: {{ (max (float64 (printf "%v" .)) 1.0) | quote }}
             {{- end }}
+            {{- with .Values.thorasForecast.worker.retrainOverrideHours }}
+          - name: RETRAIN_OVERRIDE_HOURS
+            value: {{ (float64 (printf "%v" .)) | quote }}
+            {{- end }}
         resources:
           requests:
             cpu: {{ .Values.thorasForecast.worker.requests.cpu }}
