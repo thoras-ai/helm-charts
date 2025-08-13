@@ -59,3 +59,61 @@ tests:
               value: "600"
             - name: OMP_NUM_THREADS
               value: "1"
+
+  - it: sets RETRAIN_STEADY_STATE_HOURS when value is an integer
+    set:
+      thorasForecast:
+        worker:
+          retrainSteadyStateHours: 10
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RETRAIN_STEADY_STATE_HOURS
+            value: "10"
+
+  - it: sets RETRAIN_STEADY_STATE_HOURS when value is a float
+    set:
+      thorasForecast:
+        worker:
+          retrainSteadyStateHours: 10.0
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RETRAIN_STEADY_STATE_HOURS
+            value: "10"
+
+  - it: omits RETRAIN_STEADY_STATE_HOURS when value is null
+    set:
+      thorasForecast:
+        worker:
+          retrainSteadyStateHours: null
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RETRAIN_STEADY_STATE_HOURS
+
+  - it: omits RETRAIN_STEADY_STATE_HOURS when value is empty string
+    set:
+      thorasForecast:
+        worker:
+          retrainSteadyStateHours: ""
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RETRAIN_STEADY_STATE_HOURS
+
+  - it: clamps RETRAIN_STEADY_STATE_HOURS to 1.0 when below minimum
+    set:
+      thorasForecast:
+        worker:
+          retrainSteadyStateHours: 0.1
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RETRAIN_STEADY_STATE_HOURS
+            value: "1"
