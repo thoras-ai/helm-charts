@@ -187,6 +187,7 @@ thorasForecast:
     pollingInterval: 15
     podAnnotations: {}
     retrainSteadyStateHours: ""
+    retrainOverrideHours: ""
     labels: {}
     limits:
       memory: 2Gi
