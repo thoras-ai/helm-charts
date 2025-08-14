@@ -21,6 +21,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
+        karpenter.sh/do-not-disrupt: "true"
         {{- if not .Values.thorasMonitor.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
         {{- end }}

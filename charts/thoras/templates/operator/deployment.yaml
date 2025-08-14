@@ -20,14 +20,12 @@ spec:
         {{- with .Values.thorasOperator.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.thorasOperator.podAnnotations }}
       annotations:
+        karpenter.sh/do-not-disrupt: "true"
+      {{- with .Values.thorasOperator.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- if .Values.thorasOperator.prometheus.enabled }}
-      {{- if not .Values.thorasOperator.podAnnotations }}
-      annotations:
-      {{- end }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasOperator.prometheus.port | quote }}
