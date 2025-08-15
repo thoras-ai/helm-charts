@@ -112,6 +112,10 @@ helm install \
 | metricsCollector.search.imageTag                                | String  | 8.12.1           | Elasticsearch image tag                                                       |
 | metricsCollector.search.name                                    | String  | elasticsearch    | Elasticsearch container name                                                  |
 | metricsCollector.search.containerPort                           | Number  | 9200             | Elasticsearch port                                                            |
+| metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                               |
+| metricsCollector.timescale.imageTag                             | String  | 2.21.0-pg16      | Timescale image tag                                                           |
+| metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                                      |
+| metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |
 | metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                                    |
 | metricsCollector.purge.ttl                                      | String  | 30d              | How long to keep metrics data in Elasticsearch                                |

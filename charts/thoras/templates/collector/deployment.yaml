@@ -110,7 +110,7 @@ spec:
             {{- toYaml . | nindent 10 }}
           {{- end }}
         {{- end }}
-      - image: {{ .Values.imageCredentials.registry }}/timescaledb:{{ .Values.metricsCollector.timescale.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
