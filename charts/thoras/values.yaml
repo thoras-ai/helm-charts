@@ -72,7 +72,7 @@ metricsCollector:
       cpu: "200m"
       memory: "32Mi"
   search:
-    imageTag: "8.18.3"
+    imageTag: "8.19.2"
     name: elasticsearch
     containerPort: 9200
     limits:
@@ -92,7 +92,7 @@ metricsCollector:
       memory: "32Mi"
   timescale:
     image: "timescaledb"
-    imageTag: "2.21.0-pg16"
+    imageTag: "2.21.3-pg16"
     name: timescale
     containerPort: 5432
     limits:
