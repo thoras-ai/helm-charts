@@ -71,6 +71,12 @@ spec:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
+        resources:
+          limits:
+            memory: {{ .Values.thorasDashboard.limits.memory }}
+          requests:
+            cpu: {{ .Values.thorasDashboard.requests.cpu }}
+            memory: {{ .Values.thorasDashboard.requests.memory }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
