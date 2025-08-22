@@ -101,14 +101,13 @@ spec:
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
           - name: V2_MONITOR_ENABLED
-            value: {{ .Values.thorasMonitorV2.enabled | default false | quote }}
+            value: "true"
         resources:
           limits:
             memory: {{ .Values.thorasMonitor.limits.memory }}
           requests:
             cpu: {{ .Values.thorasMonitor.requests.cpu }}
             memory: {{ .Values.thorasMonitor.requests.memory }}
-      {{- if .Values.thorasMonitorV2.enabled }}
       - name: thoras-monitor-v2
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -143,7 +142,6 @@ spec:
           requests:
             cpu: {{ .Values.thorasMonitor.requests.cpu }}
             memory: {{ .Values.thorasMonitor.requests.memory }}
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

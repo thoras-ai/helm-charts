@@ -172,9 +172,6 @@ thorasMonitor:
   labels: {}
   config: |
 
-thorasMonitorV2:
-  enabled: true
-
 thorasForecast:
   skipCache: false
   requests:
