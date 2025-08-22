@@ -118,7 +118,7 @@ Default containers should match snapshots:
       - name: SERVICE_THORAS_VERSION
         value: dev
       - name: SERVICE_CHART_VERSION
-        value: 4.48.0
+        value: 4.49.0
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     name: thoras-collector
