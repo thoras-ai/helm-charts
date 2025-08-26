@@ -150,6 +150,7 @@ helm install \
 
 | Key                             | Type    | Default | Description                                                  |
 | ------------------------------- | ------- | ------- | ------------------------------------------------------------ |
+| thorasWorker.enabled            | Boolean | false   | Enables the Thoras worker                                    |
 | thorasWorker.podAnnotations     | Object  | {}      | Pod Annotations for Thoras worker                            |
 | thorasWorker.labels             | Object  | {}      | Pod/service labels for Thoras worker                         |
 | thorasWorker.limits.memory      | String  | 2000Mi  | Thoras API memory limit                                      |
