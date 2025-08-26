@@ -134,6 +134,19 @@ thorasApiServerV2:
     enabled: true
   restartWorkloadOnCpu: false
 
+thorasWorker:
+  serviceAccount:
+    name: thoras-worker
+  podAnnotations: {}
+  labels: {}
+  replicas: 1
+  limits:
+    memory: 2000Mi
+  requests:
+    cpu: 128m
+    memory: 100Mi
+  logLevel: "info"
+
 thorasDashboard:
   enabled: true
   serviceAccount:

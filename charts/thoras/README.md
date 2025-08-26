@@ -146,6 +146,19 @@ helm install \
 | thorasApiServerV2.prometheus.enabled          | Boolean | true    | Enables a prometheus metric scrape point                                      |
 | thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false   | Enables restarting vertical workloads for CPU forecasts                       |
 
+## Thoras Worker
+
+| Key                             | Type    | Default | Description                                                  |
+| ------------------------------- | ------- | ------- | ------------------------------------------------------------ |
+| thorasWorker.podAnnotations     | Object  | {}      | Pod Annotations for Thoras worker                            |
+| thorasWorker.labels             | Object  | {}      | Pod/service labels for Thoras worker                         |
+| thorasWorker.limits.memory      | String  | 2000Mi  | Thoras API memory limit                                      |
+| thorasWorker.requests.cpu       | String  | 1000Mi  | Thoras API CPU request                                       |
+| thorasWorker.requests.memory    | String  | 1000Mi  | Thoras API memory request                                    |
+| thorasWorker.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
+| thorasWorker.logLevel           | String  | Nil     | Logging level                                                |
+| thorasWorker.queriesPerSecond   | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
+
 ## Thoras Dashboard
 
 | Key                                              | Type    | Default          | Description                                                              |
