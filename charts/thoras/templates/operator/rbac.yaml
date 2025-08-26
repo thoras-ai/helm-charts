@@ -80,22 +80,8 @@ roleRef:
   name: thoras-operator
 subjects:
 - kind: ServiceAccount
-  name: thoras-operator
+  name: {{ .Values.thorasOperator.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
-{{- end }}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-  name: thoras-operator
-  namespace: {{ .Release.Namespace }}
-imagePullSecrets:
-{{- if .Values.imageCredentials.secretRef }}
-  - name: {{ .Values.imageCredentials.secretRef }}
-{{- else }}
-  - name: thoras-secret-registry
 {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -128,7 +114,7 @@ roleRef:
   name: thoras-operator-thoras
 subjects:
 - kind: ServiceAccount
-  name: thoras-operator
+  name: {{ .Values.thorasOperator.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 
 {{- if .Values.rbac.namespaces}}

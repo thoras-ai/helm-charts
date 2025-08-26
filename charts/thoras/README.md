@@ -70,35 +70,38 @@ helm install \
 
 ## Thoras Forecast
 
-| Key                                   | Type    | Default        | Description                                                                          |
-| ------------------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------ |
-| thorasForecast.imageTag               | String  | .thorasVersion | Image tag for Thoras Forecast job                                                    |
-| thorasForecast.skipCache              | Boolean | false          | Directs the forecaster to skip to model cache                                        |
-| thorasForecast.worker.podAnnotations  | Object  | {}             | Pod Annotations for Thoras Forecast                                                  |
-| thorasForecast.worker.labels          | Object  | {}             | Pod labels for Thoras Forecast                                                       |
-| thorasForecast.worker.replicas        | Number  | 1              | Number of `thoras-forecast-worker` replicas to use                                   |
-| thorasForecast.worker.pollingInterval | Number  | 15             | Polling interval to check for work for `thoras-forecast-workers`                     |
-| thorasForecast.worker.forecastTimeout | Number  | 600            | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker` |
+| Key                                   | Type    | Default                | Description                                                                          |
+| ------------------------------------- | ------- | ---------------------- | ------------------------------------------------------------------------------------ |
+| thorasForecast.serviceAccount.name    | String  | thoras-forecast-worker | Service account name for Thoras forecast worker pod                                  |
+| thorasForecast.imageTag               | String  | .thorasVersion         | Image tag for Thoras Forecast job                                                    |
+| thorasForecast.skipCache              | Boolean | false                  | Directs the forecaster to skip to model cache                                        |
+| thorasForecast.worker.podAnnotations  | Object  | {}                     | Pod Annotations for Thoras Forecast                                                  |
+| thorasForecast.worker.labels          | Object  | {}                     | Pod labels for Thoras Forecast                                                       |
+| thorasForecast.worker.replicas        | Number  | 1                      | Number of `thoras-forecast-worker` replicas to use                                   |
+| thorasForecast.worker.pollingInterval | Number  | 15                     | Polling interval to check for work for `thoras-forecast-workers`                     |
+| thorasForecast.worker.forecastTimeout | Number  | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker` |
 
 ## Thoras Operator
 
-| Key                               | Type    | Default | Description                                                  |
-| --------------------------------- | ------- | ------- | ------------------------------------------------------------ |
-| thorasOperator.podAnnotations     | Object  | {}      | Pod Annotations for Thoras Operator                          |
-| thorasOperator.labels             | Object  | {}      | Pod/service labels for Thoras Operator                       |
-| thorasOperator.limits.memory      | String  | 2000Mi  | Thoras Operator memory limit                                 |
-| thorasOperator.requests.cpu       | String  | 1000m   | Thoras Operator CPU request                                  |
-| thorasOperator.requests.memory    | String  | 1000Mi  | Thoras Operator memory request                               |
-| thorasOperator.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasOperator.logLevel           | String  | Nil     | Logging level                                                |
-| thorasOperator.queriesPerSecond   | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
-| thorasOperator.prometheus.enabled | Boolean | true    | Enables a prometheus metric exporter                         |
-| thorasOperator.prometheus.port    | Number  | 9101    | Port for the prometheus metric exporter                      |
+| Key                                | Type    | Default         | Description                                                  |
+| ---------------------------------- | ------- | --------------- | ------------------------------------------------------------ |
+| thorasOperator.serviceAccount.name | String  | thoras-operator | Service account name for Thoras operator pod                 |
+| thorasOperator.podAnnotations      | Object  | {}              | Pod Annotations for Thoras Operator                          |
+| thorasOperator.labels              | Object  | {}              | Pod/service labels for Thoras Operator                       |
+| thorasOperator.limits.memory       | String  | 2000Mi          | Thoras Operator memory limit                                 |
+| thorasOperator.requests.cpu        | String  | 1000m           | Thoras Operator CPU request                                  |
+| thorasOperator.requests.memory     | String  | 1000Mi          | Thoras Operator memory request                               |
+| thorasOperator.slackErrorsEnabled  | Boolean | false           | Determines if error-level logs are sent to `slackWebHookUrl` |
+| thorasOperator.logLevel            | String  | Nil             | Logging level                                                |
+| thorasOperator.queriesPerSecond    | String  | "50"            | Sets a maximum threshold for K8s API qps                     |
+| thorasOperator.prometheus.enabled  | Boolean | true            | Enables a prometheus metric exporter                         |
+| thorasOperator.prometheus.port     | Number  | 9101            | Port for the prometheus metric exporter                      |
 
 ## Thoras Metrics Collector
 
 | Key                                                             | Type    | Default          | Description                                                                   |
 | --------------------------------------------------------------- | ------- | ---------------- | ----------------------------------------------------------------------------- |
+| metricsCollector.serviceAccount.name                            | String  | thoras-collector | Service account name for Thoras collector pod                                 |
 | metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector                              |
 | metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning                     |
 | metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id                    |
@@ -127,24 +130,25 @@ helm install \
 
 ## Thoras API Server
 
-| Key                                           | Type    | Default | Description                                                                   |
-| --------------------------------------------- | ------- | ------- | ----------------------------------------------------------------------------- |
-| thorasApiServerV2.podAnnotations              | Object  | {}      | Pod Annotations for Thoras API                                                |
-| thorasApiServerV2.labels                      | Object  | {}      | Pod/service labels for Thoras API                                             |
-| thorasApiServerV2.containerPort               | Number  | 8443    | Thoras API port                                                               |
-| thorasApiServerV2.port                        | Number  | 443     | Thoras API service port                                                       |
-| thorasApiServerV2.limits.memory               | String  | 2000Mi  | Thoras API memory limit                                                       |
-| thorasApiServerV2.requests.cpu                | String  | 1000Mi  | Thoras API CPU request                                                        |
-| thorasApiServerV2.requests.memory             | String  | 1000Mi  | Thoras API memory request                                                     |
-| thorasApiServerV2.slackErrorsEnabled          | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| thorasApiServerV2.logLevel                    | String  | Nil     | Logging level                                                                 |
-| thorasApiServerV2.timescalePrimary            | Boolean | true    | Use timescale as the primary data source, not elastic                         |
-| thorasApiServerV2.queriesPerSecond            | String  | "50"    | Sets a maximum threshold for K8s API qps                                      |
-| thorasApiServerV2.catalogRefreshInterval      | String  | "60s"   | Frequency of updates to catalog following k8s updates                         |
-| thorasApiServerV2.cacheWindow                 | String  | "10s"   | Maximum staleness of data before querying k8s for updates                     |
-| thorasApiServerV2.additionalPvSecurityContext | Object  | {}      | Allows assigning additional securityContext objects to workloads that use PVs |
-| thorasApiServerV2.prometheus.enabled          | Boolean | true    | Enables a prometheus metric scrape point                                      |
-| thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false   | Enables restarting vertical workloads for CPU forecasts                       |
+| Key                                           | Type    | Default    | Description                                                                   |
+| --------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------------- |
+| thorasApiServerV2.serviceAccount.name         | String  | thoras-api | Service account name for Thoras api service pod                               |
+| thorasApiServerV2.podAnnotations              | Object  | {}         | Pod Annotations for Thoras API                                                |
+| thorasApiServerV2.labels                      | Object  | {}         | Pod/service labels for Thoras API                                             |
+| thorasApiServerV2.containerPort               | Number  | 8443       | Thoras API port                                                               |
+| thorasApiServerV2.port                        | Number  | 443        | Thoras API service port                                                       |
+| thorasApiServerV2.limits.memory               | String  | 2000Mi     | Thoras API memory limit                                                       |
+| thorasApiServerV2.requests.cpu                | String  | 1000Mi     | Thoras API CPU request                                                        |
+| thorasApiServerV2.requests.memory             | String  | 1000Mi     | Thoras API memory request                                                     |
+| thorasApiServerV2.slackErrorsEnabled          | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
+| thorasApiServerV2.logLevel                    | String  | Nil        | Logging level                                                                 |
+| thorasApiServerV2.timescalePrimary            | Boolean | true       | Use timescale as the primary data source, not elastic                         |
+| thorasApiServerV2.queriesPerSecond            | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
+| thorasApiServerV2.catalogRefreshInterval      | String  | "60s"      | Frequency of updates to catalog following k8s updates                         |
+| thorasApiServerV2.cacheWindow                 | String  | "10s"      | Maximum staleness of data before querying k8s for updates                     |
+| thorasApiServerV2.additionalPvSecurityContext | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
+| thorasApiServerV2.prometheus.enabled          | Boolean | true       | Enables a prometheus metric scrape point                                      |
+| thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
 
 ## Thoras Worker
 
@@ -187,26 +191,28 @@ helm install \
 
 ## Thoras Monitor
 
-| Key                              | Type    | Default | Description                                                  |
-| -------------------------------- | ------- | ------- | ------------------------------------------------------------ |
-| thorasMonitor.enabled            | Bool    | false   | Enable Thoras monitoring                                     |
-| thorasMonitor.podAnnotations     | Object  | {}      | Pod Annotations for Thoras monitor                           |
-| thorasMonitor.labels             | Object  | {}      | Pod labels for Thoras monitor                                |
-| thorasMonitor.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasMonitor.config             | String  | ""      | Thoras Monitor configuration yaml                            |
-| thorasMonitor.logLevel           | String  | Nil     | Logging level                                                |
+| Key                               | Type    | Default        | Description                                                  |
+| --------------------------------- | ------- | -------------- | ------------------------------------------------------------ |
+| thorasMonitor.enabled             | Bool    | false          | Enable Thoras monitoring                                     |
+| thorasMonitor.serviceAccount.name | String  | thoras-monitor | Service account name for Thoras monitor pod                  |
+| thorasMonitor.podAnnotations      | Object  | {}             | Pod Annotations for Thoras monitor                           |
+| thorasMonitor.labels              | Object  | {}             | Pod labels for Thoras monitor                                |
+| thorasMonitor.slackErrorsEnabled  | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl` |
+| thorasMonitor.config              | String  | ""             | Thoras Monitor configuration yaml                            |
+| thorasMonitor.logLevel            | String  | Nil            | Logging level                                                |
 
 ## Thoras Agent
 
-| Key                            | Type    | Default        | Description                                                            |
-| ------------------------------ | ------- | -------------- | ---------------------------------------------------------------------- |
-| thorasAgent.enabled            | Bool    | false          | Enable the Thoras Agent (opt-in, for now)                              |
-| thorasAgent.podAnnotations     | Object  | {}             | Pod Annotations for Thoras Agent                                       |
-| thorasAgent.labels             | Object  | {}             | Pod labels for Thoras Agent                                            |
-| thorasAgent.imageTag           | String  | .thorasVersion | Image tag for Thoras Agent daemon set                                  |
-| thorasAgent.slackErrorsEnabled | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
-| thorasAgent.frequency          | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
-| thorasAgent.queriesPerSecond   | String  | "50"           | Sets a maximum threshold for K8s API qps                               |
+| Key                             | Type    | Default        | Description                                                            |
+| ------------------------------- | ------- | -------------- | ---------------------------------------------------------------------- |
+| thorasAgent.enabled             | Bool    | false          | Enable the Thoras Agent (opt-in, for now)                              |
+| thorasAgent.serviceAccount.name | String  | thoras-agent   | Service account name for Thoras agent pod                              |
+| thorasAgent.podAnnotations      | Object  | {}             | Pod Annotations for Thoras Agent                                       |
+| thorasAgent.labels              | Object  | {}             | Pod labels for Thoras Agent                                            |
+| thorasAgent.imageTag            | String  | .thorasVersion | Image tag for Thoras Agent daemon set                                  |
+| thorasAgent.slackErrorsEnabled  | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
+| thorasAgent.frequency           | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
+| thorasAgent.queriesPerSecond    | String  | "50"           | Sets a maximum threshold for K8s API qps                               |
 
 ## Example Thoras Monitor with default config
 
