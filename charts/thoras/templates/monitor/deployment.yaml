@@ -21,6 +21,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
+        karpenter.sh/do-not-disrupt: "true"
         {{- if not .Values.thorasMonitor.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
         {{- end }}
@@ -37,12 +38,12 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         name: wait-for-api-service
         env:
-          - name: API_BASE_URL
-            value: "http://thoras-api-server-v2.thoras.svc.cluster.local/health"
+          - name: API_HEALTH_URL
+            value: "http://thoras-api-server-v2/health"
         command: ["/bin/sh", "-c"]
         args:
           - |
-            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_BASE_URL}
+            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
             if [ $? -ne 0 ]; then
               echo "Failed to connect to API service"
               exit 1
@@ -100,14 +101,13 @@ spec:
           - name: API_BASE_URL
             value: "http://thoras-api-server-v2"
           - name: V2_MONITOR_ENABLED
-            value: {{ .Values.thorasMonitorV2.enabled | default false | quote }}
+            value: "true"
         resources:
           limits:
             memory: {{ .Values.thorasMonitor.limits.memory }}
           requests:
             cpu: {{ .Values.thorasMonitor.requests.cpu }}
             memory: {{ .Values.thorasMonitor.requests.memory }}
-      {{- if .Values.thorasMonitorV2.enabled }}
       - name: thoras-monitor-v2
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -142,7 +142,6 @@ spec:
           requests:
             cpu: {{ .Values.thorasMonitor.requests.cpu }}
             memory: {{ .Values.thorasMonitor.requests.memory }}
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

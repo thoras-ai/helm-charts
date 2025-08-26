@@ -4,6 +4,7 @@ templates:
   - dashboard/deployment.yaml
   - operator/deployment.yaml
   - reasoning-api/deployment.yaml
+  - worker/deployment.yaml
 set:
   thorasVersion: 1.0.0-alpha
   thorasReasoning:
@@ -16,6 +17,9 @@ set:
     replicas: 12
     unittesting: true
   thorasApiServerV2:
+    replicas: 12
+  thorasWorker:
+    enabled: true
     replicas: 12
 tests:
   - it: Image registry should be correct

@@ -21,8 +21,9 @@ spec:
         {{- with .Values.metricsCollector.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.metricsCollector.podAnnotations }}
       annotations:
+        karpenter.sh/do-not-disrupt: "true"
+      {{- with .Values.metricsCollector.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
@@ -109,7 +110,7 @@ spec:
             {{- toYaml . | nindent 10 }}
           {{- end }}
         {{- end }}
-      - image: {{ .Values.imageCredentials.registry }}/timescaledb:{{ .Values.metricsCollector.timescale.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:

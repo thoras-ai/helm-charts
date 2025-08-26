@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.46.0](https://img.shields.io/badge/Version-4.46.0-informational?style=flat-square) ![AppVersion: 4.32.1](https://img.shields.io/badge/AppVersion-4.32.1-informational?style=flat-square)
+![Version: 4.49.1](https://img.shields.io/badge/Version-4.49.1-informational?style=flat-square) ![AppVersion: 4.36.1](https://img.shields.io/badge/AppVersion-4.36.1-informational?style=flat-square)
 
 # Install
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                       | Type    | Default                                          | Description                                                                                                          |
 | ------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion             | String  | 4.32.1                                           | Thoras app version                                                                                                   |
+| thorasVersion             | String  | 4.36.1                                           | Thoras app version                                                                                                   |
 | imageCredentials.registry | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password | String  | ""                                               | Container registry auth string                                                                                       |
@@ -112,9 +112,13 @@ helm install \
 | metricsCollector.collector.logLevel                             | String  | Nil              | Logging level                                                                 |
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                  |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector                               |
-| metricsCollector.search.imageTag                                | String  | 8.12.1           | Elasticsearch image tag                                                       |
+| metricsCollector.search.imageTag                                | String  | 8.19.2           | Elasticsearch image tag                                                       |
 | metricsCollector.search.name                                    | String  | elasticsearch    | Elasticsearch container name                                                  |
 | metricsCollector.search.containerPort                           | Number  | 9200             | Elasticsearch port                                                            |
+| metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                               |
+| metricsCollector.timescale.imageTag                             | String  | 2.21.3-pg16      | Timescale image tag                                                           |
+| metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                                      |
+| metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |
 | metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                                    |
 | metricsCollector.purge.ttl                                      | String  | 30d              | How long to keep metrics data in Elasticsearch                                |
@@ -138,13 +142,27 @@ helm install \
 | thorasApiServerV2.requests.memory             | String  | 1000Mi     | Thoras API memory request                                                     |
 | thorasApiServerV2.slackErrorsEnabled          | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
 | thorasApiServerV2.logLevel                    | String  | Nil        | Logging level                                                                 |
-| thorasApiServerV2.timescalePrimary            | Boolean | false      | Use timescale as the primary data source, not elastic                         |
+| thorasApiServerV2.timescalePrimary            | Boolean | true       | Use timescale as the primary data source, not elastic                         |
 | thorasApiServerV2.queriesPerSecond            | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
 | thorasApiServerV2.catalogRefreshInterval      | String  | "60s"      | Frequency of updates to catalog following k8s updates                         |
 | thorasApiServerV2.cacheWindow                 | String  | "10s"      | Maximum staleness of data before querying k8s for updates                     |
 | thorasApiServerV2.additionalPvSecurityContext | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled          | Boolean | true       | Enables a prometheus metric scrape point                                      |
 | thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
+
+## Thoras Worker
+
+| Key                             | Type    | Default | Description                                                  |
+| ------------------------------- | ------- | ------- | ------------------------------------------------------------ |
+| thorasWorker.enabled            | Boolean | false   | Enables the Thoras worker                                    |
+| thorasWorker.podAnnotations     | Object  | {}      | Pod Annotations for Thoras worker                            |
+| thorasWorker.labels             | Object  | {}      | Pod/service labels for Thoras worker                         |
+| thorasWorker.limits.memory      | String  | 2000Mi  | Thoras API memory limit                                      |
+| thorasWorker.requests.cpu       | String  | 1000Mi  | Thoras API CPU request                                       |
+| thorasWorker.requests.memory    | String  | 1000Mi  | Thoras API memory request                                    |
+| thorasWorker.slackErrorsEnabled | Boolean | false   | Determines if error-level logs are sent to `slackWebHookUrl` |
+| thorasWorker.logLevel           | String  | Nil     | Logging level                                                |
+| thorasWorker.queriesPerSecond   | String  | "50"    | Sets a maximum threshold for K8s API qps                     |
 
 ## Thoras Dashboard
 

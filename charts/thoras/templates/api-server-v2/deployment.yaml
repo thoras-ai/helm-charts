@@ -19,14 +19,12 @@ spec:
         {{- with .Values.thorasApiServerV2.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.thorasApiServerV2.podAnnotations }}
       annotations:
+        karpenter.sh/do-not-disrupt: "true"
+      {{- with .Values.thorasApiServerV2.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- if .Values.thorasApiServerV2.prometheus.enabled }}
-      {{- if not .Values.thorasApiServerV2.podAnnotations }}
-      annotations:
-      {{- end }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
@@ -120,6 +118,12 @@ spec:
             value: {{ .Values.thorasApiServerV2.restartWorkloadOnCpu | quote }}
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
+        startupProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.thorasApiServerV2.containerPort }}
+          failureThreshold: 12
+          periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /health

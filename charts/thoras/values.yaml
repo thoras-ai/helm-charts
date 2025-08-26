@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.32.1"
+thorasVersion: "4.36.1"
 cluster:
   name: ""
 
@@ -76,7 +76,7 @@ metricsCollector:
       cpu: "200m"
       memory: "32Mi"
   search:
-    imageTag: "8.18.3"
+    imageTag: "8.19.2"
     name: elasticsearch
     containerPort: 9200
     limits:
@@ -95,7 +95,8 @@ metricsCollector:
       cpu: "16m"
       memory: "32Mi"
   timescale:
-    imageTag: "2.21.0-pg16"
+    image: "timescaledb"
+    imageTag: "2.21.3-pg16"
     name: timescale
     containerPort: 5432
     limits:
@@ -129,13 +130,27 @@ thorasApiServerV2:
     memory: 100Mi
   port: 80
   logLevel: "info"
-  timescalePrimary: false
+  timescalePrimary: true
   catalogRefreshInterval: "60s"
   cacheWindow: "10s"
   additionalPvSecurityContext: {}
   prometheus:
     enabled: true
   restartWorkloadOnCpu: false
+
+thorasWorker:
+  enabled: false
+  serviceAccount:
+    name: thoras-worker
+  podAnnotations: {}
+  labels: {}
+  replicas: 1
+  limits:
+    memory: 2000Mi
+  requests:
+    cpu: 128m
+    memory: 100Mi
+  logLevel: "info"
 
 thorasDashboard:
   enabled: true
@@ -177,9 +192,6 @@ thorasMonitor:
   labels: {}
   config: |
 
-thorasMonitorV2:
-  enabled: true
-
 thorasForecast:
   serviceAccount:
     name: thoras-forecast-worker
@@ -194,6 +206,8 @@ thorasForecast:
     replicas: 1
     pollingInterval: 15
     podAnnotations: {}
+    retrainSteadyStateHours: ""
+    retrainOverrideHours: ""
     labels: {}
     limits:
       memory: 2Gi

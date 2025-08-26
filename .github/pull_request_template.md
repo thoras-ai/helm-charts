@@ -1,4 +1,3 @@
-# Why are we making this change?
-
+# How does this help customers?
 
 # What's changing?
