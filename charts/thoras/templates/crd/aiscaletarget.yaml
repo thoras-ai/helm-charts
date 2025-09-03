@@ -578,7 +578,7 @@ spec:
               model:
                 properties:
                   forecast_blocks:
-                    default: 15m0s
+                    default: 20m0s
                     description: Time duration for how far into the future Thoras
                       should forecast into.
                     type: string
@@ -590,7 +590,7 @@ spec:
                     type: string
                     x-kubernetes-int-or-string: true
                   forecast_cron:
-                    default: '*/15 * * * *'
+                    default: '*/10 * * * *'
                     type: string
                   mode:
                     description: While Thoras models always bias for reliability,
