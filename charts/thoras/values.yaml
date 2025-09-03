@@ -131,6 +131,7 @@ thorasApiServerV2:
   port: 80
   logLevel: "info"
   timescalePrimary: true
+  timescaleSnapshotPrimary: false
   catalogRefreshInterval: "60s"
   cacheWindow: "10s"
   additionalPvSecurityContext: {}
