@@ -3,7 +3,6 @@ templates:
   - api-server-v2/deployment.yaml
   - dashboard/deployment.yaml
   - operator/deployment.yaml
-  - reasoning-api/deployment.yaml
   - worker/deployment.yaml
 set:
   thorasVersion: 1.0.0-alpha

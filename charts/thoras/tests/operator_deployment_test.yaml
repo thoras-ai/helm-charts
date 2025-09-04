@@ -2,22 +2,6 @@ suite: Operator
 templates:
   - operator/deployment.yaml
 tests:
-  - it: Ensure SERVICE_REASONING_ENABLED not exists when reasoning is disabled
-    set:
-      thorasReasoning:
-        enabled: false
-    asserts:
-      - equal:
-          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_REASONING_ENABLED')].value
-          value: "false"
-  - it: Ensure SERVICE_REASONING_ENABLED not exists when reasoning is enabled
-    set:
-      thorasReasoning:
-        enabled: true
-    asserts:
-      - equal:
-          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_REASONING_ENABLED')].value
-          value: "true"
   - it: Ensure MODEL_SKIP_CACHE not exists when reasoning is enabled
     set:
       thorasForecast:

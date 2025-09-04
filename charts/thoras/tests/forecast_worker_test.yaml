@@ -7,7 +7,7 @@ set:
     worker:
       enabled: true
 tests:
-  - it: Ensure SERVICE_REASONING_ENABLED not exists when reasoning is disabled
+  - it: Ensure forecast worker settings
     set:
       thorasForecast:
         worker:
