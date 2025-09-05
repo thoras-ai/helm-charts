@@ -84,9 +84,6 @@ metricsCollector:
     requests:
       cpu: "200m"
       memory: "1536Mi"
-  purge:
-    ttl: 30
-    schedule: "00 00 * * *"
   init:
     imageTag: "3.22.1"
     limits:

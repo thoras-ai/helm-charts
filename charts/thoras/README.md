@@ -121,10 +121,7 @@ helm install \
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |
 | metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                                    |
-| metricsCollector.purge.ttl                                      | String  | 30d              | How long to keep metrics data in Elasticsearch                                |
-| metricsCollector.purge.schedule                                 | String  | 00 00 \* \* \*   | Cron expression for metrics purge job                                         |
 | metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| metricsCollector.purge.logLevel                                 | String  | Nil              | Logging level                                                                 |
 | metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container                                |
 | metricsCollector.additionalPvSecurityContext                    | Object  | {}               | Allows assigning additional securityContext objects to workloads that use PVs |
 
