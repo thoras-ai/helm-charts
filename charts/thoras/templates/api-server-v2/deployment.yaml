@@ -102,8 +102,6 @@ spec:
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_BLOB_SERVICE_API_URL
             value: "http://thoras-blob-api.thoras.svc.cluster.local"
-          - name: SERVICE_TIMESCALE_PRIMARY
-            value: {{ .Values.thorasApiServerV2.timescalePrimary | quote}}
           - name: SERVICE_TIMESCALE_SNAPSHOTS_PRIMARY
             value: {{ .Values.thorasApiServerV2.timescaleSnapshotsPrimary | quote}}
           - name: SERVICE_QUERIES_PER_SECOND
