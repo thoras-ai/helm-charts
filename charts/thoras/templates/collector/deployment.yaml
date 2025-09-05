@@ -44,7 +44,7 @@ spec:
             # migrate non-elastic data to the new location
             find /var/lib/share -not -name postgresql -not -name data -not -name blobs -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/data \;
 
-            # fix elastic directory permissions
+            # fix elastic directory permissions # TODO: drop elastic data in the future
             chown -R 1000:1000 /var/lib/share/data
             rm -f /var/lib/share/data/node.lock
 
@@ -70,46 +70,6 @@ spec:
             name: elastic-search-data
       {{- end }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/elasticsearch:{{ .Values.metricsCollector.search.imageTag }}
-        name: {{ .Values.metricsCollector.search.name }}
-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        ports:
-        - containerPort: {{ .Values.metricsCollector.search.containerPort }}
-        env:
-          - name: ES_JAVA_OPTS
-            value: -Xms750m -Xmx750m
-          - name: discovery.type
-            value: single-node
-          - name: xpack.security.enabled
-            value: "true"
-          - name: bootstrap.memory_lock
-            value: "false"
-          {{- if .Values.metricsCollector.persistence.enabled }}
-          - name: path.data
-            value: /var/lib/share/elasticsearch/data
-          {{- end}}
-          - name: "ELASTIC_PASSWORD"
-            valueFrom:
-              secretKeyRef:
-                name: thoras-elastic-password
-                key: password
-        resources:
-          limits:
-            memory: {{ .Values.metricsCollector.search.limits.memory }}
-          requests:
-            cpu: {{ .Values.metricsCollector.search.requests.cpu }}
-            memory: {{ .Values.metricsCollector.search.requests.memory }}
-        {{- if .Values.metricsCollector.persistence.enabled }}
-        volumeMounts:
-          - mountPath: /var/lib/share/elasticsearch
-            name: elastic-search-data
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 0
-          {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-        {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -148,24 +108,6 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            # wait for elasticsearch to be available
-            retries=0
-            max_retries=48
-            until [ $retries -eq $max_retries ]; do
-              if wget --spider -T 5 -q ${ELASTICSEARCH_URL}; then
-                echo "elasticsearch ready"
-                break
-              else
-                echo "elasticsearch not ready"
-                retries=$((retries+1))
-                sleep 5
-              fi
-            done
-            if [ $retries -eq $max_retries ]; then
-                echo "fatal: giving up on elasticsearch availability"
-                exit 1
-            fi
-
             # wait for postgres to be available
             retries=0
             max_retries=48
@@ -196,15 +138,8 @@ spec:
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
 
-
-            ./metrics-collector init
             ./metrics-collector collect -c 60s
         env:
-          - name: "ELASTICSEARCH_URL"
-            valueFrom:
-              secretKeyRef:
-                name: thoras-elastic-password
-                key: host
           - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
