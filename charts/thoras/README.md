@@ -112,9 +112,6 @@ helm install \
 | metricsCollector.collector.logLevel                             | String  | Nil              | Logging level                                                                 |
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                  |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector                               |
-| metricsCollector.search.imageTag                                | String  | 8.19.2           | Elasticsearch image tag                                                       |
-| metricsCollector.search.name                                    | String  | elasticsearch    | Elasticsearch container name                                                  |
-| metricsCollector.search.containerPort                           | Number  | 9200             | Elasticsearch port                                                            |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                               |
 | metricsCollector.timescale.imageTag                             | String  | 2.21.3-pg16      | Timescale image tag                                                           |
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                                      |

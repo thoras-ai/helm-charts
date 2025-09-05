@@ -56,11 +56,6 @@ spec:
         name: thoras-operator
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         env:
-          - name: "ES_HOST"
-            valueFrom:
-              secretKeyRef:
-                name: thoras-elastic-password
-                key: host
           - name: SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:

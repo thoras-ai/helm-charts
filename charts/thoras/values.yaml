@@ -75,15 +75,6 @@ metricsCollector:
     requests:
       cpu: "200m"
       memory: "32Mi"
-  search:
-    imageTag: "8.19.2"
-    name: elasticsearch
-    containerPort: 9200
-    limits:
-      memory: "8192Mi"
-    requests:
-      cpu: "200m"
-      memory: "1536Mi"
   init:
     imageTag: "3.22.1"
     limits:

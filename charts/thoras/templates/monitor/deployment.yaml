@@ -60,30 +60,8 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            # Don't start app until ES is available
-            retries=0
-            max_retries=48
-            until [ $retries -eq $max_retries ]; do
-              if curl -s --connect-timeout 5 --fail -XGET ${ES_HOST}; then
-                echo "elasticsearch ready"
-                break
-              else
-                echo "elasticsearch not ready"
-                retries=$((retries+1))
-                sleep 5
-              fi
-            done
-            if [ $retries -eq $max_retries ]; then
-                echo "fatal: giving up on elasticsearch availability"
-                exit 1
-            fi
             node index.js
         env:
-          - name: "ES_HOST"
-            valueFrom:
-              secretKeyRef:
-                name: thoras-elastic-password
-                key: host
           - name: SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:

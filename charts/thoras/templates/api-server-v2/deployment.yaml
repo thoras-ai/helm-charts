@@ -73,11 +73,6 @@ spec:
             value: {{ .Values.thorasApiServerV2.containerPort | quote }}
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras"
-          - name: "ELASTICSEARCH_URL"
-            valueFrom:
-              secretKeyRef:
-                name: thoras-elastic-password
-                key: host
           - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
