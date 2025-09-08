@@ -116,6 +116,8 @@ spec:
                 fieldPath: metadata.namespace
           - name: SERVICE_RESTART_WORKLOAD_ON_CPU
             value: {{ .Values.thorasApiServerV2.restartWorkloadOnCpu | quote }}
+          - name: SERVICE_WORK_QUEUE_ENABLED
+            value: {{ not .Values.thorasWorker.enabled | quote }}
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         startupProbe:
