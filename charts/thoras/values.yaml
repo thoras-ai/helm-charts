@@ -228,7 +228,6 @@ thorasAgent:
   labels: {}
 
 thorasReasoning:
-  enabled: false
   serviceAccount:
     name: thoras-reasoning-api
   connectors:
