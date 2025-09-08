@@ -123,6 +123,8 @@ spec:
                 fieldPath: metadata.namespace
           - name: SERVICE_RESTART_WORKLOAD_ON_CPU
             value: {{ .Values.thorasApiServerV2.restartWorkloadOnCpu | quote }}
+          - name: SERVICE_WORK_QUEUE_ENABLED
+            value: {{ not .Values.thorasWorker.enabled | quote }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml
