@@ -1,6 +1,9 @@
 suite: API Service Layer Deployment
 templates:
   - api-server-v2/deployment.yaml
+set:
+  thorasMonitor:
+    unittesting: true
 tests:
   - it: Should set tolerations if specified
     set:

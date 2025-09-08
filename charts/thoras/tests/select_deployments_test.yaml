@@ -6,6 +6,8 @@ templates:
   - worker/deployment.yaml
 set:
   thorasVersion: 1.0.0-alpha
+  thorasMonitor:
+    unittesting: true
   thorasReasoning:
     enabled: true
     api:
