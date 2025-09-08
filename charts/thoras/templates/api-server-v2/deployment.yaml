@@ -29,8 +29,15 @@ spec:
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
       {{- end }}
+      {{- if not .Values.thorasMonitor.unittesting }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
+      {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
+      volumes:
+      - name: monitor-config
+        configMap:
+          name: thoras-monitor-config
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-postgres
@@ -116,6 +123,11 @@ spec:
                 fieldPath: metadata.namespace
           - name: SERVICE_RESTART_WORKLOAD_ON_CPU
             value: {{ .Values.thorasApiServerV2.restartWorkloadOnCpu | quote }}
+        volumeMounts:
+          - name: monitor-config
+            mountPath: /app/config.yaml
+            subPath: config.yaml
+            readOnly: true
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         startupProbe:
