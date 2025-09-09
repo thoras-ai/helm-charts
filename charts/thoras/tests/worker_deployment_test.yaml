@@ -4,6 +4,8 @@ templates:
 set:
   thorasWorker:
     enabled: true
+  thorasMonitor:
+    unittesting: true
 tests:
   - it: Should set tolerations if specified
     set:
