@@ -1,0 +1,33 @@
+{{- if .Values.thorasWorker.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - thoras.ai
+  resources:
+  - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
