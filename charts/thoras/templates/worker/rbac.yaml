@@ -28,6 +28,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: ServiceAccount
-  name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
+  name: {{ .Values.thorasWorker.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 {{- end }}
