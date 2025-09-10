@@ -7,6 +7,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+  annotations:
+    {{- if not .Values.thorasMonitor.unittesting }}
+      checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
+    {{- end }}
 spec:
   replicas: {{ .Values.thorasWorker.replicas }}
   selector:
@@ -27,6 +31,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasWorker.serviceAccount.name }}
+      volumes:
+      - name: monitor-config
+        configMap:
+          name: thoras-monitor-config
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         name: wait-for-postgres
@@ -91,6 +99,11 @@ spec:
           requests:
             cpu: {{ .Values.thorasWorker.requests.cpu }}
             memory: {{ .Values.thorasWorker.requests.memory }}
+        volumeMounts:
+        - name: monitor-config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+          readOnly: true
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
