@@ -52,7 +52,7 @@ Should default to v2 port:
 
             location /config.json {
                 default_type application/json;
-                return 200 '{ "api_base_url": "", "version": "4.36.0", "extra": {"cluster_name":"phantom-assassin","show_savings":true} }';
+                return 200 '{ "api_base_url": "", "version": "4.36.0", "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_simulator":true,"rolling_savings":true,"show_savings":true} }';
             }
 
             location / {
@@ -126,7 +126,7 @@ should set extras in config.json:
 
             location /config.json {
                 default_type application/json;
-                return 200 '{ "api_base_url": "", "version": "4.36.0", "extra": {"cluster_name":"phantom-assassin","feature":true,"foo":"bar","show_savings":true} }';
+                return 200 '{ "api_base_url": "", "version": "4.36.0", "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_simulator":true,"feature":true,"foo":"bar","rolling_savings":true,"show_savings":true} }';
             }
 
             location / {
