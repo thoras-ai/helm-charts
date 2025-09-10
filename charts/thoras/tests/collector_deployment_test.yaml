@@ -12,9 +12,6 @@ tests:
           path: metadata.name
           value: metrics-collector
       - equal:
-          path: spec.template.spec.containers[0].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.19.2
-      - equal:
           path: spec.template.spec.containers[?(@.name == 'timescaledb')].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.21.3-pg16
   - it: Default containers should match snapshots
@@ -40,9 +37,9 @@ tests:
               persistentVolumeClaim:
                 claimName: elastic-search-data
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].volumeMounts
           value:
-            - mountPath: /var/lib/share/elasticsearch
+            - mountPath: /var/lib/share
               name: elastic-search-data
   - it: Should always create timescale container
     asserts:
