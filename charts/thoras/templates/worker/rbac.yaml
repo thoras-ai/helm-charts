@@ -1,9 +1,66 @@
+{{- define "thoras.worker.roles" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: Role
+metadata:
+  namespace: {{ .rbacNamespace }}
+{{- else }}
+kind: ClusterRole
+metadata:
+{{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: "thoras-worker"
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+{{- if .rbacNamespace }}
+kind: RoleBinding
+metadata:
+  namespace: {{ .rbacNamespace }}
+{{- else }}
+kind: ClusterRoleBinding
+metadata:
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: "thoras-worker"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  name: "thoras-worker"
+{{- if .rbacNamespace }}
+  kind: Role
+{{- else }}
+  kind: ClusterRole
+{{- end }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+
 {{- if .Values.thorasWorker.enabled }}
+  {{- if .Values.rbac.namespaces}}
+    {{- range $idx, $namespace := .Values.rbac.namespaces }}
+      {{- template "thoras.worker.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
+    {{- end}}
+  {{- else }}
+    {{- template "thoras.worker.roles" $ }}
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  name: thoras-worker-thoras
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
@@ -18,13 +75,13 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  name: thoras-worker-thoras
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
 roleRef:
   kind: ClusterRole
-  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  name: thoras-worker-thoras
   apiGroup: rbac.authorization.k8s.io
 subjects:
 - kind: ServiceAccount
