@@ -165,6 +165,9 @@ thorasDashboard:
     annotations: {}
   extras:
     show_savings: true
+    cost_analysis: true
+    cost_simulator: true
+    rolling_savings: true
 
 thorasMonitor:
   enabled: false
@@ -215,7 +218,6 @@ thorasAgent:
   labels: {}
 
 thorasReasoning:
-  enabled: false
   serviceAccount:
     name: thoras-reasoning-api
   connectors:

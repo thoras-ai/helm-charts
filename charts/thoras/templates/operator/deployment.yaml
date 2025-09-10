@@ -100,8 +100,6 @@ spec:
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_THORAS_API_BASE_URL
             value: "http://thoras-api-server-v2.thoras.svc.cluster.local"
-          - name: SERVICE_REASONING_ENABLED
-            value: "{{ .Values.thorasReasoning.enabled }}"
           - name: FORECAST_IMAGE_PULL_POLICY
             value: "{{ .Values.imagePullPolicy }}"
           - name: MODEL_SKIP_CACHE
