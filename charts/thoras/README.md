@@ -112,19 +112,13 @@ helm install \
 | metricsCollector.collector.logLevel                             | String  | Nil              | Logging level                                                                 |
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                  |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector                               |
-| metricsCollector.search.imageTag                                | String  | 8.19.2           | Elasticsearch image tag                                                       |
-| metricsCollector.search.name                                    | String  | elasticsearch    | Elasticsearch container name                                                  |
-| metricsCollector.search.containerPort                           | Number  | 9200             | Elasticsearch port                                                            |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                               |
 | metricsCollector.timescale.imageTag                             | String  | 2.21.3-pg16      | Timescale image tag                                                           |
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                                      |
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |
 | metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                                    |
-| metricsCollector.purge.ttl                                      | String  | 30d              | How long to keep metrics data in Elasticsearch                                |
-| metricsCollector.purge.schedule                                 | String  | 00 00 \* \* \*   | Cron expression for metrics purge job                                         |
 | metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| metricsCollector.purge.logLevel                                 | String  | Nil              | Logging level                                                                 |
 | metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container                                |
 | metricsCollector.additionalPvSecurityContext                    | Object  | {}               | Allows assigning additional securityContext objects to workloads that use PVs |
 
@@ -142,7 +136,6 @@ helm install \
 | thorasApiServerV2.requests.memory             | String  | 1000Mi     | Thoras API memory request                                                     |
 | thorasApiServerV2.slackErrorsEnabled          | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
 | thorasApiServerV2.logLevel                    | String  | Nil        | Logging level                                                                 |
-| thorasApiServerV2.timescalePrimary            | Boolean | true       | Use timescale as the primary data source, not elastic                         |
 | thorasApiServerV2.timescaleSnapshotsPrimary   | Boolean | false      | Use the timescale snapshot repo as the primary data source                    |
 | thorasApiServerV2.queriesPerSecond            | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
 | thorasApiServerV2.catalogRefreshInterval      | String  | "60s"      | Frequency of updates to catalog following k8s updates                         |

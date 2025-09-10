@@ -1,51 +1,25 @@
 Default containers should match snapshots:
   1: |
     env:
-      - name: ES_JAVA_OPTS
-        value: -Xms750m -Xmx750m
-      - name: discovery.type
-        value: single-node
-      - name: xpack.security.enabled
-        value: "true"
-      - name: bootstrap.memory_lock
-        value: "false"
-      - name: ELASTIC_PASSWORD
+      - name: POSTGRES_PASSWORD
         valueFrom:
           secretKeyRef:
             key: password
-            name: thoras-elastic-password
-    image: us-east4-docker.pkg.dev/thoras-registry/platform/elasticsearch:8.19.2
+            name: thoras-timescale-password
+    image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.21.3-pg16
     imagePullPolicy: IfNotPresent
-    name: elasticsearch
+    name: timescaledb
     ports:
-      - containerPort: 9200
+      - containerPort: 5432
     resources:
       limits:
         memory: 8192Mi
       requests:
-        cpu: 200m
-        memory: 1536Mi
+        cpu: 400m
+        memory: 1280Mi
   2: |
     args:
       - |
-        # wait for elasticsearch to be available
-        retries=0
-        max_retries=48
-        until [ $retries -eq $max_retries ]; do
-          if wget --spider -T 5 -q ${ELASTICSEARCH_URL}; then
-            echo "elasticsearch ready"
-            break
-          else
-            echo "elasticsearch not ready"
-            retries=$((retries+1))
-            sleep 5
-          fi
-        done
-        if [ $retries -eq $max_retries ]; then
-            echo "fatal: giving up on elasticsearch availability"
-            exit 1
-        fi
-
         # wait for postgres to be available
         retries=0
         max_retries=48
@@ -76,18 +50,11 @@ Default containers should match snapshots:
         # run any migrations, accounting for upgrade/downgrade scenarios
         ./scripts/migrate_database.sh
 
-
-        ./metrics-collector init
         ./metrics-collector collect -c 60s
     command:
       - /bin/sh
       - -c
     env:
-      - name: ELASTICSEARCH_URL
-        valueFrom:
-          secretKeyRef:
-            key: host
-            name: thoras-elastic-password
       - name: SERVICE_SLACK_WEBHOOK_URL
         valueFrom:
           secretKeyRef:

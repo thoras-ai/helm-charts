@@ -75,18 +75,6 @@ metricsCollector:
     requests:
       cpu: "200m"
       memory: "32Mi"
-  search:
-    imageTag: "8.19.2"
-    name: elasticsearch
-    containerPort: 9200
-    limits:
-      memory: "8192Mi"
-    requests:
-      cpu: "200m"
-      memory: "1536Mi"
-  purge:
-    ttl: 30
-    schedule: "00 00 * * *"
   init:
     imageTag: "3.22.1"
     limits:
@@ -130,7 +118,6 @@ thorasApiServerV2:
     memory: 100Mi
   port: 80
   logLevel: "info"
-  timescalePrimary: true
   timescaleSnapshotsPrimary: false
   catalogRefreshInterval: "60s"
   cacheWindow: "10s"
