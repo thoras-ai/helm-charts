@@ -62,6 +62,9 @@ spec:
               echo "Failed to connect to database after $max_retries retries"
               exit 1
             fi
+
+            # run any migrations, accounting for upgrade/downgrade scenarios
+            ./scripts/migrate_database.sh
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
