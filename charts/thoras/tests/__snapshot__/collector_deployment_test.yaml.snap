@@ -6,7 +6,7 @@ Default containers should match snapshots:
           secretKeyRef:
             key: password
             name: thoras-timescale-password
-    image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.21.3-pg16
+    image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb-ha:pg16.10-ts2.21.3
     imagePullPolicy: IfNotPresent
     name: timescaledb
     ports:

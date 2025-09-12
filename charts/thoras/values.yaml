@@ -83,8 +83,8 @@ metricsCollector:
       cpu: "16m"
       memory: "32Mi"
   timescale:
-    image: "timescaledb"
-    imageTag: "2.21.3-pg16"
+    image: "timescaledb-ha"
+    imageTag: "pg16.10-ts2.21.3"
     name: timescale
     containerPort: 5432
     limits:
