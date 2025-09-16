@@ -20,7 +20,6 @@ set:
   thorasApiServerV2:
     replicas: 12
   thorasWorker:
-    enabled: true
     replicas: 12
 tests:
   - it: Image registry should be correct

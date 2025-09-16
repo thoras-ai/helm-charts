@@ -2,8 +2,6 @@ suite: Worker Deployment
 templates:
   - worker/deployment.yaml
 set:
-  thorasWorker:
-    enabled: true
   thorasMonitor:
     unittesting: true
 tests:
