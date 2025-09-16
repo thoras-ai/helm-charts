@@ -127,7 +127,7 @@ thorasApiServerV2:
   restartWorkloadOnCpu: false
 
 thorasWorker:
-  enabled: false
+  enabled: true
   serviceAccount:
     name: thoras-worker
   podAnnotations: {}

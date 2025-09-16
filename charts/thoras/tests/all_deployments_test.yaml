@@ -9,8 +9,6 @@ set:
   thorasMonitor:
     enabled: true
     unittesting: true
-  thorasWorker:
-    enabled: true
   thorasDashboard:
     unittesting: true
   thorasReasoning:
