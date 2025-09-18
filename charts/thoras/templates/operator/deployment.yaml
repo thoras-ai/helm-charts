@@ -66,8 +66,6 @@ spec:
                 name: thoras-slack
                 key: webhookUrl
             {{- end }}
-          - name: "THORAS_VERSION"
-            value: {{ .Chart.Version | replace "+" "_" }}
           - name: "SERVICE_FORECAST_RESOURCE_REQUESTS_CPU"
             value: {{ .Values.thorasForecast.requests.cpu | quote }}
           - name: "SERVICE_FORECAST_RESOURCE_LIMITS_CPU"
