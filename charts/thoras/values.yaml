@@ -93,6 +93,8 @@ metricsCollector:
       cpu: "400m"
       memory: "1280Mi"
   blobService:
+    pprof:
+      enabled: false
     containerPort: 8080
     port: 80
     limits:
@@ -125,6 +127,8 @@ thorasApiServerV2:
   prometheus:
     enabled: true
   restartWorkloadOnCpu: false
+  pprof:
+    enabled: false
 
 thorasWorker:
   enabled: true

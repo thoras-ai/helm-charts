@@ -123,6 +123,8 @@ spec:
             value: {{ .Values.thorasApiServerV2.restartWorkloadOnCpu | quote }}
           - name: SERVICE_WORK_QUEUE_ENABLED
             value: {{ not .Values.thorasWorker.enabled | quote }}
+          - name: SERVICE_ENABLE_PPROF
+            value: {{ .Values.thorasApiServerV2.pprof.enabled | quote }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml
