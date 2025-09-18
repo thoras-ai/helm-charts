@@ -118,6 +118,7 @@ helm install \
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |
 | metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                                    |
+| metricsCollector.blobService.pprof.enabled                      | Boolean | false            | Enable pprof endpoint.                                                        |
 | metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`                  |
 | metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container                                |
 | metricsCollector.additionalPvSecurityContext                    | Object  | {}               | Allows assigning additional securityContext objects to workloads that use PVs |
@@ -143,6 +144,7 @@ helm install \
 | thorasApiServerV2.additionalPvSecurityContext | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled          | Boolean | true       | Enables a prometheus metric scrape point                                      |
 | thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
+| thorasApiServerV2.pprof.enabled               | Boolean | false      | Enable pprof endpoint.                                                        |
 
 ## Thoras Worker
 

@@ -205,6 +205,8 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
           - name: SERVICE_STORAGE_FILE_PATH
             value: "/var/lib/share"
+          - name: SERVICE_ENABLE_PPROF
+            value: {{ .Values.metricsCollector.blobService.pprof.enabled | quote }}
         resources:
           limits:
             memory: {{ .Values.metricsCollector.blobService.limits.memory }}
