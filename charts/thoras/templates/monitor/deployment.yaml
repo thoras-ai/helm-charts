@@ -77,6 +77,8 @@ spec:
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_THORAS_API_BASE_URL
             value: "http://thoras-api-server-v2"
+          - name: SERVICE_CHART_VERSION
+            value: {{ .Chart.Version | quote }}
         resources:
           limits:
             memory: {{ .Values.thorasMonitor.limits.memory }}
