@@ -125,6 +125,8 @@ spec:
             value: {{ not .Values.thorasWorker.enabled | quote }}
           - name: SERVICE_ENABLE_PPROF
             value: {{ .Values.thorasApiServerV2.pprof.enabled | quote }}
+          - name: SERVICE_CHART_VERSION
+            value: {{ .Chart.Version | quote }}
           {{- with .Values.rbac.namespaces }}
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
