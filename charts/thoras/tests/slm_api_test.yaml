@@ -1,0 +1,40 @@
+suite: SLM API
+templates:
+  - slm-api/deployment.yaml
+  - slm-api/service.yaml
+  - slm-api/service-account.yaml
+tests:
+  - it: Should not render any resources when disabled
+    set:
+      thorasSlmAgent:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Should render deployment when enabled
+    template: slm-api/deployment.yaml
+    set:
+      thorasSlmAgent:
+        enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+
+  - it: Should render service when enabled
+    template: slm-api/service.yaml
+    set:
+      thorasSlmAgent:
+        enabled: true
+    asserts:
+      - isKind:
+          of: Service
+
+  - it: Should render service account when enabled
+    template: slm-api/service-account.yaml
+    set:
+      thorasSlmAgent:
+        enabled: true
+    asserts:
+      - isKind:
+          of: ServiceAccount
