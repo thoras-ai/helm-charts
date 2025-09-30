@@ -1,0 +1,49 @@
+{{- if .Values.thorasSlmAgent.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-slm-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thoras-slm-api
+  template:
+    metadata:
+      labels:
+        app: thoras-slm-api
+        {{- include "thoras.labels" . | nindent 8 }}
+        {{- with .Values.thorasSlmAgent.labels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.thorasSlmAgent.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ .Values.thorasSlmAgent.serviceAccount.name }}
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/thoras-phi4-mini:{{ default .Values.thorasVersion .Values.thorasSlmAgent.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        name: thoras-slm-api
+        ports:
+        - containerPort: {{ .Values.thorasSlmAgent.containerPort }}
+        resources:
+          limits:
+            memory: {{ .Values.thorasSlmAgent.limits.memory }}
+          requests:
+            cpu: {{ .Values.thorasSlmAgent.requests.cpu }}
+            memory: {{ .Values.thorasSlmAgent.requests.memory }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
