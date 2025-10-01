@@ -4,9 +4,9 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.55.2](https://img.shields.io/badge/Version-4.55.2-informational?style=flat-square) ![AppVersion: 4.42.1](https://img.shields.io/badge/AppVersion-4.42.1-informational?style=flat-square)
+![Version: 4.55.3](https://img.shields.io/badge/Version-4.55.3-informational?style=flat-square) ![AppVersion: 4.42.2](https://img.shields.io/badge/AppVersion-4.42.2-informational?style=flat-square)
 
-# Install
+# Installs
 
 Using [Helm](https://helm.sh), you can easily install and test Thoras in a Kubernetes cluster by running the following:
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                       | Type    | Default                                          | Description                                                                                                          |
 | ------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion             | String  | 4.42.1                                           | Thoras app version                                                                                                   |
+| thorasVersion             | String  | 4.42.2                                           | Thoras app version                                                                                                   |
 | imageCredentials.registry | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password | String  | ""                                               | Container registry auth string                                                                                       |
