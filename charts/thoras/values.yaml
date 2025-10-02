@@ -91,7 +91,7 @@ metricsCollector:
       memory: "8192Mi"
     requests:
       cpu: "400m"
-      memory: "1280Mi"
+      memory: "3072Mi"
   blobService:
     pprof:
       enabled: false
