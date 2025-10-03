@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.thorasWorker.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ports:
+  - name: http-metrics
+    port: {{ .Values.thorasWorker.prometheus.port }}
+    protocol: TCP
+    targetPort: {{ .Values.thorasWorker.prometheus.port }}
+  selector:
+    app: thoras-worker

@@ -146,6 +146,9 @@ thorasWorker:
   logLevel: "info"
   timescaleSnapshotsPrimary: true
   timescaleSnapshotsOnly: false
+  prometheus:
+    enabled: true
+    port: 9102
 
 thorasDashboard:
   enabled: true
