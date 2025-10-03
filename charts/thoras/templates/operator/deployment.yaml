@@ -74,8 +74,6 @@ spec:
             value: {{ .Values.thorasForecast.requests.memory | quote }}
           - name: "SERVICE_FORECAST_RESOURCE_LIMITS_MEMORY"
             value: {{ .Values.thorasForecast.limits.memory | quote }}
-          - name: "MODEL_IMAGE"
-            value: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
           - name: THORAS_NS
             valueFrom:
               fieldRef:
