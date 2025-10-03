@@ -162,6 +162,8 @@ helm install \
 | thorasWorker.queriesPerSecond          | String  | "50"          | Sets a maximum threshold for K8s API qps                         |
 | thorasWorker.timescaleSnapshotsPrimary | Boolean | true          | Use the timescale snapshot repo as the primary data source       |
 | thorasWorker.timescaleSnapshotsOnly    | Boolean | false         | Only use the timescale snapshot repo as the primary data source. |
+| thorasWorker.prometheus.enabled        | Boolean | true          | Enables a prometheus metric exporter                             |
+| thorasWorker.prometheus.port           | Number  | 9102          | Port for the prometheus metric exporter                          |
 
 ## Thoras Dashboard
 

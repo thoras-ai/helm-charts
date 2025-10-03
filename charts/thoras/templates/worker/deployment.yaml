@@ -25,6 +25,11 @@ spec:
         {{- end }}
       annotations:
         karpenter.sh/do-not-disrupt: "true"
+      {{- if .Values.thorasWorker.prometheus.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: {{ .Values.thorasWorker.prometheus.port | quote }}
+      {{- end }}
       {{- with .Values.thorasWorker.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -107,6 +112,11 @@ spec:
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
           {{- end }}
+          - name: SERVICE_PORT
+            value: {{ .Values.thorasWorker.prometheus.port | quote }}
+        ports:
+          - name: http-metrics
+            containerPort: {{ .Values.thorasWorker.prometheus.port }}
         resources:
           limits:
             memory: {{ .Values.thorasWorker.limits.memory }}
