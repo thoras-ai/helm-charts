@@ -49,14 +49,13 @@ subjects:
   namespace: {{ .Release.Namespace }}
 {{- end }}
 
-{{- if .Values.thorasWorker.enabled }}
-  {{- if .Values.rbac.namespaces}}
-    {{- range $idx, $namespace := .Values.rbac.namespaces }}
-      {{- template "thoras.worker.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
-    {{- end}}
-  {{- else }}
-    {{- template "thoras.worker.roles" $ }}
-  {{- end }}
+{{- if .Values.rbac.namespaces}}
+  {{- range $idx, $namespace := .Values.rbac.namespaces }}
+    {{- template "thoras.worker.roles" ($ | deepCopy | merge (dict "rbacNamespace" $namespace) ) }}
+  {{- end}}
+{{- else }}
+  {{- template "thoras.worker.roles" $ }}
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -88,4 +87,3 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasWorker.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
-{{- end }}

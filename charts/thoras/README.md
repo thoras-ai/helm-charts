@@ -151,7 +151,6 @@ helm install \
 
 | Key                                    | Type    | Default       | Description                                                      |
 | -------------------------------------- | ------- | ------------- | ---------------------------------------------------------------- |
-| thorasWorker.enabled                   | Boolean | true          | Enables the Thoras worker                                        |
 | thorasWorker.serviceAccount.name       | String  | thoras-worker | Service account name for Thoras worker pod                       |
 | thorasWorker.podAnnotations            | Object  | {}            | Pod Annotations for Thoras worker                                |
 | thorasWorker.labels                    | Object  | {}            | Pod/service labels for Thoras worker                             |
