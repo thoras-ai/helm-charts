@@ -138,7 +138,7 @@ spec:
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
 
-            ./metrics-collector collect -c 60s
+            ./metrics-collector collect
         env:
           - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
