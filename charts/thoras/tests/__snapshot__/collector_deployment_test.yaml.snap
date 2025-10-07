@@ -50,7 +50,7 @@ Default containers should match snapshots:
         # run any migrations, accounting for upgrade/downgrade scenarios
         ./scripts/migrate_database.sh
 
-        ./metrics-collector collect -c 60s
+        ./metrics-collector collect
     command:
       - /bin/sh
       - -c
