@@ -1,6 +1,4 @@
-# How does this help customers?
-
-# What's changing?
+# What's changing and why?
 
 # Forget anything
 
