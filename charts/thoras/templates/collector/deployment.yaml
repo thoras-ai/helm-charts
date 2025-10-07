@@ -102,9 +102,9 @@ spec:
             {{- toYaml . | nindent 10 }}
           {{- end }}
         {{- end }}
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        name: {{ .Values.metricsCollector.collector.name }}
+        name: thoras-blob-api
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -138,52 +138,7 @@ spec:
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
 
-            ./metrics-collector collect
-        env:
-          - name: SERVICE_SLACK_WEBHOOK_URL
-            valueFrom:
-              secretKeyRef:
-            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
-                name: {{ .Values.slackWebhookUrlSecretRefName }}
-                key: {{ .Values.slackWebhookUrlSecretRefKey }}
-            {{- else }}
-                name: thoras-slack
-                key: webhookUrl
-            {{- end }}
-          - name: SERVICE_SLACK_ERRORS_ENABLED
-            value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
-          - name: SERVICE_CLUSTER_NAME
-            value: "{{ .Values.cluster.name }}"
-          - name: SERVICE_LOG_LEVEL
-            value: {{ default .Values.logLevel .Values.metricsCollector.collector.logLevel }}
-          - name: SERVICE_THORAS_API_BASE_URL
-            value: "http://thoras-api-server-v2"
-          - name: DATABASE_HOST
-            valueFrom:
-              secretKeyRef:
-                name: thoras-timescale-password
-                key: host
-          - name: DATABASE_URL
-            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
-          - name: "POSTGRES_PASSWORD"
-            valueFrom:
-              secretKeyRef:
-                name: thoras-timescale-password
-                key: password
-          - name: SERVICE_COLLECTION_PARALLELIZATION
-            value: "{{ .Values.metricsCollector.collector.parallelization | default 20}}"
-          - name: SERVICE_CHART_VERSION
-            value: "{{ .Chart.Version }}"
-        resources:
-          limits:
-            memory: {{ .Values.metricsCollector.collector.limits.memory }}
-          requests:
-            cpu: {{ .Values.metricsCollector.collector.requests.cpu }}
-            memory: {{ .Values.metricsCollector.collector.requests.memory }}
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.collector.imageTag }}
-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        name: thoras-blob-api
-        command: ["/app/blob-service"]
+            ./blob-service
         env:
           - name: SERVICE_PORT
             value: {{ .Values.metricsCollector.blobService.containerPort | quote }}
@@ -199,12 +154,28 @@ spec:
             {{- end }}
           - name: SERVICE_SLACK_ERRORS_ENABLED
             value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
-          - name: "SERVICE_LOG_LEVEL"
-            value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
+          - name: SERVICE_CLUSTER_NAME
+            value: "{{ .Values.cluster.name }}"
+          - name: SERVICE_LOG_LEVEL
+            value: {{ default .Values.logLevel .Values.metricsCollector.blobService.logLevel }}
           - name: SERVICE_STORAGE_FILE_PATH
             value: "/var/lib/share"
           - name: SERVICE_ENABLE_PPROF
             value: {{ .Values.metricsCollector.blobService.pprof.enabled | quote }}
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+          - name: DATABASE_URL
+            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+          - name: "POSTGRES_PASSWORD"
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: password
+          - name: SERVICE_CHART_VERSION
+            value: "{{ .Chart.Version }}"
         resources:
           limits:
             memory: {{ .Values.metricsCollector.blobService.limits.memory }}

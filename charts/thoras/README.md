@@ -108,8 +108,6 @@ helm install \
 | metricsCollector.persistence.storageClassName                   | String  | ""               | Storage class for PVC                                                         |
 | metricsCollector.persistence.pvcStorageRequestSize              | String  | "3Gi"            | Inform PV backend of minimal volume requirements                              |
 | metricsCollector.persistence.accessMode                         | String  | "ReadWriteOnce"  | The accessMode applied to the PVC                                             |
-| metricsCollector.collector.name                                 | String  | thoras-collector | Thoras collector container name                                               |
-| metricsCollector.collector.logLevel                             | String  | Nil              | Logging level                                                                 |
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                  |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector                               |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                               |
@@ -117,6 +115,7 @@ helm install \
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                                      |
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |
+| metricsCollector.blobService.logLevel                           | String  | Nil              | Logging level                                                                 |
 | metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                                    |
 | metricsCollector.blobService.pprof.enabled                      | Boolean | false            | Enable pprof endpoint.                                                        |
 | metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`                  |

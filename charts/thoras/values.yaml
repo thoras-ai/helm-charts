@@ -68,13 +68,6 @@ metricsCollector:
   labels: {}
   serviceAccount:
     name: thoras-collector
-  collector:
-    name: thoras-collector
-    limits:
-      memory: "8192Mi"
-    requests:
-      cpu: "200m"
-      memory: "32Mi"
   init:
     imageTag: "3.22.1"
     limits:
@@ -93,6 +86,7 @@ metricsCollector:
       cpu: "400m"
       memory: "3072Mi"
   blobService:
+    logLevel: "info"
     pprof:
       enabled: false
     containerPort: 8080
