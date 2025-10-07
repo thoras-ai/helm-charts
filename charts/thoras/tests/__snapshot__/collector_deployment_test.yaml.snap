@@ -47,9 +47,6 @@ Default containers should match snapshots:
         echo "setting password"
         psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
 
-        # run any migrations, accounting for upgrade/downgrade scenarios
-        ./scripts/migrate_database.sh
-
         ./blob-service
     command:
       - /bin/sh
@@ -57,13 +54,6 @@ Default containers should match snapshots:
     env:
       - name: SERVICE_CLUSTER_NAME
         value: ""
-      - name: DATABASE_HOST
-        valueFrom:
-          secretKeyRef:
-            key: host
-            name: thoras-timescale-password
-      - name: DATABASE_URL
-        value: $(DATABASE_HOST)/thoras?sslmode=disable
       - name: POSTGRES_PASSWORD
         valueFrom:
           secretKeyRef:
