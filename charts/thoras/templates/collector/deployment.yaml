@@ -112,7 +112,7 @@ spec:
             retries=0
             max_retries=48
             until [ $retries -ge $max_retries ]; do
-              if pg_isready -h localhost ; then
+              if pg_isready -h localhost -U postgres; then
                 break
               else
                 echo "postgres not ready"

@@ -23,7 +23,7 @@ tests:
       - matchSnapshot:
           path: spec.template.spec.containers[0]
       - matchSnapshot:
-          path: spec.template.spec.containers[?(@.name == 'thoras-collector')]
+          path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')]
   - it: Should mount pvc when in persistence mode
     set:
       metricsCollector:
