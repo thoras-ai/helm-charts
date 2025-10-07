@@ -117,6 +117,10 @@ spec:
             value: {{ .Values.tolerations | toJson | quote }}
           - name: SERVICE_PORT
             value: {{ .Values.thorasOperator.prometheus.port | quote }}
+          {{- with .Values.rbac.namespaces }}
+          - name: SERVICE_WATCH_NAMESPACES
+            value: {{ join "," . | quote }}
+          {{- end }}
         command: [
           "/app/operator"
         ]
