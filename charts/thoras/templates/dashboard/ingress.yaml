@@ -1,0 +1,52 @@
+{{- if .Values.thorasDashboard.ingress.enabled -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thoras-dashboard
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasDashboard.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.thorasDashboard.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.thorasDashboard.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.thorasDashboard.ingress.ingressClassName }}
+  {{- end }}
+  {{- if .Values.thorasDashboard.ingress.tls }}
+  tls:
+    {{- range .Values.thorasDashboard.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- if .secretName }}
+      secretName: {{ .secretName }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.thorasDashboard.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- if .pathType }}
+            pathType: {{ .pathType }}
+            {{- else }}
+            pathType: Prefix
+            {{- end }}
+            backend:
+              service:
+                name: thoras-dashboard
+                port:
+                  number: {{ $.Values.thorasDashboard.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

@@ -185,6 +185,11 @@ helm install \
 | thorasDashboard.service.loadBalancerIP           | String  | nil              | Service loadBalancerIP when type is LoadBalancer                         |
 | thorasDashboard.service.loadBalancerSourceRanges | List    | nil              | Service loadBalancerSourceRanges when type is LoadBalancer               |
 | thorasDashboard.service.externalIPs              | List    | nil              | Service externalIPs                                                      |
+| thorasDashboard.ingress.enabled                  | Bool    | false            | Enables Ingress for the Dashboard                                        |
+| thorasDashboard.ingress.ingressClassName         | String  | ""               | IngressClass to use for the Dashboard Ingress                            |
+| thorasDashboard.ingress.annotations              | Object  | {}               | Annotations for the Dashboard Ingress                                    |
+| thorasDashboard.ingress.hosts                    | List    | see below        | List of hosts and paths for the Dashboard Ingress                        |
+| thorasDashboard.ingress.tls                      | List    | []               | TLS configuration for the Dashboard Ingress                              |
 | thorasDashboard.slackErrorsEnabled               | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`             |
 | thorasDashboard.logLevel                         | String  | Nil              | Logging level                                                            |
 | thorasDashboard.extras                           | Object  | {}               | Additional values to be injected into the Thoras Dashboard config        |
@@ -213,6 +218,38 @@ helm install \
 | thorasAgent.slackErrorsEnabled  | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
 | thorasAgent.frequency           | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
 | thorasAgent.queriesPerSecond    | String  | "50"           | Sets a maximum threshold for K8s API qps                               |
+
+## Example Thoras Dashboard Ingress Configuration
+
+```yaml
+# values.yaml
+---
+thorasDashboard:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    hosts:
+      - host: thoras.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: thoras-tls
+        hosts:
+          - thoras.example.com
+```
+
+Default `thorasDashboard.ingress.hosts` value:
+```yaml
+hosts:
+  - host: thoras.local
+    paths:
+      - path: /
+        pathType: Prefix
+```
 
 ## Example Thoras Monitor with default config
 
