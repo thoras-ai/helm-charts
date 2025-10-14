@@ -1,0 +1,149 @@
+suite: Dashboard Ingress
+templates:
+  - dashboard/ingress.yaml
+chart:
+  version: "4.36.0"
+tests:
+  - it: Does not render when disabled
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: Renders when enabled
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.name
+          value: thoras-dashboard
+  - it: Uses default host and path
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: thoras.local
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+  - it: Uses custom host and path
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+          hosts:
+            - host: custom.example.com
+              paths:
+                - path: /dashboard
+                  pathType: Exact
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: custom.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /dashboard
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Exact
+  - it: Sets ingressClassName when provided
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+          ingressClassName: nginx
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+  - it: Does not set ingressClassName when empty
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+          ingressClassName: ""
+    asserts:
+      - isNull:
+          path: spec.ingressClassName
+  - it: Applies custom annotations
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            nginx.ingress.kubernetes.io/rewrite-target: /
+    asserts:
+      - equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: letsencrypt-prod
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /
+  - it: Configures TLS
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+          tls:
+            - secretName: thoras-tls
+              hosts:
+                - thoras.example.com
+                - thoras.local
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: thoras-tls
+      - equal:
+          path: spec.tls[0].hosts
+          value:
+            - thoras.example.com
+            - thoras.local
+  - it: Supports multiple hosts
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+          hosts:
+            - host: thoras1.example.com
+              paths:
+                - path: /
+                  pathType: Prefix
+            - host: thoras2.example.com
+              paths:
+                - path: /
+                  pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: thoras1.example.com
+      - equal:
+          path: spec.rules[1].host
+          value: thoras2.example.com
+  - it: Routes to correct service and port
+    set:
+      thorasDashboard:
+        ingress:
+          enabled: true
+        port: 8080
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: thoras-dashboard
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 8080

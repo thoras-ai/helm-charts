@@ -167,6 +167,16 @@ thorasDashboard:
   service:
     type: ClusterIP
     annotations: {}
+  ingress:
+    enabled: false
+    ingressClassName: "nginx"
+    annotations: {}
+    hosts:
+      - host: thoras.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
   extras:
     show_savings: true
     cost_analysis: true
