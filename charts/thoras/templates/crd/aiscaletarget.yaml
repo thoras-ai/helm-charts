@@ -697,6 +697,13 @@ spec:
                       - name
                       type: object
                     type: array
+                  in_place_resizing:
+                    properties:
+                      allow_restart_on_memory_limit_decrease:
+                        type: boolean
+                      enabled:
+                        type: boolean
+                    type: object
                   mode:
                     enum:
                     - autonomous
