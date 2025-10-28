@@ -114,8 +114,6 @@ thorasApiServerV2:
     memory: 100Mi
   port: 80
   logLevel: "info"
-  timescaleSnapshotsPrimary: true
-  timescaleSnapshotsOnly: false
   catalogRefreshInterval: "60s"
   cacheWindow: "10s"
   additionalPvSecurityContext: {}
@@ -138,8 +136,6 @@ thorasWorker:
     cpu: 128m
     memory: 100Mi
   logLevel: "info"
-  timescaleSnapshotsPrimary: true
-  timescaleSnapshotsOnly: false
   prometheus:
     enabled: true
     port: 9102
