@@ -114,8 +114,6 @@ thorasApiServerV2:
     memory: 100Mi
   port: 80
   logLevel: "info"
-  catalogRefreshInterval: "60s"
-  cacheWindow: "10s"
   additionalPvSecurityContext: {}
   prometheus:
     enabled: true

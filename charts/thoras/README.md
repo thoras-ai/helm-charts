@@ -137,8 +137,6 @@ helm install \
 | thorasApiServerV2.slackErrorsEnabled          | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
 | thorasApiServerV2.logLevel                    | String  | Nil        | Logging level                                                                 |
 | thorasApiServerV2.queriesPerSecond            | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
-| thorasApiServerV2.catalogRefreshInterval      | String  | "60s"      | Frequency of updates to catalog following k8s updates                         |
-| thorasApiServerV2.cacheWindow                 | String  | "10s"      | Maximum staleness of data before querying k8s for updates                     |
 | thorasApiServerV2.additionalPvSecurityContext | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled          | Boolean | true       | Enables a prometheus metric scrape point                                      |
 | thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
