@@ -38,7 +38,6 @@ rules:
 - apiGroups:
   - apps
   - argoproj.io
-  - "" # core API group - pods, services, configmaps, secrets, etc.
   resources:
   - '*'
   verbs:
@@ -50,7 +49,7 @@ rules:
   verbs:
   - patch
 - apiGroups:
-  - ""
+  - "" # core API group - pods, services, configmaps, secrets, etc.
   resources:
   - pods/eviction
   verbs:
