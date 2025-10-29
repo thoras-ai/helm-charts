@@ -39,6 +39,18 @@ Default matches snapshot:
           - '*'
         verbs:
           - patch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/resize
+        verbs:
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
   2: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
