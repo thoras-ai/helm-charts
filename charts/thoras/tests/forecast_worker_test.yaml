@@ -186,10 +186,10 @@ tests:
             name: FORECAST_IGNORE_NEW_PODS
             value: "false"
 
-  - it: renders FORECAST_IGNORE_NEW_PODS as true when preferAdjusted is true
+  - it: renders FORECAST_IGNORE_NEW_PODS as true when ignoreNewPods is true
     set:
       thorasForecast:
-        preferAdjusted: true
+        ignoreNewPods: true
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
