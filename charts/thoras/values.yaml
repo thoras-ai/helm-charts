@@ -201,6 +201,7 @@ thorasForecast:
   serviceAccount:
     name: thoras-forecast-worker
   skipCache: false
+  preferAdjusted: false
   requests:
     cpu: "256m"
     memory: "256Mi"
