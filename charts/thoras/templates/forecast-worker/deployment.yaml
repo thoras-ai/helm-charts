@@ -65,6 +65,8 @@ spec:
           - name: RETRAIN_OVERRIDE_HOURS
             value: {{ (float64 (printf "%v" .)) | quote }}
             {{- end }}
+          - name: FORECAST_IGNORE_NEW_PODS
+            value: {{ .Values.thorasForecast.ignoreNewPods | ternary "true" "false" | quote }}
         resources:
           requests:
             cpu: {{ .Values.thorasForecast.worker.requests.cpu }}
