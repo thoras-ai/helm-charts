@@ -145,19 +145,20 @@ helm install \
 
 ## Thoras Worker
 
-| Key                              | Type    | Default       | Description                                                  |
-| -------------------------------- | ------- | ------------- | ------------------------------------------------------------ |
-| thorasWorker.serviceAccount.name | String  | thoras-worker | Service account name for Thoras worker pod                   |
-| thorasWorker.podAnnotations      | Object  | {}            | Pod Annotations for Thoras worker                            |
-| thorasWorker.labels              | Object  | {}            | Pod/service labels for Thoras worker                         |
-| thorasWorker.limits.memory       | String  | 2000Mi        | Thoras API memory limit                                      |
-| thorasWorker.requests.cpu        | String  | 1000Mi        | Thoras API CPU request                                       |
-| thorasWorker.requests.memory     | String  | 1000Mi        | Thoras API memory request                                    |
-| thorasWorker.slackErrorsEnabled  | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasWorker.logLevel            | String  | Nil           | Logging level                                                |
-| thorasWorker.queriesPerSecond    | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
-| thorasWorker.prometheus.enabled  | Boolean | true          | Enables a prometheus metric exporter                         |
-| thorasWorker.prometheus.port     | Number  | 9102          | Port for the prometheus metric exporter                      |
+| Key                                        | Type    | Default       | Description                                                  |
+| ------------------------------------------ | ------- | ------------- | ------------------------------------------------------------ |
+| thorasWorker.serviceAccount.name           | String  | thoras-worker | Service account name for Thoras worker pod                   |
+| thorasWorker.podAnnotations                | Object  | {}            | Pod Annotations for Thoras worker                            |
+| thorasWorker.labels                        | Object  | {}            | Pod/service labels for Thoras worker                         |
+| thorasWorker.limits.memory                 | String  | 2000Mi        | Thoras API memory limit                                      |
+| thorasWorker.requests.cpu                  | String  | 1000Mi        | Thoras API CPU request                                       |
+| thorasWorker.requests.memory               | String  | 1000Mi        | Thoras API memory request                                    |
+| thorasWorker.slackErrorsEnabled            | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl` |
+| thorasWorker.logLevel                      | String  | Nil           | Logging level                                                |
+| thorasWorker.queriesPerSecond              | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
+| thorasWorker.prometheus.enabled            | Boolean | true          | Enables a prometheus metric exporter                         |
+| thorasWorker.prometheus.port               | Number  | 9102          | Port for the prometheus metric exporter                      |
+| thorasWorker.enableSnapshotChunkAutoSizing | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
 
 ## Thoras Dashboard
 

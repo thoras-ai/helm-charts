@@ -137,6 +137,7 @@ thorasWorker:
   prometheus:
     enabled: true
     port: 9102
+  enableSnapshotChunkAutoSizing: false
 
 thorasDashboard:
   enabled: true
