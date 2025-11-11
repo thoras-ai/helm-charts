@@ -23,15 +23,16 @@ spec:
         {{- with .Values.thorasWorker.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- if or .Values.thorasWorker.prometheus.enabled .Values.thorasWorker.podAnnotations }}
       annotations:
-        karpenter.sh/do-not-disrupt: "true"
-      {{- if .Values.thorasWorker.prometheus.enabled }}
+        {{- if .Values.thorasWorker.prometheus.enabled }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasWorker.prometheus.port | quote }}
-      {{- end }}
-      {{- with .Values.thorasWorker.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.thorasWorker.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasWorker.serviceAccount.name }}
