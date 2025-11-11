@@ -19,18 +19,19 @@ spec:
         {{- with .Values.thorasApiServerV2.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- if or .Values.thorasApiServerV2.podAnnotations .Values.thorasApiServerV2.prometheus.enabled (not .Values.thorasMonitor.unittesting) }}
       annotations:
-        karpenter.sh/do-not-disrupt: "true"
-      {{- with .Values.thorasApiServerV2.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- if .Values.thorasApiServerV2.prometheus.enabled }}
+        {{- with .Values.thorasApiServerV2.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.thorasApiServerV2.prometheus.enabled }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
-      {{- end }}
-      {{- if not .Values.thorasMonitor.unittesting }}
+        {{- end }}
+        {{- if not .Values.thorasMonitor.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
+        {{- end }}
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}

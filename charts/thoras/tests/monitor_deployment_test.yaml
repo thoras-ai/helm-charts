@@ -54,3 +54,28 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
+  - it: Should have annotations section when unittesting is false
+    template: monitor/deployment.yaml
+    set:
+      thorasMonitor:
+        enabled: true
+        unittesting: false
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap"]
+  - it: Should have annotations section when podAnnotations are set
+    template: monitor/deployment.yaml
+    set:
+      thorasMonitor:
+        enabled: true
+        unittesting: true
+        podAnnotations:
+          custom-annotation: "test-value"
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations
+      - equal:
+          path: spec.template.metadata.annotations["custom-annotation"]
+          value: "test-value"

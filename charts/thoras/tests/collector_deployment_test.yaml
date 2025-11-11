@@ -102,3 +102,21 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
+  - it: Should not have annotations section when podAnnotations are not set
+    set:
+      metricsCollector:
+        podAnnotations: {}
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations
+  - it: Should have annotations section when podAnnotations are set
+    set:
+      metricsCollector:
+        podAnnotations:
+          custom-annotation: "test-value"
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations
+      - equal:
+          path: spec.template.metadata.annotations["custom-annotation"]
+          value: "test-value"

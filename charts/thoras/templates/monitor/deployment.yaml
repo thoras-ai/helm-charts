@@ -20,14 +20,15 @@ spec:
         {{- with .Values.thorasMonitor.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- if or (not .Values.thorasMonitor.unittesting) .Values.thorasMonitor.podAnnotations }}
       annotations:
-        karpenter.sh/do-not-disrupt: "true"
         {{- if not .Values.thorasMonitor.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- with .Values.thorasMonitor.podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasMonitor.serviceAccount.name }}
       volumes:

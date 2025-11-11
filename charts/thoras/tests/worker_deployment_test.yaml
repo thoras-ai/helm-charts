@@ -22,3 +22,37 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
+  - it: Should not have annotations section when all conditions are false
+    set:
+      thorasWorker:
+        prometheus:
+          enabled: false
+        podAnnotations: {}
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations
+  - it: Should have annotations section when prometheus is enabled
+    set:
+      thorasWorker:
+        prometheus:
+          enabled: true
+          port: 8080
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+  - it: Should have annotations section when podAnnotations are set
+    set:
+      thorasWorker:
+        prometheus:
+          enabled: false
+        podAnnotations:
+          custom-annotation: "test-value"
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations
+      - equal:
+          path: spec.template.metadata.annotations["custom-annotation"]
+          value: "test-value"
