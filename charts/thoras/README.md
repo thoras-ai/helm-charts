@@ -141,6 +141,7 @@ helm install \
 | thorasApiServerV2.additionalPvSecurityContext | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled          | Boolean | true       | Enables a prometheus metric scrape point                                      |
 | thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
+| thorasApiServerV2.enableForecastAffinity      | Boolean | false      | Enables forecast worker affinity to forecasts                                 |
 | thorasApiServerV2.pprof.enabled               | Boolean | false      | Enable pprof endpoint.                                                        |
 
 ## Thoras Worker
