@@ -61,6 +61,8 @@ tests:
               value: "1"
             - name: FORECAST_IGNORE_NEW_PODS
               value: "false"
+            - name: SERVICE_ENABLE_FORECAST_AFFINITY
+              value: "false"
 
   - it: sets RETRAIN_STEADY_STATE_HOURS when value is an integer
     set:
