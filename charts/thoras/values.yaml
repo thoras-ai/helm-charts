@@ -210,6 +210,7 @@ thorasForecast:
     podAnnotations: {}
     retrainSteadyStateHours: ""
     retrainOverrideHours: ""
+    maxTimeseriesMetricCacheSizeMb: 1000
     labels: {}
     limits:
       memory: 2Gi
