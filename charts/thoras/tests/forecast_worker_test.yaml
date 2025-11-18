@@ -63,6 +63,8 @@ tests:
               value: "false"
             - name: SERVICE_ENABLE_FORECAST_AFFINITY
               value: "false"
+            - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
+              value: "1000"
 
   - it: sets RETRAIN_STEADY_STATE_HOURS when value is an integer
     set:
@@ -198,3 +200,23 @@ tests:
           content:
             name: FORECAST_IGNORE_NEW_PODS
             value: "true"
+
+  - it: renders MAX_TIMESERIES_METRIC_CACHE_SIZE_MB with default value
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
+            value: "1000"
+
+  - it: renders MAX_TIMESERIES_METRIC_CACHE_SIZE_MB with custom value
+    set:
+      thorasForecast:
+        worker:
+          maxTimeseriesMetricCacheSizeMb: 2500
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
+            value: "2500"

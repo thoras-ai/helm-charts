@@ -69,6 +69,8 @@ spec:
             value: {{ .Values.thorasForecast.ignoreNewPods | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_FORECAST_AFFINITY
             value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
+          - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
+            value: {{ .Values.thorasForecast.worker.maxTimeseriesMetricCacheSizeMb | quote }}
         resources:
           requests:
             cpu: {{ .Values.thorasForecast.worker.requests.cpu }}
