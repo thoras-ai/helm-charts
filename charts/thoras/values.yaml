@@ -139,6 +139,7 @@ thorasWorker:
     enabled: true
     port: 9102
   enableSnapshotChunkAutoSizing: false
+  enableDirectForecastQueueing: false
 
 thorasDashboard:
   enabled: true
