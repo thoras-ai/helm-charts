@@ -65,6 +65,8 @@ tests:
               value: "false"
             - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
               value: "1000"
+            - name: METRICS_PORT
+              value: "9101"
 
   - it: sets RETRAIN_STEADY_STATE_HOURS when value is an integer
     set:

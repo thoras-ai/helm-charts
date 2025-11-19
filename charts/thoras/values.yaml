@@ -219,6 +219,9 @@ thorasForecast:
       cpu: 1
       memory: 250Mi
     forecastTimeout: 600
+  prometheus:
+    enabled: true
+    port: 9101
 
 thorasAgent:
   enabled: false
