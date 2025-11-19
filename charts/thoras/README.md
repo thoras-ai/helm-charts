@@ -81,6 +81,8 @@ helm install \
 | thorasForecast.worker.replicas        | Number  | 1                      | Number of `thoras-forecast-worker` replicas to use                                   |
 | thorasForecast.worker.pollingInterval | Number  | 15                     | Polling interval to check for work for `thoras-forecast-workers`                     |
 | thorasForecast.worker.forecastTimeout | Number  | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker` |
+| thorasWorker.prometheus.enabled       | Boolean | true                   | Enables a prometheus metric exporter                                                 |
+| thorasWorker.prometheus.port          | Number  | 9101                   | Port for the prometheus metric exporter                                              |
 
 ## Thoras Operator
 

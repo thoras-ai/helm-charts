@@ -19,10 +19,17 @@ spec:
         {{- with .Values.thorasForecast.worker.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.thorasForecast.worker.podAnnotations }}
+      {{- if or .Values.thorasForecast.worker.podAnnotations .Values.thorasForecast.prometheus.enabled }}
       annotations:
+        {{- with .Values.thorasForecast.worker.podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
+        {{- if .Values.thorasForecast.prometheus.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: {{ .Values.thorasForecast.prometheus.port | quote }}
+        {{- end }}
+      {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasForecast.serviceAccount.name }}
       initContainers:
@@ -71,6 +78,10 @@ spec:
             value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
           - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
             value: {{ .Values.thorasForecast.worker.maxTimeseriesMetricCacheSizeMb | quote }}
+          {{- if .Values.thorasForecast.prometheus.enabled }}
+          - name: METRICS_PORT
+            value: {{ .Values.thorasForecast.prometheus.port | quote }}
+          {{- end }}
         resources:
           requests:
             cpu: {{ .Values.thorasForecast.worker.requests.cpu }}
