@@ -799,6 +799,10 @@ spec:
             required:
             - model
             type: object
+            x-kubernetes-validations:
+            - message: exactly one of scaleTargetRef or selector must be set
+              rule: (has(self.scaleTargetRef) && !has(self.selector)) || (!has(self.scaleTargetRef)
+                && has(self.selector))
           status:
             properties:
               labelSelector:
