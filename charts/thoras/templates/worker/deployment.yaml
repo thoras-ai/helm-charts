@@ -113,6 +113,10 @@ spec:
           - name: SERVICE_CHUNK_INTERVAL_UPDATER_DRY_RUN
             value: "false"
           {{- end }}
+          {{- if .Values.thorasWorker.enableDirectForecastQueueing }}
+          - name: SERVICE_ENABLE_FORECAST_QUEUE_DIRECT
+            value: "true"
+          {{- end }}
           - name: SERVICE_COLLECTOR_MEM_REQUEST
             value: "{{ .Values.metricsCollector.timescale.requests.memory | default "3072Mi" }}"
           - name: SERVICE_PORT
