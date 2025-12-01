@@ -191,6 +191,12 @@ helm install \
 | thorasDashboard.ingress.annotations              | Object  | {}               | Annotations for the Dashboard Ingress                                    |
 | thorasDashboard.ingress.hosts                    | List    | see below        | List of hosts and paths for the Dashboard Ingress                        |
 | thorasDashboard.ingress.tls                      | List    | []               | TLS configuration for the Dashboard Ingress                              |
+| thorasDashboard.gatewayAPI.enabled               | Bool    | false            | Enables Gateway API HTTPRoute for the Dashboard                          |
+| thorasDashboard.gatewayAPI.annotations           | Object  | {}               | Annotations for the Dashboard HTTPRoute                                  |
+| thorasDashboard.gatewayAPI.parentRefs            | List    | see below        | Gateway references for the HTTPRoute                                     |
+| thorasDashboard.gatewayAPI.hostnames             | List    | see below        | Hostnames for the HTTPRoute                                              |
+| thorasDashboard.gatewayAPI.path                  | String  | /                | Path for the HTTPRoute                                                   |
+| thorasDashboard.gatewayAPI.pathType              | String  | PathPrefix       | Path type for the HTTPRoute                                              |
 | thorasDashboard.slackErrorsEnabled               | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`             |
 | thorasDashboard.logLevel                         | String  | Nil              | Logging level                                                            |
 | thorasDashboard.extras                           | Object  | {}               | Additional values to be injected into the Thoras Dashboard config        |
@@ -251,6 +257,40 @@ hosts:
     paths:
       - path: /
         pathType: Prefix
+```
+
+## Example Thoras Dashboard Gateway API Configuration
+
+```yaml
+# values.yaml
+---
+thorasDashboard:
+  gatewayAPI:
+    enabled: true
+    annotations:
+      example.com/annotation: value
+    parentRefs:
+      - name: my-gateway
+        namespace: gateway-system
+    hostnames:
+      - thoras.example.com
+    path: /
+    pathType: PathPrefix
+```
+
+Default `thorasDashboard.gatewayAPI.parentRefs` value:
+
+```yaml
+parentRefs:
+  - name: gateway
+    namespace: default
+```
+
+Default `thorasDashboard.gatewayAPI.hostnames` value:
+
+```yaml
+hostnames:
+  - thoras.local
 ```
 
 ## Example Thoras Monitor with default config
