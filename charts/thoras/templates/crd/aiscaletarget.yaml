@@ -803,6 +803,10 @@ spec:
             - message: exactly one of scaleTargetRef or selector must be set
               rule: (has(self.scaleTargetRef) && !has(self.selector)) || (!has(self.scaleTargetRef)
                 && has(self.selector))
+            - message: cannot have both horizontal and vertical scaling in autonomous
+                mode
+              rule: '!(has(self.horizontal) && has(self.vertical) && self.horizontal.mode.startsWith(''auto'')
+                && self.vertical.mode.startsWith(''auto''))'
           status:
             properties:
               labelSelector:
