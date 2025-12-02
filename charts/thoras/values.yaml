@@ -92,6 +92,20 @@ metricsCollector:
     requests:
       cpu: "2000m"
       memory: "3072Mi"
+    config:
+      checkpointTimeout: "15min"
+      maxWalSize: "2GB"
+      minWalSize: "512MB"
+      checkpointCompletionTarget: 0.9 # spread writes over a longer period
+      walBuffers: "16MB"
+      sharedBuffers: "768MB"  # ~25% of memory request (3072Mi)
+      effectiveCacheSize: "2304MB"  # ~75% of memory request (3072Mi)
+      logCheckpoints: "on"
+      logMinDurationStatement: 1000
+      logDestination: "stderr"
+      loggingCollector: "off"
+      logLinePrefix: "'%m [%p] '"
+      logErrorVerbosity: "default"
   blobService:
     logLevel: "info"
     pprof:

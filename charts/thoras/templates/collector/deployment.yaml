@@ -21,8 +21,9 @@ spec:
         {{- with .Values.metricsCollector.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.metricsCollector.podAnnotations }}
       annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/collector/configmap.yaml") . | sha256sum }}
+      {{- with .Values.metricsCollector.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
@@ -39,8 +40,11 @@ spec:
                   values:
                   - thoras-forecast-worker
               topologyKey: kubernetes.io/hostname
-      {{- if .Values.metricsCollector.persistence.enabled }}
       volumes:
+        - name: timescale-config
+          configMap:
+            name: timescale-config
+      {{- if .Values.metricsCollector.persistence.enabled }}
         - name: elastic-search-data
           persistentVolumeClaim:
             claimName:  elastic-search-data
@@ -84,6 +88,8 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        command: ["docker-entrypoint.sh"]
+        args: ["-c", "config_file=/etc/postgresql.conf"]
         ports:
         - containerPort: {{ .Values.metricsCollector.timescale.containerPort }}
         env:
@@ -102,8 +108,11 @@ spec:
           requests:
             cpu: {{ .Values.metricsCollector.timescale.requests.cpu }}
             memory: {{ .Values.metricsCollector.timescale.requests.memory }}
-        {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
+          - name: timescale-config
+            mountPath: /etc/postgresql.conf
+            subPath: custom.conf
+        {{- if .Values.metricsCollector.persistence.enabled }}
           - mountPath: /var/lib/share
             name: elastic-search-data
         securityContext:
