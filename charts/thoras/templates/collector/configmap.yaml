@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: timescale-config
+  name: thoras-timescale-config
   namespace: thoras
 data:
   custom.conf: |
