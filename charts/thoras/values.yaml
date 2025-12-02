@@ -176,6 +176,16 @@ thorasDashboard:
           - path: /
             pathType: Prefix
     tls: []
+  gatewayAPI:
+    enabled: false
+    annotations: {}
+    parentRefs:
+      - name: gateway
+        namespace: default
+    hostnames:
+      - thoras.local
+    path: /
+    pathType: PathPrefix
   extras:
     show_savings: true
     cost_analysis: true
