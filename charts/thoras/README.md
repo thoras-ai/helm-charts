@@ -267,17 +267,12 @@ thorasMonitor:
     # General Settings
     general:
       name: Thoras
-      monitor_cadence: 15s
+      monitor_cadence: 60s
     # Alert config
     alerts:
       - name: thoras_deployments
         notification_cooldown: 15m
         enabled: True
-      - name: thoras_jobs
-        notification_cooldown: 15m
-        enabled: True
-        options:
-          max_job_life: 10m
       - name: metric_integrity
         notification_cooldown: 15m
         enabled: True
