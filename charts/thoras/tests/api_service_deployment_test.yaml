@@ -68,3 +68,12 @@ tests:
       - equal:
           path: spec.template.metadata.annotations["custom-annotation"]
           value: "test-value"
+  - it: Should ensure default extensionVersion is substring of default imageTag
+    set:
+      metricsCollector:
+        timescale:
+          extensionVersion: "2.21.3"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].env[?(@.name == 'EXTENSION_VERSION')].value
+          value: "2.21.3"
