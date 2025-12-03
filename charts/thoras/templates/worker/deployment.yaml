@@ -70,6 +70,9 @@ spec:
               exit 1
             fi
 
+            # Update the timescale extension first
+            /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '{{ .Values.metricsCollector.timescale.extensionVersion }}';"
+
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
       containers:

@@ -115,6 +115,7 @@ helm install \
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector                               |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                               |
 | metricsCollector.timescale.imageTag                             | String  | 2.21.3-pg16      | Timescale image tag                                                           |
+| metricsCollector.timescale.extensionVersion                     | String  | 2.21.3           | Timescale extension version - should match imageTag                           |
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                                      |
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |

@@ -56,3 +56,12 @@ tests:
       - equal:
           path: spec.template.metadata.annotations["custom-annotation"]
           value: "test-value"
+  - it: Should ensure default extensionVersion is substring of default imageTag
+    set:
+      metricsCollector:
+        timescale:
+          extensionVersion: "2.21.3"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: ".*ALTER EXTENSION timescaledb UPDATE TO '2\\.21\\.3';.*"
