@@ -50,6 +50,8 @@ spec:
                 key: host
           - name: DATABASE_URL
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+          - name: EXTENSION_VERSION
+            value: "{{ .Values.metricsCollector.timescale.extensionVersion }}"
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -70,7 +72,12 @@ spec:
             fi
 
             # Update the timescale extension first
-            /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '{{ .Values.metricsCollector.timescale.extensionVersion }}';"
+            # Validate version format (only allow alphanumeric, dots, and hyphens)
+            if ! echo "$EXTENSION_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "Invalid extension version format: $EXTENSION_VERSION"
+              exit 1
+            fi
+            /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '$EXTENSION_VERSION';"
 
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh

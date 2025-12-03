@@ -62,6 +62,6 @@ tests:
         timescale:
           extensionVersion: "2.21.3"
     asserts:
-      - matchRegex:
-          path: spec.template.spec.initContainers[0].args[0]
-          pattern: ".*ALTER EXTENSION timescaledb UPDATE TO '2\\.21\\.3';.*"
+      - equal:
+          path: spec.template.spec.initContainers[0].env[?(@.name == 'EXTENSION_VERSION')].value
+          value: "2.21.3"
