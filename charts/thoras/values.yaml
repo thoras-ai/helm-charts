@@ -248,21 +248,9 @@ thorasAgent:
   labels: {}
 
 thorasReasoning:
-  serviceAccount:
-    name: thoras-reasoning-api
   connectors:
     prometheus:
       baseUrl: "http://localhost"
-  api:
-    podAnnotations: {}
-    labels: {}
-    containerPort: 8080
-    port: 80
-    limits:
-      memory: 2048Mi
-    requests:
-      cpu: 128m
-      memory: 8Mi
 
 thorasSlmAgent:
   enabled: false
