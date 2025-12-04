@@ -70,20 +70,20 @@ helm install \
 
 ## Thoras Forecast
 
-| Key                                   | Type    | Default                | Description                                                                          |
-| ------------------------------------- | ------- | ---------------------- | ------------------------------------------------------------------------------------ |
-| thorasForecast.serviceAccount.name    | String  | thoras-forecast-worker | Service account name for Thoras forecast worker pod                                  |
-| thorasForecast.imageTag               | String  | .thorasVersion         | Image tag for Thoras Forecast job                                                    |
-| thorasForecast.skipCache              | Boolean | false                  | Directs the forecaster to skip to model cache                                        |
-| thorasForecast.ignoreNewPods          | Boolean | false                  | Directs forecaster to adjust CPU and memory metrics temprorarily for new pods        |
+| Key                                    | Type    | Default                | Description                                                                                    |
+| -------------------------------------- | ------- | ---------------------- | ---------------------------------------------------------------------------------------------- |
+| thorasForecast.serviceAccount.name     | String  | thoras-forecast-worker | Service account name for Thoras forecast worker pod                                            |
+| thorasForecast.imageTag                | String  | .thorasVersion         | Image tag for Thoras Forecast job                                                              |
+| thorasForecast.skipCache               | Boolean | false                  | Directs the forecaster to skip to model cache                                                  |
+| thorasForecast.ignoreNewPods           | Boolean | false                  | Directs forecaster to adjust CPU and memory metrics temprorarily for new pods                  |
 | thorasForecast.enableDecoupledTraining | Boolean | false                  | Enables async training mode where forecasts report "needs_training" instead of training inline |
-| thorasForecast.worker.podAnnotations  | Object  | {}                     | Pod Annotations for Thoras Forecast                                                  |
-| thorasForecast.worker.labels          | Object  | {}                     | Pod labels for Thoras Forecast                                                       |
-| thorasForecast.worker.replicas        | Number  | 1                      | Number of `thoras-forecast-worker` replicas to use                                   |
-| thorasForecast.worker.pollingInterval | Number  | 15                     | Polling interval to check for work for `thoras-forecast-workers`                     |
-| thorasForecast.worker.forecastTimeout | Number  | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker` |
-| thorasWorker.prometheus.enabled       | Boolean | true                   | Enables a prometheus metric exporter                                                 |
-| thorasWorker.prometheus.port          | Number  | 9101                   | Port for the prometheus metric exporter                                              |
+| thorasForecast.worker.podAnnotations   | Object  | {}                     | Pod Annotations for Thoras Forecast                                                            |
+| thorasForecast.worker.labels           | Object  | {}                     | Pod labels for Thoras Forecast                                                                 |
+| thorasForecast.worker.replicas         | Number  | 1                      | Number of `thoras-forecast-worker` replicas to use                                             |
+| thorasForecast.worker.pollingInterval  | Number  | 15                     | Polling interval to check for work for `thoras-forecast-workers`                               |
+| thorasForecast.worker.forecastTimeout  | Number  | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
+| thorasWorker.prometheus.enabled        | Boolean | true                   | Enables a prometheus metric exporter                                                           |
+| thorasWorker.prometheus.port           | Number  | 9101                   | Port for the prometheus metric exporter                                                        |
 
 ## Thoras Operator
 
@@ -165,6 +165,7 @@ helm install \
 | thorasWorker.prometheus.port                | Number  | 9102          | Port for the prometheus metric exporter                      |
 | thorasWorker.enableSnapshotChunkAutoSizing  | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
 | thorasWorker.enableDirectForecastQueueing   | Boolean | true          | Enable direct queueing of forecasts                          |
+| thorasWorker.enableMetricIntegrityWorker    | Boolean | true          | Enable metric integrity worker                               |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 
 ## Thoras Dashboard
