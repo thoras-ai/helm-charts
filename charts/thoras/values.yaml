@@ -112,7 +112,7 @@ thorasApiServerV2:
     memory: 2000Mi
   requests:
     cpu: 128m
-    memory: 100Mi
+    memory: 256Mi
   port: 80
   logLevel: "info"
   additionalPvSecurityContext: {}
@@ -134,7 +134,7 @@ thorasWorker:
     memory: 2000Mi
   requests:
     cpu: 128m
-    memory: 100Mi
+    memory: 256Mi
   logLevel: "info"
   prometheus:
     enabled: true
