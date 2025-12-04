@@ -76,6 +76,7 @@ helm install \
 | thorasForecast.imageTag               | String  | .thorasVersion         | Image tag for Thoras Forecast job                                                    |
 | thorasForecast.skipCache              | Boolean | false                  | Directs the forecaster to skip to model cache                                        |
 | thorasForecast.ignoreNewPods          | Boolean | false                  | Directs forecaster to adjust CPU and memory metrics temprorarily for new pods        |
+| thorasForecast.enableDecoupledTraining | Boolean | false                  | Enables async training mode where forecasts report "needs_training" instead of training inline |
 | thorasForecast.worker.podAnnotations  | Object  | {}                     | Pod Annotations for Thoras Forecast                                                  |
 | thorasForecast.worker.labels          | Object  | {}                     | Pod labels for Thoras Forecast                                                       |
 | thorasForecast.worker.replicas        | Number  | 1                      | Number of `thoras-forecast-worker` replicas to use                                   |
