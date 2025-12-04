@@ -65,6 +65,8 @@ tests:
               value: "false"
             - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
               value: "1000"
+            - name: ENABLE_DECOUPLED_TRAINING
+              value: "false"
             - name: METRICS_PORT
               value: "9101"
 
@@ -222,3 +224,22 @@ tests:
           content:
             name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
             value: "2500"
+
+  - it: renders ENABLE_DECOUPLED_TRAINING as false by default
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENABLE_DECOUPLED_TRAINING
+            value: "false"
+
+  - it: renders ENABLE_DECOUPLED_TRAINING as true when enableDecoupledTraining is true
+    set:
+      thorasForecast:
+        enableDecoupledTraining: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENABLE_DECOUPLED_TRAINING
+            value: "true"

@@ -211,6 +211,7 @@ thorasForecast:
     name: thoras-forecast-worker
   skipCache: false
   ignoreNewPods: false
+  enableDecoupledTraining: false
   requests:
     cpu: "256m"
     memory: "256Mi"

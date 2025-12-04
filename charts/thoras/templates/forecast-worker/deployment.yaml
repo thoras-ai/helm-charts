@@ -78,6 +78,8 @@ spec:
             value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
           - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
             value: {{ .Values.thorasForecast.worker.maxTimeseriesMetricCacheSizeMb | quote }}
+          - name: ENABLE_DECOUPLED_TRAINING
+            value: {{ .Values.thorasForecast.enableDecoupledTraining | ternary "true" "false" | quote }}
           {{- if .Values.thorasForecast.prometheus.enabled }}
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
