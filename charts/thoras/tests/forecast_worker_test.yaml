@@ -228,7 +228,7 @@ tests:
   - it: renders ENABLE_DECOUPLED_TRAINING as false by default
     asserts:
       - contains:
-          path: spec.template.spec.containers[0].env
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
           content:
             name: ENABLE_DECOUPLED_TRAINING
             value: "false"
@@ -239,7 +239,7 @@ tests:
         enableDecoupledTraining: true
     asserts:
       - contains:
-          path: spec.template.spec.containers[0].env
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
           content:
             name: ENABLE_DECOUPLED_TRAINING
             value: "true"
