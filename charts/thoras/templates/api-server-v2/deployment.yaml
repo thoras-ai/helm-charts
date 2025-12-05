@@ -138,6 +138,12 @@ spec:
             value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
           - name: SERVICE_FORECAST_AFFINITY_THRESHOLD
             value: {{ .Values.thorasApiServerV2.forecastAffinityThreshold | default "2m" | quote }}
+          - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
+            value: {{ .Values.thorasApiServerV2.costRefreshBatching.enabled | quote }}
+          - name: SERVICE_COST_REFRESH_BATCH_SIZE
+            value: {{ .Values.thorasApiServerV2.costRefreshBatching.batchSize | quote }}
+          - name: SERVICE_COST_REFRESH_MAX_CONCURRENCY
+            value: {{ .Values.thorasApiServerV2.costRefreshBatching.maxConcurrency | quote }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml
