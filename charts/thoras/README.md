@@ -165,7 +165,7 @@ helm install \
 | thorasWorker.prometheus.port                | Number  | 9102          | Port for the prometheus metric exporter                      |
 | thorasWorker.enableSnapshotChunkAutoSizing  | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
 | thorasWorker.enableDirectForecastQueueing   | Boolean | true          | Enable direct queueing of forecasts                          |
-| thorasWorker.enableMetricIntegrityWorker    | Boolean | true          | Enable metric integrity worker                               |
+| thorasWorker.enableMetricIntegrityWorker    | Boolean | false         | Enable metric integrity worker                               |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 
 ## Thoras Dashboard
