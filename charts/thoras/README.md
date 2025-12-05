@@ -50,23 +50,26 @@ helm install \
 
 ## Global
 
-| Key                       | Type    | Default                                          | Description                                                                                                          |
-| ------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion             | String  | 4.50.2                                           | Thoras app version                                                                                                   |
-| imageCredentials.registry | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
-| imageCredentials.username | String  | \_json_key_base64                                | Container registry username                                                                                          |
-| imageCredentials.password | String  | ""                                               | Container registry auth string                                                                                       |
-| resourceQuota.enabled     | Bool    | false                                            | Enables resource quotas within Thoras                                                                                |
-| resourceQuota.pods        | Number  | 200                                              | Maximum number of pods allowed                                                                                       |
-| resourceQuota.cronjobs    | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                   |
-| resourceQuota.jobs        | Number  | 200                                              | Maximum number of jobs allowed                                                                                       |
-| logLevel                  | String  | info                                             | Default log level                                                                                                    |
-| slackWebhookUrl           | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                     |
-| slackErrorsEnabled        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                         |
-| queriesPerSecond          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
-| nodeSelector              | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
-| tolerations               | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
-| rbac.namespaces           | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead |
+| Key                                | Type    | Default                                          | Description                                                                                                          |
+| ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| thorasVersion                      | String  | 4.50.2                                           | Thoras app version                                                                                                   |
+| imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
+| imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
+| imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
+| resourceQuota.enabled              | Bool    | false                                            | Enables resource quotas within Thoras                                                                                |
+| resourceQuota.pods                 | Number  | 200                                              | Maximum number of pods allowed                                                                                       |
+| resourceQuota.cronjobs             | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                   |
+| resourceQuota.jobs                 | Number  | 200                                              | Maximum number of jobs allowed                                                                                       |
+| logLevel                           | String  | info                                             | Default log level                                                                                                    |
+| slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                     |
+| slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                         |
+| queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
+| nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
+| tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
+| rbac.namespaces                    | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead |
+| costRefreshBatching.enabled        | Boolean | false                                            | Enables refreshing cost data in concurrent batches                                                                   |
+| costRefreshBatching.batchSize      | Number  | 100                                              | Number of AST costs to refresh per batch                                                                             |
+| costRefreshBatching.maxConcurrency | Number  | 3                                                | Number of concurrent AST cost refresh batches to process concurrently                                                |
 
 ## Thoras Forecast
 
@@ -129,27 +132,24 @@ helm install \
 
 ## Thoras API Server
 
-| Key                                                  | Type    | Default    | Description                                                                   |
-| ---------------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------------- |
-| thorasApiServerV2.serviceAccount.name                | String  | thoras-api | Service account name for Thoras api service pod                               |
-| thorasApiServerV2.podAnnotations                     | Object  | {}         | Pod Annotations for Thoras API                                                |
-| thorasApiServerV2.labels                             | Object  | {}         | Pod/service labels for Thoras API                                             |
-| thorasApiServerV2.containerPort                      | Number  | 8443       | Thoras API port                                                               |
-| thorasApiServerV2.port                               | Number  | 443        | Thoras API service port                                                       |
-| thorasApiServerV2.limits.memory                      | String  | 2000Mi     | Thoras API memory limit                                                       |
-| thorasApiServerV2.requests.cpu                       | String  | 1000Mi     | Thoras API CPU request                                                        |
-| thorasApiServerV2.requests.memory                    | String  | 1000Mi     | Thoras API memory request                                                     |
-| thorasApiServerV2.slackErrorsEnabled                 | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| thorasApiServerV2.logLevel                           | String  | Nil        | Logging level                                                                 |
-| thorasApiServerV2.queriesPerSecond                   | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
-| thorasApiServerV2.additionalPvSecurityContext        | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
-| thorasApiServerV2.prometheus.enabled                 | Boolean | true       | Enables a prometheus metric scrape point                                      |
-| thorasApiServerV2.restartWorkloadOnCpu               | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
-| thorasApiServerV2.enableForecastAffinity             | Boolean | false      | Enables forecast worker affinity to forecasts                                 |
-| thorasApiServerV2.pprof.enabled                      | Boolean | false      | Enable pprof endpoint.                                                        |
-| thorasApiServerV2.costRefreshBatching.enabled        | Boolean | false      | Enables refreshing cost data in concurrent batches                            |
-| thorasApiServerV2.costRefreshBatching.batchSize      | Number  | 100        | Number of AST costs to refresh per batch                                      |
-| thorasApiServerV2.costRefreshBatching.maxConcurrency | Number  | 3          | Number of concurrent AST cost refresh batches to process concurrently         |
+| Key                                           | Type    | Default    | Description                                                                   |
+| --------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------------- |
+| thorasApiServerV2.serviceAccount.name         | String  | thoras-api | Service account name for Thoras api service pod                               |
+| thorasApiServerV2.podAnnotations              | Object  | {}         | Pod Annotations for Thoras API                                                |
+| thorasApiServerV2.labels                      | Object  | {}         | Pod/service labels for Thoras API                                             |
+| thorasApiServerV2.containerPort               | Number  | 8443       | Thoras API port                                                               |
+| thorasApiServerV2.port                        | Number  | 443        | Thoras API service port                                                       |
+| thorasApiServerV2.limits.memory               | String  | 2000Mi     | Thoras API memory limit                                                       |
+| thorasApiServerV2.requests.cpu                | String  | 1000Mi     | Thoras API CPU request                                                        |
+| thorasApiServerV2.requests.memory             | String  | 1000Mi     | Thoras API memory request                                                     |
+| thorasApiServerV2.slackErrorsEnabled          | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
+| thorasApiServerV2.logLevel                    | String  | Nil        | Logging level                                                                 |
+| thorasApiServerV2.queriesPerSecond            | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
+| thorasApiServerV2.additionalPvSecurityContext | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
+| thorasApiServerV2.prometheus.enabled          | Boolean | true       | Enables a prometheus metric scrape point                                      |
+| thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
+| thorasApiServerV2.enableForecastAffinity      | Boolean | false      | Enables forecast worker affinity to forecasts                                 |
+| thorasApiServerV2.pprof.enabled               | Boolean | false      | Enable pprof endpoint.                                                        |
 
 ## Thoras Worker
 

@@ -141,6 +141,12 @@ spec:
             value: {{ .Values.thorasApiServerV2.forecastAffinityThreshold | default "2m" | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_REFRESH_WORKER
             value: {{ .Values.thorasWorker.enableAstViewCacheRefreshWorker | quote }}
+          - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
+            value: {{ .Values.costRefreshBatching.enabled | ternary "true" "false" | quote }}
+          - name: SERVICE_COST_REFRESH_BATCH_SIZE
+            value: {{ .Values.costRefreshBatching.batchSize | quote }}
+          - name: SERVICE_COST_REFRESH_MAX_CONCURRENCY
+            value: {{ .Values.costRefreshBatching.maxConcurrency | quote }}
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}
