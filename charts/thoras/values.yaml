@@ -150,6 +150,7 @@ thorasWorker:
   # Cost will not work in the dashboard if this is disabled. Used for debugging purposes.
   enableAstViewCacheRefreshWorker: true
   enableMetricIntegrityWorker: false
+  enableActiveSuggestionWorker: false
 
 thorasDashboard:
   enabled: true

@@ -169,6 +169,7 @@ helm install \
 | thorasWorker.enableSnapshotChunkAutoSizing  | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
 | thorasWorker.enableDirectForecastQueueing   | Boolean | true          | Enable direct queueing of forecasts                          |
 | thorasWorker.enableMetricIntegrityWorker    | Boolean | false         | Enable metric integrity worker                               |
+| thorasWorker.enableActiveSuggestionWorker   | Boolean | false         | Enable active suggestions worker                             |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 
 ## Thoras Dashboard

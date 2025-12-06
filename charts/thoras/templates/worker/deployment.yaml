@@ -131,6 +131,8 @@ spec:
             value: {{ .Values.thorasWorker.enableDirectForecastQueueing | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
             value: {{ .Values.thorasWorker.enableMetricIntegrityWorker | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
+            value: {{ .Values.thorasWorker.enableActiveSuggestionWorker | ternary "true" "false" | quote }}
           - name: SERVICE_COLLECTOR_MEM_REQUEST
             value: "{{ .Values.metricsCollector.timescale.requests.memory | default "3072Mi" }}"
           - name: SERVICE_PORT
