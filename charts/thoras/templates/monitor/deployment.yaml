@@ -80,6 +80,8 @@ spec:
             value: "http://thoras-api-server-v2"
           - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
             value: {{ .Values.thorasWorker.enableMetricIntegrityWorker | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
+            value: {{ .Values.thorasWorker.enableActiveSuggestionWorker | ternary "true" "false" | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
         resources:
