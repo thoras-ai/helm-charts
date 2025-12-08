@@ -90,7 +90,7 @@ metricsCollector:
     limits:
       memory: "16384Mi"
     requests:
-      cpu: "2000m"
+      cpu: "1024m"
       memory: "3072Mi"
   blobService:
     logLevel: "info"
