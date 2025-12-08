@@ -1,0 +1,39 @@
+suite: Collector ConfigMap
+templates:
+  - collector/configmap.yaml
+tests:
+  - it: Should not create configmap when config is disabled
+    set:
+      metricsCollector:
+        timescale:
+          config:
+            enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: Should create configmap when config is enabled
+    set:
+      metricsCollector:
+        timescale:
+          config:
+            enabled: true
+            content: |
+              checkpoint_timeout = 15min
+              max_wal_size = 2GB
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: thoras-timescale-config
+      - equal:
+          path: metadata.namespace
+          value: NAMESPACE
+      - matchRegex:
+          path: data["custom.conf"]
+          pattern: "checkpoint_timeout = 15min"
+      - matchRegex:
+          path: data["custom.conf"]
+          pattern: "max_wal_size = 2GB"

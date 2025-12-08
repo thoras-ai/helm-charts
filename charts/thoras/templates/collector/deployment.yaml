@@ -21,10 +21,14 @@ spec:
         {{- with .Values.metricsCollector.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
+      {{- if or .Values.metricsCollector.timescale.config.enabled .Values.metricsCollector.podAnnotations }}
       annotations:
+        {{- if .Values.metricsCollector.timescale.config.enabled }}
         checksum/configmap: {{ include (print $.Template.BasePath "/collector/configmap.yaml") . | sha256sum }}
-      {{- with .Values.metricsCollector.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.metricsCollector.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
