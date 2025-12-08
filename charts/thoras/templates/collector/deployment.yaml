@@ -21,9 +21,14 @@ spec:
         {{- with .Values.metricsCollector.labels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.metricsCollector.podAnnotations }}
+      {{- if or .Values.metricsCollector.timescale.config.enabled .Values.metricsCollector.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
+        {{- if .Values.metricsCollector.timescale.config.enabled }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/collector/configmap.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.metricsCollector.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
@@ -39,8 +44,13 @@ spec:
                   values:
                   - thoras-forecast-worker
               topologyKey: kubernetes.io/hostname
-      {{- if .Values.metricsCollector.persistence.enabled }}
       volumes:
+      {{- if .Values.metricsCollector.timescale.config.enabled }}
+        - name: timescale-config
+          configMap:
+            name: thoras-timescale-config
+      {{- end }}
+      {{- if .Values.metricsCollector.persistence.enabled }}
         - name: elastic-search-data
           persistentVolumeClaim:
             claimName:  elastic-search-data
@@ -84,6 +94,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        {{- if .Values.metricsCollector.timescale.config.enabled }}
+        command: ["docker-entrypoint.sh"]
+        args: ["-c", "config_file=/etc/postgresql.conf"]
+        {{- end }}
         ports:
         - containerPort: {{ .Values.metricsCollector.timescale.containerPort }}
         env:
@@ -102,8 +116,13 @@ spec:
           requests:
             cpu: {{ .Values.metricsCollector.timescale.requests.cpu }}
             memory: {{ .Values.metricsCollector.timescale.requests.memory }}
-        {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
+        {{- if .Values.metricsCollector.timescale.config.enabled }}
+          - name: timescale-config
+            mountPath: /etc/postgresql.conf
+            subPath: custom.conf
+        {{- end }}
+        {{- if .Values.metricsCollector.persistence.enabled }}
           - mountPath: /var/lib/share
             name: elastic-search-data
         securityContext:

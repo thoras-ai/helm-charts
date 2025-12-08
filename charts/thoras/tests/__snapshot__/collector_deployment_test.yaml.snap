@@ -17,6 +17,7 @@ Default containers should match snapshots:
       requests:
         cpu: 1024m
         memory: 3072Mi
+    volumeMounts: null
   2: |
     args:
       - |

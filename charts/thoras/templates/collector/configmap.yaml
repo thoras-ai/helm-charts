@@ -1,0 +1,11 @@
+{{- if .Values.metricsCollector.timescale.config.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thoras-timescale-config
+  namespace: {{ .Release.Namespace }}
+data:
+  custom.conf: |
+{{ .Values.metricsCollector.timescale.config.content | indent 4 }}
+{{- end }}

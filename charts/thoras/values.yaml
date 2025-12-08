@@ -92,6 +92,9 @@ metricsCollector:
     requests:
       cpu: "1024m"
       memory: "3072Mi"
+    config:
+      enabled: false
+      content: |
   blobService:
     logLevel: "info"
     pprof:
