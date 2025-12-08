@@ -27,6 +27,18 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - thoras-forecast-worker
+              topologyKey: kubernetes.io/hostname
       {{- if .Values.metricsCollector.persistence.enabled }}
       volumes:
         - name: elastic-search-data
