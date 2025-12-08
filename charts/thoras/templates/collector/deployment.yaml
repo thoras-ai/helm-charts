@@ -41,9 +41,11 @@ spec:
                   - thoras-forecast-worker
               topologyKey: kubernetes.io/hostname
       volumes:
+      {{- if .Values.metricsCollector.timescale.config.enabled }}
         - name: timescale-config
           configMap:
-            name: timescale-config
+            name: thoras-timescale-config
+      {{- end }}
       {{- if .Values.metricsCollector.persistence.enabled }}
         - name: elastic-search-data
           persistentVolumeClaim:
@@ -88,8 +90,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        {{- if .Values.metricsCollector.timescale.config.enabled }}
         command: ["docker-entrypoint.sh"]
         args: ["-c", "config_file=/etc/postgresql.conf"]
+        {{- end }}
         ports:
         - containerPort: {{ .Values.metricsCollector.timescale.containerPort }}
         env:
@@ -109,9 +113,11 @@ spec:
             cpu: {{ .Values.metricsCollector.timescale.requests.cpu }}
             memory: {{ .Values.metricsCollector.timescale.requests.memory }}
         volumeMounts:
+        {{- if .Values.metricsCollector.timescale.config.enabled }}
           - name: timescale-config
             mountPath: /etc/postgresql.conf
             subPath: custom.conf
+        {{- end }}
         {{- if .Values.metricsCollector.persistence.enabled }}
           - mountPath: /var/lib/share
             name: elastic-search-data

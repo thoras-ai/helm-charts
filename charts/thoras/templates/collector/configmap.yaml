@@ -1,29 +1,11 @@
+{{- if .Values.metricsCollector.timescale.config.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: thoras-timescale-config
-  namespace: thoras
+  namespace: {{ .Release.Namespace }}
 data:
   custom.conf: |
-    # Include the default config first
-    include '/var/lib/postgresql/data/postgresql.conf'
-
-    # Checkpoint configuration
-    checkpoint_timeout = {{ .Values.metricsCollector.timescale.config.checkpointTimeout }}
-    max_wal_size = {{ .Values.metricsCollector.timescale.config.maxWalSize }}
-    min_wal_size = {{ .Values.metricsCollector.timescale.config.minWalSize }}
-    checkpoint_completion_target = {{ .Values.metricsCollector.timescale.config.checkpointCompletionTarget }}
-
-    # Write performance
-    wal_buffers = {{ .Values.metricsCollector.timescale.config.walBuffers }}
-    shared_buffers = {{ .Values.metricsCollector.timescale.config.sharedBuffers }}
-    effective_cache_size = {{ .Values.metricsCollector.timescale.config.effectiveCacheSize }}
-
-    # Logging for diagnostics
-    log_destination = {{ .Values.metricsCollector.timescale.config.logDestination }}
-    logging_collector = {{ .Values.metricsCollector.timescale.config.loggingCollector }}
-    log_line_prefix = {{ .Values.metricsCollector.timescale.config.logLinePrefix }}
-    log_error_verbosity = {{ .Values.metricsCollector.timescale.config.logErrorVerbosity }}
-    log_checkpoints = {{ .Values.metricsCollector.timescale.config.logCheckpoints }}
-    log_min_duration_statement = {{ .Values.metricsCollector.timescale.config.logMinDurationStatement }}
+{{ .Values.metricsCollector.timescale.config.content | indent 4 }}
+{{- end }}
