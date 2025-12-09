@@ -26,9 +26,9 @@ logLevel: info
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
-  enabled: false
-  batchSize: 100
-  maxConcurrency: 3
+  enabled: true
+  batchSize: 200
+  maxConcurrency: 5
 
 # Enable Slack errors
 slackErrorsEnabled: false
