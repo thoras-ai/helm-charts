@@ -67,9 +67,9 @@ helm install \
 | nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
 | tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
 | rbac.namespaces                    | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead |
-| costRefreshBatching.enabled        | Boolean | false                                            | Enables refreshing cost data in concurrent batches                                                                   |
-| costRefreshBatching.batchSize      | Number  | 100                                              | Number of AST costs to refresh per batch                                                                             |
-| costRefreshBatching.maxConcurrency | Number  | 3                                                | Number of concurrent AST cost refresh batches to process concurrently                                                |
+| costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                   |
+| costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                             |
+| costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                |
 
 ## Thoras Forecast
 
