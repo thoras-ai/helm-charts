@@ -154,6 +154,7 @@ thorasWorker:
   enableAstViewCacheRefreshWorker: true
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: false
+  enableUnifiedAstUtilizationMonitor: false
 
 thorasDashboard:
   enabled: true

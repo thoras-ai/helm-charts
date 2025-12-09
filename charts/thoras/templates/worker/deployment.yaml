@@ -149,6 +149,8 @@ spec:
             value: {{ .Values.costRefreshBatching.batchSize | quote }}
           - name: SERVICE_COST_REFRESH_MAX_CONCURRENCY
             value: {{ .Values.costRefreshBatching.maxConcurrency | quote }}
+          - name: SERVICE_ENABLE_UNIFIED_AST_UTILIZATION_MONITOR
+            value: {{ .Values.thorasWorker.enableUnifiedAstUtilizationMonitor | ternary "true" "false" | quote }}
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}
