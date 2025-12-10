@@ -226,6 +226,7 @@ thorasForecast:
   skipCache: false
   ignoreNewPods: false
   enableDecoupledTraining: false
+  trainingJitterMinutes: 0
   requests:
     cpu: "256m"
     memory: "256Mi"
