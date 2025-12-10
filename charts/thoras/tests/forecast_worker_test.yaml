@@ -67,6 +67,8 @@ tests:
               value: "1000"
             - name: ENABLE_DECOUPLED_TRAINING
               value: "false"
+            - name: TRAINING_JITTER_MINUTES
+              value: "0"
             - name: METRICS_PORT
               value: "9101"
 
@@ -243,3 +245,22 @@ tests:
           content:
             name: ENABLE_DECOUPLED_TRAINING
             value: "true"
+
+  - it: renders TRAINING_JITTER_MINUTES with default value
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: TRAINING_JITTER_MINUTES
+            value: "0"
+
+  - it: renders TRAINING_JITTER_MINUTES with custom value
+    set:
+      thorasForecast:
+        trainingJitterMinutes: 30
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: TRAINING_JITTER_MINUTES
+            value: "30"

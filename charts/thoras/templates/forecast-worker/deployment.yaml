@@ -101,6 +101,8 @@ spec:
             value: {{ .Values.thorasForecast.worker.maxTimeseriesMetricCacheSizeMb | quote }}
           - name: ENABLE_DECOUPLED_TRAINING
             value: {{ .Values.thorasForecast.enableDecoupledTraining | ternary "true" "false" | quote }}
+          - name: TRAINING_JITTER_MINUTES
+            value: {{ .Values.thorasForecast.trainingJitterMinutes | quote }}
           {{- if .Values.thorasForecast.prometheus.enabled }}
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
