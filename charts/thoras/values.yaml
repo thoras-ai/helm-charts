@@ -128,7 +128,7 @@ thorasApiServerV2:
   prometheus:
     enabled: true
   restartWorkloadOnCpu: false
-  enableForecastAffinity: false
+  enableForecastAffinity: true
   pprof:
     enabled: false
 
