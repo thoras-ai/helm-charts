@@ -142,6 +142,8 @@ spec:
             value: {{ .Values.costRefreshBatching.batchSize | quote }}
           - name: SERVICE_COST_REFRESH_MAX_CONCURRENCY
             value: {{ .Values.costRefreshBatching.maxConcurrency | quote }}
+          - name: SERVICE_ENABLE_VIEW_CACHE_QUERY_LIVE_JOIN
+            value: {{ .Values.thorasApiServerV2.enableViewCacheQueryLiveJoin | ternary "true" "false" | quote }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml

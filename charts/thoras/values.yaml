@@ -131,6 +131,7 @@ thorasApiServerV2:
   enableForecastAffinity: true
   pprof:
     enabled: false
+  enableViewCacheQueryLiveJoin: false
 
 thorasWorker:
   enabled: true

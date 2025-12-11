@@ -133,24 +133,25 @@ helm install \
 
 ## Thoras API Server
 
-| Key                                           | Type    | Default    | Description                                                                   |
-| --------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------------- |
-| thorasApiServerV2.serviceAccount.name         | String  | thoras-api | Service account name for Thoras api service pod                               |
-| thorasApiServerV2.podAnnotations              | Object  | {}         | Pod Annotations for Thoras API                                                |
-| thorasApiServerV2.labels                      | Object  | {}         | Pod/service labels for Thoras API                                             |
-| thorasApiServerV2.containerPort               | Number  | 8443       | Thoras API port                                                               |
-| thorasApiServerV2.port                        | Number  | 443        | Thoras API service port                                                       |
-| thorasApiServerV2.limits.memory               | String  | 2000Mi     | Thoras API memory limit                                                       |
-| thorasApiServerV2.requests.cpu                | String  | 1000Mi     | Thoras API CPU request                                                        |
-| thorasApiServerV2.requests.memory             | String  | 1000Mi     | Thoras API memory request                                                     |
-| thorasApiServerV2.slackErrorsEnabled          | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| thorasApiServerV2.logLevel                    | String  | Nil        | Logging level                                                                 |
-| thorasApiServerV2.queriesPerSecond            | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
-| thorasApiServerV2.additionalPvSecurityContext | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
-| thorasApiServerV2.prometheus.enabled          | Boolean | true       | Enables a prometheus metric scrape point                                      |
-| thorasApiServerV2.restartWorkloadOnCpu        | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
-| thorasApiServerV2.enableForecastAffinity      | Boolean | false      | Enables forecast worker affinity to forecasts                                 |
-| thorasApiServerV2.pprof.enabled               | Boolean | false      | Enable pprof endpoint.                                                        |
+| Key                                            | Type    | Default    | Description                                                                   |
+| ---------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------------- |
+| thorasApiServerV2.serviceAccount.name          | String  | thoras-api | Service account name for Thoras api service pod                               |
+| thorasApiServerV2.podAnnotations               | Object  | {}         | Pod Annotations for Thoras API                                                |
+| thorasApiServerV2.labels                       | Object  | {}         | Pod/service labels for Thoras API                                             |
+| thorasApiServerV2.containerPort                | Number  | 8443       | Thoras API port                                                               |
+| thorasApiServerV2.port                         | Number  | 443        | Thoras API service port                                                       |
+| thorasApiServerV2.limits.memory                | String  | 2000Mi     | Thoras API memory limit                                                       |
+| thorasApiServerV2.requests.cpu                 | String  | 1000Mi     | Thoras API CPU request                                                        |
+| thorasApiServerV2.requests.memory              | String  | 1000Mi     | Thoras API memory request                                                     |
+| thorasApiServerV2.slackErrorsEnabled           | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
+| thorasApiServerV2.logLevel                     | String  | Nil        | Logging level                                                                 |
+| thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
+| thorasApiServerV2.additionalPvSecurityContext  | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
+| thorasApiServerV2.prometheus.enabled           | Boolean | true       | Enables a prometheus metric scrape point                                      |
+| thorasApiServerV2.restartWorkloadOnCpu         | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
+| thorasApiServerV2.enableForecastAffinity       | Boolean | false      | Enables forecast worker affinity to forecasts                                 |
+| thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                        |
+| thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | false      | Enables AST view queries joining view cache results with live k8s state       |
 
 ## Thoras Worker
 
