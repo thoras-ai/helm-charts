@@ -139,8 +139,6 @@ spec:
             value: {{ .Values.thorasWorker.prometheus.port | quote }}
           - name: SERVICE_ENABLE_FORECAST_AFFINITY
             value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
-          - name: SERVICE_FORECAST_AFFINITY_THRESHOLD
-            value: {{ .Values.thorasApiServerV2.forecastAffinityThreshold | default "2m" | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_REFRESH_WORKER
             value: {{ .Values.thorasWorker.enableAstViewCacheRefreshWorker | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_STATE_RECONCILER_WORKER
