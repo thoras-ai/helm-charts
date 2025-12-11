@@ -148,7 +148,7 @@ thorasWorker:
   prometheus:
     enabled: true
     port: 9102
-  enableSnapshotChunkAutoSizing: false
+  enableSnapshotChunkAutoSizing: true
   enableDirectForecastQueueing: true
   # Cost will not work in the dashboard if this is disabled. Used for debugging purposes.
   enableAstViewCacheRefreshWorker: true
