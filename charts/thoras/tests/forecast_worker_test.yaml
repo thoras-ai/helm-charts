@@ -62,7 +62,7 @@ tests:
             - name: FORECAST_IGNORE_NEW_PODS
               value: "false"
             - name: SERVICE_ENABLE_FORECAST_AFFINITY
-              value: "false"
+              value: "true"
             - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
               value: "1000"
             - name: ENABLE_DECOUPLED_TRAINING
