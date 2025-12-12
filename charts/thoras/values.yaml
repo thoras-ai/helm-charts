@@ -75,7 +75,7 @@ metricsCollector:
   serviceAccount:
     name: thoras-collector
   init:
-    imageTag: "3.22.1"
+    imageTag: "3.23.0"
     limits:
       memory: "8192Mi"
     requests:
@@ -170,7 +170,7 @@ thorasDashboard:
   containerPort: 5173
   nginxContainerPort: 80
   nginx:
-    imageTag: "stable-alpine3.21"
+    imageTag: "1.29.4-alpine3.23-slim"
   limits:
     memory: 2000Mi
   requests:
