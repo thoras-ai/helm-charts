@@ -19,7 +19,7 @@ tests:
           value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
       - equal:
           path: spec.template.spec.containers[1].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/nginx:stable-alpine3.21
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/nginx:1.29.4-alpine3.23-slim
       - equal:
           path: spec.template.spec.containers[1].volumeMounts[0]
           value:
