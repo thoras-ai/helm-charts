@@ -151,7 +151,7 @@ helm install \
 | thorasApiServerV2.restartWorkloadOnCpu         | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
 | thorasApiServerV2.enableForecastAffinity       | Boolean | false      | Enables forecast worker affinity to forecasts                                 |
 | thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                        |
-| thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | false      | Enables AST view queries joining view cache results with live k8s state       |
+| thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state       |
 
 ## Thoras Worker
 
