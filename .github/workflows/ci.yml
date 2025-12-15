@@ -19,9 +19,9 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4.2.0
         with:
-          version: 'v3.19.2'
+          version: "v3.19.2"
       - name: Install Helm Unittest
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.2
       - name: Run Helm Unit Tests
         run: helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
       - uses: actions/setup-python@v3
