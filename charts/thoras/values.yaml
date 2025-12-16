@@ -53,10 +53,10 @@ thorasOperator:
   podAnnotations: {}
   labels: {}
   limits:
-    memory: 2000Mi
+    memory: 2Gi
   requests:
     cpu: 100m
-    memory: 100Mi
+    memory: 128Mi
   prometheus:
     enabled: true
     port: 9101
@@ -118,7 +118,7 @@ thorasApiServerV2:
   labels: {}
   replicas: 1
   limits:
-    memory: 2000Mi
+    memory: 2Gi
   requests:
     cpu: 128m
     memory: 256Mi
@@ -141,7 +141,7 @@ thorasWorker:
   labels: {}
   replicas: 1
   limits:
-    memory: 2000Mi
+    memory: 2Gi
   requests:
     cpu: 128m
     memory: 256Mi
@@ -172,10 +172,10 @@ thorasDashboard:
   nginx:
     imageTag: "1.29.4-alpine3.23-slim"
   limits:
-    memory: 2000Mi
+    memory: 2Gi
   requests:
     cpu: 100m
-    memory: 100Mi
+    memory: 128Mi
   port: 80
   replicas: 1
   service:
@@ -247,7 +247,7 @@ thorasForecast:
       cpu: 2
     requests:
       cpu: 1
-      memory: 250Mi
+      memory: 256Mi
     forecastTimeout: 600
   prometheus:
     enabled: true
