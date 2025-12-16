@@ -153,7 +153,7 @@ thorasWorker:
   enableDirectForecastQueueing: true
   # Cost will not work in the dashboard if this is disabled. Used for debugging purposes.
   enableAstViewCacheRefreshWorker: true
-  enableAstViewCacheStateReconcilerWorker: false
+  enableAstViewCacheStateReconcilerWorker: true
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: false
   enableUnifiedAstUtilizationMonitor: false

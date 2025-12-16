@@ -155,25 +155,26 @@ helm install \
 
 ## Thoras Worker
 
-| Key                                             | Type    | Default       | Description                                                  |
-| ----------------------------------------------- | ------- | ------------- | ------------------------------------------------------------ |
-| thorasWorker.serviceAccount.name                | String  | thoras-worker | Service account name for Thoras worker pod                   |
-| thorasWorker.podAnnotations                     | Object  | {}            | Pod Annotations for Thoras worker                            |
-| thorasWorker.labels                             | Object  | {}            | Pod/service labels for Thoras worker                         |
-| thorasWorker.limits.memory                      | String  | 2000Mi        | Thoras API memory limit                                      |
-| thorasWorker.requests.cpu                       | String  | 1000Mi        | Thoras API CPU request                                       |
-| thorasWorker.requests.memory                    | String  | 1000Mi        | Thoras API memory request                                    |
-| thorasWorker.slackErrorsEnabled                 | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasWorker.logLevel                           | String  | Nil           | Logging level                                                |
-| thorasWorker.queriesPerSecond                   | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
-| thorasWorker.prometheus.enabled                 | Boolean | true          | Enables a prometheus metric exporter                         |
-| thorasWorker.prometheus.port                    | Number  | 9102          | Port for the prometheus metric exporter                      |
-| thorasWorker.enableSnapshotChunkAutoSizing      | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
-| thorasWorker.enableDirectForecastQueueing       | Boolean | true          | Enable direct queueing of forecasts                          |
-| thorasWorker.enableMetricIntegrityWorker        | Boolean | false         | Enable metric integrity worker                               |
-| thorasWorker.enableActiveSuggestionWorker       | Boolean | false         | Enable active suggestions worker                             |
-| thorasWorker.maxTimeseriesMetricCacheSizeMb     | Number  | 1000          | Configure cache size that triggers LRU eviction              |
-| thorasWorker.enableUnifiedAstUtilizationMonitor | Boolean | false         | Enable the unified AST utilization monitor                   |
+| Key                                                  | Type    | Default       | Description                                                  |
+| ---------------------------------------------------- | ------- | ------------- | ------------------------------------------------------------ |
+| thorasWorker.serviceAccount.name                     | String  | thoras-worker | Service account name for Thoras worker pod                   |
+| thorasWorker.podAnnotations                          | Object  | {}            | Pod Annotations for Thoras worker                            |
+| thorasWorker.labels                                  | Object  | {}            | Pod/service labels for Thoras worker                         |
+| thorasWorker.limits.memory                           | String  | 2000Mi        | Thoras API memory limit                                      |
+| thorasWorker.requests.cpu                            | String  | 1000Mi        | Thoras API CPU request                                       |
+| thorasWorker.requests.memory                         | String  | 1000Mi        | Thoras API memory request                                    |
+| thorasWorker.slackErrorsEnabled                      | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl` |
+| thorasWorker.logLevel                                | String  | Nil           | Logging level                                                |
+| thorasWorker.queriesPerSecond                        | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
+| thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                         |
+| thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                      |
+| thorasWorker.enableSnapshotChunkAutoSizing           | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
+| thorasWorker.enableDirectForecastQueueing            | Boolean | true          | Enable direct queueing of forecasts                          |
+| thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
+| thorasWorker.enableActiveSuggestionWorker            | Boolean | false         | Enable active suggestions worker                             |
+| thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |
+| thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | false         | Enable the unified AST utilization monitor                   |
+| thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                      |
 
 ## Thoras Dashboard
 
