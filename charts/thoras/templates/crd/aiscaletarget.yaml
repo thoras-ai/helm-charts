@@ -547,30 +547,80 @@ spec:
                     properties:
                       scale_down:
                         properties:
+                          absolute:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Absolute specifies fixed resource amounts as thresholds. Used when Type is "absolute".
+                              For vertical scaling: Use "memory" and "cpu" resource names.
+                                Example: {"memory": "50Mi", "cpu": "100m"} means the resource change must exceed
+                                these absolute values to trigger scaling, regardless of current usage percentage.
+                              For horizontal scaling: Use "pods" resource name to specify replica count thresholds.
+                                Example: {"pods": "5"} means the replica count change must be at least 5 to trigger scaling.
+                            type: object
                           percent:
+                            description: |-
+                              Percent specifies a percentage threshold (0-100). Used when Type is "percent".
+                              For example, 20 means the resource change must exceed 20% of current usage to trigger scaling.
                             format: int32
                             minimum: 0
                             type: integer
                           type:
                             enum:
                             - percent
+                            - absolute
                             type: string
                         required:
                         - type
                         type: object
+                        x-kubernetes-validations:
+                        - message: percent must be set when type is percent
+                          rule: 'self.type == ''percent'' ? has(self.percent) : true'
+                        - message: absolute must be set when type is absolute
+                          rule: 'self.type == ''absolute'' ? has(self.absolute) :
+                            true'
                       scale_up:
                         properties:
+                          absolute:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Absolute specifies fixed resource amounts as thresholds. Used when Type is "absolute".
+                              For vertical scaling: Use "memory" and "cpu" resource names.
+                                Example: {"memory": "50Mi", "cpu": "100m"} means the resource change must exceed
+                                these absolute values to trigger scaling, regardless of current usage percentage.
+                              For horizontal scaling: Use "pods" resource name to specify replica count thresholds.
+                                Example: {"pods": "5"} means the replica count change must be at least 5 to trigger scaling.
+                            type: object
                           percent:
+                            description: |-
+                              Percent specifies a percentage threshold (0-100). Used when Type is "percent".
+                              For example, 20 means the resource change must exceed 20% of current usage to trigger scaling.
                             format: int32
                             minimum: 0
                             type: integer
                           type:
                             enum:
                             - percent
+                            - absolute
                             type: string
                         required:
                         - type
                         type: object
+                        x-kubernetes-validations:
+                        - message: percent must be set when type is percent
+                          rule: 'self.type == ''percent'' ? has(self.percent) : true'
+                        - message: absolute must be set when type is absolute
+                          rule: 'self.type == ''absolute'' ? has(self.absolute) :
+                            true'
                     type: object
                 required:
                 - mode
@@ -767,30 +817,80 @@ spec:
                     properties:
                       scale_down:
                         properties:
+                          absolute:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Absolute specifies fixed resource amounts as thresholds. Used when Type is "absolute".
+                              For vertical scaling: Use "memory" and "cpu" resource names.
+                                Example: {"memory": "50Mi", "cpu": "100m"} means the resource change must exceed
+                                these absolute values to trigger scaling, regardless of current usage percentage.
+                              For horizontal scaling: Use "pods" resource name to specify replica count thresholds.
+                                Example: {"pods": "5"} means the replica count change must be at least 5 to trigger scaling.
+                            type: object
                           percent:
+                            description: |-
+                              Percent specifies a percentage threshold (0-100). Used when Type is "percent".
+                              For example, 20 means the resource change must exceed 20% of current usage to trigger scaling.
                             format: int32
                             minimum: 0
                             type: integer
                           type:
                             enum:
                             - percent
+                            - absolute
                             type: string
                         required:
                         - type
                         type: object
+                        x-kubernetes-validations:
+                        - message: percent must be set when type is percent
+                          rule: 'self.type == ''percent'' ? has(self.percent) : true'
+                        - message: absolute must be set when type is absolute
+                          rule: 'self.type == ''absolute'' ? has(self.absolute) :
+                            true'
                       scale_up:
                         properties:
+                          absolute:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Absolute specifies fixed resource amounts as thresholds. Used when Type is "absolute".
+                              For vertical scaling: Use "memory" and "cpu" resource names.
+                                Example: {"memory": "50Mi", "cpu": "100m"} means the resource change must exceed
+                                these absolute values to trigger scaling, regardless of current usage percentage.
+                              For horizontal scaling: Use "pods" resource name to specify replica count thresholds.
+                                Example: {"pods": "5"} means the replica count change must be at least 5 to trigger scaling.
+                            type: object
                           percent:
+                            description: |-
+                              Percent specifies a percentage threshold (0-100). Used when Type is "percent".
+                              For example, 20 means the resource change must exceed 20% of current usage to trigger scaling.
                             format: int32
                             minimum: 0
                             type: integer
                           type:
                             enum:
                             - percent
+                            - absolute
                             type: string
                         required:
                         - type
                         type: object
+                        x-kubernetes-validations:
+                        - message: percent must be set when type is percent
+                          rule: 'self.type == ''percent'' ? has(self.percent) : true'
+                        - message: absolute must be set when type is absolute
+                          rule: 'self.type == ''absolute'' ? has(self.absolute) :
+                            true'
                     type: object
                 required:
                 - containers
