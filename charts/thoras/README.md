@@ -71,6 +71,14 @@ helm install \
 | costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                             |
 | costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                |
 
+## Feature Flags
+
+The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
+
+| Key                                              | Type    | Default | Description                                                     |
+| ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
+| featureFlags.enableSkipScalingOnInsufficientData | Boolean | false   | Workloads are scaled only if they more than three hours of data |
+
 ## Thoras Forecast
 
 | Key                                    | Type    | Default                | Description                                                                                    |
