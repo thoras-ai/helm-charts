@@ -120,6 +120,8 @@ spec:
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
           {{- end }}
+          - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
+            value: {{ .Values.featureFlags.enableSkipScalingOnInsufficientData | ternary "true" "false" | quote }}
         command: [
           "/app/operator"
         ]

@@ -144,6 +144,8 @@ spec:
             value: {{ .Values.costRefreshBatching.maxConcurrency | quote }}
           - name: SERVICE_ENABLE_VIEW_CACHE_QUERY_LIVE_JOIN
             value: {{ .Values.thorasApiServerV2.enableViewCacheQueryLiveJoin | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
+            value: {{ .Values.featureFlags.enableSkipScalingOnInsufficientData | ternary "true" "false" | quote }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml
