@@ -77,7 +77,7 @@ The following flags are considered temporary and gate access to specific behavio
 
 | Key                                              | Type    | Default | Description                                                     |
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
-| featureFlags.enableSkipScalingOnInsufficientData | Boolean | false   | Workloads are scaled only if they more than three hours of data |
+| featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
 
 ## Thoras Forecast
 
