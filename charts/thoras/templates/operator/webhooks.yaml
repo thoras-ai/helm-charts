@@ -25,7 +25,7 @@ data:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: "pods.thoras.ai"
+  name: "{{ $.Values.mutatingWebhook.prefix }}pods.thoras.ai"
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
 webhooks:

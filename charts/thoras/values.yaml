@@ -291,3 +291,6 @@ queriesPerSecond: "50"
 nodeSelector: {}
 
 tolerations: []
+
+mutatingWebhook:
+  prefix: ""
