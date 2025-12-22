@@ -86,8 +86,8 @@ metricsCollector:
       memory: "32Mi"
   timescale:
     image: "timescaledb"
-    imageTag: "2.21.3-pg16"
-    extensionVersion: "2.21.3"
+    imageTag: "2.24.0-pg16"
+    extensionVersion: "2.24.0"
     name: timescale
     containerPort: 5432
     limits:

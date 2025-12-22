@@ -15,7 +15,7 @@ tests:
           value: metrics-collector
       - equal:
           path: spec.template.spec.containers[?(@.name == 'timescaledb')].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.21.3-pg16
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.24.0-pg16
   - it: Default containers should match snapshots
     chart:
       version: "4.50.0"
