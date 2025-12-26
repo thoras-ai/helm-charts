@@ -209,6 +209,7 @@ thorasDashboard:
     cost_analysis: true
     cost_simulator: true
     rolling_savings: true
+    cost_breakdown_v2: true
 
 thorasMonitor:
   enabled: false
