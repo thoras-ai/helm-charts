@@ -60,7 +60,7 @@ tests:
             - name: OMP_NUM_THREADS
               value: "1"
             - name: FORECAST_IGNORE_NEW_PODS
-              value: "false"
+              value: "true"
             - name: SERVICE_ENABLE_FORECAST_AFFINITY
               value: "true"
             - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
