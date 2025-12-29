@@ -60,7 +60,7 @@ tests:
             - name: OMP_NUM_THREADS
               value: "1"
             - name: FORECAST_IGNORE_NEW_PODS
-              value: "false"
+              value: "true"
             - name: SERVICE_ENABLE_FORECAST_AFFINITY
               value: "true"
             - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
@@ -188,24 +188,24 @@ tests:
             name: RETRAIN_OVERRIDE_HOURS
             value: "0.1"
 
-  - it: renders FORECAST_IGNORE_NEW_PODS as false by default
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: FORECAST_IGNORE_NEW_PODS
-            value: "false"
-
-  - it: renders FORECAST_IGNORE_NEW_PODS as true when ignoreNewPods is true
-    set:
-      thorasForecast:
-        ignoreNewPods: true
+  - it: renders FORECAST_IGNORE_NEW_PODS as true by default
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
             name: FORECAST_IGNORE_NEW_PODS
             value: "true"
+
+  - it: renders FORECAST_IGNORE_NEW_PODS as false when ignoreNewPods is false
+    set:
+      thorasForecast:
+        ignoreNewPods: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FORECAST_IGNORE_NEW_PODS
+            value: "false"
 
   - it: renders MAX_TIMESERIES_METRIC_CACHE_SIZE_MB with default value
     asserts:
