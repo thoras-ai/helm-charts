@@ -207,7 +207,7 @@ thorasDashboard:
   extras:
     show_savings: true
     cost_analysis: true
-    cost_simulator: true
+    cost_simulator: false
     rolling_savings: true
     cost_breakdown_v2: true
 
