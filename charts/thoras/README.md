@@ -63,6 +63,8 @@ helm install \
 | logLevel                           | String  | info                                             | Default log level                                                                                                    |
 | slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                     |
 | slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                         |
+| cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                               |
+| cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                    |
 | queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
 | nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
 | tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
@@ -81,21 +83,22 @@ The following flags are considered temporary and gate access to specific behavio
 
 ## Thoras Forecast
 
-| Key                                    | Type    | Default                | Description                                                                                    |
-| -------------------------------------- | ------- | ---------------------- | ---------------------------------------------------------------------------------------------- |
-| thorasForecast.serviceAccount.name     | String  | thoras-forecast-worker | Service account name for Thoras forecast worker pod                                            |
-| thorasForecast.imageTag                | String  | .thorasVersion         | Image tag for Thoras Forecast job                                                              |
-| thorasForecast.skipCache               | Boolean | false                  | Directs the forecaster to skip to model cache                                                  |
-| thorasForecast.ignoreNewPods           | Boolean | true                   | Directs forecaster to adjust CPU and memory metrics temprorarily for new pods                  |
-| thorasForecast.enableDecoupledTraining | Boolean | false                  | Enables async training mode where forecasts report "needs_training" instead of training inline |
-| thorasForecast.worker.podAnnotations   | Object  | {}                     | Pod Annotations for Thoras Forecast                                                            |
-| thorasForecast.worker.labels           | Object  | {}                     | Pod labels for Thoras Forecast                                                                 |
-| thorasForecast.worker.replicas         | Number  | 1                      | Number of `thoras-forecast-worker` replicas to use                                             |
-| thorasForecast.worker.pollingInterval  | Number  | 15                     | Polling interval to check for work for `thoras-forecast-workers`                               |
-| thorasForecast.worker.forecastTimeout  | Number  | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
-| thorasForecast.trainingJitterMinutes   | Number  | 0                      | Random jitter (in minutes, 0-120) added to training threshold to desynchronize training jobs   |
-| thorasWorker.prometheus.enabled        | Boolean | true                   | Enables a prometheus metric exporter                                                           |
-| thorasWorker.prometheus.port           | Number  | 9101                   | Port for the prometheus metric exporter                                                        |
+| Key                                    | Type    | Default                     | Description                                                                                    |
+| -------------------------------------- | ------- | --------------------------- | ---------------------------------------------------------------------------------------------- |
+| thorasForecast.serviceAccount.name     | String  | thoras-forecast-worker      | Service account name for Thoras forecast worker pod                                            |
+| thorasForecast.imageTag                | String  | .thorasVersion              | Image tag for Thoras Forecast job                                                              |
+| thorasForecast.skipCache               | Boolean | false                       | Directs the forecaster to skip to model cache                                                  |
+| thorasForecast.ignoreNewPods           | Boolean | true                        | Directs forecaster to adjust CPU and memory metrics temprorarily for new pods                  |
+| thorasForecast.enableDecoupledTraining | Boolean | false                       | Enables async training mode where forecasts report "needs_training" instead of training inline |
+| thorasForecast.worker.podAnnotations   | Object  | {}                          | Pod Annotations for Thoras Forecast                                                            |
+| thorasForecast.worker.labels           | Object  | {}                          | Pod labels for Thoras Forecast                                                                 |
+| thorasForecast.worker.replicas         | Number  | 1                           | Number of `thoras-forecast-worker` replicas to use                                             |
+| thorasForecast.worker.pollingInterval  | Number  | 15                          | Polling interval to check for work for `thoras-forecast-workers`                               |
+| thorasForecast.worker.forecastTimeout  | Number  | 600                         | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
+| thorasForecast.trainingJitterMinutes   | Number  | 0                           | Random jitter (in minutes, 0-120) added to training threshold to desynchronize training jobs   |
+| thorasWorker.prometheus.enabled        | Boolean | true                        | Enables a prometheus metric exporter                                                           |
+| thorasWorker.prometheus.port           | Number  | 9101                        | Port for the prometheus metric exporter                                                        |
+| thorasWorker.cloudSyncBaseUrl          | String  | "https://console.thoras.ai" | Base URL for syncing metrics and forecasts to Thoras Cloud                                     |
 
 ## Thoras Operator
 

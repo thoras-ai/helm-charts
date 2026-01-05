@@ -65,3 +65,24 @@ tests:
       - equal:
           path: spec.template.spec.initContainers[0].env[?(@.name == 'EXTENSION_VERSION')].value
           value: "2.24.0"
+  - it: Cloud sync is disabled by default
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "false"
+  - it: Cloud sync on when configured properly
+    set:
+      cloudSync:
+        clusterKeyID: "my-cluster-key-id"
+      thorasWorker:
+        cloudSyncBaseUrl: "https://console.thoras.ai"
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "true"
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID')].value
+          value: "my-cluster-key-id"
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_BASE_URL')].value
+          value: "https://console.thoras.ai"

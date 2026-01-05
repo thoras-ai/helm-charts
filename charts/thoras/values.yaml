@@ -45,6 +45,19 @@ slackWebhookUrl: ""
 slackWebhookUrlSecretRefName: ""
 slackWebhookUrlSecretRefKey: ""
 
+cloudSync:
+  clusterKeyID: ""
+
+  # Set cluster key directly (or alternatively use use clusterKeySecretRef to
+  # reference an existing secret. Sync is disabled if no cluster key is
+  # provided.
+  clusterKey: ""
+
+  # If you'd like to reference an existing secret, use these two values to
+  # indicate the secret name and data key
+  clusterKeySecretRefName: ""
+  clusterKeySecretRefKey: ""
+
 rbac:
   namespaces: []
 
@@ -160,6 +173,7 @@ thorasWorker:
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: false
   enableUnifiedAstUtilizationMonitor: false
+  cloudSyncBaseUrl: "https://console.staging.thoras.ai"
 
 thorasDashboard:
   enabled: true
