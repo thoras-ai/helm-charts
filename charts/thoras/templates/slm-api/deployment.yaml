@@ -32,12 +32,7 @@ spec:
         name: thoras-slm-api
         ports:
         - containerPort: {{ .Values.thorasSlmAgent.containerPort }}
-        resources:
-          limits:
-            memory: {{ .Values.thorasSlmAgent.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasSlmAgent.requests.cpu }}
-            memory: {{ .Values.thorasSlmAgent.requests.memory }}
+        resources: {{ toYaml .Values.thorasSlmAgent.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -52,12 +52,7 @@ spec:
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
-        resources:
-          limits:
-            memory: {{ .Values.thorasDashboard.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasDashboard.requests.cpu }}
-            memory: {{ .Values.thorasDashboard.requests.memory }}
+        resources: {{ toYaml .Values.thorasDashboard.resources | nindent 10 }}
         volumeMounts:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf

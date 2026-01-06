@@ -84,12 +84,7 @@ spec:
             value: {{ .Values.thorasWorker.enableActiveSuggestionWorker | ternary "true" "false" | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
-        resources:
-          limits:
-            memory: {{ .Values.thorasMonitor.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasMonitor.requests.cpu }}
-            memory: {{ .Values.thorasMonitor.requests.memory }}
+        resources: {{ toYaml .Values.thorasMonitor.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

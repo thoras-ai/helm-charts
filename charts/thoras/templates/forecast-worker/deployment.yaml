@@ -107,13 +107,7 @@ spec:
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
           {{- end }}
-        resources:
-          requests:
-            cpu: {{ .Values.thorasForecast.worker.requests.cpu }}
-            memory: {{ .Values.thorasForecast.worker.requests.memory }}
-          limits:
-            cpu: {{ .Values.thorasForecast.worker.limits.cpu }}
-            memory: {{ .Values.thorasForecast.worker.limits.memory }}
+        resources: {{ toYaml .Values.thorasForecast.worker.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

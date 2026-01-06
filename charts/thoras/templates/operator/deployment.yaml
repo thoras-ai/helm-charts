@@ -139,12 +139,7 @@ spec:
             containerPort: 9443
           - name: http-metrics
             containerPort: {{ .Values.thorasOperator.prometheus.port }}
-        resources:
-          limits:
-            memory: {{ .Values.thorasOperator.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasOperator.requests.cpu }}
-            memory: {{ .Values.thorasOperator.requests.memory }}
+        resources: {{ toYaml .Values.thorasOperator.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
