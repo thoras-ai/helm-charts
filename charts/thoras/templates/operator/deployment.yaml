@@ -16,10 +16,7 @@ spec:
       labels:
         app: thoras-operator
         name: thoras-operator
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasOperator.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasOperator.labels) .Values)) .) | nindent 8 }}
       {{- if or .Values.thorasOperator.podAnnotations .Values.thorasOperator.prometheus.enabled }}
       annotations:
         {{- with .Values.thorasOperator.podAnnotations }}

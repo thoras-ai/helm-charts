@@ -16,10 +16,7 @@ spec:
     metadata:
       labels:
         app: thoras-monitor
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasMonitor.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasMonitor.labels) .Values)) .) | nindent 8 }}
       {{- if or (not .Values.thorasMonitor.unittesting) .Values.thorasMonitor.podAnnotations }}
       annotations:
         {{- if not .Values.thorasMonitor.unittesting }}

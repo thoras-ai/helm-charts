@@ -20,9 +20,6 @@ spec:
       labels:
         app: thoras-worker
         {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasWorker.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
       {{- if or .Values.thorasWorker.prometheus.enabled .Values.thorasWorker.podAnnotations }}
       annotations:
         {{- if .Values.thorasWorker.prometheus.enabled }}

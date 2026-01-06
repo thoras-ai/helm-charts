@@ -15,10 +15,7 @@ spec:
     metadata:
       labels:
         app: thoras-forecast-worker
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasForecast.worker.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasForecast.worker.labels) .Values)) .) | nindent 8 }}
       {{- if or .Values.thorasForecast.worker.podAnnotations .Values.thorasForecast.prometheus.enabled }}
       annotations:
         {{- with .Values.thorasForecast.worker.podAnnotations }}

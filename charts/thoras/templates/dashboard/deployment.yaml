@@ -15,10 +15,7 @@ spec:
     metadata:
       labels:
         app: thoras-dashboard
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasDashboard.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasDashboard.labels) .Values)) .) | nindent 8 }}
       annotations:
         {{- if not .Values.thorasDashboard.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/dashboard/nginx-config-map.yaml") . | sha256sum }}

@@ -17,10 +17,7 @@ spec:
     metadata:
       labels:
         app: metrics-collector
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.metricsCollector.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.metricsCollector.labels) .Values)) .) | nindent 8 }}
       {{- if or .Values.metricsCollector.timescale.config.enabled .Values.metricsCollector.podAnnotations }}
       annotations:
         {{- if .Values.metricsCollector.timescale.config.enabled }}

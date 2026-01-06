@@ -170,7 +170,6 @@ The following flags are considered temporary and gate access to specific behavio
 | ---------------------------------------------------- | ------- | ------------- | ------------------------------------------------------------ |
 | thorasWorker.serviceAccount.name                     | String  | thoras-worker | Service account name for Thoras worker pod                   |
 | thorasWorker.podAnnotations                          | Object  | {}            | Pod Annotations for Thoras worker                            |
-| thorasWorker.labels                                  | Object  | {}            | Pod/service labels for Thoras worker                         |
 | thorasWorker.limits.memory                           | String  | 2000Mi        | Thoras API memory limit                                      |
 | thorasWorker.requests.cpu                            | String  | 1000Mi        | Thoras API CPU request                                       |
 | thorasWorker.requests.memory                         | String  | 1000Mi        | Thoras API memory request                                    |
@@ -242,7 +241,6 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasAgent.enabled             | Bool    | false          | Enable the Thoras Agent (opt-in, for now)                              |
 | thorasAgent.serviceAccount.name | String  | thoras-agent   | Service account name for Thoras agent pod                              |
 | thorasAgent.podAnnotations      | Object  | {}             | Pod Annotations for Thoras Agent                                       |
-| thorasAgent.labels              | Object  | {}             | Pod labels for Thoras Agent                                            |
 | thorasAgent.imageTag            | String  | .thorasVersion | Image tag for Thoras Agent daemon set                                  |
 | thorasAgent.slackErrorsEnabled  | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
 | thorasAgent.frequency           | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |

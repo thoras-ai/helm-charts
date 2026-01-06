@@ -5,10 +5,7 @@ metadata:
   name: thoras-api-server-v2
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-    {{- with .Values.thorasApiServerV2.labels }}
-      {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasApiServerV2.labels) .Values)) .) | nindent 4 }}
 spec:
   ports:
   - name: http

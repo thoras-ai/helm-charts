@@ -15,9 +15,6 @@ spec:
       labels:
         app: thoras-agent
         {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasAgent.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.thorasAgent.containerPort | quote }}
