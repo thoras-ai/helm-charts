@@ -110,7 +110,7 @@ metricsCollector:
       memory: "3072Mi"
     config:
       enabled: false
-      content: |
+      content: ""
   blobService:
     logLevel: "info"
     pprof:
