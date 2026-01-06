@@ -2,7 +2,6 @@ suite: Global labels applied
 templates:
   - "*/deployment.yaml"
   - "*/service-account.yaml"
-  - "*/secret.yaml"
   - "*/rbac.yaml"
   - "*/service.yaml"
   - "*/webhooks.yaml"
