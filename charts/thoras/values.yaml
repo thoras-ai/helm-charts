@@ -154,6 +154,7 @@ thorasWorker:
   serviceAccount:
     name: thoras-worker
   podAnnotations: {}
+  labels: {}
   replicas: 1
   limits:
     memory: 2Gi
@@ -277,6 +278,7 @@ thorasAgent:
   frequency: 15
   containerPort: 9101
   podAnnotations: {}
+  labels: {}
 
 thorasReasoning:
   connectors:
@@ -288,6 +290,7 @@ thorasSlmAgent:
   serviceAccount:
     name: thoras-slm-api
   podAnnotations: {}
+  labels: {}
   containerPort: 11434
   port: 8080
   limits:
