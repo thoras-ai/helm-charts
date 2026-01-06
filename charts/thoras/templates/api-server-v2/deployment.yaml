@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   replicas: {{ .Values.thorasApiServerV2.replicas }}
   selector:
@@ -16,8 +19,8 @@ spec:
       labels:
         app: thoras-api-server-v2
         {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasApiServerV2.labels }}
-          {{- toYaml . | nindent 8 }}
+        {{- if or (.Values.labels) (.Values.thorasApiServerV2.labels) }}
+          {{- mustMerge .Values.thorasApiServerV2.labels .Values.labels | toYaml | nindent 8 }}
         {{- end }}
       {{- if or .Values.thorasApiServerV2.podAnnotations .Values.thorasApiServerV2.prometheus.enabled (not .Values.thorasMonitor.unittesting) }}
       annotations:

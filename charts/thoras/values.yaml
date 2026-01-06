@@ -292,3 +292,6 @@ queriesPerSecond: "50"
 nodeSelector: {}
 
 tolerations: []
+
+# Global Labels support
+labels: {}

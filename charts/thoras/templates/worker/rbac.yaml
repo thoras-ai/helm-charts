@@ -11,6 +11,9 @@ metadata:
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   name: "thoras-worker"
 rules:
 - apiGroups:
@@ -34,6 +37,9 @@ metadata:
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   name: "thoras-worker"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -64,6 +70,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
 rules:
 - apiGroups:
   - thoras.ai
@@ -79,6 +88,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
 roleRef:
   kind: ClusterRole
   name: thoras-worker-thoras

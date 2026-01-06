@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   annotations:
     {{- if not .Values.thorasMonitor.unittesting }}
       checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
@@ -20,8 +23,8 @@ spec:
       labels:
         app: thoras-worker
         {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasWorker.labels }}
-          {{- toYaml . | nindent 8 }}
+        {{- if or (.Values.labels) (.Values.thorasWorker.labels) }}
+          {{- mustMerge .Values.thorasWorker.labels .Values.labels | toYaml | nindent 8 }}
         {{- end }}
       {{- if or .Values.thorasWorker.prometheus.enabled .Values.thorasWorker.podAnnotations }}
       annotations:

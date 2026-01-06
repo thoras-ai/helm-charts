@@ -11,6 +11,9 @@ metadata:
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   name: {{ .Values.thorasAgent.serviceAccount.name }}
 rules:
 - apiGroups:
@@ -33,6 +36,9 @@ metadata:
 {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   name: {{ .Values.thorasAgent.serviceAccount.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -55,6 +61,9 @@ kind: ServiceAccount
 metadata:
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   name: {{ .Values.thorasAgent.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 imagePullSecrets:
@@ -69,6 +78,9 @@ kind: ClusterRole
 metadata:
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
 rules:
 - apiGroups:
@@ -83,6 +95,9 @@ kind: ClusterRoleBinding
 metadata:
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
 roleRef:
