@@ -1,0 +1,29 @@
+suite: Global labels applied
+templates:
+  - "*/deployment.yaml"
+  - "*/service-account.yaml"
+  - "*/rbac.yaml"
+  - "*/service.yaml"
+set:
+  thorasVersion: TEST
+  imageCredentials:
+    secretRef: test-secret-registry
+  # Enable all deployments
+  thorasForecast:
+    worker:
+      enabled: true
+  thorasMonitor:
+    enabled: true
+    unittesting: true
+  thorasDashboard:
+    unittesting: true
+  thorasSlmAgent:
+    enabled: true
+  labels:
+    globalLabel: globalValue
+tests:
+  - it: Default matches snapshot
+    chart:
+      version: "4.7.0"
+    asserts:
+      - matchSnapshot: {}

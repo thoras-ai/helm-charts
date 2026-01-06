@@ -5,10 +5,7 @@ metadata:
   name: timescale
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-    {{- with .Values.metricsCollector.labels }}
-      {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.metricsCollector.labels) .Values)) .) | nindent 4 }}
 spec:
   ports:
   - name: postgres
@@ -24,10 +21,7 @@ metadata:
   name: thoras-blob-api
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-    {{- with .Values.metricsCollector.labels }}
-      {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.metricsCollector.labels) .Values)) .) | nindent 4 }}
 spec:
   ports:
   - name: http

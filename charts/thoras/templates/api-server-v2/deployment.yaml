@@ -15,10 +15,7 @@ spec:
     metadata:
       labels:
         app: thoras-api-server-v2
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasApiServerV2.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasApiServerV2.labels) .Values)) .) | nindent 8 }}
       {{- if or .Values.thorasApiServerV2.podAnnotations .Values.thorasApiServerV2.prometheus.enabled (not .Values.thorasMonitor.unittesting) }}
       annotations:
         {{- with .Values.thorasApiServerV2.podAnnotations }}

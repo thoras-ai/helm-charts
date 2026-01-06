@@ -14,10 +14,7 @@ spec:
     metadata:
       labels:
         app: thoras-agent
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasAgent.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasAgent.labels) .Values)) .) | nindent 8 }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.thorasAgent.containerPort | quote }}

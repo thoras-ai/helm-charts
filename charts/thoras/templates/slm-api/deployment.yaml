@@ -16,10 +16,7 @@ spec:
     metadata:
       labels:
         app: thoras-slm-api
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasSlmAgent.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasSlmAgent.labels) .Values)) .) | nindent 8 }}
       {{- with .Values.thorasSlmAgent.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}

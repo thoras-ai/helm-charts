@@ -10,10 +10,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-    {{- with .Values.thorasDashboard.labels }}
-      {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasDashboard.labels) .Values)) .) | nindent 4 }}
 spec:
   {{- with .Values.thorasDashboard.gatewayAPI.parentRefs }}
   parentRefs:

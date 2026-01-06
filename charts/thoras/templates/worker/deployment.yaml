@@ -19,10 +19,7 @@ spec:
     metadata:
       labels:
         app: thoras-worker
-        {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasWorker.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasWorker.labels) .Values)) .) | nindent 8 }}
       {{- if or .Values.thorasWorker.prometheus.enabled .Values.thorasWorker.podAnnotations }}
       annotations:
         {{- if .Values.thorasWorker.prometheus.enabled }}
