@@ -250,6 +250,7 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasAgent.slackErrorsEnabled  | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
 | thorasAgent.frequency           | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
 | thorasAgent.queriesPerSecond    | String  | "50"           | Sets a maximum threshold for K8s API qps                               |
+| thorasAgent.securityContext     | Object  | {}             | Allows assigning additional securityContext                            |
 
 ## Example Thoras Dashboard Ingress Configuration
 

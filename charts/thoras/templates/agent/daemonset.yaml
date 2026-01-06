@@ -59,7 +59,7 @@ spec:
         securityContext:
           # the agent requires elevated privileges to collect ebpf traces
           privileged: true
-          {{- if .Values.thorasAgent.securityContext  -}}
+          {{- if .Values.thorasAgent.securityContext -}}
           {{- toYaml .Values.thorasAgent.securityContext | nindent 10 }}
           {{- end }}
       # drawn from https://github.com/kubeservice-stack/kubservice-charts/blob/6be7b9fb081abd2255dc83854dbed2d7d11e0973/charts/kubeservice-ebpf-exporter/values.yaml#L67-L69
