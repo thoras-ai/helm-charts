@@ -2,6 +2,20 @@ suite: Agent
 templates:
   - agent/daemonset.yaml
 tests:
+  - it: Default matches snapshot
+    set:
+      thorasVersion: TEST
+      thorasAgent:
+        enabled: True
+        limits:
+          cpu: 1
+          memory: 1Gi
+        requests:
+          cpu: 200m
+    chart:
+      version: "4.7.0"
+    asserts:
+      - matchSnapshot: {}
   - it: Daemon set name and image should be correct
     set:
       thorasVersion: TEST

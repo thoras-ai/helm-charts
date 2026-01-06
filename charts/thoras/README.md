@@ -243,6 +243,9 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasAgent.serviceAccount.name | String  | thoras-agent   | Service account name for Thoras agent pod                              |
 | thorasAgent.podAnnotations      | Object  | {}             | Pod Annotations for Thoras Agent                                       |
 | thorasAgent.labels              | Object  | {}             | Pod labels for Thoras Agent                                            |
+| thorasAgent.limits.memory       | String  | 128Mi          | Thoras Agent memory limit                                              |
+| thorasAgent.requests.cpu        | String  | 100m           | Thoras Agent CPU request                                               |
+| thorasAgent.requests.memory     | String  | 128Mi          | Thoras Agent memory                                                    |
 | thorasAgent.imageTag            | String  | .thorasVersion | Image tag for Thoras Agent daemon set                                  |
 | thorasAgent.slackErrorsEnabled  | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl`           |
 | thorasAgent.frequency           | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
