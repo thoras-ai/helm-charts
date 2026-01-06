@@ -18,9 +18,6 @@ spec:
       labels:
         app: thoras-agent
         {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasAgent.labels }}
-          {{- toYaml . | nindent 8 }}
-        {{- end }}
         {{- if or (.Values.labels) (.Values.thorasAgent.labels) }}
           {{- mustMerge .Values.thorasAgent.labels .Values.labels | toYaml | nindent 8 }}
         {{- end }}
