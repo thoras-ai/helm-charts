@@ -16,3 +16,27 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+
+  - it: Allow configurable resource spec
+    set:
+      thorasVersion: TEST
+      thorasAgent:
+        enabled: True
+        resources:
+          limits:
+            cpu: 1
+            memory: 512Mi
+          requests:
+            cpu: 1
+            memory: 512Mi
+
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            limits:
+              cpu: 1
+              memory: 512Mi
+            requests:
+              cpu: 1
+              memory: 512Mi
