@@ -1,0 +1,1751 @@
+Default matches snapshot:
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-server-v2
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: thoras-api-server-v2
+      template:
+        metadata:
+          annotations:
+            prometheus.io/path: /metrics
+            prometheus.io/port: "8080"
+            prometheus.io/scrape: "true"
+          labels:
+            app: thoras-api-server-v2
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+            helm.sh/chart: thoras-4.7.0
+        spec:
+          containers:
+            - command:
+                - /app/api-server
+              env:
+                - name: DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      key: host
+                      name: thoras-timescale-password
+                - name: SERVICE_PORT
+                  value: "8080"
+                - name: SERVICE_POSTGRESQL_DSN
+                  value: $(DATABASE_HOST)/thoras
+                - name: SERVICE_SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: webhookUrl
+                      name: thoras-slack
+                - name: SERVICE_SLACK_ERRORS_ENABLED
+                  value: "false"
+                - name: SERVICE_LOG_LEVEL
+                  value: info
+                - name: SERVICE_POD_LOG_LABEL
+                  value: app.kubernetes.io/name=thoras
+                - name: SERVICE_PROMETHEUS_API_URL
+                  value: http://localhost
+                - name: SERVICE_CLUSTER_NAME
+                  value: ""
+                - name: SERVICE_BLOB_SERVICE_API_URL
+                  value: http://thoras-blob-api.thoras.svc.cluster.local
+                - name: SERVICE_QUERIES_PER_SECOND
+                  value: "50"
+                - name: SERVICE_THORAS_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: SERVICE_RESTART_WORKLOAD_ON_CPU
+                  value: "false"
+                - name: SERVICE_ENABLE_PPROF
+                  value: "false"
+                - name: SERVICE_CHART_VERSION
+                  value: 4.7.0
+                - name: SERVICE_ENABLE_FORECAST_AFFINITY
+                  value: "true"
+                - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
+                  value: "true"
+                - name: SERVICE_COST_REFRESH_BATCH_SIZE
+                  value: "200"
+                - name: SERVICE_COST_REFRESH_MAX_CONCURRENCY
+                  value: "5"
+                - name: SERVICE_ENABLE_VIEW_CACHE_QUERY_LIVE_JOIN
+                  value: "true"
+                - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
+                  value: "true"
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+              name: thoras-v2-api-server
+              ports:
+                - containerPort: 8080
+              resources:
+                limits:
+                  memory: 2Gi
+                requests:
+                  cpu: 128m
+                  memory: 256Mi
+              startupProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /health
+                  port: 8080
+                periodSeconds: 10
+              volumeMounts:
+                - mountPath: /app/config.yaml
+                  name: monitor-config
+                  readOnly: true
+                  subPath: config.yaml
+          initContainers:
+            - args:
+                - |
+                  retries=0
+                  max_retries=48
+                  until [ $retries -ge $max_retries ]; do
+                    if pg_isready -q -d ${DATABASE_HOST}/thoras; then
+                      break
+                    else
+                      echo "postgres not ready"
+                      retries=$((retries+1))
+                      sleep 5
+                    fi
+                  done
+                  if [ $retries -ge $max_retries ]; then
+                    echo "Failed to connect to database after $max_retries retries"
+                    exit 1
+                  fi
+
+                  # Update the timescale extension first
+                  # Validate version format (only allow alphanumeric, dots, and hyphens)
+                  if ! echo "$EXTENSION_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+                    echo "Invalid extension version format: $EXTENSION_VERSION"
+                    exit 1
+                  fi
+                  /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '$EXTENSION_VERSION';"
+
+                  # run any migrations, accounting for upgrade/downgrade scenarios
+                  ./scripts/migrate_database.sh
+              command:
+                - /bin/sh
+                - -c
+              env:
+                - name: DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      key: host
+                      name: thoras-timescale-password
+                - name: DATABASE_URL
+                  value: $(DATABASE_HOST)/thoras?sslmode=disable
+                - name: EXTENSION_VERSION
+                  value: 2.24.0
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              name: wait-for-postgres
+          serviceAccountName: thoras-api
+          volumes:
+            - configMap:
+                name: thoras-monitor-config
+              name: monitor-config
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api
+    rules:
+      - apiGroups:
+          - '*'
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling
+        resources:
+          - horizontalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - batch
+        resources:
+          - jobs
+        verbs:
+          - '*'
+      - apiGroups:
+          - apps
+          - argoproj.io
+        resources:
+          - '*'
+        verbs:
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/resize
+        verbs:
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-api
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  4: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - '*'
+      - apiGroups:
+          - ""
+        resources:
+          - namespaces
+        verbs:
+          - list
+  5: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-api-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  6: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - delete
+  7: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-api-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  8: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api
+      namespace: NAMESPACE
+  9: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-server-v2
+      namespace: NAMESPACE
+    spec:
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: thoras-api-server-v2
+  10: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: metrics-collector
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: metrics-collector
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: metrics-collector
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+            helm.sh/chart: thoras-4.7.0
+        spec:
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                        - key: app
+                          operator: In
+                          values:
+                            - thoras-forecast-worker
+                    topologyKey: kubernetes.io/hostname
+                  weight: 100
+          containers:
+            - env:
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: thoras-timescale-password
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.24.0-pg16
+              imagePullPolicy: IfNotPresent
+              name: timescaledb
+              ports:
+                - containerPort: 5432
+              resources:
+                limits:
+                  memory: 16384Mi
+                requests:
+                  cpu: 1024m
+                  memory: 3072Mi
+              volumeMounts: null
+            - args:
+                - |
+                  # wait for postgres to be available
+                  retries=0
+                  max_retries=48
+                  until [ $retries -ge $max_retries ]; do
+                    if pg_isready -h localhost -U postgres; then
+                      break
+                    else
+                      echo "postgres not ready"
+                      retries=$((retries+1))
+                      sleep 5
+                    fi
+                  done
+                  if [ $retries -ge $max_retries ]; then
+                    echo "Failed to connect to database after $max_retries retries"
+                    exit 1
+                  fi
+
+                  # try to create the "thoras" database if it doesn't exist
+                  if ! psql -U postgres -h localhost -tc "SELECT 1 FROM pg_database WHERE datname = 'thoras'" | grep -q 1; then
+                      echo "creating database 'thoras'"
+                      psql -U postgres -h localhost -c "CREATE DATABASE thoras"
+                  fi
+
+                  # ensure the postgres user has the correct password
+                  echo "setting password"
+                  psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
+
+                  ./blob-service
+              command:
+                - /bin/sh
+                - -c
+              env:
+                - name: SERVICE_CLUSTER_NAME
+                  value: ""
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: thoras-timescale-password
+                - name: SERVICE_CHART_VERSION
+                  value: 4.7.0
+                - name: SERVICE_PORT
+                  value: "8080"
+                - name: SERVICE_SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: webhookUrl
+                      name: thoras-slack
+                - name: SERVICE_SLACK_ERRORS_ENABLED
+                  value: "false"
+                - name: SERVICE_LOG_LEVEL
+                  value: info
+                - name: SERVICE_STORAGE_FILE_PATH
+                  value: /var/lib/share
+                - name: SERVICE_ENABLE_PPROF
+                  value: "false"
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              imagePullPolicy: IfNotPresent
+              name: thoras-blob-api
+              resources:
+                limits:
+                  memory: 8192Mi
+                requests:
+                  cpu: 16m
+                  memory: 128Mi
+          serviceAccountName: thoras-collector
+          volumes: null
+  11: |
+    apiVersion: v1
+    data:
+      host: cG9zdGdyZXM6Ly9wb3N0Z3JlczozMUNJUUUxU0w1ZEJGTWREQHRpbWVzY2FsZTo1NDMy
+      password: MzFDSVFFMVNMNWRCRk1kRA==
+    kind: Secret
+    metadata:
+      name: thoras-timescale-password
+  12: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-collector
+      namespace: NAMESPACE
+  13: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: timescale
+      namespace: NAMESPACE
+    spec:
+      ports:
+        - name: postgres
+          port: 5432
+          protocol: TCP
+          targetPort: 5432
+      selector:
+        app: metrics-collector
+  14: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-blob-api
+      namespace: NAMESPACE
+    spec:
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: metrics-collector
+  15: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-dashboard
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: thoras-dashboard
+      template:
+        metadata:
+          annotations: null
+          labels:
+            app: thoras-dashboard
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+            helm.sh/chart: thoras-4.7.0
+        spec:
+          containers:
+            - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
+              imagePullPolicy: IfNotPresent
+              name: thoras-dashboard
+              ports:
+                - containerPort: 5173
+              resources:
+                limits:
+                  memory: 2Gi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              volumeMounts:
+                - mountPath: /etc/nginx/nginx.conf
+                  name: nginx-config
+                  subPath: dashboard-v2.nginx.conf
+            - image: us-east4-docker.pkg.dev/thoras-registry/platform/nginx:1.29.4-alpine3.23-slim
+              imagePullPolicy: IfNotPresent
+              name: thoras-api-proxy
+              ports:
+                - containerPort: 80
+              resources:
+                limits:
+                  memory: 2Gi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              volumeMounts:
+                - mountPath: /etc/nginx/nginx.conf
+                  name: nginx-config
+                  subPath: nginx.conf
+          initContainers:
+            - args:
+                - |
+                  curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
+                  if [ $? -ne 0 ]; then
+                    echo "Failed to connect to API service"
+                    exit 1
+                  fi
+              command:
+                - /bin/sh
+                - -c
+              env:
+                - name: API_HEALTH_URL
+                  value: http://thoras-api-server-v2/health
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              name: wait-for-api-service
+          serviceAccountName: thoras-dashboard
+          volumes:
+            - configMap:
+                name: thoras-dashboard-nginx-config
+              name: nginx-config
+  16: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-dashboard
+      namespace: NAMESPACE
+  17: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-dashboard
+      namespace: NAMESPACE
+    spec:
+      ports:
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: 80
+      selector:
+        app: thoras-dashboard
+      type: ClusterIP
+  18: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-forecast-worker
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: thoras-forecast-worker
+      template:
+        metadata:
+          annotations:
+            prometheus.io/path: /metrics
+            prometheus.io/port: "9101"
+            prometheus.io/scrape: "true"
+          labels:
+            app: thoras-forecast-worker
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+            helm.sh/chart: thoras-4.7.0
+        spec:
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                        - key: app
+                          operator: In
+                          values:
+                            - metrics-collector
+                    topologyKey: kubernetes.io/hostname
+                  weight: 100
+                - podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                        - key: app
+                          operator: In
+                          values:
+                            - thoras-forecast-worker
+                    topologyKey: kubernetes.io/hostname
+                  weight: 95
+          containers:
+            - command:
+                - worker
+                - --polling_interval
+                - "15"
+              env:
+                - name: LOGLEVEL
+                  value: info
+                - name: API_BASE_URL
+                  value: http://thoras-api-server-v2
+                - name: FORECAST_TIMEOUT
+                  value: "600"
+                - name: OMP_NUM_THREADS
+                  value: "1"
+                - name: FORECAST_IGNORE_NEW_PODS
+                  value: "true"
+                - name: SERVICE_ENABLE_FORECAST_AFFINITY
+                  value: "true"
+                - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
+                  value: "1000"
+                - name: ENABLE_DECOUPLED_TRAINING
+                  value: "false"
+                - name: TRAINING_JITTER_MINUTES
+                  value: "0"
+                - name: METRICS_PORT
+                  value: "9101"
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:TEST
+              imagePullPolicy: IfNotPresent
+              name: thoras-forecast-worker
+              resources:
+                limits:
+                  cpu: 2
+                  memory: 2Gi
+                requests:
+                  cpu: 1
+                  memory: 256Mi
+          initContainers:
+            - args:
+                - |
+                  curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
+                  if [ $? -ne 0 ]; then
+                    echo "Failed to connect to API service"
+                    exit 1
+                  fi
+              command:
+                - /bin/sh
+                - -c
+              env:
+                - name: API_HEALTH_URL
+                  value: http://thoras-api-server-v2/health
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              name: wait-for-api-service
+          serviceAccountName: thoras-forecast-worker
+  19: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-forecast-worker
+      namespace: NAMESPACE
+  20: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-monitor
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: thoras-monitor
+      template:
+        metadata:
+          labels:
+            app: thoras-monitor
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+            helm.sh/chart: thoras-4.7.0
+        spec:
+          containers:
+            - command:
+                - /app/monitor
+              env:
+                - name: SERVICE_LOG_LEVEL
+                  value: info
+                - name: SERVICE_SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: webhookUrl
+                      name: thoras-slack
+                - name: SERVICE_SLACK_ERRORS_ENABLED
+                  value: "false"
+                - name: SERVICE_CLUSTER_NAME
+                  value: ""
+                - name: SERVICE_THORAS_API_BASE_URL
+                  value: http://thoras-api-server-v2
+                - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
+                  value: "false"
+                - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
+                  value: "false"
+                - name: SERVICE_CHART_VERSION
+                  value: 4.7.0
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              imagePullPolicy: IfNotPresent
+              name: thoras-monitor-v2
+              resources:
+                limits:
+                  memory: 8192Mi
+                requests:
+                  cpu: 16m
+                  memory: 64Mi
+              volumeMounts:
+                - mountPath: /app/config.yaml
+                  name: config
+                  readOnly: true
+                  subPath: config.yaml
+          initContainers:
+            - args:
+                - |
+                  curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
+                  if [ $? -ne 0 ]; then
+                    echo "Failed to connect to API service"
+                    exit 1
+                  fi
+              command:
+                - /bin/sh
+                - -c
+              env:
+                - name: API_HEALTH_URL
+                  value: http://thoras-api-server-v2/health
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              name: wait-for-api-service
+          serviceAccountName: thoras-monitor
+          volumes:
+            - configMap:
+                name: thoras-monitor-config
+              name: config
+  21: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-monitor
+    rules:
+      - apiGroups:
+          - '*'
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling
+        resources:
+          - horizontalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling.k8s.io
+        resources:
+          - verticalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - batch
+        resources:
+          - jobs
+          - cronjobs
+        verbs:
+          - get
+          - list
+          - watch
+  22: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-monitor
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-monitor
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-monitor
+        namespace: NAMESPACE
+  23: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-monitor-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - AIScaleTarget
+          - aiscaletargets/status
+          - aiscaletargets
+        verbs:
+          - get
+          - list
+          - watch
+  24: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-monitor-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-monitor-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-monitor
+        namespace: NAMESPACE
+  25: |
+    apiVersion: v1
+    data:
+      webhookUrl: ""
+    kind: Secret
+    metadata:
+      name: thoras-slack
+  26: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-monitor
+      namespace: NAMESPACE
+  27: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: thoras-operator
+      template:
+        metadata:
+          annotations:
+            prometheus.io/path: /metrics
+            prometheus.io/port: "9101"
+            prometheus.io/scrape: "true"
+          labels:
+            app: thoras-operator
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+            helm.sh/chart: thoras-4.7.0
+            name: thoras-operator
+          name: thoras-operator
+        spec:
+          containers:
+            - command:
+                - /app/operator
+              env:
+                - name: SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: webhookUrl
+                      name: thoras-slack
+                - name: SERVICE_FORECAST_RESOURCE_REQUESTS_CPU
+                  value: 256m
+                - name: SERVICE_FORECAST_RESOURCE_LIMITS_CPU
+                  value: "4"
+                - name: SERVICE_FORECAST_RESOURCE_REQUESTS_MEMORY
+                  value: 256Mi
+                - name: SERVICE_FORECAST_RESOURCE_LIMITS_MEMORY
+                  value: 8Gi
+                - name: THORAS_NS
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: SERVICE_SLACK_ERRORS_ENABLED
+                  value: "false"
+                - name: SERVICE_SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: webhookUrl
+                      name: thoras-slack
+                - name: SERVICE_LOG_LEVEL
+                  value: info
+                - name: SERVICE_CLUSTER_NAME
+                  value: ""
+                - name: SERVICE_THORAS_API_BASE_URL
+                  value: http://thoras-api-server-v2.thoras.svc.cluster.local
+                - name: FORECAST_IMAGE_PULL_POLICY
+                  value: IfNotPresent
+                - name: MODEL_SKIP_CACHE
+                  value: "false"
+                - name: SERVICE_QUERIES_PER_SECOND
+                  value: "50"
+                - name: SERVICE_FORECAST_TOLERATIONS
+                  value: '[]'
+                - name: SERVICE_PORT
+                  value: "9101"
+                - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
+                  value: "true"
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              imagePullPolicy: IfNotPresent
+              name: thoras-operator
+              ports:
+                - containerPort: 9443
+                  name: https-web-hooks
+                - containerPort: 9101
+                  name: http-metrics
+              resources:
+                limits:
+                  memory: 2Gi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              volumeMounts:
+                - mountPath: /tmp/k8s-webhook-server/serving-certs/tls.crt
+                  name: tls
+                  readOnly: true
+                  subPath: tls.crt
+                - mountPath: /tmp/k8s-webhook-server/serving-certs/tls.key
+                  name: tls
+                  readOnly: true
+                  subPath: tls.key
+          initContainers:
+            - args:
+                - |
+                  curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
+                  if [ $? -ne 0 ]; then
+                    echo "Failed to connect to API service"
+                    exit 1
+                  fi
+              command:
+                - /bin/sh
+                - -c
+              env:
+                - name: API_HEALTH_URL
+                  value: http://thoras-api-server-v2/health
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              name: wait-for-api-service
+          serviceAccountName: thoras-operator
+          volumes:
+            - name: tls
+              secret:
+                secretName: thoras-webhooks-cert
+  28: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - AIScaleTarget
+          - aiscaletargets/status
+          - aiscaletargets
+        verbs:
+          - '*'
+  29: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-operator-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-operator
+        namespace: NAMESPACE
+  30: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator
+    rules:
+      - apiGroups:
+          - '*'
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - '*'
+        resources:
+          - '*/scale'
+          - '*/status'
+        verbs:
+          - get
+          - patch
+          - update
+      - apiGroups:
+          - autoscaling
+        resources:
+          - horizontalpodautoscalers
+        verbs:
+          - '*'
+      - apiGroups:
+          - autoscaling.k8s.io
+        resources:
+          - verticalpodautoscalers
+        verbs:
+          - '*'
+      - apiGroups:
+          - batch
+        resources:
+          - jobs
+          - cronjobs
+        verbs:
+          - '*'
+      - apiGroups:
+          - apps
+          - argoproj.io
+        resources:
+          - '*'
+        verbs:
+          - patch
+  31: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-operator
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-operator
+        namespace: NAMESPACE
+  32: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator
+      namespace: NAMESPACE
+  33: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-webhooks
+      namespace: NAMESPACE
+    spec:
+      ports:
+        - name: https-web-hooks
+          port: 443
+          protocol: TCP
+          targetPort: 9443
+        - name: http-metrics
+          port: 9101
+          protocol: TCP
+          targetPort: 9101
+      selector:
+        app: thoras-operator
+  34: |
+    apiVersion: v1
+    data:
+      ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKVENDQWcyZ0F3SUJBZ0lRWmtYbFVVRjE0NXN6OW9KdmNBS2w2VEFOQmdrcWhraUc5dzBCQVFzRkFEQWQKTVJzd0dRWURWUVFERXhKMGFHOXlZWE10ZDJWaWFHOXZhM010WTJFd0hoY05Nall3TVRBMk1UUTFPVEExV2hjTgpNell3TVRBME1UUTFPVEExV2pBZE1Sc3dHUVlEVlFRREV4SjBhRzl5WVhNdGQyVmlhRzl2YTNNdFkyRXdnZ0VpCk1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRRGF2ckUwVUsrRzAvR1RCbjIrQ21LcnVKeU8KbGt6YVlyUmIvSHMwVEFkdGRkL1NTS2I2VGhITWxBS3VJUXBSNTRIZjdjTjBHOE9KYnNGZ2FsNFRTNXltZ0RNMwp5U2U2LzloMUtta3VMQXN0WTVoVVZub21TMUhZcXg3WitiVmUwK2d0YU5XZmRaaHQwU256UWluRzdZRWNVWHF3ClRXK1p2SGxiSlgxWjhrbGlMLzM4ZWpNZmU3R0Nrd2ZNMkdCdGNJU21qdncvTDZhTUV2Q01DcXZTVVo0Q3E0akEKMUR4SXNXcWl2d3lRaTRYVGlNc1RLWC9CeXRrdG9BYnJ5UTJiZUxSSmsyV1VxUzZBcmNlcXo4dWg0TTloUlNDWQpTZjAwK3FRQnR4YWhmWERScll6MXlWN3FMRE1ucVZDUTlXUUx2bDRibGI5RjZ2ZW1pcFJpbng0T09HSVBBZ01CCkFBR2pZVEJmTUE0R0ExVWREd0VCL3dRRUF3SUNwREFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUIKQlFVSEF3SXdEd1lEVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WSFE0RUZnUVVaSXVKeUhYMU9qbkZDa0pjcTRacwpqNkx3RjhJd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFIcE9MUEdTamFFeGdDUU52ak9NaUY3a3hESXJ3dVpnCmROSEpEd2Z6MFhRa0l5OUtoOHJXZldibG5GUTdwbTcvWnk2dnpXcEIxRm5jUERpYUZMeWk0eEZRQmdVcUdmMmMKK3ZIMXFUYTQ2MjNWU0VWajRiUGI2VHM4Ti96NStVZ2ttNjBiQkJWV201Y1FtNEh4elcrKzZZT3ZEeGVGb0FpSApVN3hRQVlqR1FKM1gwNXQ2Ky92MnNYYzNHVzJMMXY3VTJCa3cwSFgxVWd4Y0FZeXZzc2RReDRRa1lqa1J0NndDCnBwTFdQYmx1UnlzTGlIREI5SkExS3pCVlpVQitxUTVlV3QyVVZOK0VESFFpNWpIZVUvak0vTDRsUFY2OWhLNGQKMGdtUFFEcXg2amlCNHV5cHEydmIyQVFDR3R4TTBReThOMC9odmtjK2VBQXNJdFNTY2xjRFlRST0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+      tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURhVENDQWxHZ0F3SUJBZ0lSQU4vTGYrWFJlYk4zOXJEeFFDUjNNNTh3RFFZSktvWklodmNOQVFFTEJRQXcKSFRFYk1Ca0dBMVVFQXhNU2RHaHZjbUZ6TFhkbFltaHZiMnR6TFdOaE1CNFhEVEkyTURFd05qRTBOVGt3TlZvWApEVE0yTURFd05ERTBOVGt3TlZvd0dqRVlNQllHQTFVRUF4TVBkR2h2Y21GekxYZGxZbWh2YjJ0ek1JSUJJakFOCkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXRvd21JdjcxdHhnVXc2RDVtMHZ5VVFYQ2V5UmcKSkpSOFBEYlhRdHE1TlRpNnpiNDBZbUVRTVBWUGVsRGxINmM2U2dnODRFVnYydEFxSU5zR2dMWVFTcmo2d2FmVQo2SXlkR3hGNlppRDZ2ZGx4TXROakwzbCtKdlBndzlrbTNUaTJ2ZGhPaTlYMXdSWnQ1ZnMxTjRzK3A1Vjl6d0ZmCktIOTlmL21lM3YrQ2ErYTVxTnVvbEM5WHlFbUJsTC9qWDZENDVjZkhwbXFlMGc5cGtVbDk1cjlBS2x4UVVRMlAKRXhzNW1qaUdFcWdnTzR3RTkrNlJxQlNGdDFGaCt4bnpOS1RxMUVmOTgvMi9jVlVJdzY4bXg1QnQwSG5MSVZRaAphOGY4NElWMGNnV0pDWTdNWHJpS2RRT1NqeFo5RVVxSkc2SXVtS1dxN21mUVpiN0UxZWtYeWFKYzd3SURBUUFCCm80R21NSUdqTUE0R0ExVWREd0VCL3dRRUF3SUZvREFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUIKQlFVSEF3SXdEQVlEVlIwVEFRSC9CQUl3QURBZkJnTlZIU01FR0RBV2dCUmtpNG5JZGZVNk9jVUtRbHlyaG15UApvdkFYd2pCREJnTlZIUkVFUERBNmdobDBhRzl5WVhNdGQyVmlhRzl2YTNNdVRrRk5SVk5RUVVORmdoMTBhRzl5CllYTXRkMlZpYUc5dmEzTXVUa0ZOUlZOUVFVTkZMbk4yWXpBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQUJkaG0KZitjbzdpbjgyY05xT1Y4NlQ1S2tpMmlNTk9mUnFyTUJRckJtVzdpVk9nckxYRnQwM28vR202dTFMVGIyTzVyegpmV2U5M213ZllUNkZyN2hzV1pqNjBCTnhISEd1OHlVYTJwVnZ3Y1hKeGZQek9zbDE3V1ZtTFM3Ym5ySHh2MDdxCitheW4wK0k3dDJsUEphNkt0dU1ZenJUdy80VXRIR24zclJ5N1VMaDNpOFUwZCtTN1pIMG5hK1dvdStET0NuM0sKVnVlai9HQmZSSjVhRHFhVFB4S3dVMHJXZ0FWdnpFMTVtWmFUUG9ZbVdzcjlqc0VOWHpEUlhCbTczMVYwdG9SVApzQnlsVm5CVTRMLzBOck5VT0liNmdwa096NHozQUtlSGpUaGcxREVDMjhnQWk3Y3hraEdaQ1ozTWJCZmRtMVh4CnZqSmlqY01mSmQ1SjJld1c4UT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+      tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb2dJQkFBS0NBUUVBdG93bUl2NzF0eGdVdzZENW0wdnlVUVhDZXlSZ0pKUjhQRGJYUXRxNU5UaTZ6YjQwClltRVFNUFZQZWxEbEg2YzZTZ2c4NEVWdjJ0QXFJTnNHZ0xZUVNyajZ3YWZVNkl5ZEd4RjZaaUQ2dmRseE10TmoKTDNsK0p2UGd3OWttM1RpMnZkaE9pOVgxd1JadDVmczFONHMrcDVWOXp3RmZLSDk5Zi9tZTN2K0NhK2E1cU51bwpsQzlYeUVtQmxML2pYNkQ0NWNmSHBtcWUwZzlwa1VsOTVyOUFLbHhRVVEyUEV4czVtamlHRXFnZ080d0U5KzZSCnFCU0Z0MUZoK3huek5LVHExRWY5OC8yL2NWVUl3NjhteDVCdDBIbkxJVlFoYThmODRJVjBjZ1dKQ1k3TVhyaUsKZFFPU2p4WjlFVXFKRzZJdW1LV3E3bWZRWmI3RTFla1h5YUpjN3dJREFRQUJBb0lCQUFsMTJyanBrMG1URGxCdApJVUp5c0wvRWwzSnNzOGJYNy9CUWlONlRUTjZ3Qi9TNmVZMVJRejBtVEtGWTlZQjNwY1lXQm1nSGNUUW4xTTErClRGdVRSeGplcVVuRms2NjMvZ2VQRnlCbVBGaG1iQXZOM2xBTEpEbFh4S0hVN0Z5eDAxYWtLNHEzcjRlVS8vM1gKblByVGlDanJOVFpSa1JTRDBJV2R2MWpUTmQzcVpGSEFsRXljNmNmNWNyVWFsR1dYQkc0RHdhZnlyNVh3dXJpawpBdEVaSEtHMTlmUU5kSGM1MG1zaTRmSTdRaHhUWWJIK3VzNDBuT3JaTzFMT3VIM3gzSTFzTzJ2aVFHVFFsSXllCld1YWVjdHNCZUhrUDlkUHludzl6MnBHTkpFMFFMU1h0UXhFMEluOGUxTDE3eEk1a2JIb0JOM01EQ2w2cUowMlEKc1lFU0ZhRUNnWUVBekxNcFZxY3N5bmoxczlsTklBbzM3aTdyci81L1VwdEZTVjFpVXRSN3dvU0FUWTZ3SStwWgo2Z0ZVR1NIOTFTZjhES0xFblh2NjlmV1VxdnplZ3dqU2RFR1BxYmFvNmRPWlhuZ3BZWVBtR0xxRGdPSm5qYUJLCkdmaW1HRzNKbFM5VmZmTWZoZFpYbWNNNUtDd1EwWWxqZ1lmQStKeG9Mc0M5TGhEaU9XMGs3OGtDZ1lFQTVFdkUKSW5EYVpLbGh4WlNVTk5WLzdJUmdGUGI1eGtYSHdTRGFoQ1BZb1lZd0Y5VXhWTHlsc01tYk96TWxDVm4vK1YvbApMcjRndmpLVFpaM1Bmc1lTSWJuVFA5SFFBVEU5NWlSWnNxM1hROExCUEdXcDhLSGhzaVg0MVpCcjN4QmQzS0RICjR0RXp5Y0pFZENNR0lNKzB5LzlQSXJOZitjdEJ1REpSdldVNzh2Y0NnWUJSMFc2OWZ2YU5PMG5pQ0FJbXcwN1YKdWhWa2RCSEtIOXZTMWl1ZHRlWjl1bDVhSWFWUHhiVUlybDFCNm04OXlzeVk5Rm9vSkUwTUVJdkt5R1hiOUNQQwphZzRWSkxoaE5iMkFvQURTUkZrdEd5ZkMxVHZVeFBPNWE4UmYwVW9ZZ2lIbXhNMmR2aTJuZlB1VWpnQnU4RDVBCm9OVkZ5YVp1d1lVY0s0MXdyS3B0MlFLQmdIclJDK1lmWWs1UEZXdE80R0NBRHo3MWhCOGpNd0pvbmVzWE9wZG0KRlcvb0djMW9ndzU4SW9NMklvMjVtUTRyM2RxUnJXRDFKZlpNalNGWXdiMEkzODVIQXcvTlZ5S2RGQmpRcTNURgpzdzRnSXdiVUJwV084VFYrMmh4Q2d0WFJIejNIUFdHWGZFM3BkaHdvajI1dGIyMWpuM1lpbTlwdGI2Q2hhWG9ECmtUbkhBb0dBQ0xzSzJ1cWtaRnlCVWYweFEraDRLb1puOXhCazlOTEZNM0VCY1lONVF0MGZqak1NUHJNVkpUT2UKQ28yRnBGdFJNMDE2NkZMelNuUTNYSUNtd05QNTlic0MxdXhhYmdZb2VxSk9TK3M5QStsQ1N4TlRVbzRyTFVaKwpSMDBwQnNnTW05aUVVWDBGbDB2OWF3UzBhclE4dGlvUVM0TG8wWDg0dG5FYjRITDhTOWs9Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
+    kind: Secret
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-webhooks-cert
+      namespace: NAMESPACE
+    type: kubernetes.io/tls
+  35: |
+    apiVersion: admissionregistration.k8s.io/v1
+    kind: MutatingWebhookConfiguration
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: pods.thoras.ai
+    webhooks:
+      - admissionReviewVersions:
+          - v1
+        clientConfig:
+          caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKVENDQWcyZ0F3SUJBZ0lRWmtYbFVVRjE0NXN6OW9KdmNBS2w2VEFOQmdrcWhraUc5dzBCQVFzRkFEQWQKTVJzd0dRWURWUVFERXhKMGFHOXlZWE10ZDJWaWFHOXZhM010WTJFd0hoY05Nall3TVRBMk1UUTFPVEExV2hjTgpNell3TVRBME1UUTFPVEExV2pBZE1Sc3dHUVlEVlFRREV4SjBhRzl5WVhNdGQyVmlhRzl2YTNNdFkyRXdnZ0VpCk1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRRGF2ckUwVUsrRzAvR1RCbjIrQ21LcnVKeU8KbGt6YVlyUmIvSHMwVEFkdGRkL1NTS2I2VGhITWxBS3VJUXBSNTRIZjdjTjBHOE9KYnNGZ2FsNFRTNXltZ0RNMwp5U2U2LzloMUtta3VMQXN0WTVoVVZub21TMUhZcXg3WitiVmUwK2d0YU5XZmRaaHQwU256UWluRzdZRWNVWHF3ClRXK1p2SGxiSlgxWjhrbGlMLzM4ZWpNZmU3R0Nrd2ZNMkdCdGNJU21qdncvTDZhTUV2Q01DcXZTVVo0Q3E0akEKMUR4SXNXcWl2d3lRaTRYVGlNc1RLWC9CeXRrdG9BYnJ5UTJiZUxSSmsyV1VxUzZBcmNlcXo4dWg0TTloUlNDWQpTZjAwK3FRQnR4YWhmWERScll6MXlWN3FMRE1ucVZDUTlXUUx2bDRibGI5RjZ2ZW1pcFJpbng0T09HSVBBZ01CCkFBR2pZVEJmTUE0R0ExVWREd0VCL3dRRUF3SUNwREFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUIKQlFVSEF3SXdEd1lEVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WSFE0RUZnUVVaSXVKeUhYMU9qbkZDa0pjcTRacwpqNkx3RjhJd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFIcE9MUEdTamFFeGdDUU52ak9NaUY3a3hESXJ3dVpnCmROSEpEd2Z6MFhRa0l5OUtoOHJXZldibG5GUTdwbTcvWnk2dnpXcEIxRm5jUERpYUZMeWk0eEZRQmdVcUdmMmMKK3ZIMXFUYTQ2MjNWU0VWajRiUGI2VHM4Ti96NStVZ2ttNjBiQkJWV201Y1FtNEh4elcrKzZZT3ZEeGVGb0FpSApVN3hRQVlqR1FKM1gwNXQ2Ky92MnNYYzNHVzJMMXY3VTJCa3cwSFgxVWd4Y0FZeXZzc2RReDRRa1lqa1J0NndDCnBwTFdQYmx1UnlzTGlIREI5SkExS3pCVlpVQitxUTVlV3QyVVZOK0VESFFpNWpIZVUvak0vTDRsUFY2OWhLNGQKMGdtUFFEcXg2amlCNHV5cHEydmIyQVFDR3R4TTBReThOMC9odmtjK2VBQXNJdFNTY2xjRFlRST0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+          service:
+            name: thoras-webhooks
+            namespace: NAMESPACE
+            path: /mutate--v1-pod
+        failurePolicy: Ignore
+        name: pods.thoras.ai
+        rules:
+          - apiGroups:
+              - ""
+            apiVersions:
+              - v1
+            operations:
+              - CREATE
+            resources:
+              - pods
+            scope: Namespaced
+        sideEffects: None
+      - admissionReviewVersions:
+          - v1
+        clientConfig:
+          caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKVENDQWcyZ0F3SUJBZ0lRWmtYbFVVRjE0NXN6OW9KdmNBS2w2VEFOQmdrcWhraUc5dzBCQVFzRkFEQWQKTVJzd0dRWURWUVFERXhKMGFHOXlZWE10ZDJWaWFHOXZhM010WTJFd0hoY05Nall3TVRBMk1UUTFPVEExV2hjTgpNell3TVRBME1UUTFPVEExV2pBZE1Sc3dHUVlEVlFRREV4SjBhRzl5WVhNdGQyVmlhRzl2YTNNdFkyRXdnZ0VpCk1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRRGF2ckUwVUsrRzAvR1RCbjIrQ21LcnVKeU8KbGt6YVlyUmIvSHMwVEFkdGRkL1NTS2I2VGhITWxBS3VJUXBSNTRIZjdjTjBHOE9KYnNGZ2FsNFRTNXltZ0RNMwp5U2U2LzloMUtta3VMQXN0WTVoVVZub21TMUhZcXg3WitiVmUwK2d0YU5XZmRaaHQwU256UWluRzdZRWNVWHF3ClRXK1p2SGxiSlgxWjhrbGlMLzM4ZWpNZmU3R0Nrd2ZNMkdCdGNJU21qdncvTDZhTUV2Q01DcXZTVVo0Q3E0akEKMUR4SXNXcWl2d3lRaTRYVGlNc1RLWC9CeXRrdG9BYnJ5UTJiZUxSSmsyV1VxUzZBcmNlcXo4dWg0TTloUlNDWQpTZjAwK3FRQnR4YWhmWERScll6MXlWN3FMRE1ucVZDUTlXUUx2bDRibGI5RjZ2ZW1pcFJpbng0T09HSVBBZ01CCkFBR2pZVEJmTUE0R0ExVWREd0VCL3dRRUF3SUNwREFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUIKQlFVSEF3SXdEd1lEVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WSFE0RUZnUVVaSXVKeUhYMU9qbkZDa0pjcTRacwpqNkx3RjhJd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFIcE9MUEdTamFFeGdDUU52ak9NaUY3a3hESXJ3dVpnCmROSEpEd2Z6MFhRa0l5OUtoOHJXZldibG5GUTdwbTcvWnk2dnpXcEIxRm5jUERpYUZMeWk0eEZRQmdVcUdmMmMKK3ZIMXFUYTQ2MjNWU0VWajRiUGI2VHM4Ti96NStVZ2ttNjBiQkJWV201Y1FtNEh4elcrKzZZT3ZEeGVGb0FpSApVN3hRQVlqR1FKM1gwNXQ2Ky92MnNYYzNHVzJMMXY3VTJCa3cwSFgxVWd4Y0FZeXZzc2RReDRRa1lqa1J0NndDCnBwTFdQYmx1UnlzTGlIREI5SkExS3pCVlpVQitxUTVlV3QyVVZOK0VESFFpNWpIZVUvak0vTDRsUFY2OWhLNGQKMGdtUFFEcXg2amlCNHV5cHEydmIyQVFDR3R4TTBReThOMC9odmtjK2VBQXNJdFNTY2xjRFlRST0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+          service:
+            name: thoras-webhooks
+            namespace: NAMESPACE
+            path: /mutate-autoscaling-v1-scale
+        failurePolicy: Ignore
+        name: scale.thoras.ai
+        rules:
+          - apiGroups:
+              - '*'
+            apiVersions:
+              - '*'
+            operations:
+              - UPDATE
+            resources:
+              - '*/scale'
+            scope: Namespaced
+        sideEffects: None
+  36: |
+    apiVersion: admissionregistration.k8s.io/v1
+    kind: ValidatingWebhookConfiguration
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: validation.thoras.ai
+    webhooks:
+      - admissionReviewVersions:
+          - v1
+        clientConfig:
+          caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKVENDQWcyZ0F3SUJBZ0lRWmtYbFVVRjE0NXN6OW9KdmNBS2w2VEFOQmdrcWhraUc5dzBCQVFzRkFEQWQKTVJzd0dRWURWUVFERXhKMGFHOXlZWE10ZDJWaWFHOXZhM010WTJFd0hoY05Nall3TVRBMk1UUTFPVEExV2hjTgpNell3TVRBME1UUTFPVEExV2pBZE1Sc3dHUVlEVlFRREV4SjBhRzl5WVhNdGQyVmlhRzl2YTNNdFkyRXdnZ0VpCk1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRRGF2ckUwVUsrRzAvR1RCbjIrQ21LcnVKeU8KbGt6YVlyUmIvSHMwVEFkdGRkL1NTS2I2VGhITWxBS3VJUXBSNTRIZjdjTjBHOE9KYnNGZ2FsNFRTNXltZ0RNMwp5U2U2LzloMUtta3VMQXN0WTVoVVZub21TMUhZcXg3WitiVmUwK2d0YU5XZmRaaHQwU256UWluRzdZRWNVWHF3ClRXK1p2SGxiSlgxWjhrbGlMLzM4ZWpNZmU3R0Nrd2ZNMkdCdGNJU21qdncvTDZhTUV2Q01DcXZTVVo0Q3E0akEKMUR4SXNXcWl2d3lRaTRYVGlNc1RLWC9CeXRrdG9BYnJ5UTJiZUxSSmsyV1VxUzZBcmNlcXo4dWg0TTloUlNDWQpTZjAwK3FRQnR4YWhmWERScll6MXlWN3FMRE1ucVZDUTlXUUx2bDRibGI5RjZ2ZW1pcFJpbng0T09HSVBBZ01CCkFBR2pZVEJmTUE0R0ExVWREd0VCL3dRRUF3SUNwREFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUIKQlFVSEF3SXdEd1lEVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WSFE0RUZnUVVaSXVKeUhYMU9qbkZDa0pjcTRacwpqNkx3RjhJd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFIcE9MUEdTamFFeGdDUU52ak9NaUY3a3hESXJ3dVpnCmROSEpEd2Z6MFhRa0l5OUtoOHJXZldibG5GUTdwbTcvWnk2dnpXcEIxRm5jUERpYUZMeWk0eEZRQmdVcUdmMmMKK3ZIMXFUYTQ2MjNWU0VWajRiUGI2VHM4Ti96NStVZ2ttNjBiQkJWV201Y1FtNEh4elcrKzZZT3ZEeGVGb0FpSApVN3hRQVlqR1FKM1gwNXQ2Ky92MnNYYzNHVzJMMXY3VTJCa3cwSFgxVWd4Y0FZeXZzc2RReDRRa1lqa1J0NndDCnBwTFdQYmx1UnlzTGlIREI5SkExS3pCVlpVQitxUTVlV3QyVVZOK0VESFFpNWpIZVUvak0vTDRsUFY2OWhLNGQKMGdtUFFEcXg2amlCNHV5cHEydmIyQVFDR3R4TTBReThOMC9odmtjK2VBQXNJdFNTY2xjRFlRST0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+          service:
+            name: thoras-webhooks
+            namespace: NAMESPACE
+            path: /validate-thoras-ai-v1-aiscaletarget
+        failurePolicy: Ignore
+        name: ast-validation.thoras.ai
+        rules:
+          - apiGroups:
+              - thoras.ai
+            apiVersions:
+              - v1
+            operations:
+              - CREATE
+              - UPDATE
+            resources:
+              - aiscaletargets
+            scope: Namespaced
+        sideEffects: None
+        timeoutSeconds: 5
+      - admissionReviewVersions:
+          - v1
+        clientConfig:
+          caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKVENDQWcyZ0F3SUJBZ0lRWmtYbFVVRjE0NXN6OW9KdmNBS2w2VEFOQmdrcWhraUc5dzBCQVFzRkFEQWQKTVJzd0dRWURWUVFERXhKMGFHOXlZWE10ZDJWaWFHOXZhM010WTJFd0hoY05Nall3TVRBMk1UUTFPVEExV2hjTgpNell3TVRBME1UUTFPVEExV2pBZE1Sc3dHUVlEVlFRREV4SjBhRzl5WVhNdGQyVmlhRzl2YTNNdFkyRXdnZ0VpCk1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRRGF2ckUwVUsrRzAvR1RCbjIrQ21LcnVKeU8KbGt6YVlyUmIvSHMwVEFkdGRkL1NTS2I2VGhITWxBS3VJUXBSNTRIZjdjTjBHOE9KYnNGZ2FsNFRTNXltZ0RNMwp5U2U2LzloMUtta3VMQXN0WTVoVVZub21TMUhZcXg3WitiVmUwK2d0YU5XZmRaaHQwU256UWluRzdZRWNVWHF3ClRXK1p2SGxiSlgxWjhrbGlMLzM4ZWpNZmU3R0Nrd2ZNMkdCdGNJU21qdncvTDZhTUV2Q01DcXZTVVo0Q3E0akEKMUR4SXNXcWl2d3lRaTRYVGlNc1RLWC9CeXRrdG9BYnJ5UTJiZUxSSmsyV1VxUzZBcmNlcXo4dWg0TTloUlNDWQpTZjAwK3FRQnR4YWhmWERScll6MXlWN3FMRE1ucVZDUTlXUUx2bDRibGI5RjZ2ZW1pcFJpbng0T09HSVBBZ01CCkFBR2pZVEJmTUE0R0ExVWREd0VCL3dRRUF3SUNwREFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUIKQlFVSEF3SXdEd1lEVlIwVEFRSC9CQVV3QXdFQi96QWRCZ05WSFE0RUZnUVVaSXVKeUhYMU9qbkZDa0pjcTRacwpqNkx3RjhJd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFIcE9MUEdTamFFeGdDUU52ak9NaUY3a3hESXJ3dVpnCmROSEpEd2Z6MFhRa0l5OUtoOHJXZldibG5GUTdwbTcvWnk2dnpXcEIxRm5jUERpYUZMeWk0eEZRQmdVcUdmMmMKK3ZIMXFUYTQ2MjNWU0VWajRiUGI2VHM4Ti96NStVZ2ttNjBiQkJWV201Y1FtNEh4elcrKzZZT3ZEeGVGb0FpSApVN3hRQVlqR1FKM1gwNXQ2Ky92MnNYYzNHVzJMMXY3VTJCa3cwSFgxVWd4Y0FZeXZzc2RReDRRa1lqa1J0NndDCnBwTFdQYmx1UnlzTGlIREI5SkExS3pCVlpVQitxUTVlV3QyVVZOK0VESFFpNWpIZVUvak0vTDRsUFY2OWhLNGQKMGdtUFFEcXg2amlCNHV5cHEydmIyQVFDR3R4TTBReThOMC9odmtjK2VBQXNJdFNTY2xjRFlRST0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+          service:
+            name: thoras-webhooks
+            namespace: NAMESPACE
+            path: /validate-autoscaling-v1-scale
+        failurePolicy: Ignore
+        name: scale-validation.thoras.ai
+        rules:
+          - apiGroups:
+              - '*'
+            apiVersions:
+              - '*'
+            operations:
+              - UPDATE
+            resources:
+              - '*/scale'
+            scope: Namespaced
+        sideEffects: None
+        timeoutSeconds: 5
+  37: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-slm-api
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: thoras-slm-api
+      template:
+        metadata:
+          labels:
+            app: thoras-slm-api
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+            helm.sh/chart: thoras-4.7.0
+        spec:
+          containers:
+            - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-phi4-mini:TEST
+              imagePullPolicy: IfNotPresent
+              name: thoras-slm-api
+              ports:
+                - containerPort: 11434
+              resources:
+                limits:
+                  memory: 8192Mi
+                requests:
+                  cpu: 1024m
+                  memory: 4096Mi
+          serviceAccountName: thoras-slm-api
+  38: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-slm-api
+      namespace: NAMESPACE
+  39: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-slm-api
+      namespace: NAMESPACE
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: 11434
+      selector:
+        app: thoras-slm-api
+  40: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      annotations: null
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker
+      namespace: NAMESPACE
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: thoras-worker
+      template:
+        metadata:
+          annotations:
+            prometheus.io/path: /metrics
+            prometheus.io/port: "9102"
+            prometheus.io/scrape: "true"
+          labels:
+            app: thoras-worker
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+            helm.sh/chart: thoras-4.7.0
+        spec:
+          containers:
+            - command:
+                - /app/worker
+              env:
+                - name: DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      key: host
+                      name: thoras-timescale-password
+                - name: SERVICE_POSTGRESQL_DSN
+                  value: $(DATABASE_HOST)/thoras
+                - name: SERVICE_SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: webhookUrl
+                      name: thoras-slack
+                - name: SERVICE_SLACK_ERRORS_ENABLED
+                  value: "false"
+                - name: SERVICE_LOG_LEVEL
+                  value: info
+                - name: SERVICE_CLUSTER_NAME
+                  value: ""
+                - name: SERVICE_QUERIES_PER_SECOND
+                  value: "50"
+                - name: SERVICE_CHART_VERSION
+                  value: 4.7.0
+                - name: SERVICE_CHUNK_INTERVAL_UPDATER_DRY_RUN
+                  value: "false"
+                - name: SERVICE_ENABLE_FORECAST_QUEUE_DIRECT
+                  value: "true"
+                - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
+                  value: "false"
+                - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
+                  value: "false"
+                - name: SERVICE_COLLECTOR_MEM_REQUEST
+                  value: 3072Mi
+                - name: SERVICE_PORT
+                  value: "9102"
+                - name: SERVICE_ENABLE_FORECAST_AFFINITY
+                  value: "true"
+                - name: SERVICE_ENABLE_AST_VIEW_CACHE_REFRESH_WORKER
+                  value: "true"
+                - name: SERVICE_ENABLE_AST_VIEW_CACHE_STATE_RECONCILER_WORKER
+                  value: "true"
+                - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
+                  value: "true"
+                - name: SERVICE_COST_REFRESH_BATCH_SIZE
+                  value: "200"
+                - name: SERVICE_COST_REFRESH_MAX_CONCURRENCY
+                  value: "5"
+                - name: SERVICE_ENABLE_UNIFIED_AST_UTILIZATION_MONITOR
+                  value: "false"
+                - name: SERVICE_ENABLE_CLOUD_SYNC_WORKER
+                  value: "false"
+                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
+                  value: ""
+                - name: SERVICE_CLOUD_SYNC_BASE_URL
+                  value: https://console.staging.thoras.ai
+                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      key: clusterKey
+                      name: thoras-cloud-sync
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              imagePullPolicy: IfNotPresent
+              name: thoras-worker
+              ports:
+                - containerPort: 9102
+                  name: http-metrics
+              resources:
+                limits:
+                  memory: 2Gi
+                requests:
+                  cpu: 128m
+                  memory: 256Mi
+              volumeMounts:
+                - mountPath: /app/config.yaml
+                  name: monitor-config
+                  readOnly: true
+                  subPath: config.yaml
+          initContainers:
+            - args:
+                - |
+                  retries=0
+                  max_retries=48
+                  until [ $retries -ge $max_retries ]; do
+                    if pg_isready -q -d ${DATABASE_HOST}/thoras; then
+                      break
+                    else
+                      echo "postgres not ready"
+                      retries=$((retries+1))
+                      sleep 5
+                    fi
+                  done
+                  if [ $retries -ge $max_retries ]; then
+                    echo "Failed to connect to database after $max_retries retries"
+                    exit 1
+                  fi
+
+                  # Update the timescale extension first
+                  # Validate version format (only allow alphanumeric, dots, and hyphens)
+                  if ! echo "$EXTENSION_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+                    echo "Invalid extension version format: $EXTENSION_VERSION"
+                    exit 1
+                  fi
+                  /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '$EXTENSION_VERSION';"
+
+                  # run any migrations, accounting for upgrade/downgrade scenarios
+                  ./scripts/migrate_database.sh
+              command:
+                - /bin/sh
+                - -c
+              env:
+                - name: DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      key: host
+                      name: thoras-timescale-password
+                - name: DATABASE_URL
+                  value: $(DATABASE_HOST)/thoras?sslmode=disable
+                - name: EXTENSION_VERSION
+                  value: 2.24.0
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              name: wait-for-postgres
+          serviceAccountName: thoras-worker
+          volumes:
+            - configMap:
+                name: thoras-monitor-config
+              name: monitor-config
+  41: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker
+    rules:
+      - apiGroups:
+          - '*'
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+  42: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-worker
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: NAMESPACE
+  43: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - '*'
+  44: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-worker-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: NAMESPACE
+  45: |
+    apiVersion: v1
+    data:
+      clusterKey: ""
+    kind: Secret
+    metadata:
+      name: thoras-cloud-sync
+  46: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker
+      namespace: NAMESPACE
+  47: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker
+      namespace: NAMESPACE
+    spec:
+      ports:
+        - name: http-metrics
+          port: 9102
+          protocol: TCP
+          targetPort: 9102
+      selector:
+        app: thoras-worker
