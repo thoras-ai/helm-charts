@@ -1252,134 +1252,6 @@ Default matches snapshot:
       selector:
         app: thoras-operator
   32: |
-    apiVersion: v1
-    data:
-      ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKakNDQWc2Z0F3SUJBZ0lSQVBIcnE5SHVsYkEwWmZlUnhQdUV2bXN3RFFZSktvWklodmNOQVFFTEJRQXcKSFRFYk1Ca0dBMVVFQXhNU2RHaHZjbUZ6TFhkbFltaHZiMnR6TFdOaE1CNFhEVEkyTURFd05qRTJNVEkwTkZvWApEVE0yTURFd05ERTJNVEkwTkZvd0hURWJNQmtHQTFVRUF4TVNkR2h2Y21GekxYZGxZbWh2YjJ0ekxXTmhNSUlCCklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEwUTFrMzNoelkweFlhNUhVQ1BMSjdXelAKWVg0SHZIVGg0UVkrc29jZ3czZTNSTFhvZmt5RTFDelI0bHh4VnRkekwzMEh2eUFKeFIvZWtTaDY1ZVNMMlNOcAorQ2Yzd2RTdW5vZEtndG1IOHUyekpIemxkNlVhL0hKdjk0VEVMNG8wd3lVL1pnTzc2MG00NHlnVE1sZmptb0l6Cm8vSG0zU1ZKbUtRSkl0aEZ5cmc5Yk9nZDZyNTdGb2RDN3JkZ0Q2Sm9jaUxSaHQxMHNHKzRRTHZpTjdZVjA5aEQKbUpTdGZLUVA4SVlVNVNmbWlWNWFOQnRpdkVmd3ZVMU83ci90UlVaZjlKdC9PMnA3K0F6cldlTTkweTM0ZmdLTApRWWI4aWFyaWczRUpLZ1drSWdKazlZa1VJZzZ0eUtsUFE4bFZnZTlVQ3NNVmtyb0Y1RnRORWZyN3ZaS1Nkd0lECkFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0cKQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGRW9hSXQydWJSditOWUVUN05wRAo5UnlwdjVDd01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQ3U0UURnSlFKcnBGMDZtYVhQb09ERWdrbExKa1FsCk9OZkxSL1RnMjdMZjJKclpvcWZienFkeVVadVdvaHUrQnB6N3VOb3JLeFdoQnNsVFRaMi9oc0dBeUdRQjRYS2kKZGhtRXZ3SFQ1dVdyRUdLZXh0NGNvalU3TllvRGtjZWFPVHBHUjl0SG4wWjFIbVVkdU95K0ZDaTBwYjYwRWZDKwowQUdIWWtMUGZMZUZWM1grdTNYZS9GUjhlZ0IyY2poaUY0WlpUclJEUFdtRjVpREhtUVoySXhwMlRqUXZtM25hCk1ZY3V4aXViemErdDZKUk04MkNSb0JJS21DdHhZdkZVTzVsZEhZK3NtdzhNVVYzSWcwTVluLzVJbW5DditVYVUKZ2VSVkYxMTMwTG84Vm5uSW9DczZUZklRb3pSUUxyY09ybmRRV1J0UDhNamF4YnBFMHBPb2NLTk4KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
-      tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURhRENDQWxDZ0F3SUJBZ0lRS2E4MC9jeUxDS1hhTHpUWnp3NzJFREFOQmdrcWhraUc5dzBCQVFzRkFEQWQKTVJzd0dRWURWUVFERXhKMGFHOXlZWE10ZDJWaWFHOXZhM010WTJFd0hoY05Nall3TVRBMk1UWXhNalEwV2hjTgpNell3TVRBME1UWXhNalEwV2pBYU1SZ3dGZ1lEVlFRREV3OTBhRzl5WVhNdGQyVmlhRzl2YTNNd2dnRWlNQTBHCkNTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFDYXhDSFFuWU9oak9mVDg2eGVOVnhZbTk4Q09ZZEEKVGhyZVMyTkR5SDNrWUJpMnJ6bVFFUWU0aEhsRlpjbmlZM0g4MFpsMG41TmRrTktrWGFLdEh5Z2VmRy9ncTIrbgp3KzFGSm1ldXNoamlWU2o3WGcvMUJqajFhMWdUZ1A5S1RibU9Td2NoQXVEbmZFVnIzM1ZvTVk0MHAvSTRydXVGCllySG4veXNvUFRCeGJiV2ZidjFUWjB5My9pU3JxQVNFbWJxTS8rdDlZbmxFTEE4K1BMUnluM0xoYkxEQTduejAKNEtjQnNjYTdpelI5b0h5bzREbW9yclhJMTlITlhXZG11RkFtYXZRbWd0Sy9VS2M3QlEyWmJqbnFTWEdmOSt2LwpPdEs1R0NWdG1ncGVudHFlQlBmbllkaUg1Yk9SUXFwNlEzSVVFMm5mR0paOER0WGFiRHhhR1N1ekFnTUJBQUdqCmdhWXdnYU13RGdZRFZSMFBBUUgvQkFRREFnV2dNQjBHQTFVZEpRUVdNQlFHQ0NzR0FRVUZCd01CQmdnckJnRUYKQlFjREFqQU1CZ05WSFJNQkFmOEVBakFBTUI4R0ExVWRJd1FZTUJhQUZFb2FJdDJ1YlJ2K05ZRVQ3TnBEOVJ5cAp2NUN3TUVNR0ExVWRFUVE4TURxQ0dYUm9iM0poY3kxM1pXSm9iMjlyY3k1T1FVMUZVMUJCUTBXQ0hYUm9iM0poCmN5MTNaV0pvYjI5cmN5NU9RVTFGVTFCQlEwVXVjM1pqTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFBV2JQTTAKTjUvSUtNRmkrTzNyOUJCS2owbVFSb1dLUWR6cjhLWEE1bVZvbGxzWDg3U1ZKeE5PS05jckNhQ2VSN0VhR3Nlbwp2UnFxK1BvNThLQnJQMDlWY3l1cEw4cnlOVlRiZ2FEY3l2dDhUQUVNQ2FIekFlb0NNczhFSG1ObVZlZ1c4d3U0CjEvbzBBekN0ZGgvWWhER2VKWU1uRmJjdG8zeU5SYVBoZDkwK1ZUSUQvb1RTWTZueUlhcGRsL0NtUkozK0sxSlAKcy8va2xJREZiWUJvNlJUU2szajJ6RVgzYjZndTFUS0xFY3hqU3YwUXRvaE10TnUyNllLdHRNMEM3c1lMekxxQQpFdFkvTVkva2lXeVlZMFFubEg2c2hGaVh2R3VqVFFZb0h1R2lFRFlCS1o4STRMck9jRTR3dGVOV0NvbTBkeHZUCjhqdURXNXpjWTZOeG5veVcKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
-      tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb2dJQkFBS0NBUUVBbXNRaDBKMkRvWXpuMC9Pc1hqVmNXSnZmQWptSFFFNGEza3RqUThoOTVHQVl0cTg1CmtCRUh1SVI1UldYSjRtTngvTkdaZEorVFhaRFNwRjJpclI4b0hueHY0S3R2cDhQdFJTWm5ycklZNGxVbysxNFAKOVFZNDlXdFlFNEQvU2syNWprc0hJUUxnNTN4RmE5OTFhREdPTktmeU9LN3JoV0t4NS84cktEMHdjVzIxbjI3OQpVMmRNdC80a3E2Z0VoSm02alAvcmZXSjVSQ3dQUGp5MGNwOXk0V3l3d081ODlPQ25BYkhHdTRzMGZhQjhxT0E1CnFLNjF5TmZSelYxblpyaFFKbXIwSm9MU3YxQ25Pd1VObVc0NTZrbHhuL2ZyL3pyU3VSZ2xiWm9LWHA3YW5nVDMKNTJIWWgrV3prVUtxZWtOeUZCTnAzeGlXZkE3VjJtdzhXaGtyc3dJREFRQUJBb0lCQUJ4RGdrdG5ZTEVobXZyTgpydVpiaDF4VlJ2SlFrRDh4cEYyQlZnVDhlZVU1bVhuUFlVdEttT2JkSm9xQ2JzNk55N1RZa0ZaSWlEQ1hzS2c4CncyY3JYL2ZGVU9jdVY4dERFRE5ITXJzb0lqdy9RaWM1dzk5Qy9pYnZyaHVOdk5HVWhUVVR4WjhGT0E1K1Z1MCsKMTJHcVh5YUZuMG96dzZaTjRtQ1ViSXpDTS9VYXc5TU5PdUxtNkxRYldJTjV3VWV2Z2l1MnVUUFZTVTRMbUl1Vgp4NzdzbTM2R2RFbEViYUZBazBzVzRSSkZDT2JodlRTa3pKZVY4YytiNzdiMFQvMVV4YWZ6YjMvb2p2SVgxOEtJCkRRY3QvR00wdVZpdFVWK1FVUnY4SlRhaHFiT1JaYkw4SFI1V3RTVGhMOWRiMG0rSEtndnJtSjNJRDZLSWdhOVIKbFBzTGFha0NnWUVBeGt6ZmtVVDlEdzR6ck9Sc2VMUzBaMUFJQStUL3lDRlEzUE43enY4UWhydjJVekpqbnRocwo5SG5LWk9nQW9YTGdoMmtIL3Y4YjN4NmRQUGQweTFJWWxCV0hWZ0hOUFMrblZheXFwMFpWVzRsdTNwQ213dm5jCkNRUmJUMnpqeDM3ZDRGVERNYmI0SmhDSUtFeDViSDIra0ZTcllaNUowQXFpU0l1U3p1ZkpWaHNDZ1lFQXg4eDEKTGJRQmpEeTIxR3QvZ1hpM2dGS0t2QXVKT04zZ2xheWlyL0QxRHhnS3BERGFHTEZzMzRmanN4L2poNUY5Wnh1cwp5RFd4L3BrVWNwMWdLdG91cTR4c0QvTVFKb0QxN1pzUUFYMWFEVHBXOUFLQVQvRVJUUUp6YkVwQWEyRjZtYjlNCmZQUGFMMDNhSDFDa29MTzZnTy9rcmJ4SkQ0U3BMUUZ2WWYxZ3Vra0NnWUJMMURlbDBIRElvaENtcTQ3RE5hN0sKMXZMSnNuY1JLNVJGZWFJOWpKSGdROTQxQUU3Ui9rYmowZkxRVlZ0d1lZSjBwWGhXVFcxMkM3bnJCMkdWSW1hZApzZ0hYcE1hOEFBNElHQWdHQVVKQXg3UXF6YnZIVVU2UDhDZU9uc0FYbUc3MkN0TzluZzhVVnp3SjFQeVZ2UnZ6CkN6MmlEYXFDTUo3UUNQZHh3WGJmUXdLQmdCbFV4Y0orb1BlYnR2NWxocXZ1bHkxUXljQWZvazB3YkVudHNrNm0KT1J1cHk2ZVhmZjlGZDIwN3VGVzhoRWRxM2NCVjFPa3BUYURlM2FYT2FDUG10NllPVHFFVEN3Z21yNGRwY25VTgo1SDNxMkoxbE44bHE0ZXVtbE9XMDRFZjgrdU5GU3JoSTNtL0M2aFd3VHI4RkttOHdld2kvNTI5dFBWbTBaZC9CCmxTTHBBb0dBWWFhU2pTMWZVMS9wWm9GYmdsaUdLUFVFQm1ic2lTR1dDRXdjYzR5MzFsRThxRmwxejFBRXU4MmMKNm9HczVKK3lvcUtPQ0hiRjZoNXgwRzJ4QzQ4b2kybnVTK1lqMjcrT3F4TmZ2bk94cTVLZEFUMDV1TkdEMnErSworSXl4dE5MY3pZa2x1ZWMvTTJLN2UvWnVYbmViM2xzZE5iZEJBclMwSXM5aVZvdjliVzA9Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
-    kind: Secret
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-webhooks-cert
-      namespace: NAMESPACE
-    type: kubernetes.io/tls
-  33: |
-    apiVersion: admissionregistration.k8s.io/v1
-    kind: MutatingWebhookConfiguration
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: pods.thoras.ai
-    webhooks:
-      - admissionReviewVersions:
-          - v1
-        clientConfig:
-          caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKakNDQWc2Z0F3SUJBZ0lSQVBIcnE5SHVsYkEwWmZlUnhQdUV2bXN3RFFZSktvWklodmNOQVFFTEJRQXcKSFRFYk1Ca0dBMVVFQXhNU2RHaHZjbUZ6TFhkbFltaHZiMnR6TFdOaE1CNFhEVEkyTURFd05qRTJNVEkwTkZvWApEVE0yTURFd05ERTJNVEkwTkZvd0hURWJNQmtHQTFVRUF4TVNkR2h2Y21GekxYZGxZbWh2YjJ0ekxXTmhNSUlCCklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEwUTFrMzNoelkweFlhNUhVQ1BMSjdXelAKWVg0SHZIVGg0UVkrc29jZ3czZTNSTFhvZmt5RTFDelI0bHh4VnRkekwzMEh2eUFKeFIvZWtTaDY1ZVNMMlNOcAorQ2Yzd2RTdW5vZEtndG1IOHUyekpIemxkNlVhL0hKdjk0VEVMNG8wd3lVL1pnTzc2MG00NHlnVE1sZmptb0l6Cm8vSG0zU1ZKbUtRSkl0aEZ5cmc5Yk9nZDZyNTdGb2RDN3JkZ0Q2Sm9jaUxSaHQxMHNHKzRRTHZpTjdZVjA5aEQKbUpTdGZLUVA4SVlVNVNmbWlWNWFOQnRpdkVmd3ZVMU83ci90UlVaZjlKdC9PMnA3K0F6cldlTTkweTM0ZmdLTApRWWI4aWFyaWczRUpLZ1drSWdKazlZa1VJZzZ0eUtsUFE4bFZnZTlVQ3NNVmtyb0Y1RnRORWZyN3ZaS1Nkd0lECkFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0cKQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGRW9hSXQydWJSditOWUVUN05wRAo5UnlwdjVDd01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQ3U0UURnSlFKcnBGMDZtYVhQb09ERWdrbExKa1FsCk9OZkxSL1RnMjdMZjJKclpvcWZienFkeVVadVdvaHUrQnB6N3VOb3JLeFdoQnNsVFRaMi9oc0dBeUdRQjRYS2kKZGhtRXZ3SFQ1dVdyRUdLZXh0NGNvalU3TllvRGtjZWFPVHBHUjl0SG4wWjFIbVVkdU95K0ZDaTBwYjYwRWZDKwowQUdIWWtMUGZMZUZWM1grdTNYZS9GUjhlZ0IyY2poaUY0WlpUclJEUFdtRjVpREhtUVoySXhwMlRqUXZtM25hCk1ZY3V4aXViemErdDZKUk04MkNSb0JJS21DdHhZdkZVTzVsZEhZK3NtdzhNVVYzSWcwTVluLzVJbW5DditVYVUKZ2VSVkYxMTMwTG84Vm5uSW9DczZUZklRb3pSUUxyY09ybmRRV1J0UDhNamF4YnBFMHBPb2NLTk4KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
-          service:
-            name: thoras-webhooks
-            namespace: NAMESPACE
-            path: /mutate--v1-pod
-        failurePolicy: Ignore
-        name: pods.thoras.ai
-        rules:
-          - apiGroups:
-              - ""
-            apiVersions:
-              - v1
-            operations:
-              - CREATE
-            resources:
-              - pods
-            scope: Namespaced
-        sideEffects: None
-      - admissionReviewVersions:
-          - v1
-        clientConfig:
-          caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKakNDQWc2Z0F3SUJBZ0lSQVBIcnE5SHVsYkEwWmZlUnhQdUV2bXN3RFFZSktvWklodmNOQVFFTEJRQXcKSFRFYk1Ca0dBMVVFQXhNU2RHaHZjbUZ6TFhkbFltaHZiMnR6TFdOaE1CNFhEVEkyTURFd05qRTJNVEkwTkZvWApEVE0yTURFd05ERTJNVEkwTkZvd0hURWJNQmtHQTFVRUF4TVNkR2h2Y21GekxYZGxZbWh2YjJ0ekxXTmhNSUlCCklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEwUTFrMzNoelkweFlhNUhVQ1BMSjdXelAKWVg0SHZIVGg0UVkrc29jZ3czZTNSTFhvZmt5RTFDelI0bHh4VnRkekwzMEh2eUFKeFIvZWtTaDY1ZVNMMlNOcAorQ2Yzd2RTdW5vZEtndG1IOHUyekpIemxkNlVhL0hKdjk0VEVMNG8wd3lVL1pnTzc2MG00NHlnVE1sZmptb0l6Cm8vSG0zU1ZKbUtRSkl0aEZ5cmc5Yk9nZDZyNTdGb2RDN3JkZ0Q2Sm9jaUxSaHQxMHNHKzRRTHZpTjdZVjA5aEQKbUpTdGZLUVA4SVlVNVNmbWlWNWFOQnRpdkVmd3ZVMU83ci90UlVaZjlKdC9PMnA3K0F6cldlTTkweTM0ZmdLTApRWWI4aWFyaWczRUpLZ1drSWdKazlZa1VJZzZ0eUtsUFE4bFZnZTlVQ3NNVmtyb0Y1RnRORWZyN3ZaS1Nkd0lECkFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0cKQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGRW9hSXQydWJSditOWUVUN05wRAo5UnlwdjVDd01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQ3U0UURnSlFKcnBGMDZtYVhQb09ERWdrbExKa1FsCk9OZkxSL1RnMjdMZjJKclpvcWZienFkeVVadVdvaHUrQnB6N3VOb3JLeFdoQnNsVFRaMi9oc0dBeUdRQjRYS2kKZGhtRXZ3SFQ1dVdyRUdLZXh0NGNvalU3TllvRGtjZWFPVHBHUjl0SG4wWjFIbVVkdU95K0ZDaTBwYjYwRWZDKwowQUdIWWtMUGZMZUZWM1grdTNYZS9GUjhlZ0IyY2poaUY0WlpUclJEUFdtRjVpREhtUVoySXhwMlRqUXZtM25hCk1ZY3V4aXViemErdDZKUk04MkNSb0JJS21DdHhZdkZVTzVsZEhZK3NtdzhNVVYzSWcwTVluLzVJbW5DditVYVUKZ2VSVkYxMTMwTG84Vm5uSW9DczZUZklRb3pSUUxyY09ybmRRV1J0UDhNamF4YnBFMHBPb2NLTk4KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
-          service:
-            name: thoras-webhooks
-            namespace: NAMESPACE
-            path: /mutate-autoscaling-v1-scale
-        failurePolicy: Ignore
-        name: scale.thoras.ai
-        rules:
-          - apiGroups:
-              - '*'
-            apiVersions:
-              - '*'
-            operations:
-              - UPDATE
-            resources:
-              - '*/scale'
-            scope: Namespaced
-        sideEffects: None
-  34: |
-    apiVersion: admissionregistration.k8s.io/v1
-    kind: ValidatingWebhookConfiguration
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: validation.thoras.ai
-    webhooks:
-      - admissionReviewVersions:
-          - v1
-        clientConfig:
-          caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKakNDQWc2Z0F3SUJBZ0lSQVBIcnE5SHVsYkEwWmZlUnhQdUV2bXN3RFFZSktvWklodmNOQVFFTEJRQXcKSFRFYk1Ca0dBMVVFQXhNU2RHaHZjbUZ6TFhkbFltaHZiMnR6TFdOaE1CNFhEVEkyTURFd05qRTJNVEkwTkZvWApEVE0yTURFd05ERTJNVEkwTkZvd0hURWJNQmtHQTFVRUF4TVNkR2h2Y21GekxYZGxZbWh2YjJ0ekxXTmhNSUlCCklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEwUTFrMzNoelkweFlhNUhVQ1BMSjdXelAKWVg0SHZIVGg0UVkrc29jZ3czZTNSTFhvZmt5RTFDelI0bHh4VnRkekwzMEh2eUFKeFIvZWtTaDY1ZVNMMlNOcAorQ2Yzd2RTdW5vZEtndG1IOHUyekpIemxkNlVhL0hKdjk0VEVMNG8wd3lVL1pnTzc2MG00NHlnVE1sZmptb0l6Cm8vSG0zU1ZKbUtRSkl0aEZ5cmc5Yk9nZDZyNTdGb2RDN3JkZ0Q2Sm9jaUxSaHQxMHNHKzRRTHZpTjdZVjA5aEQKbUpTdGZLUVA4SVlVNVNmbWlWNWFOQnRpdkVmd3ZVMU83ci90UlVaZjlKdC9PMnA3K0F6cldlTTkweTM0ZmdLTApRWWI4aWFyaWczRUpLZ1drSWdKazlZa1VJZzZ0eUtsUFE4bFZnZTlVQ3NNVmtyb0Y1RnRORWZyN3ZaS1Nkd0lECkFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0cKQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGRW9hSXQydWJSditOWUVUN05wRAo5UnlwdjVDd01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQ3U0UURnSlFKcnBGMDZtYVhQb09ERWdrbExKa1FsCk9OZkxSL1RnMjdMZjJKclpvcWZienFkeVVadVdvaHUrQnB6N3VOb3JLeFdoQnNsVFRaMi9oc0dBeUdRQjRYS2kKZGhtRXZ3SFQ1dVdyRUdLZXh0NGNvalU3TllvRGtjZWFPVHBHUjl0SG4wWjFIbVVkdU95K0ZDaTBwYjYwRWZDKwowQUdIWWtMUGZMZUZWM1grdTNYZS9GUjhlZ0IyY2poaUY0WlpUclJEUFdtRjVpREhtUVoySXhwMlRqUXZtM25hCk1ZY3V4aXViemErdDZKUk04MkNSb0JJS21DdHhZdkZVTzVsZEhZK3NtdzhNVVYzSWcwTVluLzVJbW5DditVYVUKZ2VSVkYxMTMwTG84Vm5uSW9DczZUZklRb3pSUUxyY09ybmRRV1J0UDhNamF4YnBFMHBPb2NLTk4KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
-          service:
-            name: thoras-webhooks
-            namespace: NAMESPACE
-            path: /validate-thoras-ai-v1-aiscaletarget
-        failurePolicy: Ignore
-        name: ast-validation.thoras.ai
-        rules:
-          - apiGroups:
-              - thoras.ai
-            apiVersions:
-              - v1
-            operations:
-              - CREATE
-              - UPDATE
-            resources:
-              - aiscaletargets
-            scope: Namespaced
-        sideEffects: None
-        timeoutSeconds: 5
-      - admissionReviewVersions:
-          - v1
-        clientConfig:
-          caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKakNDQWc2Z0F3SUJBZ0lSQVBIcnE5SHVsYkEwWmZlUnhQdUV2bXN3RFFZSktvWklodmNOQVFFTEJRQXcKSFRFYk1Ca0dBMVVFQXhNU2RHaHZjbUZ6TFhkbFltaHZiMnR6TFdOaE1CNFhEVEkyTURFd05qRTJNVEkwTkZvWApEVE0yTURFd05ERTJNVEkwTkZvd0hURWJNQmtHQTFVRUF4TVNkR2h2Y21GekxYZGxZbWh2YjJ0ekxXTmhNSUlCCklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEwUTFrMzNoelkweFlhNUhVQ1BMSjdXelAKWVg0SHZIVGg0UVkrc29jZ3czZTNSTFhvZmt5RTFDelI0bHh4VnRkekwzMEh2eUFKeFIvZWtTaDY1ZVNMMlNOcAorQ2Yzd2RTdW5vZEtndG1IOHUyekpIemxkNlVhL0hKdjk0VEVMNG8wd3lVL1pnTzc2MG00NHlnVE1sZmptb0l6Cm8vSG0zU1ZKbUtRSkl0aEZ5cmc5Yk9nZDZyNTdGb2RDN3JkZ0Q2Sm9jaUxSaHQxMHNHKzRRTHZpTjdZVjA5aEQKbUpTdGZLUVA4SVlVNVNmbWlWNWFOQnRpdkVmd3ZVMU83ci90UlVaZjlKdC9PMnA3K0F6cldlTTkweTM0ZmdLTApRWWI4aWFyaWczRUpLZ1drSWdKazlZa1VJZzZ0eUtsUFE4bFZnZTlVQ3NNVmtyb0Y1RnRORWZyN3ZaS1Nkd0lECkFRQUJvMkV3WHpBT0JnTlZIUThCQWY4RUJBTUNBcVF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0cKQVFVRkJ3TUNNQThHQTFVZEV3RUIvd1FGTUFNQkFmOHdIUVlEVlIwT0JCWUVGRW9hSXQydWJSditOWUVUN05wRAo5UnlwdjVDd01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQ3U0UURnSlFKcnBGMDZtYVhQb09ERWdrbExKa1FsCk9OZkxSL1RnMjdMZjJKclpvcWZienFkeVVadVdvaHUrQnB6N3VOb3JLeFdoQnNsVFRaMi9oc0dBeUdRQjRYS2kKZGhtRXZ3SFQ1dVdyRUdLZXh0NGNvalU3TllvRGtjZWFPVHBHUjl0SG4wWjFIbVVkdU95K0ZDaTBwYjYwRWZDKwowQUdIWWtMUGZMZUZWM1grdTNYZS9GUjhlZ0IyY2poaUY0WlpUclJEUFdtRjVpREhtUVoySXhwMlRqUXZtM25hCk1ZY3V4aXViemErdDZKUk04MkNSb0JJS21DdHhZdkZVTzVsZEhZK3NtdzhNVVYzSWcwTVluLzVJbW5DditVYVUKZ2VSVkYxMTMwTG84Vm5uSW9DczZUZklRb3pSUUxyY09ybmRRV1J0UDhNamF4YnBFMHBPb2NLTk4KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
-          service:
-            name: thoras-webhooks
-            namespace: NAMESPACE
-            path: /validate-autoscaling-v1-scale
-        failurePolicy: Ignore
-        name: scale-validation.thoras.ai
-        rules:
-          - apiGroups:
-              - '*'
-            apiVersions:
-              - '*'
-            operations:
-              - UPDATE
-            resources:
-              - '*/scale'
-            scope: Namespaced
-        sideEffects: None
-        timeoutSeconds: 5
-  35: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1419,7 +1291,7 @@ Default matches snapshot:
                   cpu: 1024m
                   memory: 4096Mi
           serviceAccountName: thoras-slm-api
-  36: |
+  33: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1433,7 +1305,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-slm-api
       namespace: NAMESPACE
-  37: |
+  34: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1453,7 +1325,7 @@ Default matches snapshot:
           targetPort: 11434
       selector:
         app: thoras-slm-api
-  38: |
+  35: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1614,7 +1486,7 @@ Default matches snapshot:
             - configMap:
                 name: thoras-monitor-config
               name: monitor-config
-  39: |
+  36: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1634,7 +1506,7 @@ Default matches snapshot:
           - get
           - list
           - watch
-  40: |
+  37: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1654,7 +1526,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  41: |
+  38: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1673,7 +1545,7 @@ Default matches snapshot:
           - '*'
         verbs:
           - '*'
-  42: |
+  39: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1693,7 +1565,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  43: |
+  40: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1707,7 +1579,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: NAMESPACE
-  44: |
+  41: |
     apiVersion: v1
     kind: Service
     metadata:

@@ -4,7 +4,6 @@ templates:
   - "*/service-account.yaml"
   - "*/rbac.yaml"
   - "*/service.yaml"
-  - "*/webhooks.yaml"
 set:
   thorasVersion: TEST
   imageCredentials:
