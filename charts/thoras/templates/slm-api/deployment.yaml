@@ -20,8 +20,8 @@ spec:
       labels:
         app: thoras-slm-api
         {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasSlmAgent.labels }}
-          {{- toYaml . | nindent 8 }}
+        {{- if or (.Values.labels) (.Values.thorasSlmAgent.labels) }}
+          {{- mustMerge .Values.thorasSlmAgent.labels .Values.labels | toYaml | nindent 8 }}
         {{- end }}
       {{- with .Values.thorasSlmAgent.podAnnotations }}
       annotations:

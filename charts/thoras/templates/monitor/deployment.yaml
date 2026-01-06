@@ -7,6 +7,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
@@ -17,8 +20,8 @@ spec:
       labels:
         app: thoras-monitor
         {{- include "thoras.labels" . | nindent 8 }}
-        {{- with .Values.thorasMonitor.labels }}
-          {{- toYaml . | nindent 8 }}
+        {{- if or (.Values.labels) (.Values.thorasMonitor.labels) }}
+          {{- mustMerge .Values.thorasMonitor.labels .Values.labels | toYaml | nindent 8 }}
         {{- end }}
       {{- if or (not .Values.thorasMonitor.unittesting) .Values.thorasMonitor.podAnnotations }}
       annotations:

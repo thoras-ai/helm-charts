@@ -10,8 +10,8 @@ metadata:
   {{- end }}
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
-    {{- with .Values.thorasDashboard.labels }}
-      {{- toYaml . | nindent 4 }}
+    {{- if or (.Values.labels) (.Values.thorasDashboard.labels) }}
+      {{- mustMerge .Values.thorasDashboard.labels .Values.labels | toYaml | nindent 4 }}
     {{- end }}
 spec:
 {{- if (or (eq .Values.thorasDashboard.service.type "ClusterIP") (empty .Values.thorasDashboard.service.type)) }}
