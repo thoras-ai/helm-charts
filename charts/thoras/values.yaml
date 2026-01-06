@@ -265,6 +265,14 @@ thorasAgent:
   containerPort: 9101
   podAnnotations: {}
   labels: {}
+  resources:
+    limits:
+     cpu: "100m"
+     memory: "128Mi"
+    requests:
+     cpu: "100m"
+     memory: "128Mi"
+  securityContext: {}
 
 thorasReasoning:
   connectors:
