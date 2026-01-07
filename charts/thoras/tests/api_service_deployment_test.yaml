@@ -77,3 +77,52 @@ tests:
       - equal:
           path: spec.template.spec.initContainers[0].env[?(@.name == 'EXTENSION_VERSION')].value
           value: "2.24.0"
+  - it: Should enable request and limit overrides
+    set:
+      thorasApiServerV2:
+        requests:
+          memory: "512Mi"
+          cpu: "500m"
+          hugepages-1Gi: 2Gi
+        limits:
+          memory: "1Gi"
+          cpu: "1"
+          hugepages-1Gi: 2Gi
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[?(@.name == 'thoras-v2-api-server')].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+              hugepages-1Gi: "2Gi"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+              hugepages-1Gi: "2Gi"
+  - it: Can override resources block
+    set:
+      thorasApiServerV2:
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+            hugepages-1Gi: "2Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+            hugepages-1Gi: "2Gi"
+    chart:
+      version: "4.7.0"
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[?(@.name == 'thoras-v2-api-server')].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+              hugepages-1Gi: "2Gi"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+              hugepages-1Gi: "2Gi"

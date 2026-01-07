@@ -160,12 +160,13 @@ spec:
           httpGet:
             path: /health
             port: {{ .Values.thorasApiServerV2.containerPort }}
+        {{- if .Values.thorasApiServerV2.resources }}
+        resources: {{ .Values.thorasApiServerV2.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
-          limits:
-            memory: {{ .Values.thorasApiServerV2.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasApiServerV2.requests.cpu }}
-            memory: {{ .Values.thorasApiServerV2.requests.memory }}
+          limits: {{ .Values.thorasApiServerV2.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasApiServerV2.requests | toYaml | nindent 12 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

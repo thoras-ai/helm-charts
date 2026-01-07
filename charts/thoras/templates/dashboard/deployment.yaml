@@ -49,12 +49,13 @@ spec:
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
+        {{- if .Values.thorasDashboard.resources }}
+        resources: {{ .Values.thorasDashboard.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
-          limits:
-            memory: {{ .Values.thorasDashboard.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasDashboard.requests.cpu }}
-            memory: {{ .Values.thorasDashboard.requests.memory }}
+          limits: {{ .Values.thorasDashboard.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasDashboard.requests | toYaml | nindent 12 }}
+        {{- end }}
         volumeMounts:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf
@@ -68,12 +69,13 @@ spec:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
+        {{- if .Values.thorasDashboard.resources }}
+        resources: {{ .Values.thorasDashboard.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
-          limits:
-            memory: {{ .Values.thorasDashboard.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasDashboard.requests.cpu }}
-            memory: {{ .Values.thorasDashboard.requests.memory }}
+          limits: {{ .Values.thorasDashboard.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasDashboard.requests | toYaml | nindent 12 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
