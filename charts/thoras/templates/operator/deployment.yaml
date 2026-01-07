@@ -64,14 +64,6 @@ spec:
                 name: thoras-slack
                 key: webhookUrl
             {{- end }}
-          - name: "SERVICE_FORECAST_RESOURCE_REQUESTS_CPU"
-            value: {{ .Values.thorasForecast.requests.cpu | quote }}
-          - name: "SERVICE_FORECAST_RESOURCE_LIMITS_CPU"
-            value: {{ .Values.thorasForecast.limits.cpu | quote }}
-          - name: "SERVICE_FORECAST_RESOURCE_REQUESTS_MEMORY"
-            value: {{ .Values.thorasForecast.requests.memory | quote }}
-          - name: "SERVICE_FORECAST_RESOURCE_LIMITS_MEMORY"
-            value: {{ .Values.thorasForecast.limits.memory | quote }}
           - name: THORAS_NS
             valueFrom:
               fieldRef:
