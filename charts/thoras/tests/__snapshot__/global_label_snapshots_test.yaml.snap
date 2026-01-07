@@ -1016,14 +1016,6 @@ Default matches snapshot:
                     secretKeyRef:
                       key: webhookUrl
                       name: thoras-slack
-                - name: SERVICE_FORECAST_RESOURCE_REQUESTS_CPU
-                  value: 256m
-                - name: SERVICE_FORECAST_RESOURCE_LIMITS_CPU
-                  value: "4"
-                - name: SERVICE_FORECAST_RESOURCE_REQUESTS_MEMORY
-                  value: 256Mi
-                - name: SERVICE_FORECAST_RESOURCE_LIMITS_MEMORY
-                  value: 8Gi
                 - name: THORAS_NS
                   valueFrom:
                     fieldRef:
@@ -1047,8 +1039,6 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_QUERIES_PER_SECOND
                   value: "50"
-                - name: SERVICE_FORECAST_TOLERATIONS
-                  value: '[]'
                 - name: SERVICE_PORT
                   value: "9101"
                 - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
