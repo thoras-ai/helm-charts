@@ -73,9 +73,13 @@ spec:
             # fix blobs directory
             mkdir -p /var/lib/share/blobs
             chown -R 1000:1000 /var/lib/share/blobs
+        {{- if .Values.metricsCollector.init.resources }}
+        resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
-          limits: {{ .Values.thorasOperator.limits | toYaml | nindent 12 }}
-          requests: {{ .Values.thorasOperator.requests | toYaml | nindent 12 }}
+          limits: {{ .Values.metricsCollector.init.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.metricsCollector.init.requests | toYaml | nindent 12 }}
+        {{- end }}
         {{- with .Values.metricsCollector.additionalPvSecurityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
@@ -104,9 +108,13 @@ spec:
           - name: "PGDATA"
             value: /var/lib/share/postgresql
         {{- end }}
+        {{- if .Values.metricsCollector.timescale.resources }}
+        resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
           limits: {{ .Values.metricsCollector.timescale.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.timescale.requests | toYaml | nindent 12 }}
+        {{- end }}
         volumeMounts:
         {{- if .Values.metricsCollector.timescale.config.enabled }}
           - name: timescale-config
@@ -187,9 +195,13 @@ spec:
             value: "/var/lib/share"
           - name: SERVICE_ENABLE_PPROF
             value: {{ .Values.metricsCollector.blobService.pprof.enabled | quote }}
+        {{- if .Values.metricsCollector.blobService.resources }}
+        resources: {{ .Values.metricsCollector.blobService.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
           limits: {{ .Values.metricsCollector.blobService.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.blobService.requests | toYaml | nindent 12 }}
+        {{- end }}
         {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
           - mountPath: /var/lib/share

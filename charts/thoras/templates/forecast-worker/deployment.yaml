@@ -104,9 +104,13 @@ spec:
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
           {{- end }}
+        {{- if .Values.thorasForecast.worker.resources }}
+        resources: {{ .Values.thorasForecast.worker.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
           limits: {{ .Values.thorasForecast.worker.limits | toYaml | nindent 12 }}
           requests: {{ .Values.thorasForecast.worker.requests | toYaml | nindent 12 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

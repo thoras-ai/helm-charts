@@ -126,9 +126,13 @@ spec:
             containerPort: 9443
           - name: http-metrics
             containerPort: {{ .Values.thorasOperator.prometheus.port }}
+        {{- if .Values.thorasOperator.resources }}
+        resources: {{ .Values.thorasOperator.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
           limits: {{ .Values.thorasOperator.limits | toYaml | nindent 12 }}
           requests: {{ .Values.thorasOperator.requests | toYaml | nindent 12 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

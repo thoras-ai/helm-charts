@@ -86,3 +86,29 @@ tests:
       - equal:
           path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_BASE_URL')].value
           value: "https://console.thoras.ai"
+  - it: Can override resources block
+    set:
+      thorasWorker:
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+            hugepages-1Gi: "2Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+            hugepages-1Gi: "2Gi"
+    chart:
+      version: "4.7.0"
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[?(@.name == 'thoras-worker')].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+              hugepages-1Gi: "2Gi"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+              hugepages-1Gi: "2Gi"

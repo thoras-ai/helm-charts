@@ -107,9 +107,10 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasOperator.serviceAccount.name | String  | thoras-operator | Service account name for Thoras operator pod                 |
 | thorasOperator.podAnnotations      | Object  | {}              | Pod Annotations for Thoras Operator                          |
 | thorasOperator.labels              | Object  | {}              | Pod/service labels for Thoras Operator                       |
-| thorasOperator.limits.memory       | String  | 2000Mi          | Thoras Operator memory limit                                 |
-| thorasOperator.requests.cpu        | String  | 1000m           | Thoras Operator CPU request                                  |
-| thorasOperator.requests.memory     | String  | 1000Mi          | Thoras Operator memory request                               |
+| thorasOperator.resources           | Object  | {}              | Specify the resources block. Takes precedence if set.        |
+| thorasOperator.limits.memory       | String  | 2000Mi          | Legacy field for setting Thoras Operator memory limit        |
+| thorasOperator.requests.cpu        | String  | 1000m           | Legacy field for setting Thoras Operator CPU request         |
+| thorasOperator.requests.memory     | String  | 1000Mi          | Legacy field for setting Thoras Operator memory request      |
 | thorasOperator.slackErrorsEnabled  | Boolean | false           | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasOperator.logLevel            | String  | Nil             | Logging level                                                |
 | thorasOperator.queriesPerSecond    | String  | "50"            | Sets a maximum threshold for K8s API qps                     |
@@ -151,9 +152,10 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasApiServerV2.labels                       | Object  | {}         | Pod/service labels for Thoras API                                             |
 | thorasApiServerV2.containerPort                | Number  | 8443       | Thoras API port                                                               |
 | thorasApiServerV2.port                         | Number  | 443        | Thoras API service port                                                       |
-| thorasApiServerV2.limits.memory                | String  | 2000Mi     | Thoras API memory limit                                                       |
-| thorasApiServerV2.requests.cpu                 | String  | 1000Mi     | Thoras API CPU request                                                        |
-| thorasApiServerV2.requests.memory              | String  | 1000Mi     | Thoras API memory request                                                     |
+| thorasApiServerV2.resources                    | Object  | {}         | Specify the resources block. Takes precedence if set.                         |
+| thorasApiServerV2.limits.memory                | String  | 2000Mi     | Legacy field for setting Thoras API memory limit                              |
+| thorasApiServerV2.requests.cpu                 | String  | 1000Mi     | Legacy field for settingThoras API CPU request                                |
+| thorasApiServerV2.requests.memory              | String  | 1000Mi     | Legacy field for settingThoras API memory request                             |
 | thorasApiServerV2.slackErrorsEnabled           | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
 | thorasApiServerV2.logLevel                     | String  | Nil        | Logging level                                                                 |
 | thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
@@ -171,9 +173,10 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasWorker.serviceAccount.name                     | String  | thoras-worker | Service account name for Thoras worker pod                   |
 | thorasWorker.podAnnotations                          | Object  | {}            | Pod Annotations for Thoras worker                            |
 | thorasWorker.labels                                  | Object  | {}            | Pod/service labels for Thoras worker                         |
-| thorasWorker.limits.memory                           | String  | 2000Mi        | Thoras API memory limit                                      |
-| thorasWorker.requests.cpu                            | String  | 1000Mi        | Thoras API CPU request                                       |
-| thorasWorker.requests.memory                         | String  | 1000Mi        | Thoras API memory request                                    |
+| thorasWorker.resources                               | Object  | {}            | Specify the resources block. Takes precedence if set.        |
+| thorasWorker.limits.memory                           | String  | 2000Mi        | Legacy field for setting Thoras API memory limit             |
+| thorasWorker.requests.cpu                            | String  | 1000Mi        | Legacy field for setting Thoras API CPU request              |
+| thorasWorker.requests.memory                         | String  | 1000Mi        | Legacy field for setting Thoras API memory request           |
 | thorasWorker.slackErrorsEnabled                      | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl` |
 | thorasWorker.logLevel                                | String  | Nil           | Logging level                                                |
 | thorasWorker.queriesPerSecond                        | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
@@ -199,9 +202,10 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasDashboard.labels                           | Object  | {}               | Pod/service labels for Thoras Dashboard                                  |
 | thorasDashboard.containerPort                    | Number  | 5173             | Thoras Dashboard port                                                    |
 | thorasDashboard.port                             | Number  | 80               | Thoras Dashboard service port                                            |
-| thorasDashboard.limits.memory                    | String  | 2000Mi           | Thoras Dashboard memory limit                                            |
-| thorasDashboard.requests.cpu                     | String  | 1000Mi           | Thoras Dashboard CPU request                                             |
-| thorasDashboard.requests.memory                  | String  | 1000Mi           | Thoras Dashboard memory request                                          |
+| thorasDashboard.resources                        | Object  | {}               | Specify the resources block. Takes precedence if set.                    |
+| thorasDashboard.limits.memory                    | String  | 2000Mi           | Legacy field for setting Thoras Dashboard memory limit                   |
+| thorasDashboard.requests.cpu                     | String  | 1000Mi           | Legacy field for setting Thoras Dashboard CPU request                    |
+| thorasDashboard.requests.memory                  | String  | 1000Mi           | Legacy field for setting Thoras Dashboard memory request                 |
 | thorasDashboard.service.type                     | String  | ClusterIP        | Type of Service to use                                                   |
 | thorasDashboard.service.annotations              | Object  | {}               | Service annotations                                                      |
 | thorasDashboard.service.clusterIP                | String  | nil              | Service clusterIP when type is ClusterIP                                 |

@@ -68,8 +68,12 @@ thorasOperator:
     name: thoras-operator
   podAnnotations: {}
   labels: {}
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 2Gi
+  # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 100m
     memory: 128Mi
@@ -92,8 +96,12 @@ metricsCollector:
     name: thoras-collector
   init:
     imageTag: "3.23.0"
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Legacy field for backward compatibility (used if resources is empty)
     limits:
       memory: "8192Mi"
+    # Legacy field for backward compatibility (used if resources is empty)
     requests:
       cpu: "16m"
       memory: "32Mi"
@@ -103,8 +111,12 @@ metricsCollector:
     extensionVersion: "2.24.0"
     name: timescale
     containerPort: 5432
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Legacy field for backward compatibility (used if resources is empty)
     limits:
       memory: "16384Mi"
+    # Legacy field for backward compatibility (used if resources is empty)
     requests:
       cpu: "1024m"
       memory: "3072Mi"
@@ -117,8 +129,12 @@ metricsCollector:
       enabled: false
     containerPort: 8080
     port: 80
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Legacy field for backward compatibility (used if resources is empty)
     limits:
       memory: "8192Mi"
+    # Legacy field for backward compatibility (used if resources is empty)
     requests:
       cpu: "16m"
       memory: "128Mi"
@@ -133,8 +149,12 @@ thorasApiServerV2:
   podAnnotations: {}
   labels: {}
   replicas: 1
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 2Gi
+  # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 128m
     memory: 256Mi
@@ -156,8 +176,12 @@ thorasWorker:
   podAnnotations: {}
   labels: {}
   replicas: 1
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 2Gi
+  # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 128m
     memory: 256Mi
@@ -188,8 +212,18 @@ thorasDashboard:
   nginxContainerPort: 80
   nginx:
     imageTag: "1.29.4-alpine3.23-slim"
+    resources:
+      limits:
+        memory: 2Gi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 2Gi
+  # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 100m
     memory: 128Mi
@@ -230,8 +264,12 @@ thorasMonitor:
   serviceAccount:
     name: thoras-monitor
   unittesting: false
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: "8192Mi"
+  # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: "16m"
     memory: "64Mi"
@@ -246,9 +284,13 @@ thorasForecast:
   ignoreNewPods: true
   enableDecoupledTraining: false
   trainingJitterMinutes: 0
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: "256m"
     memory: "256Mi"
+  # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: "8Gi"
     cpu: "4"
@@ -260,9 +302,13 @@ thorasForecast:
     retrainOverrideHours: ""
     maxTimeseriesMetricCacheSizeMb: 1000
     labels: {}
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Legacy field for backward compatibility (used if resources is empty)
     limits:
       memory: 2Gi
       cpu: 2
+    # Legacy field for backward compatibility (used if resources is empty)
     requests:
       cpu: 1
       memory: 256Mi
@@ -304,8 +350,12 @@ thorasSlmAgent:
   labels: {}
   containerPort: 11434
   port: 8080
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 8192Mi
+  # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 1024m
     memory: 4096Mi
