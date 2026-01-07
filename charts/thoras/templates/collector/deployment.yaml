@@ -74,11 +74,8 @@ spec:
             mkdir -p /var/lib/share/blobs
             chown -R 1000:1000 /var/lib/share/blobs
         resources:
-          limits:
-            memory: {{ .Values.metricsCollector.init.limits.memory }}
-          requests:
-            cpu: {{ .Values.metricsCollector.init.requests.cpu }}
-            memory: {{ .Values.metricsCollector.init.requests.memory }}
+          limits: {{ .Values.thorasOperator.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasOperator.requests | toYaml | nindent 12 }}
         {{- with .Values.metricsCollector.additionalPvSecurityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
@@ -108,11 +105,8 @@ spec:
             value: /var/lib/share/postgresql
         {{- end }}
         resources:
-          limits:
-            memory: {{ .Values.metricsCollector.timescale.limits.memory }}
-          requests:
-            cpu: {{ .Values.metricsCollector.timescale.requests.cpu }}
-            memory: {{ .Values.metricsCollector.timescale.requests.memory }}
+          limits: {{ .Values.metricsCollector.timescale.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.metricsCollector.timescale.requests | toYaml | nindent 12 }}
         volumeMounts:
         {{- if .Values.metricsCollector.timescale.config.enabled }}
           - name: timescale-config
@@ -194,11 +188,8 @@ spec:
           - name: SERVICE_ENABLE_PPROF
             value: {{ .Values.metricsCollector.blobService.pprof.enabled | quote }}
         resources:
-          limits:
-            memory: {{ .Values.metricsCollector.blobService.limits.memory }}
-          requests:
-            cpu: {{ .Values.metricsCollector.blobService.requests.cpu }}
-            memory: {{ .Values.metricsCollector.blobService.requests.memory }}
+          limits: {{ .Values.metricsCollector.blobService.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.metricsCollector.blobService.requests | toYaml | nindent 12 }}
         {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
           - mountPath: /var/lib/share

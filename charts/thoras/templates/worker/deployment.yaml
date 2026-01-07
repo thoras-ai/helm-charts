@@ -172,11 +172,8 @@ spec:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}
         resources:
-          limits:
-            memory: {{ .Values.thorasWorker.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasWorker.requests.cpu }}
-            memory: {{ .Values.thorasWorker.requests.memory }}
+          limits: {{ .Values.thorasWorker.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasWorker.requests | toYaml | nindent 12 }}
         volumeMounts:
         - name: monitor-config
           mountPath: /app/config.yaml

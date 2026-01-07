@@ -137,11 +137,8 @@ spec:
           - name: http-metrics
             containerPort: {{ .Values.thorasOperator.prometheus.port }}
         resources:
-          limits:
-            memory: {{ .Values.thorasOperator.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasOperator.requests.cpu }}
-            memory: {{ .Values.thorasOperator.requests.memory }}
+          limits: {{ .Values.thorasOperator.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasOperator.requests | toYaml | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

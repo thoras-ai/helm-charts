@@ -82,11 +82,8 @@ spec:
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
         resources:
-          limits:
-            memory: {{ .Values.thorasMonitor.limits.memory }}
-          requests:
-            cpu: {{ .Values.thorasMonitor.requests.cpu }}
-            memory: {{ .Values.thorasMonitor.requests.memory }}
+          limits: {{ .Values.thorasMonitor.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasMonitor.requests | toYaml | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
