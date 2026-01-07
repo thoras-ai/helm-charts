@@ -256,6 +256,7 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasAgent.frequency           | Integer | 15             | Frequency, in seconds, of agent polling for service map communications |
 | thorasAgent.queriesPerSecond    | String  | "50"           | Sets a maximum threshold for K8s API qps                               |
 | thorasAgent.priorityClassName   | String  | ""             | Priority class name for Thoras Agent pods                              |
+| thorasAgent.securityContext     | Object  | {}             | Allows assigning additional securityContext                            |
 
 ## Example Thoras Dashboard Ingress Configuration
 
