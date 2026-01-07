@@ -279,6 +279,7 @@ thorasAgent:
   containerPort: 9101
   podAnnotations: {}
   labels: {}
+  priorityClassName: ~
 
 thorasReasoning:
   connectors:
