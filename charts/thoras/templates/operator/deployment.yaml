@@ -101,8 +101,6 @@ spec:
           - name: FORECAST_NODE_SELECTOR
             value: {{ $finalString }}
           {{- end }}
-          - name: SERVICE_FORECAST_TOLERATIONS
-            value: {{ .Values.tolerations | toJson | quote }}
           - name: SERVICE_PORT
             value: {{ .Values.thorasOperator.prometheus.port | quote }}
           {{- with .Values.rbac.namespaces }}
