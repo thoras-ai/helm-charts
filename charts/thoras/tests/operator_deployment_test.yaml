@@ -154,21 +154,14 @@ tests:
           cpu: "1"
           hugepages-1Gi: 2Gi
     asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].resources.requests.memory
-          value: "512Mi"
-      - equal:
-          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].resources.requests.cpu
-          value: "500m"
-      - equal:
-          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].resources.requests.hugepages-1Gi
-          value: "2Gi"
-      - equal:
-          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].resources.limits.memory
-          value: "1Gi"
-      - equal:
-          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].resources.limits.cpu
-          value: "1"
-      - equal:
-          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].resources.limits.hugepages-1Gi
-          value: "2Gi"
+      - isSubset:
+          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+              hugepages-1Gi: "2Gi"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+              hugepages-1Gi: "2Gi"

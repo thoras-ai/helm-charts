@@ -177,3 +177,28 @@ tests:
       - equal:
           path: spec.template.metadata.annotations["custom-annotation"]
           value: "test-value"
+  - it: Should enable request and limit overrides
+    template: collector/deployment.yaml
+    set:
+      metricsCollector:
+        timescale:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+            hugepages-1Gi: 2Gi
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+            hugepages-1Gi: 2Gi
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+              hugepages-1Gi: "2Gi"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+              hugepages-1Gi: "2Gi"
