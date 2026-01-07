@@ -277,8 +277,12 @@ thorasAgent:
     name: thoras-agent
   frequency: 15
   containerPort: 9101
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 128Mi
+  # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 100m
     memory: 128Mi

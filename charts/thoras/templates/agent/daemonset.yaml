@@ -53,9 +53,13 @@ spec:
             value: {{ .Values.thorasAgent.queriesPerSecond | default .Values.queriesPerSecond | quote }}
         ports:
           - containerPort: {{ .Values.thorasAgent.containerPort }}
+        {{- if .Values.thorasAgent.resources }}
+        resources: {{ .Values.thorasAgent.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
           limits: {{ toYaml .Values.thorasAgent.limits | nindent 12 }}
           requests: {{ toYaml .Values.thorasAgent.requests | nindent 12 }}
+        {{- end }}
         securityContext:
           # the agent requires elevated privileges to collect ebpf traces
           privileged: true
