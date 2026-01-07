@@ -30,6 +30,19 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+
+  - it: Should have priorityclass section when priorityclassName are set
+    set:
+      thorasVersion: TEST
+      thorasAgent:
+        enabled: True
+        priorityClassName: critical-pod
+    asserts:
+      - exists:
+          path: spec.template.spec.priorityClassName
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: "critical-pod"
   - it: Can override resources block
     set:
       thorasAgent:

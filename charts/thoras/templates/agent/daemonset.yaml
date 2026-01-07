@@ -23,6 +23,9 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasAgent.serviceAccount.name }}
+      {{- if .Values.thorasAgent.priorityClassName }}
+      priorityClassName: {{ .Values.thorasAgent.priorityClassName }}
+      {{ end }}
       containers:
       - name: thoras-agent
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasAgent.imageTag }}
