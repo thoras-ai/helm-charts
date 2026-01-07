@@ -69,7 +69,13 @@ spec:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
-        resources: {{ .Values.thorasDashboard.nginx.resources | toYaml | nindent 10 }}
+        {{- if .Values.thorasDashboard.resources }}
+        resources: {{ .Values.thorasDashboard.resources | toYaml | nindent 10 }}
+        {{- else }}
+        resources:
+          limits: {{ .Values.thorasDashboard.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasDashboard.requests | toYaml | nindent 12 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -212,12 +212,6 @@ thorasDashboard:
   nginxContainerPort: 80
   nginx:
     imageTag: "1.29.4-alpine3.23-slim"
-    resources:
-      limits:
-        memory: 2Gi
-      requests:
-        cpu: 100m
-        memory: 128Mi
   # Specify the complete resources block (takes precedence if set)
   resources: {}
   # Legacy field for backward compatibility (used if resources is empty)
