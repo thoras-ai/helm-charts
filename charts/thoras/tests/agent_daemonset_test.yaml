@@ -2,6 +2,20 @@ suite: Agent
 templates:
   - agent/daemonset.yaml
 tests:
+  - it: Default matches snapshot
+    set:
+      thorasVersion: TEST
+      thorasAgent:
+        enabled: True
+        limits:
+          cpu: 1
+          memory: 1Gi
+        requests:
+          cpu: 200m
+    chart:
+      version: "4.7.0"
+    asserts:
+      - matchSnapshot: {}
   - it: Daemon set name and image should be correct
     set:
       thorasVersion: TEST
@@ -29,3 +43,30 @@ tests:
       - equal:
           path: spec.template.spec.priorityClassName
           value: "critical-pod"
+  - it: Can override resources block
+    set:
+      thorasAgent:
+        enabled: True
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+            hugepages-1Gi: "2Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+            hugepages-1Gi: "2Gi"
+    chart:
+      version: "4.7.0"
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[?(@.name == 'thoras-agent')].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+              hugepages-1Gi: "2Gi"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+              hugepages-1Gi: "2Gi"
