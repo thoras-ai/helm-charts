@@ -1,4 +1,4 @@
-{{ - if .Values.thorasManageThoras.enabled }}
+{{- if .Values.featureFlags.thorasManageThoras.enabled }}
 apiVersion: thoras.ai/v1
 kind: AIScaleTarget
 metadata:
@@ -19,6 +19,9 @@ spec:
   vertical:
     containers:
     - cpu:
+        lowerbound: 1m
+      memory:
+        lowerbound: 1Mi
       name: thoras-operator
-    mode: {{ .Values.thorasManageThoras.mode | default "recommendation" }}
+    mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}
 {{- end }}

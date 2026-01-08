@@ -26,6 +26,9 @@ logLevel: info
 
 featureFlags:
   enableSkipScalingOnInsufficientData: true
+  thorasManageThoras:
+    enabled: false
+
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
@@ -353,9 +356,6 @@ thorasSlmAgent:
   requests:
     cpu: 1024m
     memory: 4096Mi
-
-thorasManageThoras:
-  enabled: false
 
 # K8s client max queries per second
 queriesPerSecond: "50"
