@@ -22,6 +22,12 @@ spec:
         lowerbound: 1m
       memory:
         lowerbound: 1Mi
-      name: metrics-collector
+    containers:
+    - cpu:
+      memory:
+      name: timescaledb
+    - cpu:
+      memory:
+      name: thoras-blob-api
     mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}
 {{- end }}
