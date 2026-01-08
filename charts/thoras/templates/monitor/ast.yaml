@@ -1,0 +1,24 @@
+{{ - if .Values.thorasManageThoras.enabled }}
+apiVersion: thoras.ai/v1
+kind: AIScaleTarget
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: thoras-monitor
+  namespace: {{ .Release.Namespace }}
+spec:
+  horizontal:
+    mode: recommendation
+  model:
+    forecast_blocks: 20m0s
+    forecast_cron: '*/15 * * * *'
+    mode: balanced
+  scaleTargetRef:
+    kind: Deployment
+    name: thoras-monitor
+  vertical:
+    containers:
+    - cpu:
+      name: thoras-monitor
+    mode: {{ .Values.thorasManageThoras.mode | default "recommendation" }}
+{{- end }}
