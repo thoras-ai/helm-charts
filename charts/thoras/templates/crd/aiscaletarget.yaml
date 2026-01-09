@@ -797,6 +797,9 @@ spec:
                       type: object
                     type: array
                   in_place_resizing:
+                    description: |-
+                      Deprecated: Use UpdatePolicy instead.
+                      When InPlaceResizing is not specified and UpdatePolicy is not specified, the default behavior is UpdatePolicy{UpdateMode: "recreate", RecreateResources: ["memory"]}.
                     properties:
                       allow_restart_on_memory_limit_decrease:
                         type: boolean
@@ -892,10 +895,47 @@ spec:
                           rule: 'self.type == ''absolute'' ? has(self.absolute) :
                             true'
                     type: object
+                  update_policy:
+                    description: 'UpdatePolicy defines how pod updates are handled.
+                      If not specified, defaults to UpdatePolicy{UpdateMode: "recreate",
+                      RecreateResources: ["memory"]}.'
+                    properties:
+                      recreate_resources:
+                        default:
+                        - memory
+                        description: |-
+                          RecreateResources lists which resource types should trigger pod recreation when changed.
+                          Defaults to ["memory"] if not set.
+                        items:
+                          type: string
+                        type: array
+                      update_mode:
+                        default: recreate
+                        description: UpdateMode specifies the update strategy. Defaults
+                          to "recreate" if not set.
+                        enum:
+                        - initial
+                        - recreate
+                        - in_place_or_recreate
+                        - in_place
+                        type: string
+                    type: object
                 required:
                 - containers
                 - mode
                 type: object
+                x-kubernetes-validations:
+                - message: when in_place_resizing.enabled is true, update_policy.update_mode
+                    must be either 'in_place' or 'in_place_or_recreate'
+                  rule: '!has(self.in_place_resizing) || !has(self.in_place_resizing.enabled)
+                    || !self.in_place_resizing.enabled || !has(self.update_policy)
+                    || self.update_policy.update_mode == ''in_place'' || self.update_policy.update_mode
+                    == ''in_place_or_recreate'''
+                - message: when in_place_resizing.enabled is false, update_policy.update_mode
+                    cannot be 'in_place' or 'in_place_or_recreate'
+                  rule: '!has(self.in_place_resizing) || self.in_place_resizing.enabled
+                    || !has(self.update_policy) || (self.update_policy.update_mode
+                    != ''in_place'' && self.update_policy.update_mode != ''in_place_or_recreate'')'
             required:
             - model
             type: object
