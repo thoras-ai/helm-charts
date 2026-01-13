@@ -183,7 +183,6 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                         |
 | thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                      |
 | thorasWorker.enableSnapshotChunkAutoSizing           | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
-| thorasWorker.enableDirectForecastQueueing            | Boolean | true          | Enable direct queueing of forecasts                          |
 | thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
 | thorasWorker.enableActiveSuggestionWorker            | Boolean | false         | Enable active suggestions worker                             |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |
