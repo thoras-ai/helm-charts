@@ -276,7 +276,7 @@ thorasForecast:
     name: thoras-forecast-worker
   skipCache: false
   ignoreNewPods: true
-  enableDecoupledTraining: false
+  enableDecoupledTraining: true
   trainingJitterMinutes: 0
   # Specify the complete resources block (takes precedence if set)
   resources: {}
