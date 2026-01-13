@@ -80,6 +80,8 @@ thorasOperator:
   prometheus:
     enabled: true
     port: 9101
+  # Component-specific affinity (overrides global affinity if set)
+  affinity: {}
 
 metricsCollector:
   persistence:
@@ -139,6 +141,20 @@ metricsCollector:
       cpu: "16m"
       memory: "128Mi"
   additionalPvSecurityContext: {}
+  # Component-specific affinity (overrides global affinity if set)
+  # Default: anti-affinity with forecast-worker to spread workload
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - thoras-forecast-worker
+          topologyKey: kubernetes.io/hostname
 
 thorasApiServerV2:
   rbac:
@@ -168,6 +184,8 @@ thorasApiServerV2:
   pprof:
     enabled: false
   enableViewCacheQueryLiveJoin: true
+  # Component-specific affinity (overrides global affinity if set)
+  affinity: {}
 
 thorasWorker:
   enabled: true
@@ -198,6 +216,8 @@ thorasWorker:
   enableActiveSuggestionWorker: false
   enableUnifiedAstUtilizationMonitor: false
   cloudSyncBaseUrl: "https://console.staging.thoras.ai"
+  # Component-specific affinity (overrides global affinity if set)
+  affinity: {}
 
 thorasDashboard:
   enabled: true
@@ -252,6 +272,8 @@ thorasDashboard:
     cost_simulator: false
     rolling_savings: true
     cost_breakdown_v2: true
+  # Component-specific affinity (overrides global affinity if set)
+  affinity: {}
 
 thorasMonitor:
   enabled: false
@@ -270,6 +292,8 @@ thorasMonitor:
   podAnnotations: {}
   labels: {}
   config: |
+  # Component-specific affinity (overrides global affinity if set)
+  affinity: {}
 
 thorasForecast:
   serviceAccount:
@@ -310,6 +334,29 @@ thorasForecast:
   prometheus:
     enabled: true
     port: 9101
+  # Component-specific affinity (overrides global affinity if set)
+  # Default: anti-affinity with metrics-collector and self to spread workload
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - metrics-collector
+          topologyKey: kubernetes.io/hostname
+      - weight: 95
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - thoras-forecast-worker
+          topologyKey: kubernetes.io/hostname
 
 thorasAgent:
   enabled: false
@@ -353,6 +400,8 @@ thorasSlmAgent:
   requests:
     cpu: 1024m
     memory: 4096Mi
+  # Component-specific affinity (overrides global affinity if set)
+  affinity: {}
 
 # K8s client max queries per second
 queriesPerSecond: "50"
@@ -364,3 +413,6 @@ tolerations: []
 
 # Global Labels support
 labels: {}
+
+# Global affinity rules for all components (can be overridden per-component)
+affinity: {}
