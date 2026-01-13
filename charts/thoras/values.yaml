@@ -164,7 +164,6 @@ thorasApiServerV2:
   prometheus:
     enabled: true
   restartWorkloadOnCpu: false
-  enableForecastAffinity: true
   pprof:
     enabled: false
   enableViewCacheQueryLiveJoin: true

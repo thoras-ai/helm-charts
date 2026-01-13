@@ -162,7 +162,6 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasApiServerV2.additionalPvSecurityContext  | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled           | Boolean | true       | Enables a prometheus metric scrape point                                      |
 | thorasApiServerV2.restartWorkloadOnCpu         | Boolean | false      | Enables restarting vertical workloads for CPU forecasts                       |
-| thorasApiServerV2.enableForecastAffinity       | Boolean | false      | Enables forecast worker affinity to forecasts                                 |
 | thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                        |
 | thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state       |
 

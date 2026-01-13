@@ -131,8 +131,6 @@ spec:
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
           {{- end }}
-          - name: SERVICE_ENABLE_FORECAST_AFFINITY
-            value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
           - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
             value: {{ .Values.costRefreshBatching.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_COST_REFRESH_BATCH_SIZE
