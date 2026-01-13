@@ -721,7 +721,7 @@ Default matches snapshot:
                 - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
                   value: "1000"
                 - name: ENABLE_DECOUPLED_TRAINING
-                  value: "false"
+                  value: "true"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: METRICS_PORT
