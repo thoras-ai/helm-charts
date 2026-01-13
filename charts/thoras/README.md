@@ -88,7 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasForecast.serviceAccount.name     | String  | thoras-forecast-worker      | Service account name for Thoras forecast worker pod                                            |
 | thorasForecast.imageTag                | String  | .thorasVersion              | Image tag for Thoras Forecast job                                                              |
 | thorasForecast.skipCache               | Boolean | false                       | Directs the forecaster to skip to model cache                                                  |
-| thorasForecast.ignoreNewPods           | Boolean | true                        | Directs forecaster to adjust CPU and memory metrics temprorarily for new pods                  |
+| thorasForecast.ignoreNewPods           | Boolean | true                        | Directs forecaster to adjust CPU and memory metrics temporarily for new pods                   |
 | thorasForecast.enableDecoupledTraining | Boolean | true                        | Enables async training mode where forecasts report "needs_training" instead of training inline |
 | thorasForecast.worker.podAnnotations   | Object  | {}                          | Pod Annotations for Thoras Forecast                                                            |
 | thorasForecast.worker.labels           | Object  | {}                          | Pod labels for Thoras Forecast                                                                 |
