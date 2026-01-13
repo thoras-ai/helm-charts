@@ -134,8 +134,6 @@ spec:
             value: "{{ .Values.metricsCollector.timescale.requests.memory | default "3072Mi" }}"
           - name: SERVICE_PORT
             value: {{ .Values.thorasWorker.prometheus.port | quote }}
-          - name: SERVICE_ENABLE_FORECAST_AFFINITY
-            value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_REFRESH_WORKER
             value: {{ .Values.thorasWorker.enableAstViewCacheRefreshWorker | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_STATE_RECONCILER_WORKER
