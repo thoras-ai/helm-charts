@@ -29,18 +29,6 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - thoras-forecast-worker
-              topologyKey: kubernetes.io/hostname
       volumes:
       {{- if .Values.metricsCollector.timescale.config.enabled }}
         - name: timescale-config
@@ -219,5 +207,9 @@ spec:
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with (coalesce .Values.metricsCollector.affinity .Values.affinity) }}
+      affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}

@@ -29,27 +29,6 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasForecast.serviceAccount.name }}
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - metrics-collector
-              topologyKey: kubernetes.io/hostname
-          - weight: 95
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - thoras-forecast-worker
-              topologyKey: kubernetes.io/hostname
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service
@@ -117,5 +96,9 @@ spec:
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with (coalesce .Values.thorasForecast.affinity .Values.affinity) }}
+      affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
