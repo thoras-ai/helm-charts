@@ -14,3 +14,46 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- toYaml . | nindent 0 }}
 {{- end }}
 {{- end -}}
+
+{{/*
+Default affinity for metricsCollector - anti-affinity with forecast-worker
+*/}}
+{{- define "thoras.metricsCollector.defaultAffinity" -}}
+podAntiAffinity:
+  preferredDuringSchedulingIgnoredDuringExecution:
+  - weight: 100
+    podAffinityTerm:
+      labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - thoras-forecast-worker
+      topologyKey: kubernetes.io/hostname
+{{- end }}
+
+{{/*
+Default affinity for thorasForecast - anti-affinity with metrics-collector and self
+*/}}
+{{- define "thoras.thorasForecast.defaultAffinity" -}}
+podAntiAffinity:
+  preferredDuringSchedulingIgnoredDuringExecution:
+  - weight: 100
+    podAffinityTerm:
+      labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - metrics-collector
+      topologyKey: kubernetes.io/hostname
+  - weight: 95
+    podAffinityTerm:
+      labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - thoras-forecast-worker
+      topologyKey: kubernetes.io/hostname
+{{- end }}
