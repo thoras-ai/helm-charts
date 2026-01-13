@@ -163,7 +163,6 @@ thorasApiServerV2:
   additionalPvSecurityContext: {}
   prometheus:
     enabled: true
-  restartWorkloadOnCpu: false
   enableForecastAffinity: true
   pprof:
     enabled: false
