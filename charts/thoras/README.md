@@ -68,6 +68,7 @@ helm install \
 | queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
 | nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
 | tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
+| affinity                           | Object  | {}                                               | Global affinity rules applied to all components (components opt-in by default via useGlobalAffinity)                 |
 | rbac.namespaces                    | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead |
 | costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                   |
 | costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                             |
@@ -80,6 +81,55 @@ The following flags are considered temporary and gate access to specific behavio
 | Key                                              | Type    | Default | Description                                                     |
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
 | featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
+
+## Affinity Configuration
+
+Define affinity rules globally or per-component. Components opt into global affinity by default and can add component-specific rules that merge with global settings.
+
+```yaml
+# Global affinity (applied to all components)
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-pool
+          operator: In
+          values:
+          - thoras-pool
+
+# Component-specific affinity (merged with global)
+thorasOperator:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - high-priority-app
+          topologyKey: kubernetes.io/hostname
+
+# Opt out of global affinity
+thorasApiServerV2:
+  useGlobalAffinity: false
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: dedicated-pool
+            operator: In
+            values:
+            - api-pool
+```
+
+All components support `<component>.useGlobalAffinity` (default: `true`) and `<component>.affinity` fields.
+
+**Note:** `metricsCollector` and `thorasForecast` include built-in anti-affinity rules to avoid co-location. These always apply and merge with global/component settings.
 
 ## Thoras Forecast
 

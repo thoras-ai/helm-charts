@@ -141,3 +141,17 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.thorasOperator.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.thorasOperator.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with .Values.thorasOperator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
