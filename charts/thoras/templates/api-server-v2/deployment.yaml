@@ -121,8 +121,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          - name: SERVICE_RESTART_WORKLOAD_ON_CPU
-            value: {{ .Values.thorasApiServerV2.restartWorkloadOnCpu | quote }}
           - name: SERVICE_ENABLE_PPROF
             value: {{ .Values.thorasApiServerV2.pprof.enabled | quote }}
           - name: SERVICE_CHART_VERSION

@@ -27,14 +27,6 @@ tests:
       - equal:
           path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POD_LOG_LABEL')].value
           value: "app.kubernetes.io/name=thoras"
-  - it: Ensure SERVICE_RESTART_WORKLOAD_ON_CPU is correct
-    set:
-      thorasApiServerV2:
-        restartWorkloadOnCpu: true
-    asserts:
-      - equal:
-          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_RESTART_WORKLOAD_ON_CPU')].value
-          value: "true"
   - it: Should not have annotations section when all conditions are false
     set:
       thorasApiServerV2:
