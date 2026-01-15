@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.74.0](https://img.shields.io/badge/Version-4.74.0-informational?style=flat-square) ![AppVersion: 4.61.0](https://img.shields.io/badge/AppVersion-4.61.0-informational?style=flat-square)
+![Version: 4.74.1](https://img.shields.io/badge/Version-4.74.1-informational?style=flat-square) ![AppVersion: 4.61.1](https://img.shields.io/badge/AppVersion-4.61.1-informational?style=flat-square)
 
 # Installs
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                                | Type    | Default                                          | Description                                                                                                          |
 | ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.61.0                                           | Thoras app version                                                                                                   |
+| thorasVersion                      | String  | 4.61.1                                           | Thoras app version                                                                                                   |
 | imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
@@ -92,26 +92,26 @@ affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: node-pool
-          operator: In
-          values:
-          - thoras-pool
+        - matchExpressions:
+            - key: node-pool
+              operator: In
+              values:
+                - thoras-pool
 
 # Component-specific affinity (merged with global)
 thorasOperator:
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        podAffinityTerm:
-          labelSelector:
-            matchExpressions:
-            - key: app
-              operator: In
-              values:
-              - high-priority-app
-          topologyKey: kubernetes.io/hostname
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - high-priority-app
+            topologyKey: kubernetes.io/hostname
 
 # Opt out of global affinity
 thorasApiServerV2:
@@ -120,11 +120,11 @@ thorasApiServerV2:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
-        - matchExpressions:
-          - key: dedicated-pool
-            operator: In
-            values:
-            - api-pool
+          - matchExpressions:
+              - key: dedicated-pool
+                operator: In
+                values:
+                  - api-pool
 ```
 
 All components support `<component>.useGlobalAffinity` (default: `true`) and `<component>.affinity` fields.
