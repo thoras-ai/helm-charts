@@ -768,7 +768,7 @@ spec:
                              1. Xmx = max(heap_forecast, heap_current) * (1 + XmxBuffer)
                              2. Apply XmxBounds clamping to Xmx
                              3. Xms = Xmx * XmsRatio
-                             4. Container Memory = (heap + nonheap) * (1 + MemoryBuffer)
+                             4. Container Memory = (Xmx + nonheap) * (1 + MemoryBuffer)
                           properties:
                             enable_auto_heap_size:
                               description: Enable automatic JVM heap size adjustment
