@@ -762,11 +762,32 @@ spec:
                           - lowerbound
                           type: object
                         jvm_options:
+                          description: |-
+                            JVMOptions configures automatic JVM heap sizing.
+                            The calculation flow is:
+                             1. Xmx = max(heap_forecast, heap_current) * (1 + XmxBuffer)
+                             2. Apply XmxBounds clamping to Xmx
+                             3. Xms = Xmx * XmsRatio
+                             4. Container Memory = (heap + nonheap) * (1 + MemoryBuffer)
                           properties:
                             enable_auto_heap_size:
                               description: Enable automatic JVM heap size adjustment
                                 based on memory requests.
                               type: boolean
+                            memory_buffer:
+                              default: 10%
+                              description: |-
+                                MemoryBuffer specifies the buffer percentage to add above total JVM memory (heap + non-heap) when setting container memory limits.
+                                This accounts for non-heap memory regions such as metaspace, thread stacks, and native memory allocations.
+                                Valid range: 0%-100%. Defaults to 10%.
+                              type: string
+                            xms_ratio:
+                              default: 80%
+                              description: |-
+                                XmsRatio specifies the ratio of the initial heap size (Xms) relative to the maximum heap size (Xmx).
+                                This determines how much memory is allocated to the JVM heap at startup.
+                                Valid range: 0%-100%. Defaults to 80%.
+                              type: string
                             xmx_bounds:
                               properties:
                                 limit:
@@ -795,6 +816,13 @@ spec:
                               required:
                               - lowerbound
                               type: object
+                            xmx_buffer:
+                              default: 10%
+                              description: |-
+                                XmxBuffer specifies the buffer percentage to add above observed heap memory usage when setting Xmx.
+                                This provides headroom for heap allocation to prevent out-of-memory errors.
+                                Valid range: 0%-100%. Defaults to 10%.
+                              type: string
                           type: object
                         memory:
                           properties:
