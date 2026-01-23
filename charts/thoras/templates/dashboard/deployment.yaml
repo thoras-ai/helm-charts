@@ -43,6 +43,7 @@ spec:
               echo "Failed to connect to API service"
               exit 1
             fi
+        resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard

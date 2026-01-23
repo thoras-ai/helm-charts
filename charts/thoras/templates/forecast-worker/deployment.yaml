@@ -43,6 +43,7 @@ spec:
               echo "Failed to connect to API service"
               exit 1
             fi
+        resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"

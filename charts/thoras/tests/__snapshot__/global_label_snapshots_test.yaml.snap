@@ -150,6 +150,7 @@ Default matches snapshot:
                   value: 2.24.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
+              resources: {}
           serviceAccountName: thoras-api
           volumes:
             - configMap:
@@ -604,6 +605,7 @@ Default matches snapshot:
                   value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
+              resources: {}
           serviceAccountName: thoras-dashboard
           volumes:
             - configMap:
@@ -746,6 +748,7 @@ Default matches snapshot:
                   value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
+              resources: {}
           serviceAccountName: thoras-forecast-worker
   18: |
     apiVersion: v1
@@ -841,6 +844,7 @@ Default matches snapshot:
                   value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
+              resources: {}
           serviceAccountName: thoras-monitor
           volumes:
             - configMap:
@@ -1076,6 +1080,7 @@ Default matches snapshot:
                   value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
+              resources: {}
           serviceAccountName: thoras-operator
           volumes:
             - name: tls
@@ -1461,6 +1466,7 @@ Default matches snapshot:
                   value: 2.24.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
+              resources: {}
           serviceAccountName: thoras-worker
           volumes:
             - configMap:

@@ -78,6 +78,7 @@ spec:
 
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
+        resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
