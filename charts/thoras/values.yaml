@@ -171,7 +171,6 @@ thorasApiServerV2:
   additionalPvSecurityContext: {}
   prometheus:
     enabled: true
-  restartWorkloadOnCpu: false
   pprof:
     enabled: false
   enableViewCacheQueryLiveJoin: true
