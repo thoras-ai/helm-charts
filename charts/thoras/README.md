@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.72.0](https://img.shields.io/badge/Version-4.72.0-informational?style=flat-square) ![AppVersion: 4.59.0](https://img.shields.io/badge/AppVersion-4.59.0-informational?style=flat-square)
+![Version: 4.75.0](https://img.shields.io/badge/Version-4.75.0-informational?style=flat-square) ![AppVersion: 4.62.0](https://img.shields.io/badge/AppVersion-4.62.0-informational?style=flat-square)
 
 # Installs
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                                | Type    | Default                                          | Description                                                                                                          |
 | ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.58.1                                           | Thoras app version                                                                                                   |
+| thorasVersion                      | String  | 4.62.0                                           | Thoras app version                                                                                                   |
 | imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
@@ -68,6 +68,7 @@ helm install \
 | queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
 | nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
 | tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
+| affinity                           | Object  | {}                                               | Global affinity rules applied to all components (components opt-in by default via useGlobalAffinity)                 |
 | rbac.namespaces                    | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead |
 | costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                   |
 | costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                             |
@@ -81,6 +82,55 @@ The following flags are considered temporary and gate access to specific behavio
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
 | featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
 
+## Affinity Configuration
+
+Define affinity rules globally or per-component. Components opt into global affinity by default and can add component-specific rules that merge with global settings.
+
+```yaml
+# Global affinity (applied to all components)
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-pool
+              operator: In
+              values:
+                - thoras-pool
+
+# Component-specific affinity (merged with global)
+thorasOperator:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - high-priority-app
+            topologyKey: kubernetes.io/hostname
+
+# Opt out of global affinity
+thorasApiServerV2:
+  useGlobalAffinity: false
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: dedicated-pool
+                operator: In
+                values:
+                  - api-pool
+```
+
+All components support `<component>.useGlobalAffinity` (default: `true`) and `<component>.affinity` fields.
+
+**Note:** `metricsCollector` and `thorasForecast` include built-in anti-affinity rules to avoid co-location. These always apply and merge with global/component settings.
+
 ## Thoras Forecast
 
 | Key                                    | Type    | Default                     | Description                                                                                    |
@@ -88,8 +138,8 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasForecast.serviceAccount.name     | String  | thoras-forecast-worker      | Service account name for Thoras forecast worker pod                                            |
 | thorasForecast.imageTag                | String  | .thorasVersion              | Image tag for Thoras Forecast job                                                              |
 | thorasForecast.skipCache               | Boolean | false                       | Directs the forecaster to skip to model cache                                                  |
-| thorasForecast.ignoreNewPods           | Boolean | true                        | Directs forecaster to adjust CPU and memory metrics temprorarily for new pods                  |
-| thorasForecast.enableDecoupledTraining | Boolean | false                       | Enables async training mode where forecasts report "needs_training" instead of training inline |
+| thorasForecast.ignoreNewPods           | Boolean | true                        | Directs forecaster to adjust CPU and memory metrics temporarily for new pods                   |
+| thorasForecast.enableDecoupledTraining | Boolean | true                        | Enables async training mode where forecasts report "needs_training" instead of training inline |
 | thorasForecast.worker.podAnnotations   | Object  | {}                          | Pod Annotations for Thoras Forecast                                                            |
 | thorasForecast.worker.labels           | Object  | {}                          | Pod labels for Thoras Forecast                                                                 |
 | thorasForecast.worker.replicas         | Number  | 1                           | Number of `thoras-forecast-worker` replicas to use                                             |
@@ -161,7 +211,6 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
 | thorasApiServerV2.additionalPvSecurityContext  | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled           | Boolean | true       | Enables a prometheus metric scrape point                                      |
-| thorasApiServerV2.enableForecastAffinity       | Boolean | false      | Enables forecast worker affinity to forecasts                                 |
 | thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                        |
 | thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state       |
 
@@ -182,7 +231,6 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                         |
 | thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                      |
 | thorasWorker.enableSnapshotChunkAutoSizing           | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
-| thorasWorker.enableDirectForecastQueueing            | Boolean | true          | Enable direct queueing of forecasts                          |
 | thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
 | thorasWorker.enableActiveSuggestionWorker            | Boolean | false         | Enable active suggestions worker                             |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |

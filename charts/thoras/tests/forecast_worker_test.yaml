@@ -61,12 +61,10 @@ tests:
               value: "1"
             - name: FORECAST_IGNORE_NEW_PODS
               value: "true"
-            - name: SERVICE_ENABLE_FORECAST_AFFINITY
-              value: "true"
             - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
               value: "1000"
             - name: ENABLE_DECOUPLED_TRAINING
-              value: "false"
+              value: "true"
             - name: TRAINING_JITTER_MINUTES
               value: "0"
             - name: METRICS_PORT
@@ -227,24 +225,24 @@ tests:
             name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
             value: "2500"
 
-  - it: renders ENABLE_DECOUPLED_TRAINING as false by default
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
-          content:
-            name: ENABLE_DECOUPLED_TRAINING
-            value: "false"
-
-  - it: renders ENABLE_DECOUPLED_TRAINING as true when enableDecoupledTraining is true
-    set:
-      thorasForecast:
-        enableDecoupledTraining: true
+  - it: renders ENABLE_DECOUPLED_TRAINING as true by default
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
           content:
             name: ENABLE_DECOUPLED_TRAINING
             value: "true"
+
+  - it: renders ENABLE_DECOUPLED_TRAINING as false when enableDecoupledTraining is false
+    set:
+      thorasForecast:
+        enableDecoupledTraining: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: ENABLE_DECOUPLED_TRAINING
+            value: "false"
 
   - it: renders TRAINING_JITTER_MINUTES with default value
     asserts:

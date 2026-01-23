@@ -1,0 +1,413 @@
+suite: Affinity Configuration
+set:
+  thorasMonitor:
+    enabled: true
+    unittesting: true
+  thorasDashboard:
+    unittesting: true
+  thorasSlmAgent:
+    enabled: true
+  thorasForecast:
+    worker:
+      enabled: true
+  metricsCollector:
+    timescale:
+      config:
+        enabled: false
+tests:
+  # Test 1a: Default - forecast-worker has only thoras-specific affinities
+  - it: forecast-worker has thoras-specific affinities by default
+    templates:
+      - forecast-worker/deployment.yaml
+    asserts:
+      - isNotNull:
+          path: spec.template.spec.affinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 100
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: metrics-collector
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[1].weight
+          value: 95
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[1].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: thoras-forecast-worker
+
+  # Test 1b: Default - collector has only thoras-specific affinities
+  - it: metrics-collector has thoras-specific affinities by default
+    templates:
+      - collector/deployment.yaml
+    asserts:
+      - isNotNull:
+          path: spec.template.spec.affinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 100
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: thoras-forecast-worker
+
+  # Test 1c: Default - other components have NO affinity
+  - it: other components have no affinity by default
+    templates:
+      - operator/deployment.yaml
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+      - dashboard/deployment.yaml
+      - monitor/deployment.yaml
+      - slm-api/deployment.yaml
+    asserts:
+      - isNull:
+          path: spec.template.spec.affinity
+
+  # Test 2a: Global affinity - forecast-worker gets global + thoras
+  - it: forecast-worker gets global plus thoras-specific affinities
+    templates:
+      - forecast-worker/deployment.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-pool
+                operator: In
+                values:
+                - standard-pool
+    asserts:
+      - isNotNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: metrics-collector
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-pool
+
+  # Test 2b: Global affinity - collector gets global + thoras
+  - it: metrics-collector gets global plus thoras-specific affinities
+    templates:
+      - collector/deployment.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-pool
+                operator: In
+                values:
+                - standard-pool
+    asserts:
+      - isNotNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: thoras-forecast-worker
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-pool
+
+  # Test 2c: Global affinity - other components get only global
+  - it: other components get only global affinity
+    templates:
+      - operator/deployment.yaml
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+      - dashboard/deployment.yaml
+      - monitor/deployment.yaml
+      - slm-api/deployment.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-pool
+                operator: In
+                values:
+                - standard-pool
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-pool
+      - isNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+
+  # Test 3a: Component-specific only - operator gets only component-specific
+  - it: operator gets only component-specific affinity when opted out
+    templates:
+      - operator/deployment.yaml
+    set:
+      thorasOperator:
+        useGlobalAffinity: false
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - operator-node
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
+          value: operator-node
+      - isNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+
+  # Test 3b: Component-specific only - dashboard gets only component-specific
+  - it: dashboard gets only component-specific affinity when opted out
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        useGlobalAffinity: false
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - dashboard-companion
+              topologyKey: kubernetes.io/hostname
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          value: dashboard-companion
+      - isNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+
+  # Test 3c: Component-specific only - unspecified components have no affinity
+  - it: unspecified components have no affinity when global not set
+    templates:
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+    set:
+      thorasOperator:
+        useGlobalAffinity: false
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - operator-node
+      thorasDashboard:
+        useGlobalAffinity: false
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - dashboard-companion
+              topologyKey: kubernetes.io/hostname
+    asserts:
+      - isNull:
+          path: spec.template.spec.affinity
+
+  # Test 4a: Global + component - operator gets both
+  - it: operator gets global plus component-specific affinity
+    templates:
+      - operator/deployment.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: global-key
+                operator: In
+                values:
+                - global-value
+      thorasOperator:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 80
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - avoid-this
+                topologyKey: kubernetes.io/hostname
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: global-key
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 80
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: avoid-this
+
+  # Test 4b: Global + component - dashboard gets both merged
+  - it: dashboard gets global plus component-specific affinity merged
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: global-key
+                operator: In
+                values:
+                - global-value
+      thorasDashboard:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 60
+              preference:
+                matchExpressions:
+                - key: ssd
+                  operator: In
+                  values:
+                  - "true"
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: global-key
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 60
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].preference.matchExpressions[0].key
+          value: ssd
+
+  # Test 4c: Global + component - unspecified components get only global
+  - it: unspecified components get only global when it is set
+    templates:
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: global-key
+                operator: In
+                values:
+                - global-value
+      thorasOperator:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 80
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - avoid-this
+                topologyKey: kubernetes.io/hostname
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: global-key
+      - isNull:
+          path: spec.template.spec.affinity.podAntiAffinity
+
+  # Test 5a: Three-layer merge for forecast-worker
+  - it: forecast-worker gets global plus component plus thoras affinities
+    templates:
+      - forecast-worker/deployment.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: tier
+                operator: In
+                values:
+                - compute
+      thorasForecast:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                - key: gpu
+                  operator: In
+                  values:
+                  - "true"
+    asserts:
+      # Thoras-specific podAntiAffinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: metrics-collector
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[1].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: thoras-forecast-worker
+      # Global nodeAffinity (required)
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: tier
+      # Component-specific nodeAffinity (preferred)
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 100
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].preference.matchExpressions[0].key
+          value: gpu
+
+  # Test 5b: Three-layer merge for collector
+  - it: metrics-collector gets global plus component plus thoras affinities
+    templates:
+      - collector/deployment.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: tier
+                operator: In
+                values:
+                - compute
+      metricsCollector:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: database
+                  operator: In
+                  values:
+                  - timescaledb
+              topologyKey: kubernetes.io/hostname
+    asserts:
+      # Thoras-specific podAntiAffinity
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
+          value: thoras-forecast-worker
+      # Global nodeAffinity
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: tier
+      # Component-specific podAffinity
+      - equal:
+          path: spec.template.spec.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].key
+          value: database
+      - equal:
+          path: spec.template.spec.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          value: timescaledb

@@ -124,8 +124,6 @@ spec:
           - name: SERVICE_RIVER_LOG_LEVEL
             value: {{ . | quote }}
           {{- end }}
-          - name: SERVICE_ENABLE_FORECAST_QUEUE_DIRECT
-            value: {{ .Values.thorasWorker.enableDirectForecastQueueing | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
             value: {{ .Values.thorasWorker.enableMetricIntegrityWorker | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
@@ -134,8 +132,6 @@ spec:
             value: "{{ .Values.metricsCollector.timescale.requests.memory | default "3072Mi" }}"
           - name: SERVICE_PORT
             value: {{ .Values.thorasWorker.prometheus.port | quote }}
-          - name: SERVICE_ENABLE_FORECAST_AFFINITY
-            value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_REFRESH_WORKER
             value: {{ .Values.thorasWorker.enableAstViewCacheRefreshWorker | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_STATE_RECONCILER_WORKER
@@ -190,4 +186,18 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.thorasWorker.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.thorasWorker.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with .Values.thorasWorker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}

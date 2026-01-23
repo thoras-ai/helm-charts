@@ -70,8 +70,6 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
-                - name: SERVICE_ENABLE_FORECAST_AFFINITY
-                  value: "true"
                 - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
                   value: "true"
                 - name: SERVICE_COST_REFRESH_BATCH_SIZE
@@ -714,12 +712,10 @@ Default matches snapshot:
                   value: "1"
                 - name: FORECAST_IGNORE_NEW_PODS
                   value: "true"
-                - name: SERVICE_ENABLE_FORECAST_AFFINITY
-                  value: "true"
                 - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
                   value: "1000"
                 - name: ENABLE_DECOUPLED_TRAINING
-                  value: "false"
+                  value: "true"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: METRICS_PORT
@@ -1373,8 +1369,6 @@ Default matches snapshot:
                   value: 4.7.0
                 - name: SERVICE_CHUNK_INTERVAL_UPDATER_DRY_RUN
                   value: "false"
-                - name: SERVICE_ENABLE_FORECAST_QUEUE_DIRECT
-                  value: "true"
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
@@ -1383,8 +1377,6 @@ Default matches snapshot:
                   value: 3072Mi
                 - name: SERVICE_PORT
                   value: "9102"
-                - name: SERVICE_ENABLE_FORECAST_AFFINITY
-                  value: "true"
                 - name: SERVICE_ENABLE_AST_VIEW_CACHE_REFRESH_WORKER
                   value: "true"
                 - name: SERVICE_ENABLE_AST_VIEW_CACHE_STATE_RECONCILER_WORKER

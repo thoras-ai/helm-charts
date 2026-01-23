@@ -96,4 +96,18 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.thorasMonitor.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.thorasMonitor.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with .Values.thorasMonitor.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
 {{- end }}

@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.59.0"
+thorasVersion: "4.62.0"
 cluster:
   name: ""
 
@@ -80,6 +80,10 @@ thorasOperator:
   prometheus:
     enabled: true
     port: 9101
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
 
 metricsCollector:
   persistence:
@@ -139,6 +143,10 @@ metricsCollector:
       cpu: "16m"
       memory: "128Mi"
   additionalPvSecurityContext: {}
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
 
 thorasApiServerV2:
   rbac:
@@ -163,10 +171,13 @@ thorasApiServerV2:
   additionalPvSecurityContext: {}
   prometheus:
     enabled: true
-  enableForecastAffinity: true
   pprof:
     enabled: false
   enableViewCacheQueryLiveJoin: true
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
 
 thorasWorker:
   enabled: true
@@ -189,7 +200,6 @@ thorasWorker:
     enabled: true
     port: 9102
   enableSnapshotChunkAutoSizing: true
-  enableDirectForecastQueueing: true
   # Cost will not work in the dashboard if this is disabled. Used for debugging purposes.
   enableAstViewCacheRefreshWorker: true
   enableAstViewCacheStateReconcilerWorker: true
@@ -197,6 +207,10 @@ thorasWorker:
   enableActiveSuggestionWorker: false
   enableUnifiedAstUtilizationMonitor: false
   cloudSyncBaseUrl: "https://console.staging.thoras.ai"
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
 
 thorasDashboard:
   enabled: true
@@ -251,6 +265,10 @@ thorasDashboard:
     cost_simulator: false
     rolling_savings: true
     cost_breakdown_v2: true
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
 
 thorasMonitor:
   enabled: false
@@ -269,13 +287,17 @@ thorasMonitor:
   podAnnotations: {}
   labels: {}
   config: |
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
 
 thorasForecast:
   serviceAccount:
     name: thoras-forecast-worker
   skipCache: false
   ignoreNewPods: true
-  enableDecoupledTraining: false
+  enableDecoupledTraining: true
   trainingJitterMinutes: 0
   # Specify the complete resources block (takes precedence if set)
   resources: {}
@@ -309,6 +331,10 @@ thorasForecast:
   prometheus:
     enabled: true
     port: 9101
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
 
 thorasAgent:
   enabled: false
@@ -352,6 +378,10 @@ thorasSlmAgent:
   requests:
     cpu: 1024m
     memory: 4096Mi
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
 
 # K8s client max queries per second
 queriesPerSecond: "50"
@@ -360,6 +390,9 @@ queriesPerSecond: "50"
 nodeSelector: {}
 
 tolerations: []
+
+# Global affinity rules that components can opt into
+affinity: {}
 
 # Global Labels support
 labels: {}
