@@ -890,15 +890,6 @@ Default matches snapshot:
           - get
           - list
           - watch
-      - apiGroups:
-          - batch
-        resources:
-          - jobs
-          - cronjobs
-        verbs:
-          - get
-          - list
-          - watch
   21: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
@@ -1173,19 +1164,21 @@ Default matches snapshot:
         verbs:
           - '*'
       - apiGroups:
-          - batch
-        resources:
-          - jobs
-          - cronjobs
-        verbs:
-          - '*'
-      - apiGroups:
           - apps
           - argoproj.io
         resources:
           - '*'
         verbs:
           - patch
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - create
+          - update
+          - watch
   29: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
