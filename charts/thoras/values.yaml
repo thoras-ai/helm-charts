@@ -25,6 +25,7 @@ imagePullPolicy: "IfNotPresent"
 logLevel: info
 
 featureFlags:
+  enableNodeDetailsCollector: false
   enableSkipScalingOnInsufficientData: true
   enableCheckDatabaseHealth: false
 
