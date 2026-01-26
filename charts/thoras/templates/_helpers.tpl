@@ -62,10 +62,9 @@ podAntiAffinity:
 Excluded namespaces for webhooks
 */}}
 {{- define "thoras.webhooks.excludedNamespaces" -}}
-matchExpressions:
-  - key: "kubernetes.io/metadata.name"
-    operator: NotIn
-    values:
-      - kube-system
-      - kube-node-lease
+- key: "kubernetes.io/metadata.name"
+  operator: NotIn
+  values:
+    - kube-system
+    - kube-node-lease
 {{- end }}
