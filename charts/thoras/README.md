@@ -81,6 +81,7 @@ The following flags are considered temporary and gate access to specific behavio
 | Key                                              | Type    | Default | Description                                                     |
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
 | featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
+| featureFlags.enableCheckDatabaseHealth           | Boolean | false   | If true, pings the database in the health endpoint              |
 
 ## Affinity Configuration
 

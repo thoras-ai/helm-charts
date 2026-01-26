@@ -167,6 +167,8 @@ spec:
             {{- end }}
           - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
             value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
+          - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
+            value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}
