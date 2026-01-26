@@ -165,6 +165,8 @@ spec:
                 name: thoras-cloud-sync
                 key: clusterKey
             {{- end }}
+          - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
+            value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}
