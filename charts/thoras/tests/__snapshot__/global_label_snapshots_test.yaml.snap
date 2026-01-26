@@ -82,6 +82,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
+                - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1409,6 +1411,8 @@ Default matches snapshot:
                       name: thoras-cloud-sync
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
+                - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-worker
