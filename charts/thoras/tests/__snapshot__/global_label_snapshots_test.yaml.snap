@@ -1409,6 +1409,8 @@ Default matches snapshot:
                       name: thoras-cloud-sync
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
+                - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-worker
