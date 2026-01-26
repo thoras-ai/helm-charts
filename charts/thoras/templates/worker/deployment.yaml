@@ -169,6 +169,8 @@ spec:
             value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
           - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
             value: {{ .Values.featureFlags.enableNodeDetailsCollector | ternary "true" "false" | quote}}
+          - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
+            value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}
