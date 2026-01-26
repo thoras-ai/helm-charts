@@ -142,6 +142,8 @@ spec:
             value: {{ .Values.featureFlags.enableSkipScalingOnInsufficientData | ternary "true" "false" | quote }}
           - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
             value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
+          - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
+            value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml

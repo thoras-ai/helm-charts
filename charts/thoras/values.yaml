@@ -26,6 +26,7 @@ logLevel: info
 
 featureFlags:
   enableSkipScalingOnInsufficientData: true
+  enableCheckDatabaseHealth: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
