@@ -25,6 +25,7 @@ imagePullPolicy: "IfNotPresent"
 logLevel: info
 
 featureFlags:
+  enableNodeDetailsCollector: false
   enableSkipScalingOnInsufficientData: true
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)

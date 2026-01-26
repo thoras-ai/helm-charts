@@ -80,6 +80,7 @@ The following flags are considered temporary and gate access to specific behavio
 
 | Key                                              | Type    | Default | Description                                                     |
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
+| featureFlags.enableNodeDetailsCollector          | Boolean | false   | Collection of node detail snapshots                             |
 | featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
 
 ## Affinity Configuration
