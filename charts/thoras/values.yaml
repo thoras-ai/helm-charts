@@ -86,6 +86,9 @@ thorasOperator:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Webhook certificate generation configuration
+  webhookCertGen:
+    imageTag: v1.4.4
 
 metricsCollector:
   persistence:

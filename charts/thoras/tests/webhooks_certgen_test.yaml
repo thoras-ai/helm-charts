@@ -1,0 +1,165 @@
+suite: Webhook Certificate Generation
+tests:
+  ############################
+  # Create Job Tests
+  ############################
+  - it: Creates mutating webhook patch job with correct configuration
+    template: operator/webhooks-certgen-create.yaml
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: create
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --host=thoras-webhooks,thoras-webhooks.NAMESPACE.svc
+
+  - it: Uses secretRef for imagePullSecrets when provided
+    template: operator/webhooks-certgen-create.yaml
+    set:
+      imageCredentials:
+        secretRef: "custom-registry-secret"
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: "custom-registry-secret"
+
+  - it: Creates thoras-secret-registry-certgen imagePullSecret when password is set
+    template: operator/webhooks-certgen-create.yaml
+    set:
+      imageCredentials:
+        password: "test-password"
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: thoras-secret-registry-certgen
+
+  - it: Uses custom namespace from Release
+    template: operator/webhooks-certgen-create.yaml
+    release:
+      namespace: custom-namespace
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-namespace
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --namespace=custom-namespace
+
+  - it: Uses custom image tag
+    template: operator/webhooks-certgen-create.yaml
+    set:
+      thorasOperator:
+        webhookCertGen:
+          imageTag: "v2.0.0"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: kube-webhook-certgen:v2.0.0$
+
+  - it: Uses custom imagePullPolicy
+    template: operator/webhooks-certgen-create.yaml
+    set:
+      imagePullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  ############################
+  # Patch Jobs Tests
+  ############################
+  - it: Creates two patch jobs for mutating and validating webhooks
+    template: operator/webhooks-certgen-patch.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: Creates mutating webhook patch job with correct configuration
+    template: operator/webhooks-certgen-patch.yaml
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: patch
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --webhook-name=pods.thoras.ai
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --patch-validating=false
+
+  - it: Creates validating webhook patch job with correct configuration
+    template: operator/webhooks-certgen-patch.yaml
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: patch
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --webhook-name=validation.thoras.ai
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --patch-mutating=false
+
+  - it: Patch jobs use secretRef for imagePullSecrets when provided
+    template: operator/webhooks-certgen-patch.yaml
+    set:
+      imageCredentials:
+        secretRef: "custom-registry-secret"
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: "custom-registry-secret"
+
+  - it: Patch jobs create thoras-secret-registry-certgen imagePullSecret when password is set
+    template: operator/webhooks-certgen-patch.yaml
+    set:
+      imageCredentials:
+        password: "test-password"
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: thoras-secret-registry-certgen
+
+  - it: Patch jobs use custom namespace from Release
+    template: operator/webhooks-certgen-patch.yaml
+    release:
+      namespace: custom-namespace
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-namespace
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --namespace=custom-namespace
+
+  - it: Patch jobs use custom image tag
+    template: operator/webhooks-certgen-patch.yaml
+    set:
+      thorasOperator:
+        webhookCertGen:
+          imageTag: "v2.0.0"
+    documentIndex: 0
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: kube-webhook-certgen:v2.0.0$
