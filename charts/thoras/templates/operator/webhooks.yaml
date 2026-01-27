@@ -7,6 +7,9 @@ metadata:
     {{- include "thoras.labels" . | nindent 4 }}
 webhooks:
 - name: "pods.thoras.ai"
+  namespaceSelector:
+    matchExpressions:
+      {{- include "thoras.webhooks.excludedNamespaces" . | nindent 6 }}
   rules:
   - apiGroups:   [""]
     apiVersions: ["v1"]
@@ -23,6 +26,9 @@ webhooks:
   admissionReviewVersions:
     - v1
 - name: "scale.thoras.ai"
+  namespaceSelector:
+    matchExpressions:
+      {{- include "thoras.webhooks.excludedNamespaces" . | nindent 6 }}
   rules:
   - apiGroups:   ["*"]
     apiVersions: ["*"]
@@ -47,6 +53,9 @@ metadata:
     {{- include "thoras.labels" . | nindent 4 }}
 webhooks:
   - name: "ast-validation.thoras.ai"
+    namespaceSelector:
+      matchExpressions:
+        {{- include "thoras.webhooks.excludedNamespaces" . | nindent 8 }}
     rules:
     - apiGroups:   ["thoras.ai"]
       apiVersions: ["v1"]
@@ -64,6 +73,9 @@ webhooks:
     admissionReviewVersions:
       - v1
   - name: "scale-validation.thoras.ai"
+    namespaceSelector:
+      matchExpressions:
+        {{- include "thoras.webhooks.excludedNamespaces" . | nindent 8 }}
     rules:
     - apiGroups:   ["*"]
       apiVersions: ["*"]

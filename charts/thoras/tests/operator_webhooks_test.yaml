@@ -1,0 +1,17 @@
+suite: Operator Webhooks
+templates:
+  - operator/webhooks.yaml
+tests:
+  - it: Should exclude kube-system from mutating webhooks
+    documentIndex: 1
+    asserts:
+      - contains:
+          path: webhooks[0].namespaceSelector.matchExpressions[?(@.key == 'kubernetes.io/metadata.name')].values
+          content: kube-system
+
+  - it: Should exclude kube-system from validating webhooks
+    documentIndex: 2
+    asserts:
+      - contains:
+          path: webhooks[0].namespaceSelector.matchExpressions[?(@.key == 'kubernetes.io/metadata.name')].values
+          content: kube-system
