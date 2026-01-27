@@ -35,7 +35,7 @@ spec:
         - name: tls
           secret:
             defaultMode: 420
-            secretName: thoras-webhooks-cert
+            secretName: thoras-tls-certs
             items:
               - key: cert
                 path: tls.crt

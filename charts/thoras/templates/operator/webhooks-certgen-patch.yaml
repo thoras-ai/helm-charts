@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: thoras-webhooks-certgen-patch
+  name: thoras-tls-certsgen-patch
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
@@ -14,13 +14,13 @@ spec:
   ttlSecondsAfterFinished: 300
   template:
     metadata:
-      name: thoras-webhooks-certgen-patch
+      name: thoras-tls-certsgen-patch
       labels:
         {{- include "thoras.labels" . | nindent 8 }}
         app.kubernetes.io/component: webhook-certgen
     spec:
       restartPolicy: OnFailure
-      serviceAccountName: thoras-webhooks-certgen
+      serviceAccountName: thoras-tls-certsgen
       {{- if .Values.imageCredentials.password }}
       imagePullSecrets:
         - name: thoras-registry-secret
@@ -33,7 +33,7 @@ spec:
             - patch
             - --webhook-name=pods.thoras.ai
             - --namespace={{ .Release.Namespace }}
-            - --secret-name=thoras-webhooks-cert
+            - --secret-name=thoras-tls-certs
             - --patch-validating=false
           securityContext:
             allowPrivilegeEscalation: false
@@ -49,7 +49,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: thoras-webhooks-certgen-patch-validating
+  name: thoras-tls-certsgen-patch-validating
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
@@ -61,13 +61,13 @@ spec:
   ttlSecondsAfterFinished: 300
   template:
     metadata:
-      name: thoras-webhooks-certgen-patch-validating
+      name: thoras-tls-certsgen-patch-validating
       labels:
         {{- include "thoras.labels" . | nindent 8 }}
         app.kubernetes.io/component: webhook-certgen
     spec:
       restartPolicy: OnFailure
-      serviceAccountName: thoras-webhooks-certgen
+      serviceAccountName: thoras-tls-certsgen
       {{- if .Values.imageCredentials.password }}
       imagePullSecrets:
         - name: thoras-registry-secret
@@ -80,7 +80,7 @@ spec:
             - patch
             - --webhook-name=validation.thoras.ai
             - --namespace={{ .Release.Namespace }}
-            - --secret-name=thoras-webhooks-cert
+            - --secret-name=thoras-tls-certs
             - --patch-mutating=false
           securityContext:
             allowPrivilegeEscalation: false

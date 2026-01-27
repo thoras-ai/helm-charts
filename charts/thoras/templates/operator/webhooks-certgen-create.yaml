@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: thoras-webhooks-certgen-create
+  name: thoras-tls-certsgen-create
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
@@ -15,13 +15,13 @@ spec:
   ttlSecondsAfterFinished: 300
   template:
     metadata:
-      name: thoras-webhooks-certgen-create
+      name: thoras-tls-certsgen-create
       labels:
         {{- include "thoras.labels" . | nindent 8 }}
         app.kubernetes.io/component: webhook-certgen
     spec:
       restartPolicy: OnFailure
-      serviceAccountName: thoras-webhooks-certgen
+      serviceAccountName: thoras-tls-certsgen
       {{- if .Values.imageCredentials.password }}
       imagePullSecrets:
         - name: thoras-registry-secret
@@ -34,7 +34,7 @@ spec:
             - create
             - --host=thoras-webhooks,thoras-webhooks.{{ .Release.Namespace }}.svc
             - --namespace={{ .Release.Namespace }}
-            - --secret-name=thoras-webhooks-cert
+            - --secret-name=thoras-tls-certs
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
