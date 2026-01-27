@@ -1080,6 +1080,12 @@ Default matches snapshot:
           volumes:
             - name: tls
               secret:
+                defaultMode: 420
+                items:
+                  - key: cert
+                    path: tls.crt
+                  - key: key
+                    path: tls.key
                 secretName: thoras-tls-certs
   26: |
     apiVersion: rbac.authorization.k8s.io/v1
