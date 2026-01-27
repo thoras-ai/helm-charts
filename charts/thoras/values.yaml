@@ -88,10 +88,7 @@ thorasOperator:
   affinity: {}
   # Webhook certificate generation configuration
   webhookCertGen:
-    image:
-      registry: registry.k8s.io/ingress-nginx
-      repository: kube-webhook-certgen
-      tag: v1.4.4
+    imageTag: v1.4.4
 
 metricsCollector:
   persistence:

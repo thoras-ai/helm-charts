@@ -21,13 +21,16 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: thoras-tls-certsgen
-      {{- if .Values.imageCredentials.password }}
+      {{- if .Values.imageCredentials.secretRef }}
       imagePullSecrets:
-        - name: thoras-registry-secret
+        - name: {{ .Values.imageCredentials.secretRef }}
+      {{- else if .Values.imageCredentials.password }}
+      imagePullSecrets:
+        - name: thoras-secret-registry-certgen
       {{- end }}
       containers:
         - name: patch-mutating-pods
-          image: {{ .Values.thorasOperator.webhookCertGen.image.registry }}/{{ .Values.thorasOperator.webhookCertGen.image.repository }}:{{ .Values.thorasOperator.webhookCertGen.image.tag }}
+          image: {{ .Values.imageCredentials.registry }}/kube-webhook-certgen:{{ .Values.thorasOperator.webhookCertGen.imageTag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           args:
             - patch
@@ -68,13 +71,16 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: thoras-tls-certsgen
-      {{- if .Values.imageCredentials.password }}
+      {{- if .Values.imageCredentials.secretRef }}
       imagePullSecrets:
-        - name: thoras-registry-secret
+        - name: {{ .Values.imageCredentials.secretRef }}
+      {{- else if .Values.imageCredentials.password }}
+      imagePullSecrets:
+        - name: thoras-secret-registry-certgen
       {{- end }}
       containers:
         - name: patch-validating
-          image: {{ .Values.thorasOperator.webhookCertGen.image.registry }}/{{ .Values.thorasOperator.webhookCertGen.image.repository }}:{{ .Values.thorasOperator.webhookCertGen.image.tag }}
+          image: {{ .Values.imageCredentials.registry }}/kube-webhook-certgen:{{ .Values.thorasOperator.webhookCertGen.imageTag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           args:
             - patch
