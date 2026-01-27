@@ -1,0 +1,47 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: thoras-webhooks-certgen-create
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "-5"
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      name: thoras-webhooks-certgen-create
+      labels:
+        {{- include "thoras.labels" . | nindent 8 }}
+        app.kubernetes.io/component: webhook-certgen
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: thoras-webhooks-certgen
+      {{- if .Values.imageCredentials.password }}
+      imagePullSecrets:
+        - name: thoras-registry-secret
+      {{- end }}
+      containers:
+        - name: create
+          image: {{ .Values.thorasOperator.webhookCertGen.image.registry }}/{{ .Values.thorasOperator.webhookCertGen.image.repository }}:{{ .Values.thorasOperator.webhookCertGen.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          args:
+            - create
+            - --host=thoras-webhooks,thoras-webhooks.{{ .Release.Namespace }}.svc
+            - --namespace={{ .Release.Namespace }}
+            - --secret-name=thoras-webhooks-cert
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault

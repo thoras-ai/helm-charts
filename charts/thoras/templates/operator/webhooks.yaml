@@ -1,27 +1,4 @@
 ---
-{{- $ca := genCA "thoras-webhooks-ca" 3650 }}
-{{- $cn := "thoras-webhooks" }}
-{{- $dns1 := printf "%s.%s" $cn .Release.Namespace }}
-{{- $dns2 := printf "%s.%s.svc" $cn .Release.Namespace }}
-{{- $cert := genSignedCert $cn nil (list $dns1 $dns2) 3650 $ca }}
-apiVersion: v1
-kind: Secret
-type: kubernetes.io/tls
-metadata:
-  name: thoras-webhooks-cert
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "thoras.labels" . | nindent 4 }}
-data:
-  {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace "thoras-webhooks-cert") }}
-  {{- $secretData := (get $secretObj "data") | default dict }}
-  {{- $secretCert := (get $secretData "tls.crt") | default ($cert.Cert | b64enc) }}
-  {{- $secretKey := (get $secretData "tls.key") | default ($cert.Key | b64enc) }}
-  {{- $secretCaCert := (get $secretData "ca.crt") | default ($ca.Cert | b64enc) }}
-  tls.crt: {{ $secretCert | quote }}
-  tls.key: {{ $secretKey | quote }}
-  ca.crt: {{ $secretCaCert | quote }}
----
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -41,7 +18,6 @@ webhooks:
       namespace: {{ .Release.Namespace }}
       name: thoras-webhooks
       path: /mutate--v1-pod
-    caBundle: {{ $secretCaCert | quote }}
   sideEffects: None
   failurePolicy: 'Ignore'
   admissionReviewVersions:
@@ -58,7 +34,6 @@ webhooks:
       namespace: {{ .Release.Namespace }}
       name: thoras-webhooks
       path: /mutate-autoscaling-v1-scale
-    caBundle: {{ $secretCaCert | quote }}
   sideEffects: None
   failurePolicy: 'Ignore'
   admissionReviewVersions:
@@ -83,7 +58,6 @@ webhooks:
         namespace: {{ .Release.Namespace }}
         name: thoras-webhooks
         path: /validate-thoras-ai-v1-aiscaletarget
-      caBundle: {{ $secretCaCert | quote }}
     sideEffects: None
     failurePolicy: 'Ignore'
     timeoutSeconds: 5
@@ -101,7 +75,6 @@ webhooks:
         namespace: {{ .Release.Namespace }}
         name: thoras-webhooks
         path: /validate-autoscaling-v1-scale
-      caBundle: {{ $secretCaCert | quote }}
     sideEffects: None
     failurePolicy: 'Ignore'
     timeoutSeconds: 5

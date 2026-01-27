@@ -1,0 +1,94 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: thoras-webhooks-certgen-patch
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      name: thoras-webhooks-certgen-patch
+      labels:
+        {{- include "thoras.labels" . | nindent 8 }}
+        app.kubernetes.io/component: webhook-certgen
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: thoras-webhooks-certgen
+      {{- if .Values.imageCredentials.password }}
+      imagePullSecrets:
+        - name: thoras-registry-secret
+      {{- end }}
+      containers:
+        - name: patch-mutating-pods
+          image: {{ .Values.thorasOperator.webhookCertGen.image.registry }}/{{ .Values.thorasOperator.webhookCertGen.image.repository }}:{{ .Values.thorasOperator.webhookCertGen.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          args:
+            - patch
+            - --webhook-name=pods.thoras.ai
+            - --namespace={{ .Release.Namespace }}
+            - --secret-name=thoras-webhooks-cert
+            - --patch-validating=false
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: thoras-webhooks-certgen-patch-validating
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      name: thoras-webhooks-certgen-patch-validating
+      labels:
+        {{- include "thoras.labels" . | nindent 8 }}
+        app.kubernetes.io/component: webhook-certgen
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: thoras-webhooks-certgen
+      {{- if .Values.imageCredentials.password }}
+      imagePullSecrets:
+        - name: thoras-registry-secret
+      {{- end }}
+      containers:
+        - name: patch-validating
+          image: {{ .Values.thorasOperator.webhookCertGen.image.registry }}/{{ .Values.thorasOperator.webhookCertGen.image.repository }}:{{ .Values.thorasOperator.webhookCertGen.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          args:
+            - patch
+            - --webhook-name=validation.thoras.ai
+            - --namespace={{ .Release.Namespace }}
+            - --secret-name=thoras-webhooks-cert
+            - --patch-mutating=false
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
