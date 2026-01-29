@@ -28,6 +28,7 @@ featureFlags:
   enableNodeDetailsCollector: false
   enableSkipScalingOnInsufficientData: true
   enableCheckDatabaseHealth: false
+  enableCostSavingsSettingsRefresh: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
