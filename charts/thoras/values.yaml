@@ -64,7 +64,6 @@ rbac:
   namespaces: []
 
 thorasOperator:
-  # Operator is a singleton -- don't change this :)
   replicas: 1
   serviceAccount:
     name: thoras-operator
