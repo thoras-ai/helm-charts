@@ -29,6 +29,7 @@ featureFlags:
   enableSkipScalingOnInsufficientData: true
   enableCheckDatabaseHealth: false
   enableCostSavingsSettingsRefresh: false
+  enableNextVersionMigration: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
