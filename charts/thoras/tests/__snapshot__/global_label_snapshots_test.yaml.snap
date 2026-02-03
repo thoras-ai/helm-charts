@@ -1411,7 +1411,7 @@ Default matches snapshot:
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
                 - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "false"
                 - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
