@@ -23,5 +23,10 @@ spec:
       memory:
         lowerbound: 1Mi
       name: thoras-dashboard
+    - cpu:
+        lowerbound: 1m
+      memory:
+        lowerbound: 1Mi
+      name: thoras-api-proxy
     mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}
 {{- end }}
