@@ -52,7 +52,7 @@ Should default to v2 port:
 
             location /config.json {
                 default_type application/json;
-                return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"rolling_savings":true,"show_savings":true} }';
+                return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"node_overrides":true,"rolling_savings":true,"show_savings":true} }';
             }
 
             location / {
@@ -126,7 +126,7 @@ should set extras in config.json:
 
             location /config.json {
                 default_type application/json;
-                return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"feature":true,"foo":"bar","rolling_savings":true,"show_savings":true} }';
+                return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"feature":true,"foo":"bar","node_overrides":true,"rolling_savings":true,"show_savings":true} }';
             }
 
             location / {

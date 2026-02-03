@@ -1415,7 +1415,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "false"
                 - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
-                  value: "false"
+                  value: "true"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-worker
