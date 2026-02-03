@@ -39,6 +39,37 @@ spec:
           name: thoras-monitor-config
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
+      {{- if .Values.featureFlags.enableNextVersionMigration }}
+        name: migrate-database
+        command: ["/app/worker"]
+        args: ["migrate"]
+        env:
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+          - name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+          - name: SERVICE_SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
+                name: {{ .Values.slackWebhookUrlSecretRefName }}
+                key: {{ .Values.slackWebhookUrlSecretRefKey }}
+            {{- else }}
+                name: thoras-slack
+                key: webhookUrl
+            {{- end }}
+          - name: SERVICE_SLACK_ERRORS_ENABLED
+            value: "{{ .Values.thorasWorker.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+          - name: "SERVICE_LOG_LEVEL"
+            value: {{ default .Values.logLevel .Values.thorasWorker.logLevel }}
+          - name: SERVICE_CLUSTER_NAME
+            value: "{{ .Values.cluster.name }}"
+          - name: SERVICE_CHART_VERSION
+            value: {{ .Chart.Version | quote }}
+      {{- else }}
         name: wait-for-postgres
         env:
           - name: DATABASE_HOST
@@ -79,6 +110,7 @@ spec:
 
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
+      {{- end }}
         resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
