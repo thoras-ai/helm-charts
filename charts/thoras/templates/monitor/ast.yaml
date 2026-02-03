@@ -1,3 +1,4 @@
+{{- if .Values.thorasMonitor.enabled }}
 {{- if .Values.featureFlags.thorasManageThoras.enabled }}
 apiVersion: thoras.ai/v1
 kind: AIScaleTarget
@@ -24,4 +25,5 @@ spec:
         lowerbound: 1Mi
       name: thoras-monitor
     mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}
+{{- end }}
 {{- end }}
