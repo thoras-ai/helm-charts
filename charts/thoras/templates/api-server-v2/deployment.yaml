@@ -32,6 +32,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
       - name: monitor-config
         configMap:

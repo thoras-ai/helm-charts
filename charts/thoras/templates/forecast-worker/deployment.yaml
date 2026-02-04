@@ -29,6 +29,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasForecast.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service

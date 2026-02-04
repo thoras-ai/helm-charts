@@ -25,6 +25,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
         - name: nginx-config
           configMap:

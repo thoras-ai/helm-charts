@@ -23,6 +23,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasSlmAgent.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-phi4-mini:{{ default .Values.thorasVersion .Values.thorasSlmAgent.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"

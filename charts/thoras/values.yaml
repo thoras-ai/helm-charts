@@ -13,6 +13,7 @@ imageCredentials:
 
   # Reference a pre-existing secret in the Thoras namespace
   secretRef: ""
+  imagePullSecretInDeployment: false
 
 resourceQuota:
   enabled: false

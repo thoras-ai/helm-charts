@@ -29,6 +29,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
       {{- if .Values.metricsCollector.timescale.config.enabled }}
         - name: timescale-config
