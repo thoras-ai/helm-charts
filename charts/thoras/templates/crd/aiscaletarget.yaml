@@ -652,22 +652,6 @@ spec:
                     - max_assurance
                     type: string
                 type: object
-              reasoning:
-                properties:
-                  metrics:
-                    items:
-                      properties:
-                        connector:
-                          type: string
-                        name:
-                          type: string
-                        query:
-                          type: string
-                      type: object
-                    type: array
-                required:
-                - metrics
-                type: object
               scaleTargetRef:
                 properties:
                   apiVersion:
