@@ -23,6 +23,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasAgent.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       {{- if .Values.thorasAgent.priorityClassName }}
       priorityClassName: {{ .Values.thorasAgent.priorityClassName }}
       {{ end }}
