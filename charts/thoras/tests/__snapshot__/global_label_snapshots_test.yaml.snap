@@ -151,7 +151,7 @@ Default matches snapshot:
                 - name: DATABASE_URL
                   value: $(DATABASE_HOST)/thoras?sslmode=disable
                 - name: EXTENSION_VERSION
-                  value: 2.24.0
+                  value: 2.25.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
               resources: {}
@@ -1474,7 +1474,7 @@ Default matches snapshot:
                 - name: DATABASE_URL
                   value: $(DATABASE_HOST)/thoras?sslmode=disable
                 - name: EXTENSION_VERSION
-                  value: 2.24.0
+                  value: 2.25.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
               resources: {}

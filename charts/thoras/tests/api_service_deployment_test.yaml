@@ -64,11 +64,11 @@ tests:
     set:
       metricsCollector:
         timescale:
-          extensionVersion: "2.24.0"
+          extensionVersion: "2.25.0"
     asserts:
       - equal:
           path: spec.template.spec.initContainers[0].env[?(@.name == 'EXTENSION_VERSION')].value
-          value: "2.24.0"
+          value: "2.25.0"
   - it: Should enable request and limit overrides
     set:
       thorasApiServerV2:

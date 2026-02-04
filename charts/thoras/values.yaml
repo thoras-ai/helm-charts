@@ -117,7 +117,7 @@ metricsCollector:
   timescale:
     image: "timescaledb"
     imageTag: "2.25.0-pg16"
-    extensionVersion: "2.24.0"
+    extensionVersion: "2.25.0"
     name: timescale
     containerPort: 5432
     # Specify the complete resources block (takes precedence if set)
