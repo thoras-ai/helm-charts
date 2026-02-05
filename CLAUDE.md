@@ -29,8 +29,6 @@ The Thoras platform consists of multiple interconnected components deployed as K
 The chart includes Custom Resource Definitions (CRDs) for:
 
 - AI Scale Targets (`aiscaletarget.yaml`)
-- Metric Connectors (`metricconnector.yaml`)
-- Metric Insights (`metricinsights.yaml`)
 
 ## Common Development Tasks
 
