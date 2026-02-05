@@ -366,11 +366,6 @@ thorasAgent:
   labels: {}
   priorityClassName: ~
 
-thorasReasoning:
-  connectors:
-    prometheus:
-      baseUrl: "http://localhost"
-
 thorasSlmAgent:
   enabled: false
   serviceAccount:

@@ -54,8 +54,6 @@ Default matches snapshot:
                   value: info
                 - name: SERVICE_POD_LOG_LABEL
                   value: app.kubernetes.io/name=thoras
-                - name: SERVICE_PROMETHEUS_API_URL
-                  value: http://localhost
                 - name: SERVICE_CLUSTER_NAME
                   value: ""
                 - name: SERVICE_BLOB_SERVICE_API_URL
