@@ -33,6 +33,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasWorker.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
       - name: monitor-config
         configMap:
@@ -79,6 +83,7 @@ spec:
 
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
+        resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -124,8 +129,6 @@ spec:
           - name: SERVICE_RIVER_LOG_LEVEL
             value: {{ . | quote }}
           {{- end }}
-          - name: SERVICE_ENABLE_FORECAST_QUEUE_DIRECT
-            value: {{ .Values.thorasWorker.enableDirectForecastQueueing | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
             value: {{ .Values.thorasWorker.enableMetricIntegrityWorker | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
@@ -134,8 +137,6 @@ spec:
             value: "{{ .Values.metricsCollector.timescale.requests.memory | default "3072Mi" }}"
           - name: SERVICE_PORT
             value: {{ .Values.thorasWorker.prometheus.port | quote }}
-          - name: SERVICE_ENABLE_FORECAST_AFFINITY
-            value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_REFRESH_WORKER
             value: {{ .Values.thorasWorker.enableAstViewCacheRefreshWorker | quote }}
           - name: SERVICE_ENABLE_AST_VIEW_CACHE_STATE_RECONCILER_WORKER
@@ -168,6 +169,14 @@ spec:
                 name: thoras-cloud-sync
                 key: clusterKey
             {{- end }}
+          - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
+            value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
+          - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
+            value: {{ .Values.featureFlags.enableNodeDetailsCollector | ternary "true" "false" | quote}}
+          - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
+            value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
+            value: {{ .Values.featureFlags.enableCostSavingsSettingsRefresh | ternary "true" "false" | quote }}
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}
@@ -190,4 +199,18 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.thorasWorker.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.thorasWorker.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with .Values.thorasWorker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}

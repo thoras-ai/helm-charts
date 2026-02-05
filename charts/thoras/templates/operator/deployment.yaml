@@ -31,10 +31,20 @@ spec:
       name: thoras-operator
     spec:
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
         - name: tls
           secret:
-            secretName: thoras-webhooks-cert
+            defaultMode: 420
+            secretName: thoras-tls-certs
+            items:
+              - key: cert
+                path: tls.crt
+              - key: key
+                path: tls.key
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: wait-for-api-service
@@ -49,6 +59,7 @@ spec:
               echo "Failed to connect to API service"
               exit 1
             fi
+        resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: thoras-operator
@@ -140,4 +151,18 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.thorasOperator.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.thorasOperator.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with .Values.thorasOperator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}

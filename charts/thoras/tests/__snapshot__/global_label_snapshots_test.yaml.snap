@@ -66,14 +66,10 @@ Default matches snapshot:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
-                - name: SERVICE_RESTART_WORKLOAD_ON_CPU
-                  value: "false"
                 - name: SERVICE_ENABLE_PPROF
                   value: "false"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
-                - name: SERVICE_ENABLE_FORECAST_AFFINITY
-                  value: "true"
                 - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
                   value: "true"
                 - name: SERVICE_COST_REFRESH_BATCH_SIZE
@@ -84,6 +80,10 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
                   value: "true"
+                - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
+                  value: 2m
+                - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -154,6 +154,7 @@ Default matches snapshot:
                   value: 2.24.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
+              resources: {}
           serviceAccountName: thoras-api
           volumes:
             - configMap:
@@ -608,6 +609,7 @@ Default matches snapshot:
                   value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
+              resources: {}
           serviceAccountName: thoras-dashboard
           volumes:
             - configMap:
@@ -716,12 +718,10 @@ Default matches snapshot:
                   value: "1"
                 - name: FORECAST_IGNORE_NEW_PODS
                   value: "true"
-                - name: SERVICE_ENABLE_FORECAST_AFFINITY
-                  value: "true"
                 - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
                   value: "1000"
                 - name: ENABLE_DECOUPLED_TRAINING
-                  value: "false"
+                  value: "true"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: METRICS_PORT
@@ -752,6 +752,7 @@ Default matches snapshot:
                   value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
+              resources: {}
           serviceAccountName: thoras-forecast-worker
   18: |
     apiVersion: v1
@@ -847,6 +848,7 @@ Default matches snapshot:
                   value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
+              resources: {}
           serviceAccountName: thoras-monitor
           volumes:
             - configMap:
@@ -884,15 +886,6 @@ Default matches snapshot:
           - autoscaling.k8s.io
         resources:
           - verticalpodautoscalers
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - batch
-        resources:
-          - jobs
-          - cronjobs
         verbs:
           - get
           - list
@@ -1082,11 +1075,18 @@ Default matches snapshot:
                   value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
+              resources: {}
           serviceAccountName: thoras-operator
           volumes:
             - name: tls
               secret:
-                secretName: thoras-webhooks-cert
+                defaultMode: 420
+                items:
+                  - key: cert
+                    path: tls.crt
+                  - key: key
+                    path: tls.key
+                secretName: thoras-tls-certs
   26: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -1170,19 +1170,21 @@ Default matches snapshot:
         verbs:
           - '*'
       - apiGroups:
-          - batch
-        resources:
-          - jobs
-          - cronjobs
-        verbs:
-          - '*'
-      - apiGroups:
           - apps
           - argoproj.io
         resources:
           - '*'
         verbs:
           - patch
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - create
+          - update
+          - watch
   29: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
@@ -1375,8 +1377,6 @@ Default matches snapshot:
                   value: 4.7.0
                 - name: SERVICE_CHUNK_INTERVAL_UPDATER_DRY_RUN
                   value: "false"
-                - name: SERVICE_ENABLE_FORECAST_QUEUE_DIRECT
-                  value: "true"
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
@@ -1385,8 +1385,6 @@ Default matches snapshot:
                   value: 3072Mi
                 - name: SERVICE_PORT
                   value: "9102"
-                - name: SERVICE_ENABLE_FORECAST_AFFINITY
-                  value: "true"
                 - name: SERVICE_ENABLE_AST_VIEW_CACHE_REFRESH_WORKER
                   value: "true"
                 - name: SERVICE_ENABLE_AST_VIEW_CACHE_STATE_RECONCILER_WORKER
@@ -1410,6 +1408,14 @@ Default matches snapshot:
                     secretKeyRef:
                       key: clusterKey
                       name: thoras-cloud-sync
+                - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
+                  value: 2m
+                - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
+                  value: "true"
+                - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
+                  value: "false"
+                - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
+                  value: "true"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-worker
@@ -1471,6 +1477,7 @@ Default matches snapshot:
                   value: 2.24.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
+              resources: {}
           serviceAccountName: thoras-worker
           volumes:
             - configMap:

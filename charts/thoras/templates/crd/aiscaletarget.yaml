@@ -652,22 +652,6 @@ spec:
                     - max_assurance
                     type: string
                 type: object
-              reasoning:
-                properties:
-                  metrics:
-                    items:
-                      properties:
-                        connector:
-                          type: string
-                        name:
-                          type: string
-                        query:
-                          type: string
-                      type: object
-                    type: array
-                required:
-                - metrics
-                type: object
               scaleTargetRef:
                 properties:
                   apiVersion:
@@ -761,6 +745,69 @@ spec:
                           required:
                           - lowerbound
                           type: object
+                        jvm_options:
+                          description: |-
+                            JVMOptions configures automatic JVM heap sizing.
+                            The calculation flow is:
+                             1. Xmx = max(heap_forecast, heap_current) * (1 + XmxBuffer)
+                             2. Apply XmxBounds clamping to Xmx
+                             3. Xms = Xmx * XmsRatio
+                             4. Container Memory = (Xmx + nonheap) * (1 + MemoryBuffer)
+                          properties:
+                            enable_auto_heap_size:
+                              description: Enable automatic JVM heap size adjustment
+                                based on memory requests.
+                              type: boolean
+                            memory_buffer:
+                              default: 10%
+                              description: |-
+                                MemoryBuffer specifies the buffer percentage to add above total JVM memory (heap + non-heap) when setting container memory limits.
+                                This accounts for non-heap memory regions such as metaspace, thread stacks, and native memory allocations.
+                                Valid range: 0%-100%. Defaults to 10%.
+                              type: string
+                            xms_ratio:
+                              default: 80%
+                              description: |-
+                                XmsRatio specifies the ratio of the initial heap size (Xms) relative to the maximum heap size (Xmx).
+                                This determines how much memory is allocated to the JVM heap at startup.
+                                Valid range: 0%-100%. Defaults to 80%.
+                              type: string
+                            xmx_bounds:
+                              properties:
+                                limit:
+                                  properties:
+                                    ratio:
+                                      anyOf:
+                                      - type: integer
+                                      - type: string
+                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                      x-kubernetes-int-or-string: true
+                                  required:
+                                  - ratio
+                                  type: object
+                                lowerbound:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                upperbound:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                              required:
+                              - lowerbound
+                              type: object
+                            xmx_buffer:
+                              default: 10%
+                              description: |-
+                                XmxBuffer specifies the buffer percentage to add above observed heap memory usage when setting Xmx.
+                                This provides headroom for heap allocation to prevent out-of-memory errors.
+                                Valid range: 0%-100%. Defaults to 10%.
+                              type: string
+                          type: object
                         memory:
                           properties:
                             limit:
@@ -795,8 +842,16 @@ spec:
                       required:
                       - name
                       type: object
+                      x-kubernetes-validations:
+                      - message: EnableAutoHeapSize can only be true if memory.limit
+                          is set
+                        rule: '!has(self.jvm_options) || !self.jvm_options.enable_auto_heap_size
+                          || (has(self.memory) && has(self.memory.limit))'
                     type: array
                   in_place_resizing:
+                    description: |-
+                      Deprecated: Use UpdatePolicy instead.
+                      When InPlaceResizing is not specified and UpdatePolicy is not specified, the default behavior is UpdatePolicy{UpdateMode: "recreate", RecreateResources: ["memory"]}.
                     properties:
                       allow_restart_on_memory_limit_decrease:
                         type: boolean
@@ -892,10 +947,47 @@ spec:
                           rule: 'self.type == ''absolute'' ? has(self.absolute) :
                             true'
                     type: object
+                  update_policy:
+                    description: 'UpdatePolicy defines how pod updates are handled.
+                      If not specified, defaults to UpdatePolicy{UpdateMode: "recreate",
+                      RecreateResources: ["memory"]}.'
+                    properties:
+                      recreate_resources:
+                        default:
+                        - memory
+                        description: |-
+                          RecreateResources lists which resource types should trigger pod recreation when changed.
+                          Defaults to ["memory"] if not set.
+                        items:
+                          type: string
+                        type: array
+                      update_mode:
+                        default: recreate
+                        description: UpdateMode specifies the update strategy. Defaults
+                          to "recreate" if not set.
+                        enum:
+                        - initial
+                        - recreate
+                        - in_place_or_recreate
+                        - in_place
+                        type: string
+                    type: object
                 required:
                 - containers
                 - mode
                 type: object
+                x-kubernetes-validations:
+                - message: when in_place_resizing.enabled is true, update_policy.update_mode
+                    must be either 'in_place' or 'in_place_or_recreate'
+                  rule: '!has(self.in_place_resizing) || !has(self.in_place_resizing.enabled)
+                    || !self.in_place_resizing.enabled || !has(self.update_policy)
+                    || self.update_policy.update_mode == ''in_place'' || self.update_policy.update_mode
+                    == ''in_place_or_recreate'''
+                - message: when in_place_resizing.enabled is false, update_policy.update_mode
+                    cannot be 'in_place' or 'in_place_or_recreate'
+                  rule: '!has(self.in_place_resizing) || self.in_place_resizing.enabled
+                    || !has(self.update_policy) || (self.update_policy.update_mode
+                    != ''in_place'' && self.update_policy.update_mode != ''in_place_or_recreate'')'
             required:
             - model
             type: object
@@ -911,6 +1003,93 @@ spec:
             properties:
               labelSelector:
                 type: string
+              latestSuggestion:
+                description: LatestSuggestion contains the most recent scaling recommendations
+                  from Thoras AI
+                properties:
+                  end:
+                    format: date-time
+                    type: string
+                  forecastedTotals:
+                    description: ForecastedTotals contains predicted resource usage
+                      metrics.
+                    items:
+                      description: ForecastMetric represents a predicted resource
+                        usage value for a specific metric.
+                      properties:
+                        metric:
+                          description: Metric name - can be "cpu", "memory", "heap",
+                            "non-heap", etc.
+                          type: string
+                        targetName:
+                          description: TargetName is the name of the deployment or
+                            container this metric applies to
+                          type: string
+                        targetType:
+                          description: |-
+                            TargetType indicates whether this is a deployment-level or container-level metric
+                            Values: "deployment" or "container"
+                          type: string
+                        value:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Value is the forecasted value in Kubernetes
+                            resource format (e.g., "11m" for CPU, "24Mi" for memory)
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                      required:
+                      - metric
+                      - targetName
+                      - targetType
+                      - value
+                      type: object
+                    type: array
+                  resourceRecommendations:
+                    description: ResourceRecommendations contains optimal resource
+                      requests for each container.
+                    items:
+                      description: ContainerRecommendation contains optimal resource
+                        allocation recommendations for a single container.
+                      properties:
+                        container:
+                          description: Container name
+                          type: string
+                        recommendations:
+                          description: Resource recommendations for this container
+                          items:
+                            description: ResourceRecommendation represents an optimal
+                              resource allocation for a specific resource type.
+                            properties:
+                              resource:
+                                description: Resource type - "cpu" or "memory"
+                                type: string
+                              value:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: Value in Kubernetes resource format (e.g.,
+                                  "12m" for CPU, "256Mi" for memory)
+                                pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                x-kubernetes-int-or-string: true
+                            required:
+                            - resource
+                            - value
+                            type: object
+                          type: array
+                      required:
+                      - container
+                      - recommendations
+                      type: object
+                    type: array
+                  start:
+                    description: Time window for this suggestion
+                    format: date-time
+                    type: string
+                required:
+                - end
+                - start
+                type: object
               previousVerticalMode:
                 type: string
               replicas:

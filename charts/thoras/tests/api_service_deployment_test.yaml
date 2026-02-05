@@ -27,14 +27,6 @@ tests:
       - equal:
           path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POD_LOG_LABEL')].value
           value: "app.kubernetes.io/name=thoras"
-  - it: Ensure SERVICE_RESTART_WORKLOAD_ON_CPU is correct
-    set:
-      thorasApiServerV2:
-        restartWorkloadOnCpu: true
-    asserts:
-      - equal:
-          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_RESTART_WORKLOAD_ON_CPU')].value
-          value: "true"
   - it: Should not have annotations section when all conditions are false
     set:
       thorasApiServerV2:
@@ -126,3 +118,16 @@ tests:
               memory: "1Gi"
               cpu: "1"
               hugepages-1Gi: "2Gi"
+  - it: Should set default podEligibilityMinRunningTime
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME')].value
+          value: "2m"
+  - it: Should override podEligibilityMinRunningTime
+    set:
+      thorasForecast:
+        podEligibilityMinRunningTime: "5m"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME')].value
+          value: "5m"

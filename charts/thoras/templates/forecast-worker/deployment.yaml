@@ -29,27 +29,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.thorasForecast.serviceAccount.name }}
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - metrics-collector
-              topologyKey: kubernetes.io/hostname
-          - weight: 95
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - thoras-forecast-worker
-              topologyKey: kubernetes.io/hostname
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service
@@ -64,6 +47,7 @@ spec:
               echo "Failed to connect to API service"
               exit 1
             fi
+        resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -92,8 +76,6 @@ spec:
             {{- end }}
           - name: FORECAST_IGNORE_NEW_PODS
             value: {{ .Values.thorasForecast.ignoreNewPods | ternary "true" "false" | quote }}
-          - name: SERVICE_ENABLE_FORECAST_AFFINITY
-            value: {{ .Values.thorasApiServerV2.enableForecastAffinity | quote }}
           - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
             value: {{ .Values.thorasForecast.worker.maxTimeseriesMetricCacheSizeMb | quote }}
           - name: ENABLE_DECOUPLED_TRAINING
@@ -118,4 +100,21 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- $defaultAffinity := include "thoras.thorasForecast.defaultAffinity" . | fromYaml }}
+      {{- if .Values.thorasForecast.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.thorasForecast.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $defaultAffinity $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- $componentAffinity := .Values.thorasForecast.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $defaultAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}

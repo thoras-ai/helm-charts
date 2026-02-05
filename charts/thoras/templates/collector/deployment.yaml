@@ -29,18 +29,10 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - thoras-forecast-worker
-              topologyKey: kubernetes.io/hostname
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
       {{- if .Values.metricsCollector.timescale.config.enabled }}
         - name: timescale-config
@@ -220,4 +212,21 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- $defaultAffinity := include "thoras.metricsCollector.defaultAffinity" . | fromYaml }}
+      {{- if .Values.metricsCollector.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.metricsCollector.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $defaultAffinity $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- $componentAffinity := .Values.metricsCollector.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $defaultAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
