@@ -28,6 +28,8 @@ logLevel: info
 featureFlags:
   enableNodeDetailsCollector: true
   enableSkipScalingOnInsufficientData: true
+  thorasManageThoras:
+    enabled: false
   enableCheckDatabaseHealth: false
   enableCostSavingsSettingsRefresh: true
 

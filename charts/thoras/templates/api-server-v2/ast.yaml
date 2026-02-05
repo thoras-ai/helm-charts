@@ -1,0 +1,27 @@
+{{- if .Values.featureFlags.thorasManageThoras.enabled }}
+apiVersion: thoras.ai/v1
+kind: AIScaleTarget
+metadata:
+  labels:
+    {{- include "thoras.labels" . | nindent 4 }}
+  name: thoras-api-server-v2
+  namespace: {{ .Release.Namespace }}
+spec:
+  horizontal:
+    mode: recommendation
+  model:
+    forecast_blocks: 20m0s
+    forecast_cron: '*/15 * * * *'
+    mode: balanced
+  scaleTargetRef:
+    kind: Deployment
+    name: thoras-api-server-v2
+  vertical:
+    containers:
+    - cpu:
+        lowerbound: 1m
+      memory:
+        lowerbound: 1Mi
+      name: thoras-api-server-v2
+    mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}
+{{- end }}
