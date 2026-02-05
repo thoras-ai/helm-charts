@@ -4,7 +4,7 @@ apiVersion: thoras.ai/v1
 kind: AIScaleTarget
 metadata:
   labels:
-    app.kubernetes.io/managed-by: Helm
+    {{- include "thoras.labels" . | nindent 4 }}
   name: thoras-monitor
   namespace: {{ .Release.Namespace }}
 spec:
