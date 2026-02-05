@@ -114,8 +114,6 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
           - name: SERVICE_POD_LOG_LABEL
             value: {{ (printf "app.kubernetes.io/name=%s" .Chart.Name) | quote }}
-          - name: "SERVICE_PROMETHEUS_API_URL"
-            value: {{ .Values.thorasReasoning.connectors.prometheus.baseUrl }}
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_BLOB_SERVICE_API_URL
