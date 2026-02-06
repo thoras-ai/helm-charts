@@ -52,7 +52,7 @@ spec:
             fi
         resources: {}
       containers:
-      - name: thoras-monitor-v2
+      - name: thoras-monitor
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         command: ["/app/monitor"]

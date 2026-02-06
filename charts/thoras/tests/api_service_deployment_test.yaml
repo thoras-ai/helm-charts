@@ -82,7 +82,7 @@ tests:
           hugepages-1Gi: 2Gi
     asserts:
       - isSubset:
-          path: spec.template.spec.containers[?(@.name == 'thoras-v2-api-server')].resources
+          path: spec.template.spec.containers[?(@.name == 'thoras-api-server-v2')].resources
           content:
             requests:
               memory: "512Mi"
@@ -108,7 +108,7 @@ tests:
       version: "4.7.0"
     asserts:
       - isSubset:
-          path: spec.template.spec.containers[?(@.name == 'thoras-v2-api-server')].resources
+          path: spec.template.spec.containers[?(@.name == 'thoras-api-server-v2')].resources
           content:
             requests:
               memory: "512Mi"
