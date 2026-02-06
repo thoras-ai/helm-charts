@@ -1414,6 +1414,8 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
                   value: "true"
+                - name: SERVICE_ENABLE_FORECAST_RESCUER
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-worker

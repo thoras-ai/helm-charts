@@ -177,6 +177,8 @@ spec:
             value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
             value: {{ .Values.featureFlags.enableCostSavingsSettingsRefresh | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_FORECAST_RESCUER
+            value: {{ .Values.featureFlags.enableForecastRescuer | ternary "true" "false" | quote }}
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}

@@ -32,6 +32,7 @@ featureFlags:
     enabled: false
   enableCheckDatabaseHealth: false
   enableCostSavingsSettingsRefresh: true
+  enableForecastRescuer: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
