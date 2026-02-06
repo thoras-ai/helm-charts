@@ -88,7 +88,7 @@ Default matches snapshot:
                 httpGet:
                   path: /health
                   port: 8080
-              name: thoras-v2-api-server
+              name: thoras-api-server-v2
               ports:
                 - containerPort: 8080
               resources:

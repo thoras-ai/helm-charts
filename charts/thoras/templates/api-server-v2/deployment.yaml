@@ -86,7 +86,7 @@ spec:
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        name: thoras-v2-api-server
+        name: thoras-api-server-v2
         command: ["/app/api-server"]
         env:
           - name: DATABASE_HOST
