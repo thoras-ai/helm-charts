@@ -818,7 +818,7 @@ Default matches snapshot:
                   value: 4.7.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
-              name: thoras-monitor-v2
+              name: thoras-monitor
               resources:
                 limits:
                   memory: 8192Mi

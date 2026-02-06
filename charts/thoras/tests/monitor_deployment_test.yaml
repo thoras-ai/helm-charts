@@ -95,7 +95,7 @@ tests:
           hugepages-1Gi: 2Gi
     asserts:
       - isSubset:
-          path: spec.template.spec.containers[?(@.name == 'thoras-monitor-v2')].resources
+          path: spec.template.spec.containers[?(@.name == 'thoras-monitor')].resources
           content:
             requests:
               memory: "512Mi"
