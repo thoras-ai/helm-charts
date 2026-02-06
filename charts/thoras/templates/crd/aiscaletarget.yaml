@@ -1007,6 +1007,12 @@ spec:
                 description: LatestSuggestion contains the most recent scaling recommendations
                   from Thoras AI
                 properties:
+                  currentReplicas:
+                    description: |-
+                      CurrentReplicas is the number of replicas at the time this suggestion was generated.
+                      Used as a baseline for scaling calculations.
+                    format: int32
+                    type: integer
                   end:
                     format: date-time
                     type: string
@@ -1045,6 +1051,11 @@ spec:
                       - value
                       type: object
                     type: array
+                  hasEnoughDataToScale:
+                    description: |-
+                      HasEnoughDataToScale indicates whether sufficient data was available to generate reliable recommendations.
+                      When false, scaling actions may be skipped to prevent decisions based on incomplete data.
+                    type: boolean
                   resourceRecommendations:
                     description: ResourceRecommendations contains optimal resource
                       requests for each container.
@@ -1086,9 +1097,17 @@ spec:
                     description: Time window for this suggestion
                     format: date-time
                     type: string
+                  suggestedReplicas:
+                    description: SuggestedReplicas is the recommended number of pod
+                      replicas for horizontal scaling.
+                    format: int32
+                    type: integer
                 required:
+                - currentReplicas
                 - end
+                - hasEnoughDataToScale
                 - start
+                - suggestedReplicas
                 type: object
               previousVerticalMode:
                 type: string
