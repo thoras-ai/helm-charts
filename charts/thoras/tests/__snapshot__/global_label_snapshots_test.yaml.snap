@@ -1034,6 +1034,8 @@ Default matches snapshot:
                   value: "9101"
                 - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
                   value: "true"
+                - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-operator
