@@ -1036,6 +1036,13 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
                   value: "false"
+                - name: DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      key: host
+                      name: thoras-timescale-password
+                - name: SERVICE_POSTGRESQL_DSN
+                  value: $(DATABASE_HOST)/thoras
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-operator

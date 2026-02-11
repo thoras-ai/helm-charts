@@ -122,6 +122,13 @@ spec:
             value: {{ .Values.featureFlags.enableSkipScalingOnInsufficientData | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
             value: {{ .Values.featureFlags.enableCRDSuggestionReads | ternary "true" "false" | quote }}
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+          - name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)/thoras"
         command: [
           "/app/operator"
         ]
