@@ -3,15 +3,30 @@
 {{- end }}
 
 {{/*
-Common labels
+Component labels - merges global + component labels (no Helm labels)
+Usage: include "thoras.componentLabels" (dict "root" . "component" .Values.thorasWorker.labels)
 */}}
-{{- define "thoras.labels" -}}
-app.kubernetes.io/name: {{ .Chart.Name }}
-helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- with .Values.labels }}
-{{- toYaml . | nindent 0 }}
+{{- define "thoras.componentLabels" -}}
+{{- $globalLabels := .root.Values.labels | default dict }}
+{{- $componentLabels := .component | default dict }}
+{{- $merged := mustMerge (deepCopy $componentLabels) $globalLabels }}
+{{- if $merged -}}
+{{- toYaml $merged | nindent 0 -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Resource labels - includes Helm labels + component labels (for Deployment/Service/etc metadata)
+Usage: include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels)
+*/}}
+{{- define "thoras.resourceLabels" -}}
+app.kubernetes.io/name: {{ .root.Chart.Name }}
+helm.sh/chart: {{ .root.Chart.Name }}-{{ .root.Chart.Version | replace "+" "_" }}
+app.kubernetes.io/managed-by: {{ .root.Release.Service }}
+app.kubernetes.io/instance: {{ .root.Release.Name }}
+{{- $componentLabels := include "thoras.componentLabels" . | trim }}
+{{- if $componentLabels }}
+{{ $componentLabels }}
 {{- end }}
 {{- end -}}
 

@@ -24,11 +24,7 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-api-server-v2
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - command:
@@ -372,11 +368,7 @@ Default matches snapshot:
         metadata:
           labels:
             app: metrics-collector
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           affinity:
             podAntiAffinity:
@@ -554,11 +546,7 @@ Default matches snapshot:
           annotations: null
           labels:
             app: thoras-dashboard
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
@@ -673,11 +661,7 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-forecast-worker
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           affinity:
             podAntiAffinity:
@@ -787,11 +771,7 @@ Default matches snapshot:
         metadata:
           labels:
             app: thoras-monitor
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - command:
@@ -990,12 +970,7 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-operator
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
-            name: thoras-operator
           name: thoras-operator
         spec:
           containers:
@@ -1271,11 +1246,7 @@ Default matches snapshot:
         metadata:
           labels:
             app: thoras-slm-api
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-phi4-mini:TEST
@@ -1350,11 +1321,7 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-worker
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - command:

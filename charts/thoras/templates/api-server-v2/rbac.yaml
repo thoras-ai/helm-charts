@@ -10,7 +10,7 @@ kind: ClusterRole
 metadata:
 {{- end }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
 rules:
 - apiGroups:
@@ -66,7 +66,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 {{- end }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -97,7 +97,7 @@ metadata:
   name: {{ print .Values.thorasApiServerV2.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
 rules:
 - apiGroups:
   - thoras.ai
@@ -118,7 +118,7 @@ metadata:
   name: {{ print .Values.thorasApiServerV2.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
 roleRef:
   kind: ClusterRole
   name: {{ print .Values.thorasApiServerV2.serviceAccount.name "-thoras" }}
@@ -134,7 +134,7 @@ metadata:
   name: {{ print .Values.thorasApiServerV2.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
 rules:
 - apiGroups: [""]
   resources: ["pods"]
@@ -146,7 +146,7 @@ metadata:
   name: {{ print .Values.thorasApiServerV2.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
 roleRef:
   kind: Role
   name: {{ print .Values.thorasApiServerV2.serviceAccount.name "-thoras" }}

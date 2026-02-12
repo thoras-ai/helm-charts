@@ -10,7 +10,7 @@ kind: ClusterRole
 metadata:
 {{- end }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasAgent.labels) | nindent 4 }}
   name: {{ .Values.thorasAgent.serviceAccount.name }}
 rules:
 - apiGroups:
@@ -32,7 +32,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 {{- end }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasAgent.labels) | nindent 4 }}
   name: {{ .Values.thorasAgent.serviceAccount.name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -54,7 +54,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasAgent.labels) | nindent 4 }}
   name: {{ .Values.thorasAgent.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 imagePullSecrets:
@@ -68,7 +68,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasAgent.labels) | nindent 4 }}
   name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
 rules:
 - apiGroups:
@@ -82,7 +82,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasAgent.labels) | nindent 4 }}
   name: {{ print .Values.thorasAgent.serviceAccount.name "-thoras" }}
   namespace: {{ .Release.Namespace }}
 roleRef:

@@ -7,7 +7,7 @@ metadata:
   name: thoras
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
 spec:
   hard:
     pods: {{ .Values.resourceQuota.pods }}

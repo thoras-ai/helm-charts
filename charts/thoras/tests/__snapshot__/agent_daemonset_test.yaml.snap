@@ -21,10 +21,6 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-agent
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - command:

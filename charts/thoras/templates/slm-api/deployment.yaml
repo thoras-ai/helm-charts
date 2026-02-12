@@ -6,7 +6,7 @@ metadata:
   name: thoras-slm-api
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasSlmAgent.labels) | nindent 4 }}
 spec:
   replicas: 1
   selector:
@@ -16,7 +16,9 @@ spec:
     metadata:
       labels:
         app: thoras-slm-api
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasSlmAgent.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasSlmAgent.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- with .Values.thorasSlmAgent.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
