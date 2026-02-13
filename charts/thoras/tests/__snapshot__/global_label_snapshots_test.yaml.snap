@@ -576,7 +576,7 @@ Default matches snapshot:
                 - mountPath: /etc/nginx/nginx.conf
                   name: nginx-config
                   subPath: dashboard-v2.nginx.conf
-            - image: us-east4-docker.pkg.dev/thoras-registry/platform/nginx:1.29.4-alpine3.23-slim
+            - image: us-east4-docker.pkg.dev/thoras-registry/platform/nginx:1.29.5-alpine3.23-slim
               imagePullPolicy: IfNotPresent
               name: thoras-api-proxy
               ports:
