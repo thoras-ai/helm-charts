@@ -109,7 +109,7 @@ metricsCollector:
   serviceAccount:
     name: thoras-collector
   init:
-    imageTag: "3.23.0"
+    imageTag: "3.23.3"
     # Specify the complete resources block (takes precedence if set)
     resources: {}
     # Legacy field for backward compatibility (used if resources is empty)
@@ -234,7 +234,7 @@ thorasDashboard:
   containerPort: 5173
   nginxContainerPort: 80
   nginx:
-    imageTag: "1.29.4-alpine3.23-slim"
+    imageTag: "1.29.5-alpine3.23-slim"
   # Specify the complete resources block (takes precedence if set)
   resources: {}
   # Legacy field for backward compatibility (used if resources is empty)
