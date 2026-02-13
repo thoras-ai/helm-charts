@@ -100,6 +100,8 @@ rules:
   - 'AIScaleTarget'
   - 'aiscaletargets/status'
   - 'aiscaletargets'
+  - 'clusteraiscaletemplates'
+  - 'clusteraiscaletemplates/status'
   verbs:
   - '*'
 ---
