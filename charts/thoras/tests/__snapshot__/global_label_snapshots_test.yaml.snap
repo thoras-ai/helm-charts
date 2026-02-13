@@ -1113,6 +1113,8 @@ Default matches snapshot:
           - AIScaleTarget
           - aiscaletargets/status
           - aiscaletargets
+          - clusteraiscaletemplates
+          - clusteraiscaletemplates/status
         verbs:
           - '*'
   27: |
