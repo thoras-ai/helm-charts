@@ -8,7 +8,7 @@ metadata:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
     app.kubernetes.io/component: webhook-certgen
 spec:
   ttlSecondsAfterFinished: 300
@@ -16,7 +16,7 @@ spec:
     metadata:
       name: thoras-tls-certsgen-patch
       labels:
-        {{- include "thoras.labels" . | nindent 8 }}
+        {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 8 }}
         app.kubernetes.io/component: webhook-certgen
     spec:
       restartPolicy: OnFailure
@@ -58,7 +58,7 @@ metadata:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
     app.kubernetes.io/component: webhook-certgen
 spec:
   ttlSecondsAfterFinished: 300
@@ -66,7 +66,7 @@ spec:
     metadata:
       name: thoras-tls-certsgen-patch-validating
       labels:
-        {{- include "thoras.labels" . | nindent 8 }}
+        {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 8 }}
         app.kubernetes.io/component: webhook-certgen
     spec:
       restartPolicy: OnFailure

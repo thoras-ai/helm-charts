@@ -5,7 +5,7 @@ metadata:
   name: thoras-worker
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
   annotations:
     {{- if not .Values.thorasMonitor.unittesting }}
       checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
@@ -19,7 +19,9 @@ spec:
     metadata:
       labels:
         app: thoras-worker
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasWorker.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasWorker.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or .Values.thorasWorker.prometheus.enabled .Values.thorasWorker.podAnnotations }}
       annotations:
         {{- if .Values.thorasWorker.prometheus.enabled }}

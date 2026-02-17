@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
   name: metrics-collector
   namespace: {{ .Release.Namespace }}
 spec:
@@ -17,7 +17,9 @@ spec:
     metadata:
       labels:
         app: metrics-collector
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.metricsCollector.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.metricsCollector.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or .Values.metricsCollector.timescale.config.enabled .Values.metricsCollector.podAnnotations }}
       annotations:
         {{- if .Values.metricsCollector.timescale.config.enabled }}

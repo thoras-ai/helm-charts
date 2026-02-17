@@ -5,7 +5,7 @@ metadata:
   name: thoras-agent
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasAgent.labels) | nindent 4 }}
 spec:
   selector:
     matchLabels:
@@ -14,7 +14,9 @@ spec:
     metadata:
       labels:
         app: thoras-agent
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasAgent.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasAgent.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.thorasAgent.containerPort | quote }}

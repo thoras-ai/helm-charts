@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
   name: thoras-operator
   namespace: {{ .Release.Namespace }}
 spec:
@@ -15,8 +15,9 @@ spec:
     metadata:
       labels:
         app: thoras-operator
-        name: thoras-operator
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasOperator.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasOperator.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or .Values.thorasOperator.podAnnotations .Values.thorasOperator.prometheus.enabled }}
       annotations:
         {{- with .Values.thorasOperator.podAnnotations }}

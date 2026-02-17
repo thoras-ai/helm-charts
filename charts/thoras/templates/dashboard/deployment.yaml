@@ -5,7 +5,7 @@ metadata:
   name: thoras-dashboard
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
 spec:
   replicas: {{ .Values.thorasDashboard.replicas }}
   selector:
@@ -15,7 +15,9 @@ spec:
     metadata:
       labels:
         app: thoras-dashboard
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasDashboard.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasDashboard.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       annotations:
         {{- if not .Values.thorasDashboard.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/dashboard/nginx-config-map.yaml") . | sha256sum }}

@@ -3,7 +3,7 @@ apiVersion: thoras.ai/v1
 kind: AIScaleTarget
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
   name: thoras-api-server-v2
   namespace: {{ .Release.Namespace }}
 spec:
