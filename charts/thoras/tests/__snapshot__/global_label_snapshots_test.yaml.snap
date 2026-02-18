@@ -1256,80 +1256,6 @@ Default matches snapshot:
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-slm-api
-      namespace: NAMESPACE
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: thoras-slm-api
-      template:
-        metadata:
-          labels:
-            app: thoras-slm-api
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
-            globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
-        spec:
-          containers:
-            - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-phi4-mini:TEST
-              imagePullPolicy: IfNotPresent
-              name: thoras-slm-api
-              ports:
-                - containerPort: 11434
-              resources:
-                limits:
-                  memory: 8192Mi
-                requests:
-                  cpu: 1024m
-                  memory: 4096Mi
-          serviceAccountName: thoras-slm-api
-  33: |
-    apiVersion: v1
-    imagePullSecrets:
-      - name: test-secret-registry
-    kind: ServiceAccount
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-slm-api
-      namespace: NAMESPACE
-  34: |
-    apiVersion: v1
-    kind: Service
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-slm-api
-      namespace: NAMESPACE
-    spec:
-      ports:
-        - name: http
-          port: 8080
-          protocol: TCP
-          targetPort: 11434
-      selector:
-        app: thoras-slm-api
-  35: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
       annotations: null
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
@@ -1494,7 +1420,7 @@ Default matches snapshot:
             - configMap:
                 name: thoras-monitor-config
               name: monitor-config
-  36: |
+  33: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1514,7 +1440,7 @@ Default matches snapshot:
           - get
           - list
           - watch
-  37: |
+  34: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1534,7 +1460,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  38: |
+  35: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1553,7 +1479,7 @@ Default matches snapshot:
           - '*'
         verbs:
           - '*'
-  39: |
+  36: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1573,7 +1499,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  40: |
+  37: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1587,7 +1513,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: NAMESPACE
-  41: |
+  38: |
     apiVersion: v1
     kind: Service
     metadata:

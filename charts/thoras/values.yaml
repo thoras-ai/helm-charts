@@ -152,7 +152,6 @@ metricsCollector:
     requests:
       cpu: "16m"
       memory: "128Mi"
-  additionalPvSecurityContext: {}
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
@@ -178,7 +177,6 @@ thorasApiServerV2:
     memory: 256Mi
   port: 80
   logLevel: "info"
-  additionalPvSecurityContext: {}
   prometheus:
     enabled: true
   pprof:
@@ -343,48 +341,6 @@ thorasForecast:
   prometheus:
     enabled: true
     port: 9101
-  # Set to true to apply global affinity rules to this component
-  useGlobalAffinity: true
-  # Component-specific affinity (merged with global if useGlobalAffinity is true)
-  affinity: {}
-
-thorasAgent:
-  enabled: false
-  serviceAccount:
-    name: thoras-agent
-  frequency: 15
-  containerPort: 9101
-  # Specify the complete resources block (takes precedence if set)
-  resources: {}
-  # Legacy field for backward compatibility (used if resources is empty)
-  limits:
-    memory: 128Mi
-  # Legacy field for backward compatibility (used if resources is empty)
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  securityContext: {}
-  podAnnotations: {}
-  labels: {}
-  priorityClassName: ~
-
-thorasSlmAgent:
-  enabled: false
-  serviceAccount:
-    name: thoras-slm-api
-  podAnnotations: {}
-  labels: {}
-  containerPort: 11434
-  port: 8080
-  # Specify the complete resources block (takes precedence if set)
-  resources: {}
-  # Legacy field for backward compatibility (used if resources is empty)
-  limits:
-    memory: 8192Mi
-  # Legacy field for backward compatibility (used if resources is empty)
-  requests:
-    cpu: 1024m
-    memory: 4096Mi
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)

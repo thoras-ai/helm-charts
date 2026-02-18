@@ -196,7 +196,6 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | metricsCollector.blobService.pprof.enabled                      | Boolean | false            | Enable pprof endpoint.                                                        |
 | metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`                  |
 | metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container                                |
-| metricsCollector.additionalPvSecurityContext                    | Object  | {}               | Allows assigning additional securityContext objects to workloads that use PVs |
 
 ## Thoras API Server
 
@@ -214,7 +213,6 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasApiServerV2.slackErrorsEnabled           | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
 | thorasApiServerV2.logLevel                     | String  | Nil        | Logging level                                                                 |
 | thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
-| thorasApiServerV2.additionalPvSecurityContext  | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
 | thorasApiServerV2.prometheus.enabled           | Boolean | true       | Enables a prometheus metric scrape point                                      |
 | thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                        |
 | thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state       |
