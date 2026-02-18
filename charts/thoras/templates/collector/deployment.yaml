@@ -72,10 +72,6 @@ spec:
           limits: {{ .Values.metricsCollector.init.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.init.requests | toYaml | nindent 12 }}
         {{- end }}
-        {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-        securityContext:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
             name: elastic-search-data
@@ -119,9 +115,6 @@ spec:
         securityContext:
           runAsUser: 1000
           runAsGroup: 0
-          {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
         {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -201,9 +194,6 @@ spec:
         securityContext:
           runAsUser: 1000
           runAsGroup: 0
-          {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
