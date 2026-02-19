@@ -36,6 +36,9 @@ spec:
       - name: {{ .Values.imageCredentials.secretRef }}
       {{- end }}
       volumes:
+        - name: system-config
+          configMap:
+            name: thoras-operator-system-config
         - name: tls
           secret:
             defaultMode: 420
@@ -133,6 +136,10 @@ spec:
           "/app/operator"
         ]
         volumeMounts:
+          - name: system-config
+            mountPath: /app/system-config.yaml
+            subPath: system-config.yaml
+            readOnly: true
           - name: tls
             mountPath: /tmp/k8s-webhook-server/serving-certs/tls.crt
             subPath: tls.crt

@@ -6,4 +6,5 @@ metadata:
   labels:
     {{- include "thoras.labels" . | nindent 4 }}
 data:
-  scaling-paused: "false"
+  system-config.yaml: |
+    scaling-paused: false
