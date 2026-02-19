@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.81.1](https://img.shields.io/badge/Version-4.81.1-informational?style=flat-square) ![AppVersion: 4.65.0](https://img.shields.io/badge/AppVersion-4.65.0-informational?style=flat-square)
+![Version: 4.82.0](https://img.shields.io/badge/Version-4.82.0-informational?style=flat-square) ![AppVersion: 4.66.0](https://img.shields.io/badge/AppVersion-4.66.0-informational?style=flat-square)
 
 # Installs
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                                | Type    | Default                                          | Description                                                                                                          |
 | ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.65.0                                           | Thoras app version                                                                                                   |
+| thorasVersion                      | String  | 4.66.0                                           | Thoras app version                                                                                                   |
 | imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
@@ -174,48 +174,48 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 
 ## Thoras Metrics Collector
 
-| Key                                                             | Type    | Default          | Description                                                                   |
-| --------------------------------------------------------------- | ------- | ---------------- | ----------------------------------------------------------------------------- |
-| metricsCollector.serviceAccount.name                            | String  | thoras-collector | Service account name for Thoras collector pod                                 |
-| metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector                              |
-| metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning                     |
-| metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id                    |
-| metricsCollector.persistence.storageClassName                   | String  | ""               | Storage class for PVC                                                         |
-| metricsCollector.persistence.pvcStorageRequestSize              | String  | "3Gi"            | Inform PV backend of minimal volume requirements                              |
-| metricsCollector.persistence.accessMode                         | String  | "ReadWriteOnce"  | The accessMode applied to the PVC                                             |
-| metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                  |
-| metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector                               |
-| metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                               |
-| metricsCollector.timescale.imageTag                             | String  | 2.25.0-pg16      | Timescale image tag                                                           |
-| metricsCollector.timescale.extensionVersion                     | String  | 2.25.0           | Timescale extension version - should match imageTag                           |
-| metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                                      |
-| metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
-| metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |
-| metricsCollector.blobService.logLevel                           | String  | Nil              | Logging level                                                                 |
-| metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                                    |
-| metricsCollector.blobService.pprof.enabled                      | Boolean | false            | Enable pprof endpoint.                                                        |
-| metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container                                |
+| Key                                                             | Type    | Default          | Description                                                  |
+| --------------------------------------------------------------- | ------- | ---------------- | ------------------------------------------------------------ |
+| metricsCollector.serviceAccount.name                            | String  | thoras-collector | Service account name for Thoras collector pod                |
+| metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector             |
+| metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning    |
+| metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id   |
+| metricsCollector.persistence.storageClassName                   | String  | ""               | Storage class for PVC                                        |
+| metricsCollector.persistence.pvcStorageRequestSize              | String  | "3Gi"            | Inform PV backend of minimal volume requirements             |
+| metricsCollector.persistence.accessMode                         | String  | "ReadWriteOnce"  | The accessMode applied to the PVC                            |
+| metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                 |
+| metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector              |
+| metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                              |
+| metricsCollector.timescale.imageTag                             | String  | 2.25.0-pg16      | Timescale image tag                                          |
+| metricsCollector.timescale.extensionVersion                     | String  | 2.25.0           | Timescale extension version - should match imageTag          |
+| metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                     |
+| metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                               |
+| metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                   |
+| metricsCollector.blobService.logLevel                           | String  | Nil              | Logging level                                                |
+| metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                   |
+| metricsCollector.blobService.pprof.enabled                      | Boolean | false            | Enable pprof endpoint.                                       |
+| metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl` |
+| metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container               |
 
 ## Thoras API Server
 
-| Key                                            | Type    | Default    | Description                                                                   |
-| ---------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------------- |
-| thorasApiServerV2.serviceAccount.name          | String  | thoras-api | Service account name for Thoras api service pod                               |
-| thorasApiServerV2.podAnnotations               | Object  | {}         | Pod Annotations for Thoras API                                                |
-| thorasApiServerV2.labels                       | Object  | {}         | Pod/service labels for Thoras API                                             |
-| thorasApiServerV2.containerPort                | Number  | 8443       | Thoras API port                                                               |
-| thorasApiServerV2.port                         | Number  | 443        | Thoras API service port                                                       |
-| thorasApiServerV2.resources                    | Object  | {}         | Specify the resources block. Takes precedence if set.                         |
-| thorasApiServerV2.limits.memory                | String  | 2000Mi     | Legacy field for setting Thoras API memory limit                              |
-| thorasApiServerV2.requests.cpu                 | String  | 1000Mi     | Legacy field for settingThoras API CPU request                                |
-| thorasApiServerV2.requests.memory              | String  | 1000Mi     | Legacy field for settingThoras API memory request                             |
-| thorasApiServerV2.slackErrorsEnabled           | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| thorasApiServerV2.logLevel                     | String  | Nil        | Logging level                                                                 |
-| thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
-| thorasApiServerV2.prometheus.enabled           | Boolean | true       | Enables a prometheus metric scrape point                                      |
-| thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                        |
-| thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state       |
+| Key                                            | Type    | Default    | Description                                                             |
+| ---------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------- |
+| thorasApiServerV2.serviceAccount.name          | String  | thoras-api | Service account name for Thoras api service pod                         |
+| thorasApiServerV2.podAnnotations               | Object  | {}         | Pod Annotations for Thoras API                                          |
+| thorasApiServerV2.labels                       | Object  | {}         | Pod/service labels for Thoras API                                       |
+| thorasApiServerV2.containerPort                | Number  | 8443       | Thoras API port                                                         |
+| thorasApiServerV2.port                         | Number  | 443        | Thoras API service port                                                 |
+| thorasApiServerV2.resources                    | Object  | {}         | Specify the resources block. Takes precedence if set.                   |
+| thorasApiServerV2.limits.memory                | String  | 2000Mi     | Legacy field for setting Thoras API memory limit                        |
+| thorasApiServerV2.requests.cpu                 | String  | 1000Mi     | Legacy field for settingThoras API CPU request                          |
+| thorasApiServerV2.requests.memory              | String  | 1000Mi     | Legacy field for settingThoras API memory request                       |
+| thorasApiServerV2.slackErrorsEnabled           | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`            |
+| thorasApiServerV2.logLevel                     | String  | Nil        | Logging level                                                           |
+| thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                |
+| thorasApiServerV2.prometheus.enabled           | Boolean | true       | Enables a prometheus metric scrape point                                |
+| thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                  |
+| thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state |
 
 ## Thoras Worker
 
