@@ -490,6 +490,11 @@ Default matches snapshot:
                 requests:
                   cpu: 16m
                   memory: 128Mi
+          securityContext:
+            fsGroup: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
           serviceAccountName: thoras-collector
           volumes: null
   11: |

@@ -30,6 +30,11 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
@@ -51,22 +56,7 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /var/lib/share/data
-
-            # migrate non-elastic data to the new location
-            find /var/lib/share -not -name postgresql -not -name data -not -name blobs -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/data \;
-
-            # fix elastic directory permissions # TODO: drop elastic data in the future
-            chown -R 1000:1000 /var/lib/share/data
-            rm -f /var/lib/share/data/node.lock
-
-            # fix timescale directory
-            mkdir -p /var/lib/share/postgresql
-            chown -R 1000:1000 /var/lib/share/postgresql
-
-            # fix blobs directory
-            mkdir -p /var/lib/share/blobs
-            chown -R 1000:1000 /var/lib/share/blobs
+            mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
         {{- if .Values.metricsCollector.init.resources }}
         resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -114,9 +104,6 @@ spec:
         {{- if .Values.metricsCollector.persistence.enabled }}
           - mountPath: /var/lib/share
             name: elastic-search-data
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 0
         {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -195,9 +182,6 @@ spec:
         volumeMounts:
           - mountPath: /var/lib/share
             name: elastic-search-data
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 0
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
