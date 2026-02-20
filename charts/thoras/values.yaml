@@ -212,7 +212,7 @@ thorasWorker:
   enableAstViewCacheRefreshWorker: true
   enableAstViewCacheStateReconcilerWorker: true
   enableMetricIntegrityWorker: false
-  enableActiveSuggestionWorker: false
+  enableActiveSuggestionWorker: true
   enableUnifiedAstUtilizationMonitor: false
   cloudSyncBaseUrl: "https://console.staging.thoras.ai"
   # Set to true to apply global affinity rules to this component
