@@ -274,6 +274,7 @@ thorasDashboard:
     rolling_savings: true
     cost_breakdown_v2: true
     node_overrides: true
+    show_node_details: true
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
