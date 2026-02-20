@@ -813,7 +813,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
@@ -1315,7 +1315,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_COLLECTOR_MEM_REQUEST
                   value: 3072Mi
                 - name: SERVICE_PORT
