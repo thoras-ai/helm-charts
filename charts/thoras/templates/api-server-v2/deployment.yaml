@@ -40,6 +40,9 @@ spec:
       - name: monitor-config
         configMap:
           name: thoras-monitor-config
+      - name: system-config
+        configMap:
+          name: thoras-operator-system-config
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-postgres
@@ -150,6 +153,10 @@ spec:
           - name: monitor-config
             mountPath: /app/config.yaml
             subPath: config.yaml
+            readOnly: true
+          - name: system-config
+            mountPath: /app/system-config.yaml
+            subPath: system-config.yaml
             readOnly: true
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
