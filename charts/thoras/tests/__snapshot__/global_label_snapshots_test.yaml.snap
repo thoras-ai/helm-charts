@@ -1058,6 +1058,10 @@ Default matches snapshot:
                   cpu: 100m
                   memory: 128Mi
               volumeMounts:
+                - mountPath: /app/system-config.yaml
+                  name: system-config
+                  readOnly: true
+                  subPath: system-config.yaml
                 - mountPath: /tmp/k8s-webhook-server/serving-certs/tls.crt
                   name: tls
                   readOnly: true
@@ -1085,6 +1089,9 @@ Default matches snapshot:
               resources: {}
           serviceAccountName: thoras-operator
           volumes:
+            - configMap:
+                name: thoras-operator-system-config
+              name: system-config
             - name: tls
               secret:
                 defaultMode: 420
