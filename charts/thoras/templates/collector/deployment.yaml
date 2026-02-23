@@ -74,10 +74,6 @@ spec:
           limits: {{ .Values.metricsCollector.init.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.init.requests | toYaml | nindent 12 }}
         {{- end }}
-        {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-        securityContext:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
             name: elastic-search-data
@@ -121,9 +117,6 @@ spec:
         securityContext:
           runAsUser: 1000
           runAsGroup: 0
-          {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
         {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -168,7 +161,9 @@ spec:
                 name: thoras-timescale-password
                 key: password
           - name: SERVICE_CHART_VERSION
-            value: "{{ .Chart.Version }}"
+            value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           - name: SERVICE_PORT
             value: {{ .Values.metricsCollector.blobService.containerPort | quote }}
           - name: SERVICE_SLACK_WEBHOOK_URL
@@ -203,9 +198,6 @@ spec:
         securityContext:
           runAsUser: 1000
           runAsGroup: 0
-          {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

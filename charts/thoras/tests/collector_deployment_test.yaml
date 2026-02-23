@@ -15,7 +15,7 @@ tests:
           value: metrics-collector
       - equal:
           path: spec.template.spec.containers[?(@.name == 'timescaledb')].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.24.0-pg16
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.25.0-pg16
   - it: Default containers should match snapshots
     chart:
       version: "4.50.0"
@@ -98,46 +98,6 @@ tests:
           content:
             name: timescaledb
           any: true
-
-  ### Security context tests
-  - it: Should use additional securityContext if specified
-    set:
-      metricsCollector:
-        persistence:
-          enabled: true
-        additionalPvSecurityContext:
-          additionalField: "additionalValue"
-    template: collector/deployment.yaml
-    asserts:
-      - isSubset:
-          path: spec.template.spec.containers[0,1].securityContext
-          content:
-            runAsUser: 1000
-            runAsGroup: 0
-            additionalField: "additionalValue"
-      - isSubset:
-          path: spec.template.spec.initContainers[0,1].securityContext
-          content:
-            additionalField: "additionalValue"
-  - it: Should not use additional securityContext if not specified
-    set:
-      metricsCollector:
-        persistence:
-          enabled: true
-    template: collector/deployment.yaml
-    asserts:
-      - isSubset:
-          path: spec.template.spec.containers[0,1].securityContext
-          content:
-            runAsUser: 1000
-            runAsGroup: 0
-      - notExists:
-          path: spec.template.spec.initContainers[*].securityContext
-  - it: Should not have any securityContext if persistence is disabled
-    template: collector/deployment.yaml
-    asserts:
-      - notExists:
-          path: spec.template.spec.containers[*].securityContext
   - it: Should set tolerations if specified
     set:
       tolerations:

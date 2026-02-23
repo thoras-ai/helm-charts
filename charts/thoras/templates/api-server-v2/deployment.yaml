@@ -42,6 +42,9 @@ spec:
       - name: monitor-config
         configMap:
           name: thoras-monitor-config
+      - name: system-config
+        configMap:
+          name: thoras-operator-system-config
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-postgres
@@ -130,6 +133,8 @@ spec:
             value: {{ .Values.thorasApiServerV2.pprof.enabled | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           {{- with .Values.rbac.namespaces }}
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
@@ -148,10 +153,34 @@ spec:
             value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
           - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
             value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_CLOUD_SYNC
+          {{- if (and .Values.thorasApiServerV2.cloudSyncBaseUrl .Values.cloudSync.clusterKeyID)}}
+            value: "true"
+          {{- else }}
+            value: "false"
+          {{- end }}
+          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
+            value: {{ .Values.cloudSync.clusterKeyID | quote }}
+          - name: SERVICE_CLOUD_SYNC_BASE_URL
+            value: {{ .Values.thorasApiServerV2.cloudSyncBaseUrl | quote }}
+          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.cloudSync.clusterKeySecretRefName .Values.cloudSync.clusterKeySecretRefKey }}
+                name: {{ .Values.cloudSync.clusterKeySecretRefName }}
+                key: {{ .Values.cloudSync.clusterKeySecretRefKey }}
+            {{- else }}
+                name: thoras-cloud-sync
+                key: clusterKey
+            {{- end }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml
             subPath: config.yaml
+            readOnly: true
+          - name: system-config
+            mountPath: /app/system-config.yaml
+            subPath: system-config.yaml
             readOnly: true
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
