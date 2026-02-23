@@ -160,7 +160,7 @@ spec:
                 key: password
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
-          - name: SERVICE_THORAS_VERSION
+          - name: SERVICE_PLATFORM_VERSION
             value: {{ .Values.thorasVersion | quote }}
           - name: SERVICE_PORT
             value: {{ .Values.metricsCollector.blobService.containerPort | quote }}

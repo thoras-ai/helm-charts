@@ -62,7 +62,7 @@ Default containers should match snapshots:
             name: thoras-timescale-password
       - name: SERVICE_CHART_VERSION
         value: 4.50.0
-      - name: SERVICE_THORAS_VERSION
+      - name: SERVICE_PLATFORM_VERSION
         value: dev
       - name: SERVICE_PORT
         value: "8080"
