@@ -68,6 +68,8 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
+                - name: SERVICE_THORAS_VERSION
+                  value: TEST
                 - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
                   value: "true"
                 - name: SERVICE_COST_REFRESH_BATCH_SIZE
@@ -470,6 +472,8 @@ Default matches snapshot:
                       name: thoras-timescale-password
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
+                - name: SERVICE_THORAS_VERSION
+                  value: TEST
                 - name: SERVICE_PORT
                   value: "8080"
                 - name: SERVICE_SLACK_WEBHOOK_URL
@@ -1335,6 +1339,8 @@ Default matches snapshot:
                   value: "50"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
+                - name: SERVICE_THORAS_VERSION
+                  value: TEST
                 - name: SERVICE_CHUNK_INTERVAL_UPDATER_DRY_RUN
                   value: "false"
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
