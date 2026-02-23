@@ -6,7 +6,7 @@ metadata:
   name: thoras-monitor
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasMonitor.labels) | nindent 4 }}
 spec:
   replicas: 1
   selector:
@@ -16,7 +16,9 @@ spec:
     metadata:
       labels:
         app: thoras-monitor
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasMonitor.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasMonitor.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or (not .Values.thorasMonitor.unittesting) .Values.thorasMonitor.podAnnotations }}
       annotations:
         {{- if not .Values.thorasMonitor.unittesting }}

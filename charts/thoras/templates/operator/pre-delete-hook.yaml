@@ -5,7 +5,7 @@ metadata:
   name: thoras-pre-delete-hook
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-delete
     "helm.sh/hook-weight": "0"
@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       name: {{ .Release.Name }}
-      labels: {{- include "thoras.labels" . | nindent 8 }}
+      labels: {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
       restartPolicy: OnFailure

@@ -10,7 +10,7 @@ kind: ClusterRole
 metadata:
 {{- end }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasMonitor.labels) | nindent 4 }}
   name: "thoras-monitor"
 rules:
 - apiGroups:
@@ -49,7 +49,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 {{- end }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasMonitor.labels) | nindent 4 }}
   name: "thoras-monitor"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -80,7 +80,7 @@ metadata:
   name: thoras-monitor-thoras
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasMonitor.labels) | nindent 4 }}
 rules:
 - apiGroups:
   - thoras.ai
@@ -99,7 +99,7 @@ metadata:
   name: thoras-monitor-thoras
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasMonitor.labels) | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

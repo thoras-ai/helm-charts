@@ -4,7 +4,7 @@ apiVersion: thoras.ai/v1
 kind: AIScaleTarget
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasMonitor.labels) | nindent 4 }}
   name: thoras-monitor
   namespace: {{ .Release.Namespace }}
 spec:

@@ -4,7 +4,7 @@ metadata:
   name: thoras-operator-system-config
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
 data:
   system-config.yaml: |
     scaling-paused: false

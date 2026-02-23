@@ -10,7 +10,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasDashboard.labels) .Values)) .) | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
 spec:
   {{- if .Values.thorasDashboard.ingress.ingressClassName }}
   ingressClassName: {{ .Values.thorasDashboard.ingress.ingressClassName }}
