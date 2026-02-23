@@ -182,6 +182,7 @@ thorasApiServerV2:
   pprof:
     enabled: false
   enableViewCacheQueryLiveJoin: true
+  cloudSyncBaseUrl: "https://console.thoras.ai"
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
@@ -214,7 +215,7 @@ thorasWorker:
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: true
   enableUnifiedAstUtilizationMonitor: false
-  cloudSyncBaseUrl: "https://console.staging.thoras.ai"
+  cloudSyncBaseUrl: "https://console.thoras.ai"
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
