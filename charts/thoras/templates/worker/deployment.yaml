@@ -117,6 +117,8 @@ spec:
             value: {{ .Values.thorasWorker.queriesPerSecond | default .Values.queriesPerSecond | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           {{- with .Values.rbac.namespaces }}
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}

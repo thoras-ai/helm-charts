@@ -131,6 +131,8 @@ spec:
             value: {{ .Values.thorasApiServerV2.pprof.enabled | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           {{- with .Values.rbac.namespaces }}
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
