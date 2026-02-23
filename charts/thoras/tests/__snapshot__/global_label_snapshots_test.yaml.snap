@@ -82,6 +82,17 @@ Default matches snapshot:
                   value: 2m
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "false"
+                - name: SERVICE_ENABLE_CLOUD_SYNC
+                  value: "false"
+                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
+                  value: ""
+                - name: SERVICE_CLOUD_SYNC_BASE_URL
+                  value: https://console.thoras.ai
+                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      key: clusterKey
+                      name: thoras-cloud-sync
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1351,7 +1362,7 @@ Default matches snapshot:
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
                   value: ""
                 - name: SERVICE_CLOUD_SYNC_BASE_URL
-                  value: https://console.staging.thoras.ai
+                  value: https://console.thoras.ai
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
                   valueFrom:
                     secretKeyRef:
