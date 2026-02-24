@@ -17,6 +17,11 @@ Default containers should match snapshots:
       requests:
         cpu: 1024m
         memory: 3072Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
     volumeMounts: null
   2: |
     args:
@@ -88,3 +93,8 @@ Default containers should match snapshots:
       requests:
         cpu: 16m
         memory: 128Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
