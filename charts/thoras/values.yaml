@@ -231,7 +231,7 @@ thorasDashboard:
   podAnnotations: {}
   labels: {}
   containerPort: 5173
-  nginxContainerPort: 80
+  nginxContainerPort: 8080
   nginx:
     imageTag: "1.29.5-alpine3.23-slim"
   # Specify the complete resources block (takes precedence if set)

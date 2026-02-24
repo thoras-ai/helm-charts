@@ -1,6 +1,0 @@
-us-east4-docker.pkg.dev/thoras-registry/platform/kube-webhook-certgen:v1.4.4
-us-east4-docker.pkg.dev/thoras-registry/platform/nginx:1.29.5-alpine3.23-slim
-us-east4-docker.pkg.dev/thoras-registry/platform/services:4.65.0
-us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:4.65.0
-us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:4.65.0
-us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.25.0-pg16
