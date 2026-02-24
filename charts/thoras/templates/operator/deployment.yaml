@@ -31,6 +31,11 @@ spec:
       {{- end }}
       name: thoras-operator
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
@@ -52,6 +57,10 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -68,6 +77,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: thoras-operator
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: SLACK_WEBHOOK_URL
             valueFrom:

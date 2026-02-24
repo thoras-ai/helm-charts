@@ -34,6 +34,11 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasWorker.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
@@ -46,6 +51,10 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         name: wait-for-postgres
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: DATABASE_HOST
             valueFrom:
@@ -90,6 +99,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-worker
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/app/worker"]
         env:
           - name: DATABASE_HOST

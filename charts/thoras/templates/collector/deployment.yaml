@@ -30,6 +30,13 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
@@ -48,25 +55,14 @@ spec:
       initContainers:
       - name: fix-dir-ownership
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /var/lib/share/data
-
-            # migrate non-elastic data to the new location
-            find /var/lib/share -not -name postgresql -not -name data -not -name blobs -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/data \;
-
-            # fix elastic directory permissions # TODO: drop elastic data in the future
-            chown -R 1000:1000 /var/lib/share/data
-            rm -f /var/lib/share/data/node.lock
-
-            # fix timescale directory
-            mkdir -p /var/lib/share/postgresql
-            chown -R 1000:1000 /var/lib/share/postgresql
-
-            # fix blobs directory
-            mkdir -p /var/lib/share/blobs
-            chown -R 1000:1000 /var/lib/share/blobs
+            mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
         {{- if .Values.metricsCollector.init.resources }}
         resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -82,6 +78,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         {{- if .Values.metricsCollector.timescale.config.enabled }}
         command: ["docker-entrypoint.sh"]
         args: ["-c", "config_file=/etc/postgresql.conf"]
@@ -114,13 +114,14 @@ spec:
         {{- if .Values.metricsCollector.persistence.enabled }}
           - mountPath: /var/lib/share
             name: elastic-search-data
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 0
         {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -195,9 +196,6 @@ spec:
         volumeMounts:
           - mountPath: /var/lib/share
             name: elastic-search-data
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 0
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

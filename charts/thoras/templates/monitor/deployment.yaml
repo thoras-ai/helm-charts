@@ -29,6 +29,11 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasMonitor.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
@@ -41,6 +46,10 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -57,6 +66,10 @@ spec:
       - name: thoras-monitor
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/app/monitor"]
         volumeMounts:
           - name: config

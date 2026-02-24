@@ -30,6 +30,11 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasForecast.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
@@ -38,6 +43,10 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -54,6 +63,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-forecast-worker
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: [
           "worker",
           "--polling_interval",

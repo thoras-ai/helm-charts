@@ -26,6 +26,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
@@ -38,6 +42,11 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          runAsUser: 65534 # user: nobody
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -54,6 +63,11 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 101
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
         {{- if .Values.thorasDashboard.resources }}
@@ -70,6 +84,11 @@ spec:
       - name: thoras-api-proxy
         image: {{ .Values.imageCredentials.registry }}/nginx:{{ .Values.thorasDashboard.nginx.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 101
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         ports:
         - containerPort: {{ .Values.thorasDashboard.nginxContainerPort }}
         volumeMounts:

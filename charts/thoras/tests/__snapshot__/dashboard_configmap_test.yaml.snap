@@ -3,11 +3,19 @@ Should default to v2 port:
     apiVersion: v1
     data:
       dashboard-v2.nginx.conf: |
+        pid /tmp/nginx.pid;
+
         events {
           worker_connections 1024;
         }
 
         http {
+          client_body_temp_path /tmp/client_temp;
+          proxy_temp_path       /tmp/proxy_temp;
+          fastcgi_temp_path     /tmp/fastcgi_temp;
+          uwsgi_temp_path       /tmp/uwsgi_temp;
+          scgi_temp_path        /tmp/scgi_temp;
+
           include       mime.types;
 
           server {
@@ -34,13 +42,21 @@ Should default to v2 port:
           }
         }
       nginx.conf: |
+        pid /tmp/nginx.pid;
+
         events {
           worker_connections 1024;
         }
 
         http {
+          client_body_temp_path /tmp/client_temp;
+          proxy_temp_path       /tmp/proxy_temp;
+          fastcgi_temp_path     /tmp/fastcgi_temp;
+          uwsgi_temp_path       /tmp/uwsgi_temp;
+          scgi_temp_path        /tmp/scgi_temp;
+
           server {
-            listen 80;
+            listen 8080;
 
             location /v1/ {
               proxy_pass http://thoras-api-server-v2;
@@ -77,11 +93,19 @@ should set extras in config.json:
     apiVersion: v1
     data:
       dashboard-v2.nginx.conf: |
+        pid /tmp/nginx.pid;
+
         events {
           worker_connections 1024;
         }
 
         http {
+          client_body_temp_path /tmp/client_temp;
+          proxy_temp_path       /tmp/proxy_temp;
+          fastcgi_temp_path     /tmp/fastcgi_temp;
+          uwsgi_temp_path       /tmp/uwsgi_temp;
+          scgi_temp_path        /tmp/scgi_temp;
+
           include       mime.types;
 
           server {
@@ -108,13 +132,21 @@ should set extras in config.json:
           }
         }
       nginx.conf: |
+        pid /tmp/nginx.pid;
+
         events {
           worker_connections 1024;
         }
 
         http {
+          client_body_temp_path /tmp/client_temp;
+          proxy_temp_path       /tmp/proxy_temp;
+          fastcgi_temp_path     /tmp/fastcgi_temp;
+          uwsgi_temp_path       /tmp/uwsgi_temp;
+          scgi_temp_path        /tmp/scgi_temp;
+
           server {
-            listen 80;
+            listen 8080;
 
             location /v1/ {
               proxy_pass http://thoras-api-server-v2;

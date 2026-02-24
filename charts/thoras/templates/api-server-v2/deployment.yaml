@@ -33,6 +33,11 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
@@ -48,6 +53,10 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-postgres
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: DATABASE_HOST
             valueFrom:
@@ -92,6 +101,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-api-server-v2
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/app/api-server"]
         env:
           - name: DATABASE_HOST
