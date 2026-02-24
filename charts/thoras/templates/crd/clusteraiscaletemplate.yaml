@@ -717,8 +717,8 @@ spec:
                           the level of aggression in scaling.
                         enum:
                         - balanced
-                        - cost_savings
-                        - max_assurance
+                        - cost-optimized
+                        - undershoot
                         type: string
                     type: object
                   vertical:
