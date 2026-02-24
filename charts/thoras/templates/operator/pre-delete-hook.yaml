@@ -29,5 +29,7 @@ spec:
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/app/operator", "uninstall"]
         resources: {}

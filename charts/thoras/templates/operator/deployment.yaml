@@ -59,6 +59,8 @@ spec:
         name: wait-for-api-service
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -77,6 +79,8 @@ spec:
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: SLACK_WEBHOOK_URL
             valueFrom:

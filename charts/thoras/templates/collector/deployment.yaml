@@ -57,6 +57,8 @@ spec:
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -78,6 +80,8 @@ spec:
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         {{- if .Values.metricsCollector.timescale.config.enabled }}
         command: ["docker-entrypoint.sh"]
         args: ["-c", "config_file=/etc/postgresql.conf"]
@@ -116,6 +120,8 @@ spec:
         name: thoras-blob-api
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/bin/sh", "-c"]
         args:
           - |

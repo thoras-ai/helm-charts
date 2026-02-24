@@ -45,6 +45,8 @@ spec:
         securityContext:
           runAsUser: 65534 # user: nobody
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -64,6 +66,8 @@ spec:
         securityContext:
           runAsUser: 101
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
         {{- if .Values.thorasDashboard.resources }}
@@ -83,6 +87,8 @@ spec:
         securityContext:
           runAsUser: 101
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         ports:
         - containerPort: {{ .Values.thorasDashboard.nginxContainerPort }}
         volumeMounts:

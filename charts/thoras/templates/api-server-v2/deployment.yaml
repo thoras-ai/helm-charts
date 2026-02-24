@@ -55,6 +55,8 @@ spec:
         name: wait-for-postgres
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: DATABASE_HOST
             valueFrom:
@@ -101,6 +103,8 @@ spec:
         name: thoras-api-server-v2
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/app/api-server"]
         env:
           - name: DATABASE_HOST
