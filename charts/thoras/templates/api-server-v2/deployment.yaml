@@ -34,6 +34,8 @@ spec:
       {{- end }}
     spec:
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}

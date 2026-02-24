@@ -32,6 +32,8 @@ spec:
       name: thoras-operator
     spec:
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
@@ -55,8 +57,6 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: wait-for-api-service
-        securityContext:
-          runAsUser: 65534 # user: nobody
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"

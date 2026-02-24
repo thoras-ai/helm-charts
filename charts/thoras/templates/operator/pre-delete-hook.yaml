@@ -17,6 +17,8 @@ spec:
       labels: {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 8 }}
     spec:
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
