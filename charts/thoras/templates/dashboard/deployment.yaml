@@ -27,6 +27,7 @@ spec:
       {{- end }}
     spec:
       securityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
@@ -57,6 +58,8 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 101
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
         {{- if .Values.thorasDashboard.resources }}
@@ -73,6 +76,8 @@ spec:
       - name: thoras-api-proxy
         image: {{ .Values.imageCredentials.registry }}/nginx:{{ .Values.thorasDashboard.nginx.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 101
         ports:
         - containerPort: {{ .Values.thorasDashboard.nginxContainerPort }}
         volumeMounts:
