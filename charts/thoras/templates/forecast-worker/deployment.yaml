@@ -43,6 +43,8 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          allowPrivilegeEscalation: false
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -59,6 +61,8 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-forecast-worker
+        securityContext:
+          allowPrivilegeEscalation: false
         command: [
           "worker",
           "--polling_interval",

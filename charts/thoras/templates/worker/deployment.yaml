@@ -51,6 +51,8 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         name: wait-for-postgres
+        securityContext:
+          allowPrivilegeEscalation: false
         env:
           - name: DATABASE_HOST
             valueFrom:
@@ -95,6 +97,8 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-worker
+        securityContext:
+          allowPrivilegeEscalation: false
         command: ["/app/worker"]
         env:
           - name: DATABASE_HOST

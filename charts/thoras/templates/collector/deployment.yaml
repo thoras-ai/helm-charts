@@ -55,6 +55,8 @@ spec:
       initContainers:
       - name: fix-dir-ownership
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
+        securityContext:
+          allowPrivilegeEscalation: false
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -74,6 +76,8 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
         {{- if .Values.metricsCollector.timescale.config.enabled }}
         command: ["docker-entrypoint.sh"]
         args: ["-c", "config_file=/etc/postgresql.conf"]
@@ -110,6 +114,8 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
+        securityContext:
+          allowPrivilegeEscalation: false
         command: ["/bin/sh", "-c"]
         args:
           - |

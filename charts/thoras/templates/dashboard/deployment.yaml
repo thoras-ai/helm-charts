@@ -44,6 +44,7 @@ spec:
         name: wait-for-api-service
         securityContext:
           runAsUser: 65534 # user: nobody
+          allowPrivilegeEscalation: false
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -62,6 +63,7 @@ spec:
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
           runAsUser: 101
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
         {{- if .Values.thorasDashboard.resources }}
@@ -80,6 +82,7 @@ spec:
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
           runAsUser: 101
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: {{ .Values.thorasDashboard.nginxContainerPort }}
         volumeMounts:

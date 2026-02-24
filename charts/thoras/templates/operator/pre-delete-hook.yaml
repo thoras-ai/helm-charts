@@ -27,5 +27,7 @@ spec:
       - name: thoras-delete-asts
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
         command: ["/app/operator", "uninstall"]
         resources: {}

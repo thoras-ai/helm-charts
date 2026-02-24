@@ -46,6 +46,8 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          allowPrivilegeEscalation: false
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -62,6 +64,8 @@ spec:
       - name: thoras-monitor
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
         command: ["/app/monitor"]
         volumeMounts:
           - name: config
