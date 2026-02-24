@@ -7,11 +7,19 @@ metadata:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
 data:
   nginx.conf: |
+    pid /tmp/nginx.pid;
+
     events {
       worker_connections 1024;
     }
 
     http {
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path       /tmp/proxy_temp;
+      fastcgi_temp_path     /tmp/fastcgi_temp;
+      uwsgi_temp_path       /tmp/uwsgi_temp;
+      scgi_temp_path        /tmp/scgi_temp;
+
       server {
         listen {{ .Values.thorasDashboard.nginxContainerPort }};
 
@@ -37,11 +45,19 @@ data:
       }
     }
   dashboard-v2.nginx.conf: |
+    pid /tmp/nginx.pid;
+
     events {
       worker_connections 1024;
     }
 
     http {
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path       /tmp/proxy_temp;
+      fastcgi_temp_path     /tmp/fastcgi_temp;
+      uwsgi_temp_path       /tmp/uwsgi_temp;
+      scgi_temp_path        /tmp/scgi_temp;
+
       include       mime.types;
 
       server {
