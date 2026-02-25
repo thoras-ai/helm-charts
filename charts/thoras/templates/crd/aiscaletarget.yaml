@@ -649,6 +649,8 @@ spec:
                     enum:
                     - balanced
                     - cost_optimized
+                    - cost_savings
+                    - max_assurance
                     - undershoot
                     type: string
                 type: object
