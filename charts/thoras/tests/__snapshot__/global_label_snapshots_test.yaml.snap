@@ -85,7 +85,7 @@ Default matches snapshot:
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
                   value: ""
                 - name: SERVICE_CLOUD_SYNC_BASE_URL
-                  value: https://console.thoras.ai
+                  value: null
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
                   valueFrom:
                     secretKeyRef:

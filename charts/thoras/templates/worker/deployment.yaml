@@ -167,7 +167,7 @@ spec:
           - name: SERVICE_ENABLE_UNIFIED_AST_UTILIZATION_MONITOR
             value: {{ .Values.thorasWorker.enableUnifiedAstUtilizationMonitor | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC_WORKER
-          {{- if (and .Values.thorasWorker.cloudSyncBaseUrl .Values.cloudSync.clusterKeyID)}}
+          {{- if (and .Values.cloudSync.cloudSyncBaseUrl .Values.cloudSync.clusterKeyID)}}
             value: "true"
           {{- else }}
             value: "false"
@@ -175,7 +175,7 @@ spec:
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
             value: {{ .Values.cloudSync.clusterKeyID | quote }}
           - name: SERVICE_CLOUD_SYNC_BASE_URL
-            value: {{ .Values.thorasWorker.cloudSyncBaseUrl | quote }}
+            value: {{ .Values.cloudSync.cloudSyncBaseUrl | quote }}
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
             valueFrom:
               secretKeyRef:
