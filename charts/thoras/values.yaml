@@ -54,6 +54,8 @@ slackWebhookUrlSecretRefName: ""
 slackWebhookUrlSecretRefKey: ""
 
 cloudSync:
+  baseUrl: "https://console.thoras.ai"
+
   clusterKeyID: ""
 
   # Set cluster key directly (or alternatively use use clusterKeySecretRef to
@@ -182,7 +184,6 @@ thorasApiServerV2:
   pprof:
     enabled: false
   enableViewCacheQueryLiveJoin: true
-  cloudSyncBaseUrl: "https://console.thoras.ai"
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
@@ -215,7 +216,6 @@ thorasWorker:
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: true
   enableUnifiedAstUtilizationMonitor: false
-  cloudSyncBaseUrl: "https://console.thoras.ai"
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)

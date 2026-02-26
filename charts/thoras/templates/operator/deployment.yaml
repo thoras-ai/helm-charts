@@ -146,6 +146,26 @@ spec:
                 key: host
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras"
+          - name: SERVICE_ENABLE_CLOUD_SYNC
+          {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
+            value: "true"
+          {{- else }}
+            value: "false"
+          {{- end }}
+          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
+            value: {{ .Values.cloudSync.clusterKeyID | quote }}
+          - name: SERVICE_CLOUD_SYNC_BASE_URL
+            value: {{ .Values.cloudSync.baseUrl | quote }}
+          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.cloudSync.clusterKeySecretRefName .Values.cloudSync.clusterKeySecretRefKey }}
+                name: {{ .Values.cloudSync.clusterKeySecretRefName }}
+                key: {{ .Values.cloudSync.clusterKeySecretRefKey }}
+            {{- else }}
+                name: thoras-cloud-sync
+                key: clusterKey
+            {{- end }}
         command: [
           "/app/operator"
         ]
