@@ -167,7 +167,7 @@ spec:
           - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
             value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC
-          {{- if (and .Values.cloudSync.cloudSyncBaseUrl .Values.cloudSync.clusterKeyID)}}
+          {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
             value: "true"
           {{- else }}
             value: "false"

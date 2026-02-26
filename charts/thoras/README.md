@@ -65,7 +65,7 @@ helm install \
 | slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                         |
 | cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                               |
 | cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                    |
-| cloudSync.cloudSyncBaseUrl         | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                               |
+| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                               |
 | queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
 | nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
 | tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |

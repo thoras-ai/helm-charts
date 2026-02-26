@@ -54,7 +54,7 @@ slackWebhookUrlSecretRefName: ""
 slackWebhookUrlSecretRefKey: ""
 
 cloudSync:
-  cloudSyncBaseUrl: "https://console.thoras.ai"
+  baseUrl: "https://console.thoras.ai"
 
   clusterKeyID: ""
 
