@@ -20,6 +20,8 @@ Should default to v2 port:
 
           server {
             listen       5173;
+            listen [::]:5173 ipv6only=on;
+
             server_name  localhost;
 
             root   /usr/share/nginx/html;
@@ -57,6 +59,7 @@ Should default to v2 port:
 
           server {
             listen 8080;
+            listen [::]:8080 ipv6only=on;
 
             location /v1/ {
               proxy_pass http://thoras-api-server-v2;
@@ -110,6 +113,8 @@ should set extras in config.json:
 
           server {
             listen       5173;
+            listen [::]:5173 ipv6only=on;
+
             server_name  localhost;
 
             root   /usr/share/nginx/html;
@@ -147,6 +152,7 @@ should set extras in config.json:
 
           server {
             listen 8080;
+            listen [::]:8080 ipv6only=on;
 
             location /v1/ {
               proxy_pass http://thoras-api-server-v2;
