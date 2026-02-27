@@ -80,28 +80,7 @@ spec:
         volumeMounts:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf
-            subPath: dashboard-v2.nginx.conf
-      - name: thoras-api-proxy
-        image: {{ .Values.imageCredentials.registry }}/nginx:{{ .Values.thorasDashboard.nginx.imageTag }}
-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        securityContext:
-          runAsUser: 101
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: [ALL]
-        ports:
-        - containerPort: {{ .Values.thorasDashboard.nginxContainerPort }}
-        volumeMounts:
-          - name: nginx-config
-            mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
-        {{- if .Values.thorasDashboard.resources }}
-        resources: {{ .Values.thorasDashboard.resources | toYaml | nindent 10 }}
-        {{- else }}
-        resources:
-          limits: {{ .Values.thorasDashboard.limits | toYaml | nindent 12 }}
-          requests: {{ .Values.thorasDashboard.requests | toYaml | nindent 12 }}
-        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
