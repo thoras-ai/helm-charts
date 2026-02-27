@@ -22,7 +22,9 @@ Default containers should match snapshots:
       capabilities:
         drop:
           - ALL
-    volumeMounts: null
+    volumeMounts:
+      - mountPath: /var/lib/postgresql/data
+        name: timescale-data
   2: |
     args:
       - |

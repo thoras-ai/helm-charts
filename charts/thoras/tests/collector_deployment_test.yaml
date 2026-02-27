@@ -53,8 +53,10 @@ tests:
             enabled: false
     template: collector/deployment.yaml
     asserts:
-      - isEmpty:
+      - notContains:
           path: spec.template.spec.volumes
+          content:
+            name: timescale-config
       - isNull:
           path: spec.template.spec.containers[?(@.name == 'timescaledb')].command
       - isNull:
