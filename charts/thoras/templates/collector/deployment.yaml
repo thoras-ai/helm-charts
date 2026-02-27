@@ -52,6 +52,11 @@ spec:
         - name: elastic-search-data
           persistentVolumeClaim:
             claimName:  elastic-search-data
+      {{- else }}
+        - name: timescale-data
+          emptyDir: {}
+      {{- end }}
+      {{- if .Values.metricsCollector.persistence.enabled }}
       initContainers:
       - name: fix-dir-ownership
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
@@ -114,6 +119,9 @@ spec:
         {{- if .Values.metricsCollector.persistence.enabled }}
           - mountPath: /var/lib/share
             name: elastic-search-data
+        {{- else }}
+          - mountPath: /var/lib/postgresql/data
+            name: timescale-data
         {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"

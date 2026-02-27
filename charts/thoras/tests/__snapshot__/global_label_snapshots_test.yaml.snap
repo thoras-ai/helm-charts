@@ -440,7 +440,9 @@ Default matches snapshot:
                 capabilities:
                   drop:
                     - ALL
-              volumeMounts: null
+              volumeMounts:
+                - mountPath: /var/lib/postgresql/data
+                  name: timescale-data
             - args:
                 - |
                   # wait for postgres to be available
@@ -523,7 +525,9 @@ Default matches snapshot:
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: thoras-collector
-          volumes: null
+          volumes:
+            - emptyDir: {}
+              name: timescale-data
   11: |
     apiVersion: v1
     imagePullSecrets:
