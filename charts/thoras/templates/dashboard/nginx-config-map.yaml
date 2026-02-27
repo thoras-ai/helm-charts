@@ -22,6 +22,7 @@ data:
 
       server {
         listen {{ .Values.thorasDashboard.nginxContainerPort }};
+        listen [::]:{{ .Values.thorasDashboard.nginxContainerPort }} ipv6only=on;
 
         location /v1/ {
           proxy_pass http://thoras-api-server-v2;
@@ -62,6 +63,7 @@ data:
 
       server {
         listen       {{ .Values.thorasDashboard.containerPort }};
+        listen       [::]:{{ .Values.thorasDashboard.containerPort }} ipv6only=on;
         server_name  localhost;
 
         root   /usr/share/nginx/html;
