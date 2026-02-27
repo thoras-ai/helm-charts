@@ -424,6 +424,8 @@ Default matches snapshot:
                     secretKeyRef:
                       key: password
                       name: thoras-timescale-password
+                - name: PGDATA
+                  value: /var/lib/share/postgresql
               image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.25.0-pg16
               imagePullPolicy: IfNotPresent
               name: timescaledb
@@ -441,7 +443,7 @@ Default matches snapshot:
                   drop:
                     - ALL
               volumeMounts:
-                - mountPath: /var/lib/postgresql/data
+                - mountPath: /var/lib/share
                   name: timescale-data
             - args:
                 - |
@@ -517,6 +519,32 @@ Default matches snapshot:
                 capabilities:
                   drop:
                     - ALL
+              volumeMounts:
+                - mountPath: /var/lib/share
+                  name: timescale-data
+          initContainers:
+            - args:
+                - |
+                  mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
+              command:
+                - /bin/sh
+                - -c
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/alpine:3.23.3
+              name: fix-dir-ownership
+              resources:
+                limits:
+                  memory: 8192Mi
+                requests:
+                  cpu: 16m
+                  memory: 32Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - mountPath: /var/lib/share
+                  name: timescale-data
           securityContext:
             fsGroup: 1000
             runAsGroup: 1000

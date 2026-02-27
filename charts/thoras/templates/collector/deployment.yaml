@@ -56,7 +56,6 @@ spec:
         - name: timescale-data
           emptyDir: {}
       {{- end }}
-      {{- if .Values.metricsCollector.persistence.enabled }}
       initContainers:
       - name: fix-dir-ownership
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
@@ -77,7 +76,10 @@ spec:
         {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
+      {{- if .Values.metricsCollector.persistence.enabled }}
             name: elastic-search-data
+      {{- else }}
+            name: timescale-data
       {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
@@ -99,10 +101,8 @@ spec:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: password
-        {{- if .Values.metricsCollector.persistence.enabled }}
           - name: "PGDATA"
             value: /var/lib/share/postgresql
-        {{- end }}
         {{- if .Values.metricsCollector.timescale.resources }}
         resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -116,13 +116,12 @@ spec:
             mountPath: /etc/postgresql.conf
             subPath: custom.conf
         {{- end }}
-        {{- if .Values.metricsCollector.persistence.enabled }}
           - mountPath: /var/lib/share
+      {{- if .Values.metricsCollector.persistence.enabled }}
             name: elastic-search-data
-        {{- else }}
-          - mountPath: /var/lib/postgresql/data
+      {{- else }}
             name: timescale-data
-        {{- end }}
+      {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
@@ -200,11 +199,13 @@ spec:
           limits: {{ .Values.metricsCollector.blobService.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.blobService.requests | toYaml | nindent 12 }}
         {{- end }}
-        {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
           - mountPath: /var/lib/share
+      {{- if .Values.metricsCollector.persistence.enabled }}
             name: elastic-search-data
-        {{- end }}
+      {{- else }}
+            name: timescale-data
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
