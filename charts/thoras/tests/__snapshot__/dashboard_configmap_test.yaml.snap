@@ -2,7 +2,7 @@ Should default to v2 port:
   1: |
     apiVersion: v1
     data:
-      dashboard-v2.nginx.conf: |
+      nginx.conf: |
         pid /tmp/nginx.pid;
 
         events {
@@ -19,46 +19,12 @@ Should default to v2 port:
           include       mime.types;
 
           server {
-            listen       5173;
-            listen       [::]:5173 ipv6only=on;
+            listen       8080;
+            listen       [::]:8080 ipv6only=on;
             server_name  localhost;
 
             root   /usr/share/nginx/html;
             index  index.html index.htm;
-
-            location / {
-              try_files $uri /index.html;
-            }
-
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|otf|ttf|map)$ {
-              expires 1y;
-              access_log off;
-              add_header Cache-Control "public";
-            }
-
-            error_page   500 502 503 504  /50x.html;
-            location = /50x.html {
-              root   /usr/share/nginx/html;
-            }
-          }
-        }
-      nginx.conf: |
-        pid /tmp/nginx.pid;
-
-        events {
-          worker_connections 1024;
-        }
-
-        http {
-          client_body_temp_path /tmp/client_temp;
-          proxy_temp_path       /tmp/proxy_temp;
-          fastcgi_temp_path     /tmp/fastcgi_temp;
-          uwsgi_temp_path       /tmp/uwsgi_temp;
-          scgi_temp_path        /tmp/scgi_temp;
-
-          server {
-            listen 8080;
-            listen [::]:8080 ipv6only=on;
 
             location /v1/ {
               proxy_pass http://thoras-api-server-v2;
@@ -74,11 +40,19 @@ Should default to v2 port:
             }
 
             location / {
-              proxy_pass http://localhost:5173;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;       }
+              try_files $uri /index.html;
+            }
+
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|otf|ttf|map)$ {
+              expires 1y;
+              access_log off;
+              add_header Cache-Control "public";
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+              root   /usr/share/nginx/html;
+            }
           }
         }
     kind: ConfigMap
@@ -94,7 +68,7 @@ should set extras in config.json:
   1: |
     apiVersion: v1
     data:
-      dashboard-v2.nginx.conf: |
+      nginx.conf: |
         pid /tmp/nginx.pid;
 
         events {
@@ -111,46 +85,12 @@ should set extras in config.json:
           include       mime.types;
 
           server {
-            listen       5173;
-            listen       [::]:5173 ipv6only=on;
+            listen       8080;
+            listen       [::]:8080 ipv6only=on;
             server_name  localhost;
 
             root   /usr/share/nginx/html;
             index  index.html index.htm;
-
-            location / {
-              try_files $uri /index.html;
-            }
-
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|otf|ttf|map)$ {
-              expires 1y;
-              access_log off;
-              add_header Cache-Control "public";
-            }
-
-            error_page   500 502 503 504  /50x.html;
-            location = /50x.html {
-              root   /usr/share/nginx/html;
-            }
-          }
-        }
-      nginx.conf: |
-        pid /tmp/nginx.pid;
-
-        events {
-          worker_connections 1024;
-        }
-
-        http {
-          client_body_temp_path /tmp/client_temp;
-          proxy_temp_path       /tmp/proxy_temp;
-          fastcgi_temp_path     /tmp/fastcgi_temp;
-          uwsgi_temp_path       /tmp/uwsgi_temp;
-          scgi_temp_path        /tmp/scgi_temp;
-
-          server {
-            listen 8080;
-            listen [::]:8080 ipv6only=on;
 
             location /v1/ {
               proxy_pass http://thoras-api-server-v2;
@@ -166,11 +106,19 @@ should set extras in config.json:
             }
 
             location / {
-              proxy_pass http://localhost:5173;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;       }
+              try_files $uri /index.html;
+            }
+
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|otf|ttf|map)$ {
+              expires 1y;
+              access_log off;
+              add_header Cache-Control "public";
+            }
+
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+              root   /usr/share/nginx/html;
+            }
           }
         }
     kind: ConfigMap
