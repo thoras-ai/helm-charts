@@ -5,7 +5,7 @@ metadata:
   name: thoras-dashboard
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
 spec:
   replicas: {{ .Values.thorasDashboard.replicas }}
   selector:
@@ -15,7 +15,9 @@ spec:
     metadata:
       labels:
         app: thoras-dashboard
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasDashboard.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasDashboard.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       annotations:
         {{- if not .Values.thorasDashboard.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/dashboard/nginx-config-map.yaml") . | sha256sum }}
@@ -24,7 +26,15 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
         - name: nginx-config
           configMap:
@@ -32,6 +42,11 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          runAsUser: 65534 # user: nobody
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -48,6 +63,11 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 101
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
         {{- if .Values.thorasDashboard.resources }}
@@ -60,23 +80,7 @@ spec:
         volumeMounts:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf
-            subPath: dashboard-v2.nginx.conf
-      - name: thoras-api-proxy
-        image: {{ .Values.imageCredentials.registry }}/nginx:{{ .Values.thorasDashboard.nginx.imageTag }}
-        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        ports:
-        - containerPort: {{ .Values.thorasDashboard.nginxContainerPort }}
-        volumeMounts:
-          - name: nginx-config
-            mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
-        {{- if .Values.thorasDashboard.resources }}
-        resources: {{ .Values.thorasDashboard.resources | toYaml | nindent 10 }}
-        {{- else }}
-        resources:
-          limits: {{ .Values.thorasDashboard.limits | toYaml | nindent 12 }}
-          requests: {{ .Values.thorasDashboard.requests | toYaml | nindent 12 }}
-        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

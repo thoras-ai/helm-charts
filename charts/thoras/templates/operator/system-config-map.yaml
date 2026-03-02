@@ -1,13 +1,10 @@
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: thoras-api-server-v2
+  name: thoras-operator-system-config
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app: thoras-api-server-v2
+data:
+  system-config.yaml: |
+    scaling-paused: false

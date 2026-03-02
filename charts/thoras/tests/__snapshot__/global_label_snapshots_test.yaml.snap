@@ -24,11 +24,8 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-api-server-v2
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - command:
@@ -54,8 +51,6 @@ Default matches snapshot:
                   value: info
                 - name: SERVICE_POD_LOG_LABEL
                   value: app.kubernetes.io/name=thoras
-                - name: SERVICE_PROMETHEUS_API_URL
-                  value: http://localhost
                 - name: SERVICE_CLUSTER_NAME
                   value: ""
                 - name: SERVICE_BLOB_SERVICE_API_URL
@@ -70,6 +65,8 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
+                - name: SERVICE_PLATFORM_VERSION
+                  value: TEST
                 - name: SERVICE_ENABLE_COST_REFRESH_BATCHING
                   value: "true"
                 - name: SERVICE_COST_REFRESH_BATCH_SIZE
@@ -84,13 +81,24 @@ Default matches snapshot:
                   value: 2m
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "false"
+                - name: SERVICE_ENABLE_CLOUD_SYNC
+                  value: "false"
+                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
+                  value: ""
+                - name: SERVICE_CLOUD_SYNC_BASE_URL
+                  value: https://console.thoras.ai
+                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      key: clusterKey
+                      name: thoras-cloud-sync
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
                   path: /health
                   port: 8080
-              name: thoras-v2-api-server
+              name: thoras-api-server-v2
               ports:
                 - containerPort: 8080
               resources:
@@ -99,6 +107,11 @@ Default matches snapshot:
                 requests:
                   cpu: 128m
                   memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               startupProbe:
                 failureThreshold: 12
                 httpGet:
@@ -110,6 +123,10 @@ Default matches snapshot:
                   name: monitor-config
                   readOnly: true
                   subPath: config.yaml
+                - mountPath: /app/system-config.yaml
+                  name: system-config
+                  readOnly: true
+                  subPath: system-config.yaml
           initContainers:
             - args:
                 - |
@@ -151,15 +168,28 @@ Default matches snapshot:
                 - name: DATABASE_URL
                   value: $(DATABASE_HOST)/thoras?sslmode=disable
                 - name: EXTENSION_VERSION
-                  value: 2.24.0
+                  value: 2.25.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
               resources: {}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
           serviceAccountName: thoras-api
           volumes:
             - configMap:
                 name: thoras-monitor-config
               name: monitor-config
+            - configMap:
+                name: thoras-operator-system-config
+              name: system-config
   2: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -374,11 +404,8 @@ Default matches snapshot:
         metadata:
           labels:
             app: metrics-collector
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           affinity:
             podAntiAffinity:
@@ -399,7 +426,9 @@ Default matches snapshot:
                     secretKeyRef:
                       key: password
                       name: thoras-timescale-password
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.24.0-pg16
+                - name: PGDATA
+                  value: /var/lib/share/postgresql
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.25.0-pg16
               imagePullPolicy: IfNotPresent
               name: timescaledb
               ports:
@@ -410,7 +439,14 @@ Default matches snapshot:
                 requests:
                   cpu: 1024m
                   memory: 3072Mi
-              volumeMounts: null
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - mountPath: /var/lib/share
+                  name: timescale-data
             - args:
                 - |
                   # wait for postgres to be available
@@ -454,6 +490,8 @@ Default matches snapshot:
                       name: thoras-timescale-password
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
+                - name: SERVICE_PLATFORM_VERSION
+                  value: TEST
                 - name: SERVICE_PORT
                   value: "8080"
                 - name: SERVICE_SLACK_WEBHOOK_URL
@@ -478,8 +516,48 @@ Default matches snapshot:
                 requests:
                   cpu: 16m
                   memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - mountPath: /var/lib/share
+                  name: timescale-data
+          initContainers:
+            - args:
+                - |
+                  mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
+              command:
+                - /bin/sh
+                - -c
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/alpine:3.23.3
+              name: fix-dir-ownership
+              resources:
+                limits:
+                  memory: 8192Mi
+                requests:
+                  cpu: 16m
+                  memory: 32Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - mountPath: /var/lib/share
+                  name: timescale-data
+          securityContext:
+            fsGroup: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
           serviceAccountName: thoras-collector
-          volumes: null
+          volumes:
+            - emptyDir: {}
+              name: timescale-data
   11: |
     apiVersion: v1
     imagePullSecrets:
@@ -556,39 +634,27 @@ Default matches snapshot:
           annotations: null
           labels:
             app: thoras-dashboard
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-dashboard
               ports:
-                - containerPort: 5173
+                - containerPort: 8080
               resources:
                 limits:
                   memory: 2Gi
                 requests:
                   cpu: 100m
                   memory: 128Mi
-              volumeMounts:
-                - mountPath: /etc/nginx/nginx.conf
-                  name: nginx-config
-                  subPath: dashboard-v2.nginx.conf
-            - image: us-east4-docker.pkg.dev/thoras-registry/platform/nginx:1.29.4-alpine3.23-slim
-              imagePullPolicy: IfNotPresent
-              name: thoras-api-proxy
-              ports:
-                - containerPort: 80
-              resources:
-                limits:
-                  memory: 2Gi
-                requests:
-                  cpu: 100m
-                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsUser: 101
               volumeMounts:
                 - mountPath: /etc/nginx/nginx.conf
                   name: nginx-config
@@ -610,6 +676,16 @@ Default matches snapshot:
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
               resources: {}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsUser: 65534
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
           serviceAccountName: thoras-dashboard
           volumes:
             - configMap:
@@ -646,7 +722,7 @@ Default matches snapshot:
         - name: http
           port: 80
           protocol: TCP
-          targetPort: 80
+          targetPort: 8080
       selector:
         app: thoras-dashboard
       type: ClusterIP
@@ -675,11 +751,8 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-forecast-worker
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           affinity:
             podAntiAffinity:
@@ -736,6 +809,11 @@ Default matches snapshot:
                 requests:
                   cpu: 1
                   memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
           initContainers:
             - args:
                 - |
@@ -753,6 +831,16 @@ Default matches snapshot:
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
               resources: {}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
           serviceAccountName: thoras-forecast-worker
   18: |
     apiVersion: v1
@@ -789,11 +877,8 @@ Default matches snapshot:
         metadata:
           labels:
             app: thoras-monitor
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - command:
@@ -815,18 +900,23 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
-              name: thoras-monitor-v2
+              name: thoras-monitor
               resources:
                 limits:
                   memory: 8192Mi
                 requests:
                   cpu: 16m
                   memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               volumeMounts:
                 - mountPath: /app/config.yaml
                   name: config
@@ -849,6 +939,16 @@ Default matches snapshot:
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
               resources: {}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
           serviceAccountName: thoras-monitor
           volumes:
             - configMap:
@@ -992,12 +1092,8 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-operator
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
-            name: thoras-operator
           name: thoras-operator
         spec:
           containers:
@@ -1036,6 +1132,26 @@ Default matches snapshot:
                   value: "9101"
                 - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
                   value: "true"
+                - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
+                  value: "false"
+                - name: DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      key: host
+                      name: thoras-timescale-password
+                - name: SERVICE_POSTGRESQL_DSN
+                  value: $(DATABASE_HOST)/thoras
+                - name: SERVICE_ENABLE_CLOUD_SYNC
+                  value: "false"
+                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
+                  value: ""
+                - name: SERVICE_CLOUD_SYNC_BASE_URL
+                  value: https://console.thoras.ai
+                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      key: clusterKey
+                      name: thoras-cloud-sync
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-operator
@@ -1050,7 +1166,16 @@ Default matches snapshot:
                 requests:
                   cpu: 100m
                   memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               volumeMounts:
+                - mountPath: /app/system-config.yaml
+                  name: system-config
+                  readOnly: true
+                  subPath: system-config.yaml
                 - mountPath: /tmp/k8s-webhook-server/serving-certs/tls.crt
                   name: tls
                   readOnly: true
@@ -1076,8 +1201,21 @@ Default matches snapshot:
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
               resources: {}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
           serviceAccountName: thoras-operator
           volumes:
+            - configMap:
+                name: thoras-operator-system-config
+              name: system-config
             - name: tls
               secret:
                 defaultMode: 420
@@ -1106,6 +1244,8 @@ Default matches snapshot:
           - AIScaleTarget
           - aiscaletargets/status
           - aiscaletargets
+          - clusteraiscaletemplates
+          - clusteraiscaletemplates/status
         verbs:
           - '*'
   27: |
@@ -1247,80 +1387,6 @@ Default matches snapshot:
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-slm-api
-      namespace: NAMESPACE
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: thoras-slm-api
-      template:
-        metadata:
-          labels:
-            app: thoras-slm-api
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
-            app.kubernetes.io/name: thoras
-            globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
-        spec:
-          containers:
-            - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-phi4-mini:TEST
-              imagePullPolicy: IfNotPresent
-              name: thoras-slm-api
-              ports:
-                - containerPort: 11434
-              resources:
-                limits:
-                  memory: 8192Mi
-                requests:
-                  cpu: 1024m
-                  memory: 4096Mi
-          serviceAccountName: thoras-slm-api
-  33: |
-    apiVersion: v1
-    imagePullSecrets:
-      - name: test-secret-registry
-    kind: ServiceAccount
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-slm-api
-      namespace: NAMESPACE
-  34: |
-    apiVersion: v1
-    kind: Service
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-slm-api
-      namespace: NAMESPACE
-    spec:
-      ports:
-        - name: http
-          port: 8080
-          protocol: TCP
-          targetPort: 11434
-      selector:
-        app: thoras-slm-api
-  35: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
       annotations: null
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
@@ -1343,11 +1409,8 @@ Default matches snapshot:
             prometheus.io/scrape: "true"
           labels:
             app: thoras-worker
-            app.kubernetes.io/instance: RELEASE-NAME
-            app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
-            helm.sh/chart: thoras-4.7.0
         spec:
           containers:
             - command:
@@ -1375,12 +1438,14 @@ Default matches snapshot:
                   value: "50"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
+                - name: SERVICE_PLATFORM_VERSION
+                  value: TEST
                 - name: SERVICE_CHUNK_INTERVAL_UPDATER_DRY_RUN
                   value: "false"
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_COLLECTOR_MEM_REQUEST
                   value: 3072Mi
                 - name: SERVICE_PORT
@@ -1402,7 +1467,7 @@ Default matches snapshot:
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
                   value: ""
                 - name: SERVICE_CLOUD_SYNC_BASE_URL
-                  value: https://console.staging.thoras.ai
+                  value: https://console.thoras.ai
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
                   valueFrom:
                     secretKeyRef:
@@ -1411,10 +1476,12 @@ Default matches snapshot:
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
                 - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "false"
                 - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
+                  value: "true"
+                - name: SERVICE_ENABLE_FORECAST_RESCUER
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
@@ -1428,6 +1495,11 @@ Default matches snapshot:
                 requests:
                   cpu: 128m
                   memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               volumeMounts:
                 - mountPath: /app/config.yaml
                   name: monitor-config
@@ -1474,16 +1546,26 @@ Default matches snapshot:
                 - name: DATABASE_URL
                   value: $(DATABASE_HOST)/thoras?sslmode=disable
                 - name: EXTENSION_VERSION
-                  value: 2.24.0
+                  value: 2.25.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
               resources: {}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
           serviceAccountName: thoras-worker
           volumes:
             - configMap:
                 name: thoras-monitor-config
               name: monitor-config
-  36: |
+  33: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1503,7 +1585,7 @@ Default matches snapshot:
           - get
           - list
           - watch
-  37: |
+  34: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1523,7 +1605,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  38: |
+  35: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1542,7 +1624,7 @@ Default matches snapshot:
           - '*'
         verbs:
           - '*'
-  39: |
+  36: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1562,7 +1644,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  40: |
+  37: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1576,7 +1658,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: NAMESPACE
-  41: |
+  38: |
     apiVersion: v1
     kind: Service
     metadata:

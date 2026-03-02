@@ -2,20 +2,42 @@ Should default to v2 port:
   1: |
     apiVersion: v1
     data:
-      dashboard-v2.nginx.conf: |
+      nginx.conf: |
+        pid /tmp/nginx.pid;
+
         events {
           worker_connections 1024;
         }
 
         http {
+          client_body_temp_path /tmp/client_temp;
+          proxy_temp_path       /tmp/proxy_temp;
+          fastcgi_temp_path     /tmp/fastcgi_temp;
+          uwsgi_temp_path       /tmp/uwsgi_temp;
+          scgi_temp_path        /tmp/scgi_temp;
+
           include       mime.types;
 
           server {
-            listen       5173;
+            listen       8080;
+            listen       [::]:8080 ipv6only=on;
             server_name  localhost;
 
             root   /usr/share/nginx/html;
             index  index.html index.htm;
+
+            location /v1/ {
+              proxy_pass http://thoras-api-server-v2;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            location /config.json {
+                default_type application/json;
+                return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
+            }
 
             location / {
               try_files $uri /index.html;
@@ -31,36 +53,6 @@ Should default to v2 port:
             location = /50x.html {
               root   /usr/share/nginx/html;
             }
-          }
-        }
-      nginx.conf: |
-        events {
-          worker_connections 1024;
-        }
-
-        http {
-          server {
-            listen 80;
-
-            location /v1/ {
-              proxy_pass http://thoras-api-server-v2;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-            }
-
-            location /config.json {
-                default_type application/json;
-                return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"rolling_savings":true,"show_savings":true} }';
-            }
-
-            location / {
-              proxy_pass http://localhost:5173;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;       }
           }
         }
     kind: ConfigMap
@@ -76,20 +68,42 @@ should set extras in config.json:
   1: |
     apiVersion: v1
     data:
-      dashboard-v2.nginx.conf: |
+      nginx.conf: |
+        pid /tmp/nginx.pid;
+
         events {
           worker_connections 1024;
         }
 
         http {
+          client_body_temp_path /tmp/client_temp;
+          proxy_temp_path       /tmp/proxy_temp;
+          fastcgi_temp_path     /tmp/fastcgi_temp;
+          uwsgi_temp_path       /tmp/uwsgi_temp;
+          scgi_temp_path        /tmp/scgi_temp;
+
           include       mime.types;
 
           server {
-            listen       5173;
+            listen       8080;
+            listen       [::]:8080 ipv6only=on;
             server_name  localhost;
 
             root   /usr/share/nginx/html;
             index  index.html index.htm;
+
+            location /v1/ {
+              proxy_pass http://thoras-api-server-v2;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            location /config.json {
+                default_type application/json;
+                return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"feature":true,"foo":"bar","node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
+            }
 
             location / {
               try_files $uri /index.html;
@@ -105,36 +119,6 @@ should set extras in config.json:
             location = /50x.html {
               root   /usr/share/nginx/html;
             }
-          }
-        }
-      nginx.conf: |
-        events {
-          worker_connections 1024;
-        }
-
-        http {
-          server {
-            listen 80;
-
-            location /v1/ {
-              proxy_pass http://thoras-api-server-v2;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-            }
-
-            location /config.json {
-                default_type application/json;
-                return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"feature":true,"foo":"bar","rolling_savings":true,"show_savings":true} }';
-            }
-
-            location / {
-              proxy_pass http://localhost:5173;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;       }
           }
         }
     kind: ConfigMap

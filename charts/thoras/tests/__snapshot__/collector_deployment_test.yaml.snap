@@ -6,7 +6,9 @@ Default containers should match snapshots:
           secretKeyRef:
             key: password
             name: thoras-timescale-password
-    image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.24.0-pg16
+      - name: PGDATA
+        value: /var/lib/share/postgresql
+    image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.25.0-pg16
     imagePullPolicy: IfNotPresent
     name: timescaledb
     ports:
@@ -17,7 +19,14 @@ Default containers should match snapshots:
       requests:
         cpu: 1024m
         memory: 3072Mi
-    volumeMounts: null
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - mountPath: /var/lib/share
+        name: timescale-data
   2: |
     args:
       - |
@@ -62,6 +71,8 @@ Default containers should match snapshots:
             name: thoras-timescale-password
       - name: SERVICE_CHART_VERSION
         value: 4.50.0
+      - name: SERVICE_PLATFORM_VERSION
+        value: dev
       - name: SERVICE_PORT
         value: "8080"
       - name: SERVICE_SLACK_WEBHOOK_URL
@@ -86,3 +97,11 @@ Default containers should match snapshots:
       requests:
         cpu: 16m
         memory: 128Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+      - mountPath: /var/lib/share
+        name: timescale-data

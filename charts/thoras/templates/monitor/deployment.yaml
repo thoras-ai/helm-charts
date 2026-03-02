@@ -6,7 +6,7 @@ metadata:
   name: thoras-monitor
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasMonitor.labels) | nindent 4 }}
 spec:
   replicas: 1
   selector:
@@ -16,7 +16,9 @@ spec:
     metadata:
       labels:
         app: thoras-monitor
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasMonitor.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasMonitor.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or (not .Values.thorasMonitor.unittesting) .Values.thorasMonitor.podAnnotations }}
       annotations:
         {{- if not .Values.thorasMonitor.unittesting }}
@@ -27,7 +29,16 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasMonitor.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
       - name: config
         configMap:
@@ -35,6 +46,10 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -48,9 +63,13 @@ spec:
             fi
         resources: {}
       containers:
-      - name: thoras-monitor-v2
+      - name: thoras-monitor
         image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMonitor.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/app/monitor"]
         volumeMounts:
           - name: config

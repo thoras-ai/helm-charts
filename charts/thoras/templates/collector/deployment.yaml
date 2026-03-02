@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
   name: metrics-collector
   namespace: {{ .Release.Namespace }}
 spec:
@@ -17,7 +17,9 @@ spec:
     metadata:
       labels:
         app: metrics-collector
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.metricsCollector.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.metricsCollector.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or .Values.metricsCollector.timescale.config.enabled .Values.metricsCollector.podAnnotations }}
       annotations:
         {{- if .Values.metricsCollector.timescale.config.enabled }}
@@ -28,7 +30,18 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
       {{- if .Values.metricsCollector.timescale.config.enabled }}
         - name: timescale-config
@@ -39,28 +52,21 @@ spec:
         - name: elastic-search-data
           persistentVolumeClaim:
             claimName:  elastic-search-data
+      {{- else }}
+        - name: timescale-data
+          emptyDir: {}
+      {{- end }}
       initContainers:
       - name: fix-dir-ownership
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/bin/sh", "-c"]
         args:
           - |
-            mkdir -p /var/lib/share/data
-
-            # migrate non-elastic data to the new location
-            find /var/lib/share -not -name postgresql -not -name data -not -name blobs -mindepth 1 -maxdepth 1 -exec mv {} /var/lib/share/data \;
-
-            # fix elastic directory permissions # TODO: drop elastic data in the future
-            chown -R 1000:1000 /var/lib/share/data
-            rm -f /var/lib/share/data/node.lock
-
-            # fix timescale directory
-            mkdir -p /var/lib/share/postgresql
-            chown -R 1000:1000 /var/lib/share/postgresql
-
-            # fix blobs directory
-            mkdir -p /var/lib/share/blobs
-            chown -R 1000:1000 /var/lib/share/blobs
+            mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
         {{- if .Values.metricsCollector.init.resources }}
         resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -68,18 +74,21 @@ spec:
           limits: {{ .Values.metricsCollector.init.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.init.requests | toYaml | nindent 12 }}
         {{- end }}
-        {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-        securityContext:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
+      {{- if .Values.metricsCollector.persistence.enabled }}
             name: elastic-search-data
+      {{- else }}
+            name: timescale-data
       {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         {{- if .Values.metricsCollector.timescale.config.enabled }}
         command: ["docker-entrypoint.sh"]
         args: ["-c", "config_file=/etc/postgresql.conf"]
@@ -92,10 +101,8 @@ spec:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: password
-        {{- if .Values.metricsCollector.persistence.enabled }}
           - name: "PGDATA"
             value: /var/lib/share/postgresql
-        {{- end }}
         {{- if .Values.metricsCollector.timescale.resources }}
         resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -109,19 +116,19 @@ spec:
             mountPath: /etc/postgresql.conf
             subPath: custom.conf
         {{- end }}
-        {{- if .Values.metricsCollector.persistence.enabled }}
           - mountPath: /var/lib/share
+      {{- if .Values.metricsCollector.persistence.enabled }}
             name: elastic-search-data
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 0
-          {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-        {{- end }}
+      {{- else }}
+            name: timescale-data
+      {{- end }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -162,7 +169,9 @@ spec:
                 name: thoras-timescale-password
                 key: password
           - name: SERVICE_CHART_VERSION
-            value: "{{ .Chart.Version }}"
+            value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           - name: SERVICE_PORT
             value: {{ .Values.metricsCollector.blobService.containerPort | quote }}
           - name: SERVICE_SLACK_WEBHOOK_URL
@@ -190,17 +199,13 @@ spec:
           limits: {{ .Values.metricsCollector.blobService.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.blobService.requests | toYaml | nindent 12 }}
         {{- end }}
-        {{- if .Values.metricsCollector.persistence.enabled }}
         volumeMounts:
           - mountPath: /var/lib/share
+      {{- if .Values.metricsCollector.persistence.enabled }}
             name: elastic-search-data
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 0
-          {{- with .Values.metricsCollector.additionalPvSecurityContext }}
-            {{- toYaml . | nindent 10 }}
-          {{- end }}
-        {{- end }}
+      {{- else }}
+            name: timescale-data
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

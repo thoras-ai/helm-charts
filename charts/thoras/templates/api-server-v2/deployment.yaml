@@ -5,7 +5,7 @@ metadata:
   name: thoras-api-server-v2
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
 spec:
   replicas: {{ .Values.thorasApiServerV2.replicas }}
   selector:
@@ -15,7 +15,9 @@ spec:
     metadata:
       labels:
         app: thoras-api-server-v2
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasApiServerV2.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasApiServerV2.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or .Values.thorasApiServerV2.podAnnotations .Values.thorasApiServerV2.prometheus.enabled (not .Values.thorasMonitor.unittesting) }}
       annotations:
         {{- with .Values.thorasApiServerV2.podAnnotations }}
@@ -31,11 +33,23 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasApiServerV2.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
       - name: monitor-config
         configMap:
           name: thoras-monitor-config
+      - name: system-config
+        configMap:
+          name: thoras-operator-system-config
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
       {{- if .Values.featureFlags.enableNextVersionMigration }}
@@ -74,6 +88,10 @@ spec:
             value: {{ .Chart.Version | quote }}
       {{- else }}
         name: wait-for-postgres
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: DATABASE_HOST
             valueFrom:
@@ -118,7 +136,11 @@ spec:
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-        name: thoras-v2-api-server
+        name: thoras-api-server-v2
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/app/api-server"]
         env:
           - name: DATABASE_HOST
@@ -146,8 +168,6 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasApiServerV2.logLevel }}
           - name: SERVICE_POD_LOG_LABEL
             value: {{ (printf "app.kubernetes.io/name=%s" .Chart.Name) | quote }}
-          - name: "SERVICE_PROMETHEUS_API_URL"
-            value: {{ .Values.thorasReasoning.connectors.prometheus.baseUrl }}
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_BLOB_SERVICE_API_URL
@@ -162,6 +182,8 @@ spec:
             value: {{ .Values.thorasApiServerV2.pprof.enabled | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           {{- with .Values.rbac.namespaces }}
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
@@ -180,10 +202,34 @@ spec:
             value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
           - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
             value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_CLOUD_SYNC
+          {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
+            value: "true"
+          {{- else }}
+            value: "false"
+          {{- end }}
+          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
+            value: {{ .Values.cloudSync.clusterKeyID | quote }}
+          - name: SERVICE_CLOUD_SYNC_BASE_URL
+            value: {{ .Values.cloudSync.baseUrl | quote }}
+          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.cloudSync.clusterKeySecretRefName .Values.cloudSync.clusterKeySecretRefKey }}
+                name: {{ .Values.cloudSync.clusterKeySecretRefName }}
+                key: {{ .Values.cloudSync.clusterKeySecretRefKey }}
+            {{- else }}
+                name: thoras-cloud-sync
+                key: clusterKey
+            {{- end }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml
             subPath: config.yaml
+            readOnly: true
+          - name: system-config
+            mountPath: /app/system-config.yaml
+            subPath: system-config.yaml
             readOnly: true
         ports:
         - containerPort: {{ .Values.thorasApiServerV2.containerPort }}

@@ -5,7 +5,7 @@ metadata:
   name: thoras-worker
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
   annotations:
     {{- if not .Values.thorasMonitor.unittesting }}
       checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
@@ -19,7 +19,9 @@ spec:
     metadata:
       labels:
         app: thoras-worker
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasWorker.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasWorker.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or .Values.thorasWorker.prometheus.enabled .Values.thorasWorker.podAnnotations }}
       annotations:
         {{- if .Values.thorasWorker.prometheus.enabled }}
@@ -32,7 +34,16 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasWorker.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
       - name: monitor-config
         configMap:
@@ -71,6 +82,10 @@ spec:
             value: {{ .Chart.Version | quote }}
       {{- else }}
         name: wait-for-postgres
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: DATABASE_HOST
             valueFrom:
@@ -116,6 +131,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-worker
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         command: ["/app/worker"]
         env:
           - name: DATABASE_HOST
@@ -145,6 +164,8 @@ spec:
             value: {{ .Values.thorasWorker.queriesPerSecond | default .Values.queriesPerSecond | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           {{- with .Values.rbac.namespaces }}
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
@@ -178,7 +199,7 @@ spec:
           - name: SERVICE_ENABLE_UNIFIED_AST_UTILIZATION_MONITOR
             value: {{ .Values.thorasWorker.enableUnifiedAstUtilizationMonitor | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC_WORKER
-          {{- if (and .Values.thorasWorker.cloudSyncBaseUrl .Values.cloudSync.clusterKeyID)}}
+          {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
             value: "true"
           {{- else }}
             value: "false"
@@ -186,7 +207,7 @@ spec:
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
             value: {{ .Values.cloudSync.clusterKeyID | quote }}
           - name: SERVICE_CLOUD_SYNC_BASE_URL
-            value: {{ .Values.thorasWorker.cloudSyncBaseUrl | quote }}
+            value: {{ .Values.cloudSync.baseUrl | quote }}
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
             valueFrom:
               secretKeyRef:
@@ -205,6 +226,8 @@ spec:
             value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
             value: {{ .Values.featureFlags.enableCostSavingsSettingsRefresh | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_FORECAST_RESCUER
+            value: {{ .Values.featureFlags.enableForecastRescuer | ternary "true" "false" | quote }}
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}

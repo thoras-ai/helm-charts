@@ -57,7 +57,6 @@ tests:
       - worker/deployment.yaml
       - dashboard/deployment.yaml
       - monitor/deployment.yaml
-      - slm-api/deployment.yaml
     asserts:
       - isNull:
           path: spec.template.spec.affinity
@@ -118,7 +117,6 @@ tests:
       - worker/deployment.yaml
       - dashboard/deployment.yaml
       - monitor/deployment.yaml
-      - slm-api/deployment.yaml
     set:
       affinity:
         nodeAffinity:

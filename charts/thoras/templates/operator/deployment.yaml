@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    {{- include "thoras.labels" . | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
   name: thoras-operator
   namespace: {{ .Release.Namespace }}
 spec:
@@ -15,8 +15,9 @@ spec:
     metadata:
       labels:
         app: thoras-operator
-        name: thoras-operator
-        {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasOperator.labels) .Values)) .) | nindent 8 }}
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasOperator.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- if or .Values.thorasOperator.podAnnotations .Values.thorasOperator.prometheus.enabled }}
       annotations:
         {{- with .Values.thorasOperator.podAnnotations }}
@@ -30,8 +31,20 @@ spec:
       {{- end }}
       name: thoras-operator
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
       volumes:
+        - name: system-config
+          configMap:
+            name: thoras-operator-system-config
         - name: tls
           secret:
             defaultMode: 420
@@ -44,6 +57,10 @@ spec:
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: wait-for-api-service
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
@@ -60,6 +77,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: thoras-operator
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         env:
           - name: SLACK_WEBHOOK_URL
             valueFrom:
@@ -116,10 +137,43 @@ spec:
           {{- end }}
           - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
             value: {{ .Values.featureFlags.enableSkipScalingOnInsufficientData | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
+            value: {{ .Values.featureFlags.enableCRDSuggestionReads | ternary "true" "false" | quote }}
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+          - name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)/thoras"
+          - name: SERVICE_ENABLE_CLOUD_SYNC
+          {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
+            value: "true"
+          {{- else }}
+            value: "false"
+          {{- end }}
+          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
+            value: {{ .Values.cloudSync.clusterKeyID | quote }}
+          - name: SERVICE_CLOUD_SYNC_BASE_URL
+            value: {{ .Values.cloudSync.baseUrl | quote }}
+          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
+            valueFrom:
+              secretKeyRef:
+            {{- if and .Values.cloudSync.clusterKeySecretRefName .Values.cloudSync.clusterKeySecretRefKey }}
+                name: {{ .Values.cloudSync.clusterKeySecretRefName }}
+                key: {{ .Values.cloudSync.clusterKeySecretRefKey }}
+            {{- else }}
+                name: thoras-cloud-sync
+                key: clusterKey
+            {{- end }}
         command: [
           "/app/operator"
         ]
         volumeMounts:
+          - name: system-config
+            mountPath: /app/system-config.yaml
+            subPath: system-config.yaml
+            readOnly: true
           - name: tls
             mountPath: /tmp/k8s-webhook-server/serving-certs/tls.crt
             subPath: tls.crt

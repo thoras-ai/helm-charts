@@ -9,7 +9,7 @@ metadata:
     {{- toYaml . | nindent 8 }}
   {{- end }}
   labels:
-    {{- include "thoras.labels" (mustMerge (dict "Values" (mustMerge (dict "labels" .Values.thorasDashboard.labels) .Values)) .) | nindent 4 }}
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
 spec:
 {{- if (or (eq .Values.thorasDashboard.service.type "ClusterIP") (empty .Values.thorasDashboard.service.type)) }}
   type: ClusterIP
@@ -36,6 +36,6 @@ spec:
   - name: http
     port: {{ .Values.thorasDashboard.port }}
     protocol: TCP
-    targetPort: {{ .Values.thorasDashboard.nginxContainerPort }}
+    targetPort: {{ .Values.thorasDashboard.containerPort }}
   selector:
     app: thoras-dashboard

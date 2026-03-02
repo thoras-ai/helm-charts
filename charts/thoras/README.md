@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.79.1](https://img.shields.io/badge/Version-4.79.1-informational?style=flat-square) ![AppVersion: 4.64.4](https://img.shields.io/badge/AppVersion-4.64.4-informational?style=flat-square)
+![Version: 4.85.4](https://img.shields.io/badge/Version-4.85.4-informational?style=flat-square) ![AppVersion: 4.69.0](https://img.shields.io/badge/AppVersion-4.69.0-informational?style=flat-square)
 
 # Installs
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                                | Type    | Default                                          | Description                                                                                                          |
 | ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.64.4                                           | Thoras app version                                                                                                   |
+| thorasVersion                      | String  | 4.69.0                                           | Thoras app version                                                                                                   |
 | imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
@@ -65,6 +65,7 @@ helm install \
 | slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                         |
 | cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                               |
 | cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                    |
+| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                               |
 | queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
 | nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
 | tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
@@ -80,10 +81,12 @@ The following flags are considered temporary and gate access to specific behavio
 
 | Key                                              | Type    | Default | Description                                                     |
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
-| featureFlags.enableNodeDetailsCollector          | Boolean | false   | Collection of node detail snapshots                             |
+| featureFlags.enableNodeDetailsCollector          | Boolean | true    | Collection of node detail snapshots                             |
 | featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
+| featureFlags.enableCRDSuggestionReads            | Boolean | false   | If true, webhooks read suggestions from CRD instead of API      |
 | featureFlags.enableCheckDatabaseHealth           | Boolean | false   | If true, pings the database in the health endpoint              |
-| featureFlags.enableCostSavingsSettingsRefresh    | Boolean | false   | If true, refreshes the costs savings settings periodically      |
+| featureFlags.enableCostSavingsSettingsRefresh    | Boolean | true    | If true, refreshes the costs savings settings periodically      |
+| featureFlags.enableForecastRescuer               | Boolean | false   | If true, enables rescuing stalled forecast jobs                 |
 | featureFlags.enableNextVersionMigration          | Boolean | false   | If true, uses a different migration init container              |
 
 ## Affinity Configuration
@@ -137,22 +140,21 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 
 ## Thoras Forecast
 
-| Key                                    | Type    | Default                     | Description                                                                                    |
-| -------------------------------------- | ------- | --------------------------- | ---------------------------------------------------------------------------------------------- |
-| thorasForecast.serviceAccount.name     | String  | thoras-forecast-worker      | Service account name for Thoras forecast worker pod                                            |
-| thorasForecast.imageTag                | String  | .thorasVersion              | Image tag for Thoras Forecast job                                                              |
-| thorasForecast.skipCache               | Boolean | false                       | Directs the forecaster to skip to model cache                                                  |
-| thorasForecast.ignoreNewPods           | Boolean | true                        | Directs forecaster to adjust CPU and memory metrics temporarily for new pods                   |
-| thorasForecast.enableDecoupledTraining | Boolean | true                        | Enables async training mode where forecasts report "needs_training" instead of training inline |
-| thorasForecast.worker.podAnnotations   | Object  | {}                          | Pod Annotations for Thoras Forecast                                                            |
-| thorasForecast.worker.labels           | Object  | {}                          | Pod labels for Thoras Forecast                                                                 |
-| thorasForecast.worker.replicas         | Number  | 1                           | Number of `thoras-forecast-worker` replicas to use                                             |
-| thorasForecast.worker.pollingInterval  | Number  | 15                          | Polling interval to check for work for `thoras-forecast-workers`                               |
-| thorasForecast.worker.forecastTimeout  | Number  | 600                         | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
-| thorasForecast.trainingJitterMinutes   | Number  | 0                           | Random jitter (in minutes, 0-120) added to training threshold to desynchronize training jobs   |
-| thorasWorker.prometheus.enabled        | Boolean | true                        | Enables a prometheus metric exporter                                                           |
-| thorasWorker.prometheus.port           | Number  | 9101                        | Port for the prometheus metric exporter                                                        |
-| thorasWorker.cloudSyncBaseUrl          | String  | "https://console.thoras.ai" | Base URL for syncing metrics and forecasts to Thoras Cloud                                     |
+| Key                                    | Type    | Default                | Description                                                                                    |
+| -------------------------------------- | ------- | ---------------------- | ---------------------------------------------------------------------------------------------- |
+| thorasForecast.serviceAccount.name     | String  | thoras-forecast-worker | Service account name for Thoras forecast worker pod                                            |
+| thorasForecast.imageTag                | String  | .thorasVersion         | Image tag for Thoras Forecast job                                                              |
+| thorasForecast.skipCache               | Boolean | false                  | Directs the forecaster to skip to model cache                                                  |
+| thorasForecast.ignoreNewPods           | Boolean | true                   | Directs forecaster to adjust CPU and memory metrics temporarily for new pods                   |
+| thorasForecast.enableDecoupledTraining | Boolean | true                   | Enables async training mode where forecasts report "needs_training" instead of training inline |
+| thorasForecast.worker.podAnnotations   | Object  | {}                     | Pod Annotations for Thoras Forecast                                                            |
+| thorasForecast.worker.labels           | Object  | {}                     | Pod labels for Thoras Forecast                                                                 |
+| thorasForecast.worker.replicas         | Number  | 1                      | Number of `thoras-forecast-worker` replicas to use                                             |
+| thorasForecast.worker.pollingInterval  | Number  | 15                     | Polling interval to check for work for `thoras-forecast-workers`                               |
+| thorasForecast.worker.forecastTimeout  | Number  | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
+| thorasForecast.trainingJitterMinutes   | Number  | 0                      | Random jitter (in minutes, 0-120) added to training threshold to desynchronize training jobs   |
+| thorasWorker.prometheus.enabled        | Boolean | true                   | Enables a prometheus metric exporter                                                           |
+| thorasWorker.prometheus.port           | Number  | 9101                   | Port for the prometheus metric exporter                                                        |
 
 ## Thoras Operator
 
@@ -173,50 +175,48 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 
 ## Thoras Metrics Collector
 
-| Key                                                             | Type    | Default          | Description                                                                   |
-| --------------------------------------------------------------- | ------- | ---------------- | ----------------------------------------------------------------------------- |
-| metricsCollector.serviceAccount.name                            | String  | thoras-collector | Service account name for Thoras collector pod                                 |
-| metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector                              |
-| metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning                     |
-| metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id                    |
-| metricsCollector.persistence.storageClassName                   | String  | ""               | Storage class for PVC                                                         |
-| metricsCollector.persistence.pvcStorageRequestSize              | String  | "3Gi"            | Inform PV backend of minimal volume requirements                              |
-| metricsCollector.persistence.accessMode                         | String  | "ReadWriteOnce"  | The accessMode applied to the PVC                                             |
-| metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                  |
-| metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector                               |
-| metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                               |
-| metricsCollector.timescale.imageTag                             | String  | 2.24.0-pg16      | Timescale image tag                                                           |
-| metricsCollector.timescale.extensionVersion                     | String  | 2.24.0           | Timescale extension version - should match imageTag                           |
-| metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                                      |
-| metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                                                |
-| metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                                    |
-| metricsCollector.blobService.logLevel                           | String  | Nil              | Logging level                                                                 |
-| metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                                    |
-| metricsCollector.blobService.pprof.enabled                      | Boolean | false            | Enable pprof endpoint.                                                        |
-| metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container                                |
-| metricsCollector.additionalPvSecurityContext                    | Object  | {}               | Allows assigning additional securityContext objects to workloads that use PVs |
+| Key                                                             | Type    | Default          | Description                                                  |
+| --------------------------------------------------------------- | ------- | ---------------- | ------------------------------------------------------------ |
+| metricsCollector.serviceAccount.name                            | String  | thoras-collector | Service account name for Thoras collector pod                |
+| metricsCollector.persistence.enabled                            | Bool    | false            | Enables persistence for Thoras metrics collector             |
+| metricsCollector.persistence.volumeName                         | String  | ""               | PV name for PVC. Keep blank if using dynamic provisioning    |
+| metricsCollector.persistence.createEFSStorageClass.fileSystemId | String  | ""               | Create dynamic PV provisioner for EFS by specifying EFS id   |
+| metricsCollector.persistence.storageClassName                   | String  | ""               | Storage class for PVC                                        |
+| metricsCollector.persistence.pvcStorageRequestSize              | String  | "3Gi"            | Inform PV backend of minimal volume requirements             |
+| metricsCollector.persistence.accessMode                         | String  | "ReadWriteOnce"  | The accessMode applied to the PVC                            |
+| metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                 |
+| metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector              |
+| metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                              |
+| metricsCollector.timescale.imageTag                             | String  | 2.25.0-pg16      | Timescale image tag                                          |
+| metricsCollector.timescale.extensionVersion                     | String  | 2.25.0           | Timescale extension version - should match imageTag          |
+| metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                     |
+| metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                               |
+| metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                   |
+| metricsCollector.blobService.logLevel                           | String  | Nil              | Logging level                                                |
+| metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                   |
+| metricsCollector.blobService.pprof.enabled                      | Boolean | false            | Enable pprof endpoint.                                       |
+| metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl` |
+| metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container               |
 
 ## Thoras API Server
 
-| Key                                            | Type    | Default    | Description                                                                   |
-| ---------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------------- |
-| thorasApiServerV2.serviceAccount.name          | String  | thoras-api | Service account name for Thoras api service pod                               |
-| thorasApiServerV2.podAnnotations               | Object  | {}         | Pod Annotations for Thoras API                                                |
-| thorasApiServerV2.labels                       | Object  | {}         | Pod/service labels for Thoras API                                             |
-| thorasApiServerV2.containerPort                | Number  | 8443       | Thoras API port                                                               |
-| thorasApiServerV2.port                         | Number  | 443        | Thoras API service port                                                       |
-| thorasApiServerV2.resources                    | Object  | {}         | Specify the resources block. Takes precedence if set.                         |
-| thorasApiServerV2.limits.memory                | String  | 2000Mi     | Legacy field for setting Thoras API memory limit                              |
-| thorasApiServerV2.requests.cpu                 | String  | 1000Mi     | Legacy field for settingThoras API CPU request                                |
-| thorasApiServerV2.requests.memory              | String  | 1000Mi     | Legacy field for settingThoras API memory request                             |
-| thorasApiServerV2.slackErrorsEnabled           | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`                  |
-| thorasApiServerV2.logLevel                     | String  | Nil        | Logging level                                                                 |
-| thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                      |
-| thorasApiServerV2.additionalPvSecurityContext  | Object  | {}         | Allows assigning additional securityContext objects to workloads that use PVs |
-| thorasApiServerV2.prometheus.enabled           | Boolean | true       | Enables a prometheus metric scrape point                                      |
-| thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                        |
-| thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state       |
+| Key                                            | Type    | Default    | Description                                                             |
+| ---------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------- |
+| thorasApiServerV2.serviceAccount.name          | String  | thoras-api | Service account name for Thoras api service pod                         |
+| thorasApiServerV2.podAnnotations               | Object  | {}         | Pod Annotations for Thoras API                                          |
+| thorasApiServerV2.labels                       | Object  | {}         | Pod/service labels for Thoras API                                       |
+| thorasApiServerV2.containerPort                | Number  | 8443       | Thoras API port                                                         |
+| thorasApiServerV2.port                         | Number  | 443        | Thoras API service port                                                 |
+| thorasApiServerV2.resources                    | Object  | {}         | Specify the resources block. Takes precedence if set.                   |
+| thorasApiServerV2.limits.memory                | String  | 2000Mi     | Legacy field for setting Thoras API memory limit                        |
+| thorasApiServerV2.requests.cpu                 | String  | 1000Mi     | Legacy field for settingThoras API CPU request                          |
+| thorasApiServerV2.requests.memory              | String  | 1000Mi     | Legacy field for settingThoras API memory request                       |
+| thorasApiServerV2.slackErrorsEnabled           | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`            |
+| thorasApiServerV2.logLevel                     | String  | Nil        | Logging level                                                           |
+| thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                |
+| thorasApiServerV2.prometheus.enabled           | Boolean | true       | Enables a prometheus metric scrape point                                |
+| thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                  |
+| thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state |
 
 ## Thoras Worker
 
@@ -236,7 +236,7 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                      |
 | thorasWorker.enableSnapshotChunkAutoSizing           | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
 | thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
-| thorasWorker.enableActiveSuggestionWorker            | Boolean | false         | Enable active suggestions worker                             |
+| thorasWorker.enableActiveSuggestionWorker            | Boolean | true          | Enable active suggestions worker                             |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | false         | Enable the unified AST utilization monitor                   |
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                      |
