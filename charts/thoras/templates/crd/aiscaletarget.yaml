@@ -651,6 +651,26 @@ spec:
                     - cost_optimized
                     - undershoot
                     type: string
+                  metrics:
+                    additionalProperties:
+                      properties:
+                        forecast_buffer_percentage:
+                          description: Buffer percentage for this metric. Overrides
+                            global forecast_buffer_percentage.
+                          type: string
+                          x-kubernetes-int-or-string: true
+                        mode:
+                          description: Forecast mode for this metric. Overrides global
+                            model.mode.
+                          enum:
+                          - balanced
+                          - cost_optimized
+                          - undershoot
+                          type: string
+                      type: object
+                    description: Per-metric forecast configuration. Overrides global
+                      mode and forecast_buffer_percentage for specific metrics.
+                    type: object
                 type: object
               scaleTargetRef:
                 properties:
