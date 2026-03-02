@@ -32,6 +32,7 @@ featureFlags:
   thorasManageThoras:
     enabled: false
   enableCheckDatabaseHealth: false
+  enableNextVersionMigration: false
   enableCostSavingsSettingsRefresh: true
   enableForecastRescuer: false
 
