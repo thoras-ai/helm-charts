@@ -230,10 +230,7 @@ thorasDashboard:
     create: true
   podAnnotations: {}
   labels: {}
-  containerPort: 5173
-  nginxContainerPort: 8080
-  nginx:
-    imageTag: "1.29.5-alpine3.23-slim"
+  containerPort: 8080
   # Specify the complete resources block (takes precedence if set)
   resources: {}
   # Legacy field for backward compatibility (used if resources is empty)
