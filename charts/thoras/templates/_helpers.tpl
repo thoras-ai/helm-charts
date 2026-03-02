@@ -7,6 +7,7 @@ Component labels - merges global + component labels (no Helm labels)
 Usage: include "thoras.componentLabels" (dict "root" . "component" .Values.thorasWorker.labels)
 */}}
 {{- define "thoras.componentLabels" -}}
+app.kubernetes.io/name: {{ .root.Chart.Name }}
 {{- $globalLabels := .root.Values.labels | default dict }}
 {{- $componentLabels := .component | default dict }}
 {{- $merged := mustMerge (deepCopy $componentLabels) $globalLabels }}
@@ -20,7 +21,6 @@ Resource labels - includes Helm labels + component labels (for Deployment/Servic
 Usage: include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels)
 */}}
 {{- define "thoras.resourceLabels" -}}
-app.kubernetes.io/name: {{ .root.Chart.Name }}
 helm.sh/chart: {{ .root.Chart.Name }}-{{ .root.Chart.Version | replace "+" "_" }}
 app.kubernetes.io/managed-by: {{ .root.Release.Service }}
 app.kubernetes.io/instance: {{ .root.Release.Name }}
