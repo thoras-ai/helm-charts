@@ -28,7 +28,7 @@ logLevel: info
 featureFlags:
   enableNodeDetailsCollector: true
   enableSkipScalingOnInsufficientData: true
-  enableCRDSuggestionReads: false
+  enableCRDSuggestionReads: true
   thorasManageThoras:
     enabled: false
   enableCheckDatabaseHealth: false

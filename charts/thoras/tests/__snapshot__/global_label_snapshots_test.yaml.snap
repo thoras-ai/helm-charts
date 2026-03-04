@@ -1133,7 +1133,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
                   value: "true"
                 - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
-                  value: "false"
+                  value: "true"
                 - name: DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
