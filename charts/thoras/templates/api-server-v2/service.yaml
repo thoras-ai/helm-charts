@@ -5,6 +5,7 @@ metadata:
   name: thoras-api-server-v2
   namespace: {{ .Release.Namespace }}
   labels:
+    app: thoras-api-server-v2
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
 spec:
   ports:

@@ -1,0 +1,19 @@
+{{- if and .Values.serviceMonitor.enabled .Values.thorasForecast.prometheus.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-forecast-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: thoras-forecast-worker
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasForecast.worker.labels) | nindent 4 }}
+spec:
+  ports:
+  - name: metrics
+    port: {{ .Values.thorasForecast.prometheus.port }}
+    protocol: TCP
+    targetPort: {{ .Values.thorasForecast.prometheus.port }}
+  selector:
+    app: thoras-forecast-worker
+{{- end }}

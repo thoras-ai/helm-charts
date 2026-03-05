@@ -358,5 +358,13 @@ tolerations: []
 # Global affinity rules that components can opt into
 affinity: {}
 
+# Create Prometheus ServiceMonitors for all Prometheus-enabled components
+serviceMonitor:
+  enabled: false
+  # Scrape interval (e.g. "30s"). If empty, uses Prometheus default.
+  interval: ""
+  # Additional labels to add to all ServiceMonitors (e.g. for Prometheus discovery)
+  additionalLabels: {}
+
 # Global Labels support
 labels: {}
