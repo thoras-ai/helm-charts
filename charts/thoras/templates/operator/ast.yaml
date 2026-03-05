@@ -22,6 +22,10 @@ spec:
         lowerbound: 1m
       memory:
         lowerbound: 1Mi
-      name: thoras-operator
+        limit:
+          ratio: 3
+      name: '*'
+      update_policy:
+        update_mode: {{ .Values.featureFlags.thorasManageThoras.updateMode | default "recreate" }}
     mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}
 {{- end }}
