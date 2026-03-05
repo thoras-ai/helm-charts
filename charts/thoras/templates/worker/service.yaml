@@ -5,6 +5,7 @@ metadata:
   name: thoras-worker
   namespace: {{ .Release.Namespace }}
   labels:
+    app: thoras-worker
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
 spec:
   ports:

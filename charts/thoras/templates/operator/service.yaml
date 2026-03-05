@@ -5,6 +5,7 @@ metadata:
   name: thoras-webhooks
   namespace: {{ .Release.Namespace }}
   labels:
+    app: thoras-operator
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
 spec:
   ports:

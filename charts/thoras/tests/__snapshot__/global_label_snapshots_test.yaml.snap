@@ -366,6 +366,7 @@ Default matches snapshot:
     kind: Service
     metadata:
       labels:
+        app: thoras-api-server-v2
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
@@ -1364,6 +1365,7 @@ Default matches snapshot:
     kind: Service
     metadata:
       labels:
+        app: thoras-operator
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
@@ -1663,6 +1665,7 @@ Default matches snapshot:
     kind: Service
     metadata:
       labels:
+        app: thoras-worker
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: thoras
