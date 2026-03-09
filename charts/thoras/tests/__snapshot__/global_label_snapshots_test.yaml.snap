@@ -79,6 +79,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
+                - name: MIN_LOOKBACK_TO_SCALE
+                  value: 3h
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "false"
                 - name: SERVICE_ENABLE_CLOUD_SYNC

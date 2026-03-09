@@ -153,6 +153,7 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasForecast.worker.pollingInterval  | Number  | 15                     | Polling interval to check for work for `thoras-forecast-workers`                               |
 | thorasForecast.worker.forecastTimeout  | Number  | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
 | thorasForecast.trainingJitterMinutes   | Number  | 0                      | Random jitter (in minutes, 0-120) added to training threshold to desynchronize training jobs   |
+| thorasForecast.minLookbackToScale      | Duration| 3h                     | Minimum lookback window before autonomous scaling (minimum: 3h). Supports 3h, 180m, 1h30m      |
 | thorasWorker.prometheus.enabled        | Boolean | true                   | Enables a prometheus metric exporter                                                           |
 | thorasWorker.prometheus.port           | Number  | 9101                   | Port for the prometheus metric exporter                                                        |
 

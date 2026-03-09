@@ -200,6 +200,8 @@ spec:
             value: {{ .Values.featureFlags.enableSkipScalingOnInsufficientData | ternary "true" "false" | quote }}
           - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
             value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
+          - name: MIN_LOOKBACK_TO_SCALE
+            value: "{{ .Values.thorasForecast.minLookbackToScale | default "3h" }}"
           - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
             value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC
