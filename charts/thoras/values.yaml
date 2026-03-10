@@ -310,6 +310,8 @@ thorasForecast:
   podEligibilityMinRunningTime: "2m"
   enableDecoupledTraining: true
   trainingJitterMinutes: 0
+  # Minimum lookback window required before autonomous scaling is enabled (minimum 3h).
+  minLookbackToScale: "3h"
   # Specify the complete resources block (takes precedence if set)
   resources: {}
   # Legacy field for backward compatibility (used if resources is empty)
