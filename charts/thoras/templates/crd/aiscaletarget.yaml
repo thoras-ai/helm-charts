@@ -642,15 +642,6 @@ spec:
                   forecast_cron:
                     default: '*/15 * * * *'
                     type: string
-                  mode:
-                    description: While Thoras models always bias for reliability,
-                      you have the option to set a "mode" for the model to inform
-                      the level of aggression in scaling.
-                    enum:
-                    - balanced
-                    - cost_optimized
-                    - undershoot
-                    type: string
                   metrics:
                     additionalProperties:
                       properties:
@@ -671,6 +662,22 @@ spec:
                     description: Per-metric forecast configuration. Overrides global
                       mode and forecast_buffer_percentage for specific metrics.
                     type: object
+                  min_lookback_to_scale:
+                    description: Minimum lookback window before autonomous scaling
+                      is enabled. Autonomous scaling will only occur if historical
+                      data spans at least this duration.
+                    format: int64
+                    type: integer
+                    x-kubernetes-int-or-string: true
+                  mode:
+                    description: While Thoras models always bias for reliability,
+                      you have the option to set a "mode" for the model to inform
+                      the level of aggression in scaling.
+                    enum:
+                    - balanced
+                    - cost_optimized
+                    - undershoot
+                    type: string
                 type: object
               scaleTargetRef:
                 properties:
