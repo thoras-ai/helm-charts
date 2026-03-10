@@ -131,24 +131,24 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME')].value
           value: "5m"
-  - it: Should set default MIN_LOOKBACK_TO_SCALE
+  - it: Should set default SERVICE_MIN_LOOKBACK_TO_SCALE
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[?(@.name == 'MIN_LOOKBACK_TO_SCALE')].value
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_MIN_LOOKBACK_TO_SCALE')].value
           value: "3h"
-  - it: Should override MIN_LOOKBACK_TO_SCALE
+  - it: Should override SERVICE_MIN_LOOKBACK_TO_SCALE
     set:
       thorasForecast:
         minLookbackToScale: "12h"
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[?(@.name == 'MIN_LOOKBACK_TO_SCALE')].value
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_MIN_LOOKBACK_TO_SCALE')].value
           value: "12h"
-  - it: Should default MIN_LOOKBACK_TO_SCALE when null
+  - it: Should default SERVICE_MIN_LOOKBACK_TO_SCALE when null
     set:
       thorasForecast:
         minLookbackToScale: null
     asserts:
       - equal:
-          path: spec.template.spec.containers[0].env[?(@.name == 'MIN_LOOKBACK_TO_SCALE')].value
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_MIN_LOOKBACK_TO_SCALE')].value
           value: "3h"
