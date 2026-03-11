@@ -83,6 +83,8 @@ Default matches snapshot:
                   value: 3h
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "false"
+                - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
+                  value: "true"
                 - name: SERVICE_ENABLE_CLOUD_SYNC
                   value: "false"
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
@@ -1144,6 +1146,8 @@ Default matches snapshot:
                       name: thoras-timescale-password
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
+                - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
+                  value: "true"
                 - name: SERVICE_ENABLE_CLOUD_SYNC
                   value: "false"
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
@@ -1466,6 +1470,8 @@ Default matches snapshot:
                   value: "5"
                 - name: SERVICE_ENABLE_UNIFIED_AST_UTILIZATION_MONITOR
                   value: "false"
+                - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
+                  value: "true"
                 - name: SERVICE_ENABLE_CLOUD_SYNC_WORKER
                   value: "false"
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID

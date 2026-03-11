@@ -146,6 +146,8 @@ spec:
                 key: host
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras"
+          - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
+            value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC
           {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
             value: "true"
