@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.91.0](https://img.shields.io/badge/Version-4.91.0-informational?style=flat-square) ![AppVersion: 4.73.0](https://img.shields.io/badge/AppVersion-4.73.0-informational?style=flat-square)
+![Version: 4.91.1](https://img.shields.io/badge/Version-4.91.1-informational?style=flat-square) ![AppVersion: 4.73.0](https://img.shields.io/badge/AppVersion-4.73.0-informational?style=flat-square)
 
 # Installs
 
@@ -140,22 +140,22 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 
 ## Thoras Forecast
 
-| Key                                    | Type    | Default                | Description                                                                                    |
-| -------------------------------------- | ------- | ---------------------- | ---------------------------------------------------------------------------------------------- |
-| thorasForecast.serviceAccount.name     | String  | thoras-forecast-worker | Service account name for Thoras forecast worker pod                                            |
-| thorasForecast.imageTag                | String  | .thorasVersion         | Image tag for Thoras Forecast job                                                              |
-| thorasForecast.skipCache               | Boolean | false                  | Directs the forecaster to skip to model cache                                                  |
-| thorasForecast.ignoreNewPods           | Boolean | true                   | Directs forecaster to adjust CPU and memory metrics temporarily for new pods                   |
-| thorasForecast.enableDecoupledTraining | Boolean | true                   | Enables async training mode where forecasts report "needs_training" instead of training inline |
-| thorasForecast.worker.podAnnotations   | Object  | {}                     | Pod Annotations for Thoras Forecast                                                            |
-| thorasForecast.worker.labels           | Object  | {}                     | Pod labels for Thoras Forecast                                                                 |
-| thorasForecast.worker.replicas         | Number  | 1                      | Number of `thoras-forecast-worker` replicas to use                                             |
-| thorasForecast.worker.pollingInterval  | Number  | 15                     | Polling interval to check for work for `thoras-forecast-workers`                               |
-| thorasForecast.worker.forecastTimeout  | Number  | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
-| thorasForecast.trainingJitterMinutes   | Number  | 0                      | Random jitter (in minutes, 0-120) added to training threshold to desynchronize training jobs   |
-| thorasForecast.minLookbackToScale      | Duration| 3h                     | Minimum lookback window before autonomous scaling (minimum: 3h). Supports 3h, 180m, 1h30m      |
-| thorasWorker.prometheus.enabled        | Boolean | true                   | Enables a prometheus metric exporter                                                           |
-| thorasWorker.prometheus.port           | Number  | 9101                   | Port for the prometheus metric exporter                                                        |
+| Key                                    | Type     | Default                | Description                                                                                    |
+| -------------------------------------- | -------- | ---------------------- | ---------------------------------------------------------------------------------------------- |
+| thorasForecast.serviceAccount.name     | String   | thoras-forecast-worker | Service account name for Thoras forecast worker pod                                            |
+| thorasForecast.imageTag                | String   | .thorasVersion         | Image tag for Thoras Forecast job                                                              |
+| thorasForecast.skipCache               | Boolean  | false                  | Directs the forecaster to skip to model cache                                                  |
+| thorasForecast.ignoreNewPods           | Boolean  | true                   | Directs forecaster to adjust CPU and memory metrics temporarily for new pods                   |
+| thorasForecast.enableDecoupledTraining | Boolean  | true                   | Enables async training mode where forecasts report "needs_training" instead of training inline |
+| thorasForecast.worker.podAnnotations   | Object   | {}                     | Pod Annotations for Thoras Forecast                                                            |
+| thorasForecast.worker.labels           | Object   | {}                     | Pod labels for Thoras Forecast                                                                 |
+| thorasForecast.worker.replicas         | Number   | 1                      | Number of `thoras-forecast-worker` replicas to use                                             |
+| thorasForecast.worker.pollingInterval  | Number   | 15                     | Polling interval to check for work for `thoras-forecast-workers`                               |
+| thorasForecast.worker.forecastTimeout  | Number   | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
+| thorasForecast.trainingJitterMinutes   | Number   | 0                      | Random jitter (in minutes, 0-120) added to training threshold to desynchronize training jobs   |
+| thorasForecast.minLookbackToScale      | Duration | 3h                     | Minimum lookback window before autonomous scaling (minimum: 3h). Supports 3h, 180m, 1h30m      |
+| thorasWorker.prometheus.enabled        | Boolean  | true                   | Enables a prometheus metric exporter                                                           |
+| thorasWorker.prometheus.port           | Number   | 9101                   | Port for the prometheus metric exporter                                                        |
 
 ## Thoras Operator
 
