@@ -204,6 +204,8 @@ spec:
             value: "{{ .Values.thorasForecast.minLookbackToScale | default "3h" }}"
           - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
             value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
+            value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC
           {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
             value: "true"

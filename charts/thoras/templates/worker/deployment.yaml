@@ -198,6 +198,8 @@ spec:
             value: {{ .Values.costRefreshBatching.maxConcurrency | quote }}
           - name: SERVICE_ENABLE_UNIFIED_AST_UTILIZATION_MONITOR
             value: {{ .Values.thorasWorker.enableUnifiedAstUtilizationMonitor | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
+            value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC_WORKER
           {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
             value: "true"
