@@ -666,8 +666,7 @@ spec:
                     description: Minimum lookback window before autonomous scaling
                       is enabled. Autonomous scaling will only occur if historical
                       data spans at least this duration.
-                    format: int64
-                    type: integer
+                    type: string
                     x-kubernetes-int-or-string: true
                   mode:
                     description: While Thoras models always bias for reliability,
