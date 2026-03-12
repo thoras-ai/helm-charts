@@ -99,6 +99,18 @@ thorasOperator:
   # Webhook certificate generation configuration
   webhookCertGen:
     imageTag: v1.4.4
+  # namespaceSelector applied to all webhook configurations. Override or set to
+  # {} when using an admission enforcer (e.g. OPA Gatekeeper's
+  # admissionsenforcer) that manages namespaceSelector itself, to avoid upgrade
+  # conflicts.
+  webhooks:
+    namespaceSelector:
+      matchExpressions:
+        - key: "kubernetes.io/metadata.name"
+          operator: NotIn
+          values:
+            - kube-system
+            - kube-node-lease
 
 metricsCollector:
   persistence:
