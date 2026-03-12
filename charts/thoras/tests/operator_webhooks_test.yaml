@@ -2,16 +2,26 @@ suite: Operator Webhooks
 templates:
   - operator/webhooks.yaml
 tests:
-  - it: Should exclude kube-system from mutating webhooks
-    documentIndex: 0
+  - it: Should exclude kube-system and kube-node-lease from all webhooks by default
     asserts:
       - contains:
           path: webhooks[0].namespaceSelector.matchExpressions[?(@.key == 'kubernetes.io/metadata.name')].values
           content: kube-system
+      - contains:
+          path: webhooks[0].namespaceSelector.matchExpressions[?(@.key == 'kubernetes.io/metadata.name')].values
+          content: kube-node-lease
+      - contains:
+          path: webhooks[1].namespaceSelector.matchExpressions[?(@.key == 'kubernetes.io/metadata.name')].values
+          content: kube-system
+      - contains:
+          path: webhooks[1].namespaceSelector.matchExpressions[?(@.key == 'kubernetes.io/metadata.name')].values
+          content: kube-node-lease
 
-  - it: Should exclude kube-system from validating webhooks
-    documentIndex: 1
+  - it: Should omit namespaceSelector on all webhooks when set to null
+    set:
+      thorasOperator.webhooks.namespaceSelector: null
     asserts:
-      - contains:
-          path: webhooks[0].namespaceSelector.matchExpressions[?(@.key == 'kubernetes.io/metadata.name')].values
-          content: kube-system
+      - notExists:
+          path: webhooks[0].namespaceSelector
+      - notExists:
+          path: webhooks[1].namespaceSelector
