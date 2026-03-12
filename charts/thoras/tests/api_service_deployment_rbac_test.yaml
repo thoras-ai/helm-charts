@@ -14,3 +14,14 @@ tests:
       version: "4.7.0"
     asserts:
       - matchSnapshot: {}
+  - it: thoras role includes configmap permissions
+    chart:
+      version: "4.7.0"
+    asserts:
+      - documentIndex: 4
+        equal:
+          path: rules[1]
+          value:
+            apiGroups: [""]
+            resources: ["configmaps"]
+            verbs: ["get", "update", "patch"]

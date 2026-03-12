@@ -131,6 +131,14 @@ Default matches snapshot:
           - pods
         verbs:
           - delete
+      - apiGroups:
+          - ""
+        resources:
+          - configmaps
+        verbs:
+          - get
+          - update
+          - patch
   6: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
