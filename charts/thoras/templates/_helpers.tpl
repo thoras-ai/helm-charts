@@ -72,14 +72,3 @@ podAntiAffinity:
           - thoras-forecast-worker
       topologyKey: kubernetes.io/hostname
 {{- end }}
-
-{{/*
-Excluded namespaces for webhooks
-*/}}
-{{- define "thoras.webhooks.excludedNamespaces" -}}
-- key: "kubernetes.io/metadata.name"
-  operator: NotIn
-  values:
-    - kube-system
-    - kube-node-lease
-{{- end }}
