@@ -10,6 +10,14 @@ Default containers should match snapshots:
         value: /var/lib/share/postgresql
     image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.25.0-pg16
     imagePullPolicy: IfNotPresent
+    lifecycle:
+      preStop:
+        exec:
+          command:
+            - pg_ctl
+            - stop
+            - -m
+            - fast
     name: timescaledb
     ports:
       - containerPort: 5432
