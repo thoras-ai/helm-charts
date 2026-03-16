@@ -571,6 +571,7 @@ Default matches snapshot:
           volumes:
             - emptyDir: {}
               name: timescale-data
+      terminationGracePeriodSeconds: 120
   11: |
     apiVersion: v1
     imagePullSecrets:
