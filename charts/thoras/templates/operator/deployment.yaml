@@ -168,6 +168,10 @@ spec:
                 name: thoras-cloud-sync
                 key: clusterKey
             {{- end }}
+          {{- if .Values.flux.enabled }}
+          - name: SERVICE_FIELD_MANAGER
+            value: {{ .Values.flux.fieldManager | quote }}
+          {{- end }}
         command: [
           "/app/operator"
         ]

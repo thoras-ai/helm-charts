@@ -383,3 +383,12 @@ serviceMonitor:
 
 # Global Labels support
 labels: {}
+
+# Flux configuration
+flux:
+  # Set to true if deploying via Flux to prevent drift detection from reverting
+  # operator-initiated rollout restarts.
+  enabled: false
+  # Field manager name used when patching Kubernetes resources (e.g. restartedAt).
+  # Override only if your Flux installation uses a non-default field manager name.
+  fieldManager: "flux-client-side-apply"
