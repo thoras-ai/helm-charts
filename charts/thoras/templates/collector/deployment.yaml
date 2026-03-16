@@ -8,7 +8,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
-  terminationGracePeriodSeconds: 120
   strategy:
     type: Recreate
   selector:
@@ -38,6 +37,7 @@ spec:
         fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
+      terminationGracePeriodSeconds: 120
       serviceAccountName: {{ .Values.metricsCollector.serviceAccount.name }}
       {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
       imagePullSecrets:
