@@ -86,6 +86,10 @@ spec:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        lifecycle:
+          preStop:
+            exec:
+              command: ["pg_ctl", "stop", "-m", "fast"]
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
