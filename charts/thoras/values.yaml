@@ -288,6 +288,8 @@ thorasDashboard:
     cost_breakdown_v2: true
     node_overrides: true
     show_node_details: true
+    # Show option in the dashboard to pause scaling cluster wide.
+    enable_scaling_pause: true
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
