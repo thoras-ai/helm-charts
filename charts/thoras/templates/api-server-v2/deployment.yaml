@@ -226,6 +226,10 @@ spec:
                 name: thoras-cloud-sync
                 key: clusterKey
             {{- end }}
+          {{- if .Values.flux.enabled }}
+          - name: SERVICE_FIELD_MANAGER
+            value: {{ .Values.flux.fieldManager | quote }}
+          {{- end }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml
