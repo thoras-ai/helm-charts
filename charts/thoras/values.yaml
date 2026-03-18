@@ -37,6 +37,7 @@ featureFlags:
   enableCostSavingsSettingsRefresh: true
   enableForecastRescuer: false
   enablePrometheusMetricScraping: false
+  enableMonitorActiveSuggestionFromCRD: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:

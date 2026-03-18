@@ -238,6 +238,7 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasWorker.enableSnapshotChunkAutoSizing           | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
 | thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
 | thorasWorker.enableActiveSuggestionWorker            | Boolean | true          | Enable active suggestions worker                             |
+| thorasWorker.enableMonitorActiveSuggestionFromCRD    | Boolean | false         | Enable monitoring active suggestions using the AST           |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | false         | Enable the unified AST utilization monitor                   |
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                      |
