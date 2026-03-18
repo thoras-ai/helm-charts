@@ -154,8 +154,10 @@ spec:
           {{- else }}
             value: "false"
           {{- end }}
+          {{- if .Values.cloudSync.clusterKeyID }}
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
             value: {{ .Values.cloudSync.clusterKeyID | quote }}
+          {{- end }}
           - name: SERVICE_CLOUD_SYNC_BASE_URL
             value: {{ .Values.cloudSync.baseUrl | quote }}
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
