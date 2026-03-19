@@ -1156,6 +1156,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
                   value: "true"
+                - name: SERVICE_MIN_LOOKBACK_TO_SCALE
+                  value: 3h
                 - name: DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
