@@ -139,6 +139,8 @@ spec:
             value: {{ .Values.featureFlags.enableSkipScalingOnInsufficientData | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
             value: {{ .Values.featureFlags.enableCRDSuggestionReads | ternary "true" "false" | quote }}
+          - name: SERVICE_MIN_LOOKBACK_TO_SCALE
+            value: {{ .Values.thorasForecast.minLookbackToScale | quote }}
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
