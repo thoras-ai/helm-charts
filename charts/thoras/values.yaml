@@ -76,7 +76,7 @@ rbac:
   namespaces: []
 
 thorasOperator:
-  replicas: 1
+  replicas: 2
   serviceAccount:
     name: thoras-operator
   podAnnotations: {}
