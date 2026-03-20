@@ -642,6 +642,15 @@ spec:
                   forecast_cron:
                     default: '*/15 * * * *'
                     type: string
+                  forecast_period:
+                    default: 15m0s
+                    description: |-
+                      Time duration for how frequently Thoras should generate forecasts and
+                      evaluate scaling. This is separate from the forecast period (how far into
+                      the future forecasts predict) and allows you to control how often scaling
+                      decisions are made. Mutually exclusive with forecastCron.
+                    type: string
+                    x-kubernetes-int-or-string: true
                   metrics:
                     additionalProperties:
                       properties:
@@ -682,6 +691,10 @@ spec:
                     - overshoot
                     type: string
                 type: object
+                x-kubernetes-validations:
+                - message: forecastCron and forecastPeriod are mutually exclusive
+                  rule: '!(has(self.forecast_cron) && self.forecast_cron != '''' &&
+                    has(self.forecast_period) && self.forecast_period != '''')'
               scaleTargetRef:
                 properties:
                   apiVersion:
