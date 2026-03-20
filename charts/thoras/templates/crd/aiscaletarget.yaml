@@ -640,7 +640,6 @@ spec:
                     type: string
                     x-kubernetes-int-or-string: true
                   forecast_cron:
-                    default: '*/15 * * * *'
                     type: string
                   forecast_interval:
                     description: |-
