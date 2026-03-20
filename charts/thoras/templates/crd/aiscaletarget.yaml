@@ -642,7 +642,7 @@ spec:
                   forecast_cron:
                     default: '*/15 * * * *'
                     type: string
-                  forecast_period:
+                  forecast_interval:
                     default: 15m0s
                     description: |-
                       Time duration for the how frequently Thoras forecasts. This provides
@@ -679,9 +679,9 @@ spec:
                     type: string
                     x-kubernetes-int-or-string: true
                   mode:
-                    description: While Thoras models always bias for reliability,
-                      you have the option to set a "mode" for the model to inform
-                      the level of aggression in scaling.
+                    description: |-
+                      While Thoras models always bias for reliability, you have the option to set
+                      a "mode" for the model to inform the level of aggression in scaling.
                     enum:
                     - balanced
                     - cost_optimized
@@ -691,9 +691,9 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-validations:
-                - message: forecastCron and forecastPeriod are mutually exclusive
-                  rule: '!(has(self.forecast_cron) && self.forecast_cron != ” && has(self.forecast_period)
-                    && self.forecast_period != ”)'
+                - message: forecastCron and forecastInterval are mutually exclusive
+                  rule: '!(has(self.forecast_cron) && self.forecast_cron != ” && has(self.forecast_interval)
+                    && self.forecast_interval != ”)'
               scaleTargetRef:
                 properties:
                   apiVersion:
