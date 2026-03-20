@@ -691,8 +691,8 @@ spec:
                 type: object
                 x-kubernetes-validations:
                 - message: forecastCron and forecastInterval are mutually exclusive
-                  rule: '!(has(self.forecast_cron) && self.forecast_cron != ” && has(self.forecast_interval)
-                    && self.forecast_interval != ”)'
+                  rule: '!has(self.forecast_cron) || self.forecast_cron == '''' ||
+                    !has(self.forecast_interval) || self.forecast_interval == '''''
               scaleTargetRef:
                 properties:
                   apiVersion:
