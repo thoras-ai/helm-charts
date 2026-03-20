@@ -643,7 +643,6 @@ spec:
                     default: '*/15 * * * *'
                     type: string
                   forecast_interval:
-                    default: 15m0s
                     description: |-
                       Time duration for the how frequently Thoras forecasts. This provides
                       control for how often scaling decisions are made. Mutually exclusive with
