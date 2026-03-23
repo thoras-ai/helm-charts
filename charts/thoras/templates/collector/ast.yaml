@@ -12,6 +12,7 @@ spec:
   model:
     forecast_blocks: 20m0s
     forecast_cron: '*/15 * * * *'
+    forecast_buffer_percentage: 33%
     mode: balanced
   scaleTargetRef:
     kind: Deployment
@@ -24,7 +25,12 @@ spec:
         lowerbound: 1Mi
         limit:
           ratio: 3
-      name: '*'
+      name: 'blob-api'
+    - cpu:
+        lowerbound: 1m
+      memory:
+        lowerbound: 1Mi
+      name: 'timescaledb'
     update_policy:
       update_mode: {{ .Values.featureFlags.thorasManageThoras.updateMode | default "recreate" }}
     mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}
