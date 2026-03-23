@@ -626,6 +626,10 @@ spec:
                 - mode
                 type: object
               model:
+                description: |-
+                  Defines the forecasting and scaling behavior for an AIScaleTarget, including
+                  how often forecasts are generated, how far ahead to predict, and how
+                  aggressively to scale.
                 properties:
                   forecast_blocks:
                     default: 15m0s
