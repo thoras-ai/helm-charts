@@ -657,7 +657,7 @@ spec:
                           - balanced
                           - cost_optimized
                           - undershoot
-                          - reliability_optimized
+                          - assurance_optimized
                           - overshoot
                           type: string
                       type: object
@@ -678,7 +678,7 @@ spec:
                     - balanced
                     - cost_optimized
                     - undershoot
-                    - reliability_optimized
+                    - assurance_optimized
                     - overshoot
                     type: string
                 type: object
