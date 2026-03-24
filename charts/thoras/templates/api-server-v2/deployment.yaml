@@ -86,6 +86,7 @@ spec:
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          {{- include "thoras.globalEnv" . | nindent 10 }}
       {{- else }}
         name: wait-for-postgres
         securityContext:
@@ -102,6 +103,7 @@ spec:
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
           - name: EXTENSION_VERSION
             value: "{{ .Values.metricsCollector.timescale.extensionVersion }}"
+          {{- include "thoras.globalEnv" . | nindent 10 }}
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -230,6 +232,7 @@ spec:
           - name: SERVICE_FIELD_MANAGER
             value: {{ .Values.flux.fieldManager | quote }}
           {{- end }}
+          {{- include "thoras.globalEnv" . | nindent 10 }}
         volumeMounts:
           - name: monitor-config
             mountPath: /app/config.yaml

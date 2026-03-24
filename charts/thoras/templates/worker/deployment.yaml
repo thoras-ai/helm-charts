@@ -80,6 +80,7 @@ spec:
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          {{- include "thoras.globalEnv" . | nindent 10 }}
       {{- else }}
         name: wait-for-postgres
         securityContext:
@@ -96,6 +97,7 @@ spec:
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
           - name: EXTENSION_VERSION
             value: "{{ .Values.metricsCollector.timescale.extensionVersion }}"
+          {{- include "thoras.globalEnv" . | nindent 10 }}
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -232,6 +234,7 @@ spec:
             value: {{ .Values.featureFlags.enableForecastRescuer | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
             value: {{ .Values.featureFlags.enableMonitorActiveSuggestionFromCRD | ternary "true" "false" | quote }}
+          {{- include "thoras.globalEnv" . | nindent 10 }}
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}

@@ -53,6 +53,7 @@ spec:
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
+          {{- include "thoras.globalEnv" . | nindent 10 }}
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -101,6 +102,7 @@ spec:
             value: {{ .Values.thorasWorker.enableActiveSuggestionWorker | ternary "true" "false" | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          {{- include "thoras.globalEnv" . | nindent 10 }}
         {{- if .Values.thorasMonitor.resources }}
         resources: {{ .Values.thorasMonitor.resources | toYaml | nindent 10 }}
         {{- else }}

@@ -25,6 +25,15 @@ imagePullPolicy: "IfNotPresent"
 
 logLevel: info
 
+# -- Additional environment variables that will be passed onto all Thoras components
+env: []
+
+# -- Proxy settings passed to all Thoras components
+proxy:
+  httpProxy: ""
+  httpsProxy: ""
+  noProxy: ""
+
 featureFlags:
   enableNodeDetailsCollector: true
   enableSkipScalingOnInsufficientData: true
