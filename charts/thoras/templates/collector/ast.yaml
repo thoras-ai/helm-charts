@@ -10,8 +10,8 @@ spec:
   horizontal:
     mode: recommendation
   model:
-    forecast_blocks: 20m0s
-    forecast_cron: '*/15 * * * *'
+    forecast_blocks: {{ .Values.featureFlags.thorasManageThoras.db.forecastBlocks | default "4h0s" }}
+    forecast_cron: {{ .Values.featureFlags.thorasManageThoras.db.forecastCron | default "17 * * * *" }}
     forecast_buffer_percentage: 33%
     mode: balanced
   scaleTargetRef:
@@ -32,6 +32,6 @@ spec:
         lowerbound: 1Mi
       name: 'timescaledb'
     update_policy:
-      update_mode: {{ .Values.featureFlags.thorasManageThoras.updateMode | default "recreate" }}
+      update_mode: {{ .Values.featureFlags.thorasManageThoras.db.updateMode | default .Values.featureFlags.thorasManageThoras.updateMode | default "recreate" }}
     mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}
 {{- end }}
