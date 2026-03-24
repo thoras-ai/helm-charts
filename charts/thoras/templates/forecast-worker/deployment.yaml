@@ -50,7 +50,7 @@ spec:
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
-          {{- include "thoras.globalEnv" . | nindent 10 }}
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -102,7 +102,7 @@ spec:
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
           {{- end }}
-          {{- include "thoras.globalEnv" . | nindent 10 }}
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         {{- if .Values.thorasForecast.worker.resources }}
         resources: {{ .Values.thorasForecast.worker.resources | toYaml | nindent 10 }}
         {{- else }}
