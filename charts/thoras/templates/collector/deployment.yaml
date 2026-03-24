@@ -103,12 +103,13 @@ spec:
         env:
           - name: PGDATA
             value: /var/lib/share/postgresql
+        {{- if .Values.metricsCollector.timescale.resources }}
+        resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
+        {{- else }}
         resources:
-          limits:
-            memory: "256Mi"
-          requests:
-            cpu: "16m"
-            memory: "64Mi"
+          limits: {{ .Values.metricsCollector.timescale.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.metricsCollector.timescale.requests | toYaml | nindent 12 }}
+        {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
       {{- if .Values.metricsCollector.persistence.enabled }}
