@@ -165,6 +165,8 @@ metricsCollector:
     config:
       enabled: false
       content: ""
+    walRecovery:
+      enabled: false
   blobService:
     logLevel: "info"
     pprof:

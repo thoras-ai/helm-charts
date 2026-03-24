@@ -82,6 +82,41 @@ spec:
       {{- else }}
             name: timescale-data
       {{- end }}
+      {{- if .Values.metricsCollector.timescale.walRecovery.enabled }}
+      - name: reset-wal-on-startup
+        image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Checking WAL integrity..."
+            if ! pg_resetwal --check "$PGDATA" 2>/dev/null; then
+              echo "WAL check failed, running pg_resetwal -f"
+              pg_resetwal -f "$PGDATA"
+            else
+              echo "WAL OK"
+            fi
+        env:
+          - name: PGDATA
+            value: /var/lib/share/postgresql
+        resources:
+          limits:
+            memory: "256Mi"
+          requests:
+            cpu: "16m"
+            memory: "64Mi"
+        volumeMounts:
+          - mountPath: /var/lib/share
+      {{- if .Values.metricsCollector.persistence.enabled }}
+            name: elastic-search-data
+      {{- else }}
+            name: timescale-data
+      {{- end }}
+      {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
