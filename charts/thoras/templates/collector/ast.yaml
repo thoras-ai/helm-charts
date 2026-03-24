@@ -11,7 +11,7 @@ spec:
     mode: recommendation
   model:
     forecast_blocks: {{ .Values.featureFlags.thorasManageThoras.db.forecastBlocks | default "4h0s" }}
-    forecast_cron: {{ .Values.featureFlags.thorasManageThoras.db.forecastCron | default "17 * * * *" }}
+    forecast_cron: {{ .Values.featureFlags.thorasManageThoras.db.forecastCron | default "17 * * * *" | quote }}
     forecast_buffer_percentage: 33%
     mode: balanced
   scaleTargetRef:
