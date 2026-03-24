@@ -626,6 +626,10 @@ spec:
                 - mode
                 type: object
               model:
+                description: |-
+                  Defines the forecasting and scaling behavior for an AIScaleTarget, including
+                  how often forecasts are generated, how far ahead to predict, and how
+                  aggressively to scale.
                 properties:
                   forecast_blocks:
                     default: 15m0s
@@ -640,8 +644,14 @@ spec:
                     type: string
                     x-kubernetes-int-or-string: true
                   forecast_cron:
-                    default: '*/15 * * * *'
                     type: string
+                  forecast_interval:
+                    description: |-
+                      Time duration for the how frequently Thoras forecasts. This provides
+                      control for how often scaling decisions are made. Mutually exclusive with
+                      forecastCron.
+                    type: string
+                    x-kubernetes-int-or-string: true
                   metrics:
                     additionalProperties:
                       properties:
@@ -682,6 +692,10 @@ spec:
                     - overshoot
                     type: string
                 type: object
+                x-kubernetes-validations:
+                - message: forecastCron and forecastInterval are mutually exclusive
+                  rule: '!has(self.forecast_cron) || self.forecast_cron == '''' ||
+                    !has(self.forecast_interval) || self.forecast_interval == '''''
               scaleTargetRef:
                 properties:
                   apiVersion:
