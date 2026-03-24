@@ -31,7 +31,17 @@ featureFlags:
   enableCRDSuggestionReads: true
   thorasManageThoras:
     enabled: false
+    # Recommendation Mode by default
+    mode: "recommendation"
+    # Restart by default
     updateMode: "recreate"
+    db:
+      # Restart by default
+      updateMode: "recreate"
+      # Look 4h ahead by default
+      forecastBlocks: "4h0s"
+      # Forecast once per hour by default
+      forecastCron: "17 * * * *"
   enableCheckDatabaseHealth: false
   enableNextVersionMigration: false
   enableCostSavingsSettingsRefresh: true
