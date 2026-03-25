@@ -1051,6 +1051,9 @@ spec:
                 description: LatestSuggestion contains the most recent scaling recommendations
                   from Thoras AI
                 properties:
+                  suggestionUID:
+                    description: Unique identifier for the suggestion.
+                    type: string
                   currentReplicas:
                     description: |-
                       CurrentReplicas is the number of replicas at the time this suggestion was generated.
