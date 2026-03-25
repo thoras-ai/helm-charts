@@ -2,6 +2,15 @@ apiVersion: v1
 entries:
   thoras:
   - apiVersion: v2
+    created: "2026-03-25T03:05:10.873555849Z"
+    description: Helm chart to install the Thoras platform
+    digest: 3f94669d11ef1f50e8b4d7da80efeede174954c1a46ae8faec568e796d65f6bb
+    name: thoras
+    type: application
+    urls:
+    - https://github.com/thoras-ai/helm-charts/releases/download/thoras-4.96.2/thoras-4.96.2.tgz
+    version: 4.96.2
+  - apiVersion: v2
     created: "2026-03-24T16:52:37.951868587Z"
     description: Helm chart to install the Thoras platform
     digest: 05a74235582ca574c066851f1b54ad765f484184433ba7dabe86e631ed5ceb9c
@@ -1909,4 +1918,4 @@ entries:
     urls:
     - https://github.com/thoras-ai/helm-charts/releases/download/thoras-2.0.0/thoras-2.0.0.tgz
     version: 2.0.0
-generated: "2026-03-24T16:52:37.95241507Z"
+generated: "2026-03-25T03:05:10.874438625Z"
