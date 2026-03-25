@@ -72,3 +72,32 @@ podAntiAffinity:
           - thoras-forecast-worker
       topologyKey: kubernetes.io/hostname
 {{- end }}
+
+{{/*
+Global environment variables (proxy settings + user-defined env) injected into all containers.
+*/}}
+{{/*
+Returns a YAML list of global env var entries (proxy + user-defined), or empty string.
+Indent the output at the call site: {{- include "thoras.globalEnv" . | indent 10 }}
+*/}}
+{{- define "thoras.globalEnv" -}}
+{{- $out := list -}}
+{{- with .Values.proxy.httpProxy -}}
+{{- $out = append $out (dict "name" "HTTP_PROXY" "value" .) -}}
+{{- $out = append $out (dict "name" "http_proxy" "value" .) -}}
+{{- end -}}
+{{- with .Values.proxy.httpsProxy -}}
+{{- $out = append $out (dict "name" "HTTPS_PROXY" "value" .) -}}
+{{- $out = append $out (dict "name" "https_proxy" "value" .) -}}
+{{- end -}}
+{{- with .Values.proxy.noProxy -}}
+{{- $out = append $out (dict "name" "NO_PROXY" "value" .) -}}
+{{- $out = append $out (dict "name" "no_proxy" "value" .) -}}
+{{- end -}}
+{{- range .Values.env -}}
+{{- $out = append $out . -}}
+{{- end -}}
+{{- if $out -}}
+{{ toYaml $out -}}
+{{- end -}}
+{{- end }}

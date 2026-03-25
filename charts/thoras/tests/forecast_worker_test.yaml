@@ -48,27 +48,51 @@ tests:
             - "worker"
             - "--polling_interval"
             - "30"
-      - equal:
+      - contains:
           path: spec.template.spec.containers[0].env
-          value:
-            - name: "LOGLEVEL"
-              value: info
-            - name: API_BASE_URL
-              value: "http://thoras-api-server-v2"
-            - name: FORECAST_TIMEOUT
-              value: "600"
-            - name: OMP_NUM_THREADS
-              value: "1"
-            - name: FORECAST_IGNORE_NEW_PODS
-              value: "true"
-            - name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
-              value: "1000"
-            - name: ENABLE_DECOUPLED_TRAINING
-              value: "true"
-            - name: TRAINING_JITTER_MINUTES
-              value: "0"
-            - name: METRICS_PORT
-              value: "9101"
+          content:
+            name: "LOGLEVEL"
+            value: info
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_BASE_URL
+            value: "http://thoras-api-server-v2"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FORECAST_TIMEOUT
+            value: "600"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OMP_NUM_THREADS
+            value: "1"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FORECAST_IGNORE_NEW_PODS
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MAX_TIMESERIES_METRIC_CACHE_SIZE_MB
+            value: "1000"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENABLE_DECOUPLED_TRAINING
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TRAINING_JITTER_MINUTES
+            value: "0"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_PORT
+            value: "9101"
 
   - it: sets RETRAIN_STEADY_STATE_HOURS when value is an integer
     set:

@@ -50,6 +50,7 @@ spec:
         env:
           - name: API_HEALTH_URL
             value: "http://thoras-api-server-v2/health"
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -68,6 +69,10 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
+        {{- with include "thoras.globalEnv" . }}
+        env:
+          {{- . | nindent 10 }}
+        {{- end }}
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
         {{- if .Values.thorasDashboard.resources }}

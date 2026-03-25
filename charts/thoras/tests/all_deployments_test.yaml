@@ -49,3 +49,31 @@ tests:
           content:
             nodeSelector:
               color: green
+  - it: Passes global env vars to all containers
+    set:
+      env:
+        - name: CUSTOM_VAR
+          value: "custom-value"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CUSTOM_VAR
+            value: "custom-value"
+  - it: Passes proxy env vars to all containers
+    set:
+      proxy:
+        httpProxy: "http://proxy:3128"
+        httpsProxy: "http://proxy:3128"
+        noProxy: "localhost,127.0.0.1"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTP_PROXY
+            value: "http://proxy:3128"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NO_PROXY
+            value: "localhost,127.0.0.1"

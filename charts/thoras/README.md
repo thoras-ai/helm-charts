@@ -61,6 +61,7 @@ helm install \
 | resourceQuota.cronjobs             | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                   |
 | resourceQuota.jobs                 | Number  | 200                                              | Maximum number of jobs allowed                                                                                       |
 | logLevel                           | String  | info                                             | Default log level                                                                                                    |
+| env                                | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                      |
 | slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                     |
 | slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                         |
 | cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                               |
