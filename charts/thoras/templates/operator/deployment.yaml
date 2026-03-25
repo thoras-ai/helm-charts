@@ -63,7 +63,7 @@ spec:
             drop: [ALL]
         env:
           - name: API_HEALTH_URL
-            value: "http://thoras-api-server-v2/health"
+            value: "http://thoras-api-server-v2.{{ .Release.Namespace }}.svc.cluster.local/health"
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: ["/bin/sh", "-c"]
         args:
