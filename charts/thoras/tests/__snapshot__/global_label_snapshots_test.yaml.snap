@@ -10,7 +10,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-api-server-v2
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       replicas: 1
       selector:
@@ -54,7 +54,7 @@ Default matches snapshot:
                 - name: SERVICE_CLUSTER_NAME
                   value: ""
                 - name: SERVICE_BLOB_SERVICE_API_URL
-                  value: http://thoras-blob-api.thoras.svc.cluster.local
+                  value: http://thoras-blob-api.foo.svc.cluster.local
                 - name: SERVICE_QUERIES_PER_SECOND
                   value: "50"
                 - name: SERVICE_THORAS_NAMESPACE
@@ -258,7 +258,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-api
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
@@ -266,7 +266,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-api
-        namespace: NAMESPACE
+        namespace: foo
   4: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -278,7 +278,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-api-thoras
-      namespace: NAMESPACE
+      namespace: foo
     rules:
       - apiGroups:
           - thoras.ai
@@ -303,7 +303,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-api-thoras
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
@@ -311,7 +311,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-api
-        namespace: NAMESPACE
+        namespace: foo
   6: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
@@ -323,7 +323,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-api-thoras
-      namespace: NAMESPACE
+      namespace: foo
     rules:
       - apiGroups:
           - ""
@@ -350,7 +350,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-api-thoras
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: Role
@@ -358,7 +358,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-api
-        namespace: NAMESPACE
+        namespace: foo
   8: |
     apiVersion: v1
     imagePullSecrets:
@@ -372,7 +372,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-api
-      namespace: NAMESPACE
+      namespace: foo
   9: |
     apiVersion: v1
     kind: Service
@@ -385,7 +385,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-api-server-v2
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       ports:
         - name: http
@@ -405,7 +405,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: metrics-collector
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       replicas: 1
       selector:
@@ -593,7 +593,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-collector
-      namespace: NAMESPACE
+      namespace: foo
   12: |
     apiVersion: v1
     kind: Service
@@ -605,7 +605,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: timescale
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       ports:
         - name: postgres
@@ -625,7 +625,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-blob-api
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       ports:
         - name: http
@@ -645,7 +645,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-dashboard
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       replicas: 1
       selector:
@@ -726,7 +726,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-dashboard
-      namespace: NAMESPACE
+      namespace: foo
   16: |
     apiVersion: v1
     kind: Service
@@ -738,7 +738,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-dashboard
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       ports:
         - name: http
@@ -759,7 +759,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-forecast-worker
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       replicas: 1
       selector:
@@ -877,7 +877,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-forecast-worker
-      namespace: NAMESPACE
+      namespace: foo
   19: |
     apiVersion: apps/v1
     kind: Deployment
@@ -889,7 +889,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-monitor
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       replicas: 1
       selector:
@@ -1023,7 +1023,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-monitor
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
@@ -1031,7 +1031,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-monitor
-        namespace: NAMESPACE
+        namespace: foo
   22: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -1043,7 +1043,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-monitor-thoras
-      namespace: NAMESPACE
+      namespace: foo
     rules:
       - apiGroups:
           - thoras.ai
@@ -1066,7 +1066,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-monitor-thoras
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
@@ -1074,7 +1074,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-monitor
-        namespace: NAMESPACE
+        namespace: foo
   24: |
     apiVersion: v1
     imagePullSecrets:
@@ -1088,7 +1088,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-monitor
-      namespace: NAMESPACE
+      namespace: foo
   25: |
     apiVersion: apps/v1
     kind: Deployment
@@ -1100,7 +1100,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-operator
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       replicas: 2
       selector:
@@ -1143,7 +1143,7 @@ Default matches snapshot:
                 - name: SERVICE_CLUSTER_NAME
                   value: ""
                 - name: SERVICE_THORAS_API_BASE_URL
-                  value: http://thoras-api-server-v2.thoras.svc.cluster.local
+                  value: http://thoras-api-server-v2.foo.svc.cluster.local
                 - name: FORECAST_IMAGE_PULL_POLICY
                   value: IfNotPresent
                 - name: MODEL_SKIP_CACHE
@@ -1260,7 +1260,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-operator-thoras
-      namespace: NAMESPACE
+      namespace: foo
     rules:
       - apiGroups:
           - thoras.ai
@@ -1283,7 +1283,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-operator-thoras
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
@@ -1291,7 +1291,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-operator
-        namespace: NAMESPACE
+        namespace: foo
   28: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -1360,7 +1360,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-operator
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
@@ -1368,7 +1368,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-operator
-        namespace: NAMESPACE
+        namespace: foo
   30: |
     apiVersion: v1
     imagePullSecrets:
@@ -1382,7 +1382,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-operator
-      namespace: NAMESPACE
+      namespace: foo
   31: |
     apiVersion: v1
     kind: Service
@@ -1395,7 +1395,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-webhooks
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       ports:
         - name: https-web-hooks
@@ -1420,7 +1420,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       replicas: 1
       selector:
@@ -1625,7 +1625,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
@@ -1633,7 +1633,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-worker
-        namespace: NAMESPACE
+        namespace: foo
   35: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -1645,7 +1645,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker-thoras
-      namespace: NAMESPACE
+      namespace: foo
     rules:
       - apiGroups:
           - thoras.ai
@@ -1664,7 +1664,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker-thoras
-      namespace: NAMESPACE
+      namespace: foo
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
@@ -1672,7 +1672,7 @@ Default matches snapshot:
     subjects:
       - kind: ServiceAccount
         name: thoras-worker
-        namespace: NAMESPACE
+        namespace: foo
   37: |
     apiVersion: v1
     imagePullSecrets:
@@ -1686,7 +1686,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
-      namespace: NAMESPACE
+      namespace: foo
   38: |
     apiVersion: v1
     kind: Service
@@ -1699,7 +1699,7 @@ Default matches snapshot:
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
-      namespace: NAMESPACE
+      namespace: foo
     spec:
       ports:
         - name: http-metrics

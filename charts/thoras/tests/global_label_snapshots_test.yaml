@@ -25,5 +25,7 @@ tests:
   - it: Default matches snapshot
     chart:
       version: "4.7.0"
+    release:
+      namespace: foo
     asserts:
       - matchSnapshot: {}
