@@ -88,7 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableCheckDatabaseHealth           | Boolean | false   | If true, pings the database in the health endpoint              |
 | featureFlags.enableNextVersionMigration          | Boolean | false   | If true, uses a different migration init container              |
 | featureFlags.enableCostSavingsSettingsRefresh    | Boolean | true    | If true, refreshes the costs savings settings periodically      |
-| featureFlags.enableForecastRescuer               | Boolean | false   | If true, enables rescuing stalled forecast jobs                 |
+| featureFlags.enableForecastRescuer               | Boolean | true    | If true, enables rescuing stalled forecast jobs                 |
 
 ## Affinity Configuration
 
