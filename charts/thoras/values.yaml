@@ -55,7 +55,7 @@ featureFlags:
   enableNextVersionMigration: false
   enableMigrationOnStartup: false
   enableCostSavingsSettingsRefresh: true
-  enableForecastRescuer: false
+  enableForecastRescuer: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
 

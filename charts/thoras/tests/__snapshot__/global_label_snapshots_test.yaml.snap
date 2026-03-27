@@ -1511,7 +1511,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
                   value: "true"
                 - name: SERVICE_ENABLE_FORECAST_RESCUER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
                   value: "false"
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
