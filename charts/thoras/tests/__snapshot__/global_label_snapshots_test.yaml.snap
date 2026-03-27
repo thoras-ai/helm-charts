@@ -85,6 +85,8 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
                   value: "false"
+                - name: SERVICE_ENABLE_MIGRATION_ON_START
+                  value: "false"
                 - name: SERVICE_ENABLE_CLOUD_SYNC
                   value: "false"
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
@@ -1511,6 +1513,8 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_FORECAST_RESCUER
                   value: "false"
                 - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
+                  value: "false"
+                - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent

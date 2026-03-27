@@ -53,6 +53,7 @@ featureFlags:
       forecastCron: "17 * * * *"
   enableCheckDatabaseHealth: false
   enableNextVersionMigration: false
+  enableMigrationOnStartup: false
   enableCostSavingsSettingsRefresh: true
   enableForecastRescuer: false
   enablePrometheusMetricScraping: false
