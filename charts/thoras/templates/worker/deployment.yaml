@@ -234,6 +234,8 @@ spec:
             value: {{ .Values.featureFlags.enableForecastRescuer | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
             value: {{ .Values.featureFlags.enableMonitorActiveSuggestionFromCRD | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_MIGRATION_ON_START
+            value: {{ .Values.featureFlags.enableMigrationOnStartup | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics

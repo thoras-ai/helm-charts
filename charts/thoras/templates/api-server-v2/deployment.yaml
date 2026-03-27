@@ -208,6 +208,8 @@ spec:
             value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
             value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
+          - name: SERVICE_ENABLE_MIGRATION_ON_START
+            value: {{ .Values.featureFlags.enableMigrationOnStartup | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC
           {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
             value: "true"
