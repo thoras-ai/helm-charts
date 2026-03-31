@@ -1,4 +1,4 @@
-{{- if and .Values.serviceMonitor.enabled .Values.thorasForecast.prometheus.enabled }}
+{{- if .Values.thorasForecast.prometheus.enabled }}
 ---
 apiVersion: v1
 kind: Service
