@@ -386,9 +386,6 @@ hostnames:
 ---
 thorasMonitor:
   enabled: true
-  slackWorkspaceID: "ABC123"
-  slackChannelID: "ABC123"
-  slackWebhookID: "SECRET_ABC123"
   config: |
     # General Settings
     general:
