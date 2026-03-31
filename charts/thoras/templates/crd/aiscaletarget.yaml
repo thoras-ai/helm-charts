@@ -1105,6 +1105,11 @@ spec:
                 type: array
               labelSelector:
                 type: string
+              lastCollectionTime:
+                description: LastCollectionTime is the last time metrics were successfully
+                  collected for this AIScaleTarget
+                format: date-time
+                type: string
               latestSuggestion:
                 description: LatestSuggestion contains the most recent scaling recommendations
                   from Thoras AI
