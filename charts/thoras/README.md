@@ -84,7 +84,6 @@ The following flags are considered temporary and gate access to specific behavio
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
 | featureFlags.enableNodeDetailsCollector          | Boolean | true    | Collection of node detail snapshots                             |
 | featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
-| featureFlags.enableCRDSuggestionReads            | Boolean | true    | If true, webhooks read suggestions from CRD instead of API      |
 | featureFlags.enableCheckDatabaseHealth           | Boolean | false   | If true, pings the database in the health endpoint              |
 | featureFlags.enableNextVersionMigration          | Boolean | false   | If true, uses a different migration init container              |
 | featureFlags.enableCostSavingsSettingsRefresh    | Boolean | true    | If true, refreshes the costs savings settings periodically      |

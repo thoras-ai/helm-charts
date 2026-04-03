@@ -37,7 +37,6 @@ proxy:
 featureFlags:
   enableNodeDetailsCollector: true
   enableSkipScalingOnInsufficientData: true
-  enableCRDSuggestionReads: true
   thorasManageThoras:
     enabled: false
     # Recommendation Mode by default
