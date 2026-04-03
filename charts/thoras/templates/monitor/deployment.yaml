@@ -52,7 +52,7 @@ spec:
             drop: [ALL]
         env:
           - name: API_HEALTH_URL
-            value: "http://thoras-api-server-v2/health"
+            value: "http://thoras-api-server-v2.{{ .Release.Namespace }}.svc.cluster.local/health"
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: ["/bin/sh", "-c"]
         args:
@@ -95,7 +95,7 @@ spec:
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_THORAS_API_BASE_URL
-            value: "http://thoras-api-server-v2"
+            value: "http://thoras-api-server-v2.{{ .Release.Namespace }}.svc.cluster.local"
           - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
             value: {{ .Values.thorasWorker.enableMetricIntegrityWorker | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER

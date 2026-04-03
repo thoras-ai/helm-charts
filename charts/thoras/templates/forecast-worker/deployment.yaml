@@ -49,7 +49,7 @@ spec:
             drop: [ALL]
         env:
           - name: API_HEALTH_URL
-            value: "http://thoras-api-server-v2/health"
+            value: "http://thoras-api-server-v2.{{ .Release.Namespace }}.svc.cluster.local/health"
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: ["/bin/sh", "-c"]
         args:
@@ -77,7 +77,7 @@ spec:
           - name: "LOGLEVEL"
             value: {{ default .Values.logLevel .Values.thorasForecast.logLevel }}
           - name: API_BASE_URL
-            value: "http://thoras-api-server-v2"
+            value: "http://thoras-api-server-v2.{{ .Release.Namespace }}.svc.cluster.local"
           - name: FORECAST_TIMEOUT
             value: "{{ default 600 .Values.thorasForecast.worker.forecastTimeout }}"
           - name: OMP_NUM_THREADS
