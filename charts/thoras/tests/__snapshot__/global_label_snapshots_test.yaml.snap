@@ -1177,8 +1177,6 @@ Default matches snapshot:
                   value: "9101"
                 - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
                   value: "true"
-                - name: SERVICE_ENABLE_CRD_SUGGESTION_READS
-                  value: "true"
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
                   value: 3h
                 - name: DATABASE_HOST
