@@ -236,6 +236,12 @@ spec:
             value: {{ .Values.featureFlags.enableMonitorActiveSuggestionFromCRD | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_MIGRATION_ON_START
             value: {{ .Values.featureFlags.enableMigrationOnStartup | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
+            value: {{ .Values.featureFlags.enableDeploymentMonitor | ternary "true" "false" | quote }}
+          - name: SERVICE_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics
