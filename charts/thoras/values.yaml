@@ -52,7 +52,6 @@ featureFlags:
       # Forecast once per hour by default
       forecastCron: "17 * * * *"
   enableCheckDatabaseHealth: false
-  enableNextVersionMigration: false
   enableMigrationOnStartup: false
   enableCostSavingsSettingsRefresh: true
   enableForecastRescuer: true
