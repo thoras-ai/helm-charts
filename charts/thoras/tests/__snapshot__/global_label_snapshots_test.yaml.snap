@@ -1539,7 +1539,7 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
                   value: "false"
-                - name: POD_NAME
+                - name: SERVICE_POD_NAME
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name

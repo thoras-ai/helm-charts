@@ -238,7 +238,7 @@ spec:
             value: {{ .Values.featureFlags.enableMigrationOnStartup | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
             value: {{ .Values.featureFlags.enableDeploymentMonitor | ternary "true" "false" | quote }}
-          - name: POD_NAME
+          - name: SERVICE_POD_NAME
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
