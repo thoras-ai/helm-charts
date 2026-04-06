@@ -57,7 +57,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: API_BASE_URL
-            value: "http://thoras-api-server-v2.NAMESPACE.svc.cluster.local"
+            value: "http://thoras-api-server-v2"
       - contains:
           path: spec.template.spec.containers[0].env
           content:

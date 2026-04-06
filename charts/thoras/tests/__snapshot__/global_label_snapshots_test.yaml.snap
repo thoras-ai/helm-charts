@@ -54,7 +54,7 @@ Default matches snapshot:
                 - name: SERVICE_CLUSTER_NAME
                   value: ""
                 - name: SERVICE_BLOB_SERVICE_API_URL
-                  value: http://thoras-blob-api.foo.svc.cluster.local
+                  value: http://thoras-blob-api
                 - name: SERVICE_QUERIES_PER_SECOND
                   value: "50"
                 - name: SERVICE_THORAS_NAMESPACE
@@ -694,7 +694,7 @@ Default matches snapshot:
                 - -c
               env:
                 - name: API_HEALTH_URL
-                  value: http://thoras-api-server-v2.foo.svc.cluster.local/health
+                  value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
               resources: {}
@@ -806,7 +806,7 @@ Default matches snapshot:
                 - name: LOGLEVEL
                   value: info
                 - name: API_BASE_URL
-                  value: http://thoras-api-server-v2.foo.svc.cluster.local
+                  value: http://thoras-api-server-v2
                 - name: FORECAST_TIMEOUT
                   value: "600"
                 - name: OMP_NUM_THREADS
@@ -849,7 +849,7 @@ Default matches snapshot:
                 - -c
               env:
                 - name: API_HEALTH_URL
-                  value: http://thoras-api-server-v2.foo.svc.cluster.local/health
+                  value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
               resources: {}
@@ -918,7 +918,7 @@ Default matches snapshot:
                 - name: SERVICE_CLUSTER_NAME
                   value: ""
                 - name: SERVICE_THORAS_API_BASE_URL
-                  value: http://thoras-api-server-v2.foo.svc.cluster.local
+                  value: http://thoras-api-server-v2
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
@@ -957,7 +957,7 @@ Default matches snapshot:
                 - -c
               env:
                 - name: API_HEALTH_URL
-                  value: http://thoras-api-server-v2.foo.svc.cluster.local/health
+                  value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
               resources: {}
@@ -1143,7 +1143,7 @@ Default matches snapshot:
                 - name: SERVICE_CLUSTER_NAME
                   value: ""
                 - name: SERVICE_THORAS_API_BASE_URL
-                  value: http://thoras-api-server-v2.foo.svc.cluster.local
+                  value: http://thoras-api-server-v2
                 - name: FORECAST_IMAGE_PULL_POLICY
                   value: IfNotPresent
                 - name: MODEL_SKIP_CACHE
@@ -1221,7 +1221,7 @@ Default matches snapshot:
                 - -c
               env:
                 - name: API_HEALTH_URL
-                  value: http://thoras-api-server-v2.foo.svc.cluster.local/health
+                  value: http://thoras-api-server-v2/health
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-api-service
               resources: {}
