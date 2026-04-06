@@ -174,7 +174,7 @@ Default matches snapshot:
                 - name: DATABASE_URL
                   value: $(DATABASE_HOST)/thoras?sslmode=disable
                 - name: EXTENSION_VERSION
-                  value: 2.25.0
+                  value: 2.26.1
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
               resources: {}
@@ -443,7 +443,7 @@ Default matches snapshot:
                       name: thoras-timescale-password
                 - name: PGDATA
                   value: /var/lib/share/postgresql
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.25.0-pg16
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.26.1-pg16
               imagePullPolicy: IfNotPresent
               lifecycle:
                 preStop:
@@ -1598,7 +1598,7 @@ Default matches snapshot:
                 - name: DATABASE_URL
                   value: $(DATABASE_HOST)/thoras?sslmode=disable
                 - name: EXTENSION_VERSION
-                  value: 2.25.0
+                  value: 2.26.1
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
               resources: {}
