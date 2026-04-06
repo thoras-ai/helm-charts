@@ -98,6 +98,8 @@ Default matches snapshot:
                     secretKeyRef:
                       key: clusterKey
                       name: thoras-cloud-sync
+                - name: SERVICE_ENABLE_PG_LARGE_OBJECT_STORAGE
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:

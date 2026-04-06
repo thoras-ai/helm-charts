@@ -200,6 +200,8 @@ spec:
           - name: SERVICE_FIELD_MANAGER
             value: {{ .Values.flux.fieldManager | quote }}
           {{- end }}
+          - name: SERVICE_ENABLE_PG_LARGE_OBJECT_STORAGE
+            value: {{ .Values.featureFlags.enablePgLargeObjectStorage | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         volumeMounts:
           - name: monitor-config

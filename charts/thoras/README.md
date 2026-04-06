@@ -88,6 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableMigrationOnStartup            | Boolean | false   | If true, the main container handles migrations                  |
 | featureFlags.enableCostSavingsSettingsRefresh    | Boolean | true    | If true, refreshes the costs savings settings periodically      |
 | featureFlags.enableForecastRescuer               | Boolean | true    | If true, enables rescuing stalled forecast jobs                 |
+| featureFlags.enablePgLargeObjectStorage          | Boolean | false   | If true, enables storing blobs as postgres large objects        |
 
 ## Affinity Configuration
 
