@@ -65,9 +65,15 @@ spec:
           capabilities:
             drop: [ALL]
         command: ["/bin/sh", "-c"]
+        {{- if .Values.featureFlags.enablePgLargeObjectStorage }}
+        args:
+          - |
+            mkdir -p /var/lib/share/postgresql
+        {{- else }}
         args:
           - |
             mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
+        {{- end }}
         {{- if .Values.metricsCollector.init.resources }}
         resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
         {{- else }}
