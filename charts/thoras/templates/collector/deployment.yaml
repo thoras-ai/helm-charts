@@ -165,6 +165,7 @@ spec:
       {{- else }}
             name: timescale-data
       {{- end }}
+      {{- if not .Values.featureFlags.enablePgLargeObjectStorage }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
@@ -249,6 +250,7 @@ spec:
             name: elastic-search-data
       {{- else }}
             name: timescale-data
+      {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

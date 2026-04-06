@@ -100,6 +100,28 @@ tests:
           content:
             name: timescaledb
           any: true
+  - it: Should create blob-api container if not enabledPgLargeObjectStorage
+    set:
+      featureFlags:
+        enablePgLargeObjectStorage: false
+    template: collector/deployment.yaml
+    asserts:
+      - contains:
+          path: $..spec.containers
+          content:
+            name: thoras-blob-api
+          any: true
+  - it: Shouldn't create blob-api container if enabledPgLargeObjectStorage
+    set:
+      featureFlags:
+        enablePgLargeObjectStorage: true
+    template: collector/deployment.yaml
+    asserts:
+      - notContains:
+          path: $..spec.containers
+          content:
+            name: thoras-blob-api
+          any: true
   - it: Should set tolerations if specified
     set:
       tolerations:
