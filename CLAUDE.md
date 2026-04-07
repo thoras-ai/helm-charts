@@ -20,9 +20,7 @@ The Thoras platform consists of multiple interconnected components deployed as K
 
 ### Optional Components
 
-- **Agent**: DaemonSet for service map communications (opt-in)
 - **Monitor**: Platform monitoring and alerting capabilities
-- **Reasoning API**: Additional API services for ML reasoning
 
 ### Custom Resources
 
@@ -69,15 +67,13 @@ charts/thoras/
 ├── Chart.yaml              # Chart metadata and version
 ├── values.yaml             # Default configuration values
 ├── templates/              # Kubernetes manifests
-│   ├── agent/              # Agent DaemonSet and RBAC
 │   ├── api-server-v2/      # API server deployment and service
 │   ├── collector/          # Metrics collection components
 │   ├── crd/                # Custom Resource Definitions
 │   ├── dashboard/          # Dashboard deployment and config
 │   ├── forecast-worker/    # Forecast worker deployment
 │   ├── monitor/            # Monitoring components
-│   ├── operator/           # Operator deployment and webhooks
-│   └── reasoning-api/      # Reasoning API components
+│   └── operator/           # Operator deployment and webhooks
 └── tests/                  # Helm unit tests with snapshots
 ```
 
