@@ -18,10 +18,10 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasApiServerV2.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- if or .Values.thorasApiServerV2.podAnnotations .Values.thorasApiServerV2.prometheus.enabled (not .Values.thorasMonitor.unittesting) }}
+      {{- if or .Values.podAnnotations .Values.thorasApiServerV2.podAnnotations .Values.thorasApiServerV2.prometheus.enabled (not .Values.thorasMonitor.unittesting) }}
       annotations:
-        {{- with .Values.thorasApiServerV2.podAnnotations }}
-          {{- toYaml . | nindent 8 }}
+        {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasApiServerV2.podAnnotations) }}
+          {{- . | trim | nindent 8 }}
         {{- end }}
         {{- if .Values.thorasApiServerV2.prometheus.enabled }}
         prometheus.io/scrape: "true"

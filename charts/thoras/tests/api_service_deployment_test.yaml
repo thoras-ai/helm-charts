@@ -29,6 +29,7 @@ tests:
           value: "app.kubernetes.io/name=thoras"
   - it: Should not have annotations section when all conditions are false
     set:
+      podAnnotations: {}
       thorasApiServerV2:
         prometheus:
           enabled: false
@@ -36,6 +37,49 @@ tests:
     asserts:
       - notExists:
           path: spec.template.metadata.annotations
+  - it: Should have annotations section when only global podAnnotations are set
+    set:
+      podAnnotations:
+        linkerd.io/inject: enabled
+      thorasApiServerV2:
+        prometheus:
+          enabled: false
+        podAnnotations: {}
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations
+      - equal:
+          path: spec.template.metadata.annotations["linkerd.io/inject"]
+          value: enabled
+  - it: Component podAnnotations should override global for same key
+    set:
+      podAnnotations:
+        linkerd.io/inject: enabled
+      thorasApiServerV2:
+        prometheus:
+          enabled: false
+        podAnnotations:
+          linkerd.io/inject: disabled
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["linkerd.io/inject"]
+          value: disabled
+  - it: Should merge global and component podAnnotations
+    set:
+      podAnnotations:
+        linkerd.io/inject: enabled
+      thorasApiServerV2:
+        prometheus:
+          enabled: false
+        podAnnotations:
+          custom-annotation: test-value
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["linkerd.io/inject"]
+          value: enabled
+      - equal:
+          path: spec.template.metadata.annotations["custom-annotation"]
+          value: test-value
   - it: Should have annotations section when prometheus is enabled
     set:
       thorasApiServerV2:
