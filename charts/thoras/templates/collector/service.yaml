@@ -4,6 +4,10 @@ kind: Service
 metadata:
   name: timescale
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.metricsCollector.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
 spec:
@@ -20,6 +24,10 @@ kind: Service
 metadata:
   name: thoras-blob-api
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.metricsCollector.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
 spec:

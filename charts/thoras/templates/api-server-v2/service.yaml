@@ -4,6 +4,10 @@ kind: Service
 metadata:
   name: thoras-api-server-v2
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasApiServerV2.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     app: thoras-api-server-v2
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}

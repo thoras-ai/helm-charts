@@ -4,6 +4,10 @@ kind: Service
 metadata:
   name: thoras-webhooks
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasOperator.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     app: thoras-operator
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}

@@ -4,6 +4,10 @@ kind: Service
 metadata:
   name: thoras-worker
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasWorker.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     app: thoras-worker
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
