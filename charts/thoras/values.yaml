@@ -100,6 +100,8 @@ thorasOperator:
     name: thoras-operator
   podAnnotations: {}
   labels: {}
+  service:
+    annotations: {}
   # Specify the complete resources block (takes precedence if set)
   resources: {}
   # Legacy field for backward compatibility (used if resources is empty)
@@ -143,6 +145,8 @@ metricsCollector:
     pvcStorageRequestSize: "3Gi"
   podAnnotations: {}
   labels: {}
+  service:
+    annotations: {}
   serviceAccount:
     name: thoras-collector
   init:
@@ -204,6 +208,8 @@ thorasApiServerV2:
   containerPort: 8080
   podAnnotations: {}
   labels: {}
+  service:
+    annotations: {}
   replicas: 1
   # Specify the complete resources block (takes precedence if set)
   resources: {}
@@ -232,6 +238,8 @@ thorasWorker:
     name: thoras-worker
   podAnnotations: {}
   labels: {}
+  service:
+    annotations: {}
   replicas: 1
   # Specify the complete resources block (takes precedence if set)
   resources: {}
@@ -381,6 +389,8 @@ thorasForecast:
   prometheus:
     enabled: true
     port: 9101
+  service:
+    annotations: {}
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)

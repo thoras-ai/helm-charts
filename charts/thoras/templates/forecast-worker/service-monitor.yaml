@@ -14,7 +14,7 @@ spec:
     matchLabels:
       app: thoras-forecast-worker
   endpoints:
-    - port: metrics
+    - port: http-metrics
       path: /metrics
       {{- with .Values.serviceMonitor.interval }}
       interval: {{ . }}

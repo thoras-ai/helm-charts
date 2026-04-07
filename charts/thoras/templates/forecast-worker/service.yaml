@@ -5,12 +5,16 @@ kind: Service
 metadata:
   name: thoras-forecast-worker
   namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasForecast.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     app: thoras-forecast-worker
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasForecast.worker.labels) | nindent 4 }}
 spec:
   ports:
-  - name: metrics
+  - name: http-metrics
     port: {{ .Values.thorasForecast.prometheus.port }}
     protocol: TCP
     targetPort: {{ .Values.thorasForecast.prometheus.port }}

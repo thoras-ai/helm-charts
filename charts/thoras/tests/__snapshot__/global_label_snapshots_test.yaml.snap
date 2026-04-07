@@ -897,7 +897,7 @@ Default matches snapshot:
       namespace: foo
     spec:
       ports:
-        - name: metrics
+        - name: http-metrics
           port: 9101
           protocol: TCP
           targetPort: 9101

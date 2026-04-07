@@ -1,0 +1,47 @@
+suite: Service Annotations
+templates:
+  - api-server-v2/service.yaml
+  - collector/service.yaml
+  - operator/service.yaml
+  - worker/service.yaml
+  - forecast-worker/service.yaml
+set:
+  thorasForecast:
+    prometheus:
+      enabled: true
+tests:
+  - it: No annotations by default
+    asserts:
+      - notExists:
+          path: metadata.annotations
+  - it: API server service supports annotations
+    templates:
+      - api-server-v2/service.yaml
+    set:
+      thorasApiServerV2:
+        service:
+          annotations:
+            test-annotation: test-value
+    asserts:
+      - equal:
+          path: metadata.annotations["test-annotation"]
+          value: test-value
+  - it: Collector services support annotations
+    templates:
+      - collector/service.yaml
+    set:
+      metricsCollector:
+        service:
+          annotations:
+            test-annotation: test-value
+    asserts:
+      - equal:
+          path: metadata.annotations["test-annotation"]
+          value: test-value
+  - it: Forecast worker service port is named http-metrics
+    templates:
+      - forecast-worker/service.yaml
+    asserts:
+      - equal:
+          path: spec.ports[0].name
+          value: http-metrics
