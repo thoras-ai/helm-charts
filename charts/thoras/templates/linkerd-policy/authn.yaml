@@ -1,0 +1,36 @@
+{{- if .Values.linkerd.enabled }}
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: MeshTLSAuthentication
+metadata:
+  name: thoras-mesh-authn
+  namespace: {{ .Release.Namespace }}
+spec:
+  identityRefs:
+    - kind: ServiceAccount
+      name: {{ .Values.thorasOperator.serviceAccount.name }}
+    - kind: ServiceAccount
+      name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
+    - kind: ServiceAccount
+      name: {{ .Values.thorasWorker.serviceAccount.name }}
+    - kind: ServiceAccount
+      name: {{ .Values.thorasForecast.serviceAccount.name }}
+    - kind: ServiceAccount
+      name: {{ .Values.metricsCollector.serviceAccount.name }}
+    - kind: ServiceAccount
+      name: {{ .Values.thorasDashboard.serviceAccount.name }}
+    {{- if .Values.thorasMonitor.enabled }}
+    - kind: ServiceAccount
+      name: {{ .Values.thorasMonitor.serviceAccount.name }}
+    {{- end }}
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: NetworkAuthentication
+metadata:
+  name: thoras-network-authn
+  namespace: {{ .Release.Namespace }}
+spec:
+  networks:
+    - cidr: "0.0.0.0/0"
+    - cidr: "::/0"
+{{- end }}

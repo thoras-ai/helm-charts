@@ -1,0 +1,122 @@
+{{- if .Values.linkerd.enabled }}
+---
+apiVersion: policy.linkerd.io/v1beta2
+kind: Server
+metadata:
+  name: thoras-api-server-v2
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-api-server-v2
+  port: {{ .Values.thorasApiServerV2.containerPort }}
+  proxyProtocol: HTTP/1
+---
+apiVersion: policy.linkerd.io/v1beta2
+kind: Server
+metadata:
+  name: thoras-timescale
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: metrics-collector
+  port: {{ .Values.metricsCollector.timescale.containerPort }}
+  proxyProtocol: opaque
+---
+apiVersion: policy.linkerd.io/v1beta2
+kind: Server
+metadata:
+  name: thoras-blob-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: metrics-collector
+  port: {{ .Values.metricsCollector.blobService.containerPort }}
+  proxyProtocol: HTTP/1
+---
+apiVersion: policy.linkerd.io/v1beta2
+kind: Server
+metadata:
+  name: thoras-webhooks
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-operator
+  port: 9443
+  proxyProtocol: opaque
+{{- if .Values.thorasDashboard.enabled }}
+---
+apiVersion: policy.linkerd.io/v1beta2
+kind: Server
+metadata:
+  name: thoras-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-dashboard
+  port: {{ .Values.thorasDashboard.containerPort }}
+  proxyProtocol: HTTP/1
+{{- end }}
+{{- if .Values.thorasOperator.prometheus.enabled }}
+---
+apiVersion: policy.linkerd.io/v1beta2
+kind: Server
+metadata:
+  name: thoras-operator-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-operator
+  port: {{ .Values.thorasOperator.prometheus.port }}
+  proxyProtocol: HTTP/1
+{{- end }}
+{{- if .Values.thorasWorker.prometheus.enabled }}
+---
+apiVersion: policy.linkerd.io/v1beta2
+kind: Server
+metadata:
+  name: thoras-worker-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-worker
+  port: {{ .Values.thorasWorker.prometheus.port }}
+  proxyProtocol: HTTP/1
+{{- end }}
+{{- if .Values.thorasForecast.prometheus.enabled }}
+---
+apiVersion: policy.linkerd.io/v1beta2
+kind: Server
+metadata:
+  name: thoras-forecast-worker-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" dict) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-forecast-worker
+  port: {{ .Values.thorasForecast.prometheus.port }}
+  proxyProtocol: HTTP/1
+{{- end }}
+{{- end }}

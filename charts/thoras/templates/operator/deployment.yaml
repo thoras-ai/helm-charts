@@ -18,8 +18,11 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasOperator.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- if or .Values.podAnnotations .Values.thorasOperator.podAnnotations .Values.thorasOperator.prometheus.enabled }}
+      {{- if or .Values.podAnnotations .Values.thorasOperator.podAnnotations .Values.thorasOperator.prometheus.enabled .Values.linkerd.enabled }}
       annotations:
+        {{- if .Values.linkerd.enabled }}
+        config.linkerd.io/opaque-ports: "9443"
+        {{- end }}
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasOperator.podAnnotations) }}
           {{- . | trim | nindent 8 }}
         {{- end }}

@@ -1,0 +1,250 @@
+suite: Linkerd Policy
+templates:
+  - linkerd-policy/servers.yaml
+  - linkerd-policy/authn.yaml
+  - linkerd-policy/authz.yaml
+tests:
+  # --- Default (disabled) ---
+  - it: Should not create any resources when linkerd is disabled
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # --- Servers ---
+  - it: Should create all Server resources when linkerd is enabled
+    template: linkerd-policy/servers.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 8
+      - isKind:
+          of: Server
+        documentIndex: 0
+
+  - it: API server Server should use containerPort from values
+    template: linkerd-policy/servers.yaml
+    set:
+      linkerd:
+        enabled: true
+      thorasApiServerV2:
+        containerPort: 9090
+    asserts:
+      - equal:
+          path: spec.port
+          value: 9090
+        documentIndex: 0
+      - equal:
+          path: spec.proxyProtocol
+          value: HTTP/1
+        documentIndex: 0
+
+  - it: TimescaleDB Server should be opaque
+    template: linkerd-policy/servers.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: thoras-timescale
+        documentIndex: 1
+      - equal:
+          path: spec.port
+          value: 5432
+        documentIndex: 1
+      - equal:
+          path: spec.proxyProtocol
+          value: opaque
+        documentIndex: 1
+
+  - it: Webhooks Server should be opaque on port 9443
+    template: linkerd-policy/servers.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: thoras-webhooks
+        documentIndex: 3
+      - equal:
+          path: spec.port
+          value: 9443
+        documentIndex: 3
+      - equal:
+          path: spec.proxyProtocol
+          value: opaque
+        documentIndex: 3
+
+  - it: Should not create forecast-worker-metrics Server when prometheus is disabled
+    template: linkerd-policy/servers.yaml
+    set:
+      linkerd:
+        enabled: true
+      thorasForecast:
+        prometheus:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 7
+
+  - it: Should not create dashboard Server when dashboard is disabled
+    template: linkerd-policy/servers.yaml
+    set:
+      linkerd:
+        enabled: true
+      thorasDashboard:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 7
+
+  # --- Authentication ---
+  - it: Should create MeshTLSAuthentication and NetworkAuthentication
+    template: linkerd-policy/authn.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: MeshTLSAuthentication
+        documentIndex: 0
+      - isKind:
+          of: NetworkAuthentication
+        documentIndex: 1
+
+  - it: MeshTLSAuthentication should list all component ServiceAccounts
+    template: linkerd-policy/authn.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - contains:
+          path: spec.identityRefs
+          content:
+            kind: ServiceAccount
+            name: thoras-operator
+        documentIndex: 0
+      - contains:
+          path: spec.identityRefs
+          content:
+            kind: ServiceAccount
+            name: thoras-api
+        documentIndex: 0
+      - contains:
+          path: spec.identityRefs
+          content:
+            kind: ServiceAccount
+            name: thoras-worker
+        documentIndex: 0
+      - contains:
+          path: spec.identityRefs
+          content:
+            kind: ServiceAccount
+            name: thoras-forecast-worker
+        documentIndex: 0
+      - contains:
+          path: spec.identityRefs
+          content:
+            kind: ServiceAccount
+            name: thoras-collector
+        documentIndex: 0
+      - contains:
+          path: spec.identityRefs
+          content:
+            kind: ServiceAccount
+            name: thoras-dashboard
+        documentIndex: 0
+
+  - it: Should include monitor ServiceAccount when monitor is enabled
+    template: linkerd-policy/authn.yaml
+    set:
+      linkerd:
+        enabled: true
+      thorasMonitor:
+        enabled: true
+    asserts:
+      - contains:
+          path: spec.identityRefs
+          content:
+            kind: ServiceAccount
+            name: thoras-monitor
+        documentIndex: 0
+
+  - it: NetworkAuthentication should allow all traffic
+    template: linkerd-policy/authn.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.networks
+          value:
+            - cidr: "0.0.0.0/0"
+            - cidr: "::/0"
+        documentIndex: 1
+
+  # --- Authorization Policies ---
+  - it: Should create all AuthorizationPolicies when linkerd is enabled
+    template: linkerd-policy/authz.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 8
+
+  - it: API server mesh policy should reference correct Server and authn
+    template: linkerd-policy/authz.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: thoras-api-server-v2-mesh
+        documentIndex: 0
+      - equal:
+          path: spec.targetRef.name
+          value: thoras-api-server-v2
+        documentIndex: 0
+      - contains:
+          path: spec.requiredAuthenticationRefs
+          content:
+            name: thoras-mesh-authn
+            kind: MeshTLSAuthentication
+            group: policy.linkerd.io
+        documentIndex: 0
+
+  - it: Webhooks network policy should reference NetworkAuthentication
+    template: linkerd-policy/authz.yaml
+    set:
+      linkerd:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: thoras-webhooks-network
+        documentIndex: 3
+      - contains:
+          path: spec.requiredAuthenticationRefs
+          content:
+            name: thoras-network-authn
+            kind: NetworkAuthentication
+            group: policy.linkerd.io
+        documentIndex: 3
+
+  - it: Should not create dashboard policy when dashboard is disabled
+    template: linkerd-policy/authz.yaml
+    set:
+      linkerd:
+        enabled: true
+      thorasDashboard:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 7

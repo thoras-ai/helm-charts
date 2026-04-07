@@ -419,6 +419,11 @@ serviceMonitor:
 # Global pod annotations applied to all deployments (component podAnnotations override these)
 podAnnotations: {}
 
+# Linkerd service mesh policy configuration.
+# Creates Server and AuthorizationPolicy resources for Linkerd default-deny mode.
+linkerd:
+  enabled: false
+
 # Global Labels support
 labels: {}
 

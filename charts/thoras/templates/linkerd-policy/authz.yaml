@@ -1,0 +1,132 @@
+{{- if .Values.linkerd.enabled }}
+# --- Internal mesh traffic ---
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: thoras-api-server-v2-mesh
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: thoras-api-server-v2
+  requiredAuthenticationRefs:
+    - name: thoras-mesh-authn
+      kind: MeshTLSAuthentication
+      group: policy.linkerd.io
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: thoras-timescale-mesh
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: thoras-timescale
+  requiredAuthenticationRefs:
+    - name: thoras-mesh-authn
+      kind: MeshTLSAuthentication
+      group: policy.linkerd.io
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: thoras-blob-api-mesh
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: thoras-blob-api
+  requiredAuthenticationRefs:
+    - name: thoras-mesh-authn
+      kind: MeshTLSAuthentication
+      group: policy.linkerd.io
+# --- Network traffic (non-mesh sources) ---
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: thoras-webhooks-network
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: thoras-webhooks
+  requiredAuthenticationRefs:
+    - name: thoras-network-authn
+      kind: NetworkAuthentication
+      group: policy.linkerd.io
+{{- if .Values.thorasDashboard.enabled }}
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: thoras-dashboard-network
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: thoras-dashboard
+  requiredAuthenticationRefs:
+    - name: thoras-network-authn
+      kind: NetworkAuthentication
+      group: policy.linkerd.io
+{{- end }}
+{{- if .Values.thorasOperator.prometheus.enabled }}
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: thoras-operator-metrics-network
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: thoras-operator-metrics
+  requiredAuthenticationRefs:
+    - name: thoras-network-authn
+      kind: NetworkAuthentication
+      group: policy.linkerd.io
+{{- end }}
+{{- if .Values.thorasWorker.prometheus.enabled }}
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: thoras-worker-metrics-network
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: thoras-worker-metrics
+  requiredAuthenticationRefs:
+    - name: thoras-network-authn
+      kind: NetworkAuthentication
+      group: policy.linkerd.io
+{{- end }}
+{{- if .Values.thorasForecast.prometheus.enabled }}
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: thoras-forecast-worker-metrics-network
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: thoras-forecast-worker-metrics
+  requiredAuthenticationRefs:
+    - name: thoras-network-authn
+      kind: NetworkAuthentication
+      group: policy.linkerd.io
+{{- end }}
+{{- end }}

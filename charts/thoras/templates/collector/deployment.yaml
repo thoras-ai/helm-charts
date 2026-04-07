@@ -20,8 +20,11 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.metricsCollector.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- if or .Values.podAnnotations .Values.metricsCollector.timescale.config.enabled .Values.metricsCollector.podAnnotations }}
+      {{- if or .Values.podAnnotations .Values.metricsCollector.timescale.config.enabled .Values.metricsCollector.podAnnotations .Values.linkerd.enabled }}
       annotations:
+        {{- if .Values.linkerd.enabled }}
+        config.linkerd.io/opaque-ports: {{ .Values.metricsCollector.timescale.containerPort | quote }}
+        {{- end }}
         {{- if .Values.metricsCollector.timescale.config.enabled }}
         checksum/configmap: {{ include (print $.Template.BasePath "/collector/configmap.yaml") . | sha256sum }}
         {{- end }}
