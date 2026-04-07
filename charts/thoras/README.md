@@ -84,11 +84,11 @@ The following flags are considered temporary and gate access to specific behavio
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
 | featureFlags.enableNodeDetailsCollector          | Boolean | true    | Collection of node detail snapshots                             |
 | featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
-| featureFlags.enableCRDSuggestionReads            | Boolean | true    | If true, webhooks read suggestions from CRD instead of API      |
 | featureFlags.enableCheckDatabaseHealth           | Boolean | false   | If true, pings the database in the health endpoint              |
-| featureFlags.enableNextVersionMigration          | Boolean | false   | If true, uses a different migration init container              |
+| featureFlags.enableMigrationOnStartup            | Boolean | false   | If true, the main container handles migrations                  |
 | featureFlags.enableCostSavingsSettingsRefresh    | Boolean | true    | If true, refreshes the costs savings settings periodically      |
 | featureFlags.enableForecastRescuer               | Boolean | true    | If true, enables rescuing stalled forecast jobs                 |
+| featureFlags.enablePgLargeObjectStorage          | Boolean | false   | If true, enables storing blobs as postgres large objects        |
 
 ## Affinity Configuration
 
@@ -189,8 +189,8 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                 |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector              |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                              |
-| metricsCollector.timescale.imageTag                             | String  | 2.25.0-pg16      | Timescale image tag                                          |
-| metricsCollector.timescale.extensionVersion                     | String  | 2.25.0           | Timescale extension version - should match imageTag          |
+| metricsCollector.timescale.imageTag                             | String  | 2.26.1-pg16      | Timescale image tag                                          |
+| metricsCollector.timescale.extensionVersion                     | String  | 2.26.1           | Timescale extension version - should match imageTag          |
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                     |
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                               |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                   |

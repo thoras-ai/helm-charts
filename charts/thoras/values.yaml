@@ -37,7 +37,6 @@ proxy:
 featureFlags:
   enableNodeDetailsCollector: true
   enableSkipScalingOnInsufficientData: true
-  enableCRDSuggestionReads: true
   thorasManageThoras:
     enabled: false
     # Recommendation Mode by default
@@ -52,13 +51,13 @@ featureFlags:
       # Forecast once per hour by default
       forecastCron: "17 * * * *"
   enableCheckDatabaseHealth: false
-  enableNextVersionMigration: false
   enableMigrationOnStartup: false
   enableCostSavingsSettingsRefresh: true
   enableForecastRescuer: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
   enableDeploymentMonitor: false
+  enablePgLargeObjectStorage: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
@@ -160,8 +159,8 @@ metricsCollector:
       memory: "32Mi"
   timescale:
     image: "timescaledb"
-    imageTag: "2.25.0-pg16"
-    extensionVersion: "2.25.0"
+    imageTag: "2.26.1-pg16"
+    extensionVersion: "2.26.1"
     name: timescale
     containerPort: 5432
     # Specify the complete resources block (takes precedence if set)
