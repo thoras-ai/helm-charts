@@ -12,7 +12,8 @@ spec:
     listKind: ClusterAIScaleTemplateList
     plural: clusteraiscaletemplates
     shortNames:
-    - cast
+    - astt
+    - clusterast
     singular: clusteraiscaletemplate
   scope: Cluster
   versions:
