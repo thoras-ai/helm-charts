@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Single Helm chart (`charts/thoras/`) that installs the Thoras AI platform onto
+Kubernetes clusters.
 
 ## Repository Overview
 
@@ -20,15 +21,14 @@ The Thoras platform consists of multiple interconnected components deployed as K
 
 ### Optional Components
 
-- **Agent**: DaemonSet for service map communications (opt-in)
 - **Monitor**: Platform monitoring and alerting capabilities
-- **Reasoning API**: Additional API services for ML reasoning
 
 ### Custom Resources
 
 The chart includes Custom Resource Definitions (CRDs) for:
 
 - AI Scale Targets (`aiscaletarget.yaml`)
+- Cluster AI Scale Template (`clusteraiscaletemplate.yaml`)
 
 ## Common Development Tasks
 
@@ -69,21 +69,20 @@ charts/thoras/
 ├── Chart.yaml              # Chart metadata and version
 ├── values.yaml             # Default configuration values
 ├── templates/              # Kubernetes manifests
-│   ├── agent/              # Agent DaemonSet and RBAC
-│   ├── api-server-v2/      # API server deployment and service
-│   ├── collector/          # Metrics collection components
+│   ├── api-server-v2/      # API server
+│   ├── collector/          # Metrics storage (timescaledb)
 │   ├── crd/                # Custom Resource Definitions
-│   ├── dashboard/          # Dashboard deployment and config
-│   ├── forecast-worker/    # Forecast worker deployment
-│   ├── monitor/            # Monitoring components
-│   ├── operator/           # Operator deployment and webhooks
-│   └── reasoning-api/      # Reasoning API components
+│   ├── dashboard/          # Dasbhoard UI
+│   ├── forecast-worker/    # Forecast worker
+│   ├── monitor/            # Monitoring (optional)
+│   ├── operator/           # Operator + webhook cert management
+│   └── worker/             # Background worker
 └── tests/                  # Helm unit tests with snapshots
 ```
 
 ## Configuration
 
-The chart uses extensive configuration through `values.yaml` with these key sections:
+The chart is configured through `values.yaml` with these key sections:
 
 - **Global settings**: Image credentials, resource quotas, logging
 - **Component-specific configs**: Each component has dedicated configuration blocks
