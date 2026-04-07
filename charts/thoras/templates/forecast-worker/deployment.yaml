@@ -18,10 +18,10 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasForecast.worker.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- if or .Values.thorasForecast.worker.podAnnotations .Values.thorasForecast.prometheus.enabled }}
+      {{- if or .Values.podAnnotations .Values.thorasForecast.worker.podAnnotations .Values.thorasForecast.prometheus.enabled }}
       annotations:
-        {{- with .Values.thorasForecast.worker.podAnnotations }}
-          {{- toYaml . | nindent 8 }}
+        {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasForecast.worker.podAnnotations) }}
+          {{- . | trim | nindent 8 }}
         {{- end }}
         {{- if .Values.thorasForecast.prometheus.enabled }}
         prometheus.io/scrape: "true"

@@ -31,6 +31,18 @@ app.kubernetes.io/instance: {{ .root.Release.Name }}
 {{- end -}}
 
 {{/*
+Pod annotations - merges global podAnnotations with component-specific podAnnotations.
+Component annotations override global ones (same key = component wins).
+Usage: include "thoras.podAnnotations" (dict "root" . "component" .Values.thorasWorker.podAnnotations)
+*/}}
+{{- define "thoras.podAnnotations" -}}
+{{- $merged := mergeOverwrite (deepCopy (.root.Values.podAnnotations | default dict)) (.component | default dict) }}
+{{- if $merged }}
+{{- toYaml $merged }}
+{{- end }}
+{{- end }}
+
+{{/*
 Default affinity for metricsCollector - anti-affinity with forecast-worker
 */}}
 {{- define "thoras.metricsCollector.defaultAffinity" -}}

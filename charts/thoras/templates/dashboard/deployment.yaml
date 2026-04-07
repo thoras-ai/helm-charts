@@ -22,8 +22,8 @@ spec:
         {{- if not .Values.thorasDashboard.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/dashboard/nginx-config-map.yaml") . | sha256sum }}
         {{- end }}
-      {{- with .Values.thorasDashboard.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
+      {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasDashboard.podAnnotations) }}
+        {{- . | trim | nindent 8 }}
       {{- end }}
     spec:
       securityContext:

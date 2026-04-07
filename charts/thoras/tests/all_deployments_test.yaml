@@ -77,3 +77,11 @@ tests:
           content:
             name: NO_PROXY
             value: "localhost,127.0.0.1"
+  - it: Passes global podAnnotations to all deployments
+    set:
+      podAnnotations:
+        linkerd.io/inject: enabled
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["linkerd.io/inject"]
+          value: enabled
