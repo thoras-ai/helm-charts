@@ -60,10 +60,6 @@ spec:
                     - override
                     type: string
                   excludedNamespaces:
-                    default:
-                    - kube-node-lease
-                    - kube-public
-                    - kube-system
                     description: ExcludedNamespaces lists namespaces where this template
                       should not be applied
                     items:
