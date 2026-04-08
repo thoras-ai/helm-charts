@@ -69,6 +69,14 @@ spec:
                     items:
                       type: string
                     type: array
+                  includedNamespaces:
+                    description: |-
+                      IncludedNamespaces restricts this template to only the listed namespaces.
+                      When set, the template is applied only to workloads in these namespaces.
+                      Takes precedence over ExcludedNamespaces when both are set.
+                    items:
+                      type: string
+                    type: array
                 type: object
               selector:
                 description: Selector matches Deployments, Argo Rollouts, and StatefulSets
