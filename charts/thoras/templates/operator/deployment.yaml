@@ -114,7 +114,7 @@ spec:
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_THORAS_API_BASE_URL
-            value: "http://thoras-api-server-v2.{{ .Release.Namespace }}.svc.cluster.local"
+            value: "http://thoras-api-server-v2"
           - name: FORECAST_IMAGE_PULL_POLICY
             value: "{{ .Values.imagePullPolicy }}"
           - name: MODEL_SKIP_CACHE

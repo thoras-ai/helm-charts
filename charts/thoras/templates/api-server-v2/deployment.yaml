@@ -139,7 +139,7 @@ spec:
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_BLOB_SERVICE_API_URL
-            value: "http://thoras-blob-api.{{ .Release.Namespace }}.svc.cluster.local"
+            value: "http://thoras-blob-api"
           - name: SERVICE_QUERIES_PER_SECOND
             value: {{ .Values.thorasApiServerV2.queriesPerSecond | default .Values.queriesPerSecond | quote }}
           - name: SERVICE_THORAS_NAMESPACE
