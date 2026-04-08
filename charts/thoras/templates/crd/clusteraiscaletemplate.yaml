@@ -60,16 +60,26 @@ spec:
                     - override
                     type: string
                   excludedNamespaces:
-                    default:
-                    - kube-node-lease
-                    - kube-public
-                    - kube-system
                     description: ExcludedNamespaces lists namespaces where this template
                       should not be applied
                     items:
                       type: string
                     type: array
+                  includedNamespaces:
+                    description: |-
+                      IncludedNamespaces restricts this template to only the listed namespaces.
+                      When set, the template is applied only to workloads in these namespaces.
+                      Mutually exclusive with ExcludedNamespaces.
+                    items:
+                      type: string
+                    type: array
                 type: object
+                x-kubernetes-validations:
+                - message: excludedNamespaces and includedNamespaces are mutually
+                    exclusive
+                  rule: '!has(self.excludedNamespaces) || self.excludedNamespaces.size()
+                    == 0 || !has(self.includedNamespaces) || self.includedNamespaces.size()
+                    == 0'
               selector:
                 description: Selector matches Deployments, Argo Rollouts, and StatefulSets
                   to apply this template to
