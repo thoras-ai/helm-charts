@@ -18,6 +18,7 @@ spec:
     targetPort: {{ .Values.metricsCollector.timescale.containerPort }}
   selector:
     app: metrics-collector
+{{- if not .Values.featureFlags.enableNoBlobApiServer }}
 ---
 apiVersion: v1
 kind: Service
@@ -38,3 +39,4 @@ spec:
     targetPort: {{ .Values.metricsCollector.blobService.containerPort }}
   selector:
     app: metrics-collector
+{{- end }}

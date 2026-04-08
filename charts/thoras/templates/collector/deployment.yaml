@@ -65,9 +65,15 @@ spec:
           capabilities:
             drop: [ALL]
         command: ["/bin/sh", "-c"]
+        {{- if .Values.featureFlags.enableNoBlobApiServer }}
+        args:
+          - |
+            mkdir -p /var/lib/share/postgresql
+        {{- else }}
         args:
           - |
             mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
+        {{- end }}
         {{- if .Values.metricsCollector.init.resources }}
         resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -165,6 +171,7 @@ spec:
       {{- else }}
             name: timescale-data
       {{- end }}
+      {{- if not .Values.featureFlags.enableNoBlobApiServer }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
@@ -249,6 +256,7 @@ spec:
             name: elastic-search-data
       {{- else }}
             name: timescale-data
+      {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

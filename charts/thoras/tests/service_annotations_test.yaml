@@ -45,3 +45,18 @@ tests:
       - equal:
           path: spec.ports[0].name
           value: http-metrics
+  - it: Collector should have blob-api service by default
+    templates:
+      - collector/service.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: Collector should not have blob-api service when enableNoBlobApiServer is true
+    templates:
+      - collector/service.yaml
+    set:
+      featureFlags:
+        enableNoBlobApiServer: true
+    asserts:
+      - hasDocuments:
+          count: 1

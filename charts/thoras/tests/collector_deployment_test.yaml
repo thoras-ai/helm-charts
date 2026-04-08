@@ -100,6 +100,42 @@ tests:
           content:
             name: timescaledb
           any: true
+  - it: Should include blob-api container by default
+    template: collector/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers
+          content:
+            name: thoras-blob-api
+          any: true
+  - it: Should omit blob-api container when enableNoBlobApiServer is true
+    template: collector/deployment.yaml
+    set:
+      featureFlags:
+        enableNoBlobApiServer: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers
+          content:
+            name: thoras-blob-api
+          any: true
+  - it: Should create blobs dir in init container by default
+    template: collector/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].args
+          content: |
+            mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
+  - it: Should not create blobs dir in init container when enableNoBlobApiServer is true
+    template: collector/deployment.yaml
+    set:
+      featureFlags:
+        enableNoBlobApiServer: true
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].args
+          content: |
+            mkdir -p /var/lib/share/postgresql
   - it: Should set tolerations if specified
     set:
       tolerations:

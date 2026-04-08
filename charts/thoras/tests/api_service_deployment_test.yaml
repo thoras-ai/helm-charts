@@ -196,3 +196,15 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_MIN_LOOKBACK_TO_SCALE')].value
           value: "3h"
+  - it: Should set SERVICE_BLOB_SERVICE_API_URL by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_BLOB_SERVICE_API_URL')].value
+          value: "http://thoras-blob-api"
+  - it: Should omit SERVICE_BLOB_SERVICE_API_URL when enableNoBlobApiServer is true
+    set:
+      featureFlags:
+        enableNoBlobApiServer: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_BLOB_SERVICE_API_URL')]

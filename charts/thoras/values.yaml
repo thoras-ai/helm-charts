@@ -58,6 +58,7 @@ featureFlags:
   enableMonitorActiveSuggestionFromCRD: false
   enableDeploymentMonitor: false
   enablePgLargeObjectStorage: false
+  enableNoBlobApiServer: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
