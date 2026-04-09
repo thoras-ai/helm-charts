@@ -1158,6 +1158,18 @@ spec:
                       - value
                       type: object
                     type: array
+                  forecastErrorGeneral:
+                    description: ForecastErrorGeneral is set when a general forecasting
+                      error occurred that blocks all scaling.
+                    type: string
+                  forecastErrorHorizontal:
+                    description: ForecastErrorHorizontal is set when a horizontal-specific
+                      forecasting error occurred.
+                    type: string
+                  forecastErrorVertical:
+                    description: ForecastErrorVertical is set when a vertical-specific
+                      forecasting error occurred.
+                    type: string
                   hasEnoughDataToScale:
                     description: |-
                       HasEnoughDataToScale indicates whether sufficient data was available to generate reliable recommendations.
@@ -1220,6 +1232,11 @@ spec:
                 - start
                 - suggestedReplicas
                 type: object
+              lastProcessedSuggestionUID:
+                description: LastProcessedSuggestionUID is the SuggestionUID of the
+                  last suggestion the operator fully processed. Used to prevent reprocessing
+                  the same suggestion on every reconcile.
+                type: string
               previousVerticalMode:
                 type: string
               replicas:
