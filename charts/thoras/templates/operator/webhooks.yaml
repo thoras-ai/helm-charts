@@ -7,7 +7,7 @@ metadata:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
 webhooks:
 - name: "pods.thoras.ai"
-  reinvocationPolicy: IfNeeded
+  reinvocationPolicy: {{ .Values.thorasOperator.webhooks.reinvocationPolicy.pods }}
   {{- with .Values.thorasOperator.webhooks.namespaceSelector }}
   namespaceSelector:
     {{- toYaml . | nindent 4 }}
@@ -28,6 +28,7 @@ webhooks:
   admissionReviewVersions:
     - v1
 - name: "scale.thoras.ai"
+  reinvocationPolicy: {{ .Values.thorasOperator.webhooks.reinvocationPolicy.scale }}
   {{- with .Values.thorasOperator.webhooks.namespaceSelector }}
   namespaceSelector:
     {{- toYaml . | nindent 4 }}

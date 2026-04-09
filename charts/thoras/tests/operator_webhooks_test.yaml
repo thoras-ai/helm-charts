@@ -25,3 +25,26 @@ tests:
           path: webhooks[0].namespaceSelector
       - notExists:
           path: webhooks[1].namespaceSelector
+
+  - it: Should set reinvocationPolicy to IfNeeded on pods webhook and Never on scale webhook by default
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: webhooks[0].reinvocationPolicy
+          value: IfNeeded
+      - equal:
+          path: webhooks[1].reinvocationPolicy
+          value: Never
+
+  - it: Should allow overriding reinvocationPolicy on both webhooks
+    documentIndex: 0
+    set:
+      thorasOperator.webhooks.reinvocationPolicy.pods: Never
+      thorasOperator.webhooks.reinvocationPolicy.scale: IfNeeded
+    asserts:
+      - equal:
+          path: webhooks[0].reinvocationPolicy
+          value: Never
+      - equal:
+          path: webhooks[1].reinvocationPolicy
+          value: IfNeeded

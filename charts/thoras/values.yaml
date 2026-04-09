@@ -141,6 +141,9 @@ thorasOperator:
           values:
             - kube-system
             - kube-node-lease
+    reinvocationPolicy:
+      pods: IfNeeded
+      scale: Never
   extraEgressRules: []
 
 metricsCollector:
