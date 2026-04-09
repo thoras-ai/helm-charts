@@ -22,7 +22,9 @@ spec:
   # Allow all egress to pods within the same namespace
   - to:
     - podSelector: {}
-  # Allow access to the Kubernetes API server (metrics-server API is proxied through here)
+  # Allow access to the Kubernetes API server (metrics-server API is proxied through here).
+  # Note: standard NetworkPolicy cannot target the API server by label, so this permits
+  # egress to any destination on these ports. Use the cilium flavor for precise scoping.
   - ports:
     - port: 443
       protocol: TCP

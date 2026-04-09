@@ -18,7 +18,9 @@ spec:
   # Allow all ingress from pods within the same namespace
   - from:
     - podSelector: {}
-  # Allow webhook callbacks from the Kubernetes API server
+  # Allow webhook callbacks from the Kubernetes API server.
+  # Note: standard NetworkPolicy cannot target the API server by label, so this permits
+  # ingress from any source on this port. Use the cilium flavor for precise scoping.
   - ports:
     - port: 9443
       protocol: TCP
@@ -26,7 +28,9 @@ spec:
   # Allow all egress to pods within the same namespace
   - to:
     - podSelector: {}
-  # Allow access to the Kubernetes API server (metrics-server API is proxied through here)
+  # Allow access to the Kubernetes API server (metrics-server API is proxied through here).
+  # Note: standard NetworkPolicy cannot target the API server by label, so this permits
+  # egress to any destination on these ports. Use the cilium flavor for precise scoping.
   - ports:
     - port: 443
       protocol: TCP
