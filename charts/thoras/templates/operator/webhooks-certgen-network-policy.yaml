@@ -1,0 +1,77 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-certgen
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    # Weight -10 ensures this policy exists before the certgen-create job (weight -5) runs.
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: webhook-certgen
+  policyTypes:
+  - Egress
+  egress:
+  # Allow access to the Kubernetes API server to read/write secrets and patch webhooks.
+  # Note: standard NetworkPolicy cannot target the API server by label, so this permits
+  # egress to any destination on these ports. Use the cilium flavor for precise scoping.
+  - ports:
+    - port: 443
+      protocol: TCP
+    - port: 6443
+      protocol: TCP
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+{{- else if eq .Values.networkPolicy.flavor "cilium" }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-certgen
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    # Weight -10 ensures this policy exists before the certgen-create job (weight -5) runs.
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: webhook-certgen
+  egress:
+  # Allow access to the Kubernetes API server to read/write secrets and patch webhooks
+  - toEntities:
+    - kube-apiserver
+  # Allow DNS resolution
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: "*"
+{{- end }}
+{{- end }}
