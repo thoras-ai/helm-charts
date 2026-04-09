@@ -62,7 +62,6 @@ metadata:
     app.kubernetes.io/component: webhook-certgen
 spec:
   ttlSecondsAfterFinished: 300
-  backoffLimit: 10
   template:
     metadata:
       name: thoras-tls-certsgen-patch-validating
