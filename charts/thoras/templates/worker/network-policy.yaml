@@ -1,0 +1,86 @@
+{{- if and .Values.networkPolicy.enabled .Values.thorasWorker.enabled }}
+{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-worker
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all ingress from pods within the same namespace
+  - from:
+    - podSelector: {}
+  egress:
+  # Allow all egress to pods within the same namespace
+  - to:
+    - podSelector: {}
+  # Allow access to the Kubernetes API server
+  - ports:
+    - port: 443
+      protocol: TCP
+    - port: 6443
+      protocol: TCP
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  {{- with .Values.thorasWorker.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- else if eq .Values.networkPolicy.flavor "cilium" }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: thoras-worker
+  ingress:
+  # Allow all ingress from endpoints within the same namespace
+  - fromEndpoints:
+    - {}
+  egress:
+  # Allow all egress to endpoints within the same namespace
+  - toEndpoints:
+    - {}
+  # Allow access to the Kubernetes API server
+  - toEntities:
+    - kube-apiserver
+  # Allow DNS resolution
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: "*"
+  {{- with .Values.thorasWorker.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}

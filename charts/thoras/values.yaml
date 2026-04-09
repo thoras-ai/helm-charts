@@ -21,6 +21,12 @@ resourceQuota:
   cronjobs: 200
   jobs: 200
 
+networkPolicy:
+  enabled: false
+  # flavor: "kubernetes" uses standard NetworkPolicy (networking.k8s.io/v1)
+  # flavor: "cilium" uses CiliumNetworkPolicy (cilium.io/v2)
+  flavor: kubernetes
+
 imagePullPolicy: "IfNotPresent"
 
 logLevel: info
@@ -135,6 +141,7 @@ thorasOperator:
           values:
             - kube-system
             - kube-node-lease
+  extraEgressRules: []
 
 metricsCollector:
   persistence:
@@ -201,6 +208,7 @@ metricsCollector:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  extraEgressRules: []
 
 thorasApiServerV2:
   rbac:
@@ -233,6 +241,7 @@ thorasApiServerV2:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  extraEgressRules: []
 
 thorasWorker:
   enabled: true
@@ -267,6 +276,7 @@ thorasWorker:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  extraEgressRules: []
 
 thorasDashboard:
   enabled: true
@@ -326,6 +336,7 @@ thorasDashboard:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  extraEgressRules: []
 
 thorasMonitor:
   enabled: false
@@ -348,6 +359,7 @@ thorasMonitor:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  extraEgressRules: []
 
 thorasForecast:
   serviceAccount:
@@ -397,6 +409,7 @@ thorasForecast:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  extraEgressRules: []
 
 # K8s client max queries per second
 queriesPerSecond: "50"
