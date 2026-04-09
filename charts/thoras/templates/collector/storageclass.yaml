@@ -1,4 +1,4 @@
-{{- if and .Values.metricsCollector.persistence.enabled .Values.metricsCollector.persistence.createEFSStorageClass.fileSystemId }}
+{{- if and .Values.metricsCollector.persistence.enabled .Values.metricsCollector.persistence.createEFSStorageClass.fileSystemId (or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .))) }}
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:

@@ -175,6 +175,18 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasOperator.prometheus.enabled  | Boolean | true            | Enables a prometheus metric exporter                         |
 | thorasOperator.prometheus.port     | Number  | 9101            | Port for the prometheus metric exporter                      |
 
+## External TimescaleDB
+
+When set, the chart skips deploying the in-cluster TimescaleDB and configures
+all components to use an external database instead. The TimescaleDB extension
+must be pre-installed and managed externally.
+
+| Key                             | Type   | Default | Description                                                                                           |
+| ------------------------------- | ------ | ------- | ----------------------------------------------------------------------------------------------------- |
+| externalTimescale.dsn           | String | ""      | Full postgres DSN including database name, e.g. `postgres://user:pass@host:5432/tsdb?sslmode=require` |
+| externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`)                               |
+| externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN                                                              |
+
 ## Thoras Metrics Collector
 
 | Key                                                             | Type    | Default          | Description                                                  |

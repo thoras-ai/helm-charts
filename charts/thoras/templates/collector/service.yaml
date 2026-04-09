@@ -1,3 +1,4 @@
+{{- if not (include "thoras.externalTimescaleEnabled" .) }}
 ---
 apiVersion: v1
 kind: Service
@@ -18,6 +19,7 @@ spec:
     targetPort: {{ .Values.metricsCollector.timescale.containerPort }}
   selector:
     app: metrics-collector
+{{- end }}
 {{- if not .Values.featureFlags.enableNoBlobApiServer }}
 ---
 apiVersion: v1
