@@ -166,8 +166,6 @@ spec:
             value: {{ .Values.costRefreshBatching.maxConcurrency | quote }}
           - name: SERVICE_ENABLE_VIEW_CACHE_QUERY_LIVE_JOIN
             value: {{ .Values.thorasApiServerV2.enableViewCacheQueryLiveJoin | ternary "true" "false" | quote }}
-          - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
-            value: {{ .Values.featureFlags.enableSkipScalingOnInsufficientData | ternary "true" "false" | quote }}
           - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
             value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
           - name: SERVICE_MIN_LOOKBACK_TO_SCALE

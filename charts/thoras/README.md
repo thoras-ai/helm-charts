@@ -83,7 +83,6 @@ The following flags are considered temporary and gate access to specific behavio
 | Key                                              | Type    | Default | Description                                                     |
 | ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
 | featureFlags.enableNodeDetailsCollector          | Boolean | true    | Collection of node detail snapshots                             |
-| featureFlags.enableSkipScalingOnInsufficientData | Boolean | true    | Workloads are scaled only if they more than three hours of data |
 | featureFlags.enableCheckDatabaseHealth           | Boolean | false   | If true, pings the database in the health endpoint              |
 | featureFlags.enableMigrationOnStartup            | Boolean | false   | If true, the main container handles migrations                  |
 | featureFlags.enableCostSavingsSettingsRefresh    | Boolean | true    | If true, refreshes the costs savings settings periodically      |
