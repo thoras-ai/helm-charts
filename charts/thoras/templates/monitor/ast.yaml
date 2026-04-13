@@ -11,8 +11,8 @@ spec:
   horizontal:
     mode: recommendation
   model:
-    forecast_blocks: 20m0s
-    forecast_cron: '*/15 * * * *'
+    forecast_blocks: 20m
+    forecast_interval: 15m
     mode: balanced
   scaleTargetRef:
     kind: Deployment
