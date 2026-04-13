@@ -75,8 +75,6 @@ Default matches snapshot:
                   value: "5"
                 - name: SERVICE_ENABLE_VIEW_CACHE_QUERY_LIVE_JOIN
                   value: "true"
-                - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
-                  value: "true"
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
@@ -1177,8 +1175,6 @@ Default matches snapshot:
                   value: "50"
                 - name: SERVICE_PORT
                   value: "9101"
-                - name: SERVICE_ENABLE_SKIP_SCALING_ON_INSUFFICIENT_DATA
-                  value: "true"
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
                   value: 3h
                 - name: DATABASE_HOST
