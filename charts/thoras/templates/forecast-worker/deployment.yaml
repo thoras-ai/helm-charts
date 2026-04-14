@@ -40,6 +40,7 @@ spec:
       imagePullSecrets:
       - name: {{ .Values.imageCredentials.secretRef }}
       {{- end }}
+      {{- if not .Values.featureFlags.enableForecastWorkerReadinessProbe }}
       initContainers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         name: wait-for-api-service
@@ -60,6 +61,7 @@ spec:
               exit 1
             fi
         resources: {}
+      {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -109,6 +111,17 @@ spec:
         resources:
           limits: {{ .Values.thorasForecast.worker.limits | toYaml | nindent 12 }}
           requests: {{ .Values.thorasForecast.worker.requests | toYaml | nindent 12 }}
+        {{- end }}
+        {{- if .Values.featureFlags.enableForecastWorkerReadinessProbe }}
+        readinessProbe:
+          exec:
+            command:
+              - curl
+              - -sf
+              - http://thoras-api-server-v2/health
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 48
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
