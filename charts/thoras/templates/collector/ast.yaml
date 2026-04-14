@@ -1,4 +1,4 @@
-{{- if .Values.featureFlags.thorasManageThoras.enabled }}
+{{- if and (.Values.featureFlags.thorasManageThoras.enabled) (or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .))) }}
 apiVersion: thoras.ai/v1
 kind: AIScaleTarget
 metadata:
@@ -26,11 +26,13 @@ spec:
         limit:
           ratio: 3
       name: 'blob-api'
+    {{- if not (include "thoras.externalTimescaleEnabled" .) }}
     - cpu:
         lowerbound: 1m
       memory:
         lowerbound: 1Mi
       name: 'timescaledb'
+    {{- end }}
     update_policy:
       update_mode: {{ .Values.featureFlags.thorasManageThoras.db.updateMode | default .Values.featureFlags.thorasManageThoras.updateMode | default "recreate" }}
     mode: {{ .Values.featureFlags.thorasManageThoras.mode | default "recommendation" }}

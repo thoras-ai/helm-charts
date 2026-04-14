@@ -1,4 +1,4 @@
-{{- if .Values.metricsCollector.timescale.config.enabled }}
+{{- if and .Values.metricsCollector.timescale.config.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
 ---
 apiVersion: v1
 kind: ConfigMap

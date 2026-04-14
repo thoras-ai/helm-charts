@@ -141,7 +141,7 @@ Default matches snapshot:
                   retries=0
                   max_retries=48
                   until [ $retries -ge $max_retries ]; do
-                    if pg_isready -q -d ${DATABASE_HOST}/thoras; then
+                    if pg_isready -q -d ${DATABASE_URL}; then
                       break
                     else
                       echo "postgres not ready"
@@ -1571,7 +1571,7 @@ Default matches snapshot:
                   retries=0
                   max_retries=48
                   until [ $retries -ge $max_retries ]; do
-                    if pg_isready -q -d ${DATABASE_HOST}/thoras; then
+                    if pg_isready -q -d ${DATABASE_URL}; then
                       break
                     else
                       echo "postgres not ready"

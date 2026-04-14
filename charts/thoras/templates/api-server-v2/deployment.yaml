@@ -63,10 +63,19 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
+              {{- if .Values.externalTimescale.secretRefName }}
+                name: {{ .Values.externalTimescale.secretRefName }}
+                key: {{ .Values.externalTimescale.secretRefKey }}
+              {{- else }}
                 name: thoras-timescale-password
                 key: host
+              {{- end }}
           - name: DATABASE_URL
+          {{- if include "thoras.externalTimescaleEnabled" . }}
+            value: "$(DATABASE_HOST)"
+          {{- else }}
             value: "$(DATABASE_HOST)/thoras?sslmode=disable"
+          {{- end }}
           - name: EXTENSION_VERSION
             value: "{{ .Values.metricsCollector.timescale.extensionVersion }}"
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
@@ -76,7 +85,7 @@ spec:
             retries=0
             max_retries=48
             until [ $retries -ge $max_retries ]; do
-              if pg_isready -q -d ${DATABASE_HOST}/thoras; then
+              if pg_isready -q -d ${DATABASE_URL}; then
                 break
               else
                 echo "postgres not ready"
@@ -88,6 +97,7 @@ spec:
               echo "Failed to connect to database after $max_retries retries"
               exit 1
             fi
+        {{- if not (include "thoras.externalTimescaleEnabled" .) }}
 
             # Update the timescale extension first
             # Validate version format (only allow alphanumeric, dots, and hyphens)
@@ -96,6 +106,7 @@ spec:
               exit 1
             fi
             /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '$EXTENSION_VERSION';"
+        {{- end }}
 
             # run any migrations, accounting for upgrade/downgrade scenarios
             ./scripts/migrate_database.sh
@@ -114,12 +125,21 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
+              {{- if .Values.externalTimescale.secretRefName }}
+                name: {{ .Values.externalTimescale.secretRefName }}
+                key: {{ .Values.externalTimescale.secretRefKey }}
+              {{- else }}
                 name: thoras-timescale-password
                 key: host
+              {{- end }}
           - name: SERVICE_PORT
             value: {{ .Values.thorasApiServerV2.containerPort | quote }}
           - name: SERVICE_POSTGRESQL_DSN
+          {{- if include "thoras.externalTimescaleEnabled" . }}
+            value: "$(DATABASE_HOST)"
+          {{- else }}
             value: "$(DATABASE_HOST)/thoras"
+          {{- end }}
           - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:

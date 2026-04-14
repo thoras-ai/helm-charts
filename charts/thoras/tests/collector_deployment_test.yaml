@@ -92,7 +92,7 @@ tests:
             name: timescale-config
             mountPath: /etc/postgresql.conf
             subPath: custom.conf
-  - it: Should always create timescale container
+  - it: Should create timescale container in default mode
     template: collector/deployment.yaml
     asserts:
       - contains:

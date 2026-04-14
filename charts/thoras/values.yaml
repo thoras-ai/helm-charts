@@ -100,6 +100,20 @@ cloudSync:
   clusterKeySecretRefName: ""
   clusterKeySecretRefKey: ""
 
+# External TimescaleDB configuration. When set, the chart skips deploying the
+# in-cluster TimescaleDB and configures all components to use the external
+# database instead. The TimescaleDB extension must be pre-installed and managed
+# externally.
+externalTimescale:
+  # Full postgres DSN including the database name,
+  # e.g. "postgres://user:password@host:5432/tsdb?sslmode=require"
+  dsn: ""
+
+  # Or reference a pre-existing Secret containing the DSN.
+  # The secret key must contain the full postgres DSN including the database name.
+  secretRefName: ""
+  secretRefKey: ""
+
 rbac:
   namespaces: []
 

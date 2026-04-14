@@ -143,10 +143,19 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
+              {{- if .Values.externalTimescale.secretRefName }}
+                name: {{ .Values.externalTimescale.secretRefName }}
+                key: {{ .Values.externalTimescale.secretRefKey }}
+              {{- else }}
                 name: thoras-timescale-password
                 key: host
+              {{- end }}
           - name: SERVICE_POSTGRESQL_DSN
+          {{- if include "thoras.externalTimescaleEnabled" . }}
+            value: "$(DATABASE_HOST)"
+          {{- else }}
             value: "$(DATABASE_HOST)/thoras"
+          {{- end }}
           - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
             value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC

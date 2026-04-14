@@ -92,6 +92,15 @@ Global environment variables (proxy settings + user-defined env) injected into a
 Returns a YAML list of global env var entries (proxy + user-defined), or empty string.
 Indent the output at the call site: {{- include "thoras.globalEnv" . | indent 10 }}
 */}}
+{{/*
+True when the chart should use an external TimescaleDB instead of deploying one.
+*/}}
+{{- define "thoras.externalTimescaleEnabled" -}}
+{{- if or .Values.externalTimescale.dsn .Values.externalTimescale.secretRefName -}}
+true
+{{- end -}}
+{{- end -}}
+
 {{- define "thoras.globalEnv" -}}
 {{- $out := list -}}
 {{- with .Values.proxy.httpProxy -}}

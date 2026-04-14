@@ -1,3 +1,4 @@
+{{- if or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .)) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -20,9 +21,9 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.metricsCollector.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- if or .Values.podAnnotations .Values.metricsCollector.timescale.config.enabled .Values.metricsCollector.podAnnotations }}
+      {{- if or .Values.podAnnotations .Values.metricsCollector.podAnnotations (and .Values.metricsCollector.timescale.config.enabled (not (include "thoras.externalTimescaleEnabled" .))) }}
       annotations:
-        {{- if .Values.metricsCollector.timescale.config.enabled }}
+        {{- if and .Values.metricsCollector.timescale.config.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
         checksum/configmap: {{ include (print $.Template.BasePath "/collector/configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.metricsCollector.podAnnotations) }}
@@ -44,12 +45,12 @@ spec:
       - name: {{ .Values.imageCredentials.secretRef }}
       {{- end }}
       volumes:
-      {{- if .Values.metricsCollector.timescale.config.enabled }}
+      {{- if and .Values.metricsCollector.timescale.config.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
         - name: timescale-config
           configMap:
             name: thoras-timescale-config
       {{- end }}
-      {{- if .Values.metricsCollector.persistence.enabled }}
+      {{- if and .Values.metricsCollector.persistence.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
         - name: elastic-search-data
           persistentVolumeClaim:
             claimName:  elastic-search-data
@@ -72,7 +73,11 @@ spec:
         {{- else }}
         args:
           - |
+        {{- if include "thoras.externalTimescaleEnabled" . }}
+            mkdir -p /var/lib/share/blobs
+        {{- else }}
             mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
+        {{- end }}
         {{- end }}
         {{- if .Values.metricsCollector.init.resources }}
         resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
@@ -83,12 +88,12 @@ spec:
         {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
-      {{- if .Values.metricsCollector.persistence.enabled }}
+      {{- if and .Values.metricsCollector.persistence.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
             name: elastic-search-data
       {{- else }}
             name: timescale-data
       {{- end }}
-      {{- if .Values.metricsCollector.timescale.walRecovery.enabled }}
+      {{- if and .Values.metricsCollector.timescale.walRecovery.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
       - name: reset-wal-on-startup
         image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -126,6 +131,7 @@ spec:
       {{- end }}
       {{- end }}
       containers:
+      {{- if not (include "thoras.externalTimescaleEnabled" .) }}
       - image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         name: timescaledb
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -171,6 +177,7 @@ spec:
       {{- else }}
             name: timescale-data
       {{- end }}
+      {{- end }}
       {{- if not .Values.featureFlags.enableNoBlobApiServer }}
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -182,6 +189,7 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
+        {{- if not (include "thoras.externalTimescaleEnabled" .) }}
             # wait for postgres to be available
             retries=0
             max_retries=48
@@ -208,16 +216,32 @@ spec:
             # ensure the postgres user has the correct password
             echo "setting password"
             psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
+        {{- end }}
 
             ./blob-service
         env:
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
+        {{- if include "thoras.externalTimescaleEnabled" . }}
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+              {{- if .Values.externalTimescale.secretRefName }}
+                name: {{ .Values.externalTimescale.secretRefName }}
+                key: {{ .Values.externalTimescale.secretRefKey }}
+              {{- else }}
+                name: thoras-timescale-password
+                key: host
+              {{- end }}
+          - name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)"
+        {{- else }}
           - name: "POSTGRES_PASSWORD"
             valueFrom:
               secretKeyRef:
                 name: thoras-timescale-password
                 key: password
+        {{- end }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
           - name: SERVICE_PLATFORM_VERSION
@@ -252,7 +276,7 @@ spec:
         {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
-      {{- if .Values.metricsCollector.persistence.enabled }}
+      {{- if and .Values.metricsCollector.persistence.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
             name: elastic-search-data
       {{- else }}
             name: timescale-data
@@ -283,3 +307,4 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
+{{- end }}

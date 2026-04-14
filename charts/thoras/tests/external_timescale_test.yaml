@@ -1,0 +1,301 @@
+suite: External TimescaleDB
+tests:
+  # --- Collector Deployment ---
+
+  - it: Should not include timescaledb container when external host is set
+    templates:
+      - collector/deployment.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - isKind:
+          of: Deployment
+      - notContains:
+          path: spec.template.spec.containers
+          content:
+            name: timescaledb
+          any: true
+      - contains:
+          path: spec.template.spec.containers
+          content:
+            name: thoras-blob-api
+          any: true
+
+  - it: Should give blob-service DATABASE_HOST and SERVICE_POSTGRESQL_DSN in external mode
+    templates:
+      - collector/deployment.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
+          content:
+            name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: thoras-timescale-password
+                key: host
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
+          content:
+            name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)"
+
+  - it: Should not include POSTGRES_PASSWORD env on blob-service in external mode
+    templates:
+      - collector/deployment.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
+          content:
+            name: POSTGRES_PASSWORD
+          any: true
+
+  - it: Blob-service should skip localhost bootstrap script in external mode
+    templates:
+      - collector/deployment.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].args[0]
+          pattern: "pg_isready -h localhost"
+
+  - it: Should not include WAL recovery init container in external mode
+    templates:
+      - collector/deployment.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+      metricsCollector:
+        timescale:
+          walRecovery:
+            enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: reset-wal-on-startup
+          any: true
+
+  - it: Should only create blobs dir in fix-dir-ownership in external mode
+    templates:
+      - collector/deployment.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].args[0]
+          pattern: "mkdir -p /var/lib/share/blobs"
+      - notMatchRegex:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].args[0]
+          pattern: "/var/lib/share/postgresql"
+
+  - it: Should use secretRef for blob-service DATABASE_HOST when secretRefName is set
+    templates:
+      - collector/deployment.yaml
+    set:
+      externalTimescale:
+        secretRefName: "my-db-secret"
+        secretRefKey: "dsn"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
+          content:
+            name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: my-db-secret
+                key: dsn
+
+  # --- Collector Service ---
+
+  - it: Should not create timescale Service in external mode
+    templates:
+      - collector/service.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: thoras-blob-api
+
+  - it: Should create both Services in default mode
+    templates:
+      - collector/service.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  # --- Collector Secret ---
+
+  - it: Should store external host in secret when host is set
+    templates:
+      - collector/secret.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: thoras-timescale-password
+
+  - it: Should not create secret when secretRefName is set
+    templates:
+      - collector/secret.yaml
+    set:
+      externalTimescale:
+        secretRefName: "my-db-secret"
+        secretRefKey: "dsn"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # --- ConfigMap, PVC, StorageClass ---
+
+  - it: Should not create configmap in external mode even if config enabled
+    templates:
+      - collector/configmap.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+      metricsCollector:
+        timescale:
+          config:
+            enabled: true
+            content: "shared_buffers = 256MB"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Should create PVC in external mode when blob server is enabled
+    templates:
+      - collector/pvc.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+      metricsCollector:
+        persistence:
+          enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: Should not create PVC when external timescale and blob server both disabled
+    templates:
+      - collector/pvc.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+      featureFlags:
+        enableNoBlobApiServer: true
+      metricsCollector:
+        persistence:
+          enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Should not create StorageClass when external timescale and blob server both disabled
+    templates:
+      - collector/storageclass.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+      featureFlags:
+        enableNoBlobApiServer: true
+      metricsCollector:
+        persistence:
+          enabled: true
+          createEFSStorageClass:
+            fileSystemId: "fs-12345"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # --- Consumer Deployments with secretRef ---
+
+  - it: Operator should use external secretRef for DATABASE_HOST
+    templates:
+      - operator/deployment.yaml
+    set:
+      externalTimescale:
+        secretRefName: "my-db-secret"
+        secretRefKey: "dsn"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].env
+          content:
+            name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: my-db-secret
+                key: dsn
+
+  - it: API server should use external secretRef for DATABASE_HOST
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      externalTimescale:
+        secretRefName: "my-db-secret"
+        secretRefKey: "dsn"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-api-server-v2')].env
+          content:
+            name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: my-db-secret
+                key: dsn
+
+  - it: Worker should use external secretRef for DATABASE_HOST
+    templates:
+      - worker/deployment.yaml
+    set:
+      externalTimescale:
+        secretRefName: "my-db-secret"
+        secretRefKey: "dsn"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-worker')].env
+          content:
+            name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: my-db-secret
+                key: dsn
+
+  # --- AST ---
+
+  - it: Should not include timescaledb in AST vertical containers in external mode
+    templates:
+      - collector/ast.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+      featureFlags:
+        thorasManageThoras:
+          enabled: true
+    asserts:
+      - notContains:
+          path: spec.vertical.containers
+          content:
+            name: timescaledb
+          any: true

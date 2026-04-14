@@ -1,4 +1,4 @@
-{{- if .Values.metricsCollector.persistence.enabled }}
+{{- if and .Values.metricsCollector.persistence.enabled (or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .)))}}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
