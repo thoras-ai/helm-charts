@@ -61,7 +61,7 @@ featureFlags:
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
   enableDeploymentMonitor: false
-  enablePgLargeObjectStorage: false
+  enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastWorkerReadinessProbe: false
   enableForecastQueueStats: false
