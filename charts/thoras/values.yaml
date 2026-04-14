@@ -287,7 +287,7 @@ thorasWorker:
   enableAstViewCacheStateReconcilerWorker: true
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: true
-  enableUnifiedAstUtilizationMonitor: false
+  enableUnifiedAstUtilizationMonitor: true
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
