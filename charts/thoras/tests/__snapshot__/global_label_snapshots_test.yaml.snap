@@ -1175,6 +1175,8 @@ Default matches snapshot:
                   value: "50"
                 - name: SERVICE_PORT
                   value: "9101"
+                - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
+                  value: "false"
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
                   value: 3h
                 - name: DATABASE_HOST
@@ -1533,6 +1535,8 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
                   value: "false"
+                - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
+                  value: "true"
                 - name: SERVICE_POD_NAME
                   valueFrom:
                     fieldRef:
