@@ -58,7 +58,6 @@ featureFlags:
   enableCheckDatabaseHealth: false
   enableMigrationOnStartup: false
   enableCostSavingsSettingsRefresh: true
-  enableForecastRescuer: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
   enableDeploymentMonitor: false
