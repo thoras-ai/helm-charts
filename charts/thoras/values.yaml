@@ -60,7 +60,7 @@ featureFlags:
   enableCostSavingsSettingsRefresh: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
-  enableDeploymentMonitor: false
+  enableDeploymentMonitor: true
   enablePgLargeObjectStorage: false
   enableNoBlobApiServer: false
   enableForecastWorkerReadinessProbe: false
