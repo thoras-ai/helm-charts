@@ -1534,7 +1534,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "false"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
                   value: "true"
                 - name: SERVICE_POD_NAME
