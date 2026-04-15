@@ -42,6 +42,8 @@ proxy:
 
 featureFlags:
   enableNodeDetailsCollector: true
+  # When enabled, AST scale mode may be configured via API
+  enableUpdateScaleModeApi: false
   thorasManageThoras:
     enabled: false
     # Recommendation Mode by default
