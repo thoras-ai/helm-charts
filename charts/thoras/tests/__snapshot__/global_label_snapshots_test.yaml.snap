@@ -1197,6 +1197,8 @@ Default matches snapshot:
                     secretKeyRef:
                       key: clusterKey
                       name: thoras-cloud-sync
+                - name: SERVICE_ENABLE_MIGRATION_ON_START
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-operator
@@ -1534,7 +1536,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "false"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
                   value: "true"
                 - name: SERVICE_POD_NAME

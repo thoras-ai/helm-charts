@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.85.0"
+thorasVersion: "4.87.0"
 cluster:
   name: ""
 
@@ -42,6 +42,8 @@ proxy:
 
 featureFlags:
   enableNodeDetailsCollector: true
+  # When enabled, AST scale mode may be configured via API
+  enableUpdateScaleModeApi: false
   thorasManageThoras:
     enabled: false
     # Recommendation Mode by default
@@ -60,7 +62,7 @@ featureFlags:
   enableCostSavingsSettingsRefresh: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
-  enableDeploymentMonitor: false
+  enableDeploymentMonitor: true
   enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastWorkerReadinessProbe: false
