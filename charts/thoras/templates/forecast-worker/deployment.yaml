@@ -104,6 +104,10 @@ spec:
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
           {{- end }}
+          {{- if .Values.featureFlags.enableForecastWorkerLivenessProbe }}
+          - name: WORKER_HEARTBEAT_FILE
+            value: /var/run/thoras/worker-heartbeat
+          {{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         {{- if .Values.thorasForecast.worker.resources }}
         resources: {{ .Values.thorasForecast.worker.resources | toYaml | nindent 10 }}
@@ -123,6 +127,25 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 48
         {{- end }}
+        {{- if .Values.featureFlags.enableForecastWorkerLivenessProbe }}
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - "test $(( $(date +%s) - $(stat -c %Y /var/run/thoras/worker-heartbeat) )) -lt 300"
+          initialDelaySeconds: 120
+          periodSeconds: 60
+          failureThreshold: 5
+        volumeMounts:
+          - name: worker-state
+            mountPath: /var/run/thoras
+        {{- end }}
+      {{- if .Values.featureFlags.enableForecastWorkerLivenessProbe }}
+      volumes:
+        - name: worker-state
+          emptyDir: {}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
