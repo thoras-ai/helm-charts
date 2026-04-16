@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.107.0](https://img.shields.io/badge/Version-4.107.0-informational?style=flat-square) ![AppVersion: 4.87.0](https://img.shields.io/badge/AppVersion-4.87.0-informational?style=flat-square)
+![Version: 4.108.0](https://img.shields.io/badge/Version-4.108.0-informational?style=flat-square) ![AppVersion: 4.89.0](https://img.shields.io/badge/AppVersion-4.89.0-informational?style=flat-square)
 
 # Installs
 
@@ -80,13 +80,13 @@ helm install \
 
 The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
 
-| Key                                              | Type    | Default | Description                                                     |
-| ------------------------------------------------ | ------- | ------- | --------------------------------------------------------------- |
-| featureFlags.enableNodeDetailsCollector          | Boolean | true    | Collection of node detail snapshots                             |
-| featureFlags.enableCheckDatabaseHealth           | Boolean | false   | If true, pings the database in the health endpoint              |
-| featureFlags.enableMigrationOnStartup            | Boolean | false   | If true, the main container handles migrations                  |
-| featureFlags.enableCostSavingsSettingsRefresh    | Boolean | true    | If true, refreshes the costs savings settings periodically      |
-| featureFlags.enablePgLargeObjectStorage          | Boolean | false   | If true, enables storing blobs as postgres large objects        |
+| Key                                           | Type    | Default | Description                                                |
+| --------------------------------------------- | ------- | ------- | ---------------------------------------------------------- |
+| featureFlags.enableNodeDetailsCollector       | Boolean | true    | Collection of node detail snapshots                        |
+| featureFlags.enableCheckDatabaseHealth        | Boolean | false   | If true, pings the database in the health endpoint         |
+| featureFlags.enableMigrationOnStartup         | Boolean | false   | If true, the main container handles migrations             |
+| featureFlags.enableCostSavingsSettingsRefresh | Boolean | true    | If true, refreshes the costs savings settings periodically |
+| featureFlags.enablePgLargeObjectStorage       | Boolean | false   | If true, enables storing blobs as postgres large objects   |
 
 ## Affinity Configuration
 
