@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.108.0](https://img.shields.io/badge/Version-4.108.0-informational?style=flat-square) ![AppVersion: 4.89.0](https://img.shields.io/badge/AppVersion-4.89.0-informational?style=flat-square)
+![Version: 4.109.0](https://img.shields.io/badge/Version-4.109.0-informational?style=flat-square) ![AppVersion: 4.90.0](https://img.shields.io/badge/AppVersion-4.90.0-informational?style=flat-square)
 
 # Installs
 
