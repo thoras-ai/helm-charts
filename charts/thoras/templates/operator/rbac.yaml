@@ -43,6 +43,12 @@ rules:
   verbs:
   - '*'
 - apiGroups:
+  - ""
+  resources:
+  - pods/resize
+  verbs:
+  - patch
+- apiGroups:
   - apps
   - argoproj.io
   resources:
