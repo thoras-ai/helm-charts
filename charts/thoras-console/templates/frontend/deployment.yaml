@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-console-frontend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleFrontend.labels) | nindent 4 }}
+spec:
+  replicas: {{ .Values.consoleFrontend.replicas }}
+  selector:
+    matchLabels:
+      app: thoras-console-frontend
+  template:
+    metadata:
+      labels:
+        app: thoras-console-frontend
+        {{- with include "thoras-console.componentLabels" (dict "root" $ "component" .Values.consoleFrontend.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- if not .Values.consoleFrontend.unittesting }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/frontend/configmap.yaml") . | sha256sum }}
+        {{- end }}
+      {{- with include "thoras-console.podAnnotations" (dict "root" $ "component" .Values.consoleFrontend.podAnnotations) }}
+        {{- . | trim | nindent 8 }}
+      {{- end }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ .Values.consoleFrontend.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: thoras-console-frontend-nginx-config
+      containers:
+      - name: console-frontend
+        image: {{ .Values.imageCredentials.registry }}/console-frontend:{{ default .Values.consoleVersion .Values.consoleFrontend.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 101
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        {{- with include "thoras-console.globalEnv" . }}
+        env:
+          {{- . | nindent 10 }}
+        {{- end }}
+        ports:
+        - containerPort: {{ .Values.consoleFrontend.containerPort }}
+        volumeMounts:
+          - name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+        {{- if .Values.consoleFrontend.resources }}
+        resources: {{ .Values.consoleFrontend.resources | toYaml | nindent 10 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.consoleFrontend.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.consoleFrontend.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with .Values.consoleFrontend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}

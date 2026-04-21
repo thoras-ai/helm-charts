@@ -15,6 +15,8 @@ imageCredentials:
   secretRef: ""
   imagePullSecretInDeployment: false
 
+imagePullPolicy: "IfNotPresent"
+
 resourceQuota:
   enabled: false
   pods: 200
@@ -26,8 +28,6 @@ networkPolicy:
   # flavor: "kubernetes" uses standard NetworkPolicy (networking.k8s.io/v1)
   # flavor: "cilium" uses CiliumNetworkPolicy (cilium.io/v2)
   flavor: kubernetes
-
-imagePullPolicy: "IfNotPresent"
 
 logLevel: info
 

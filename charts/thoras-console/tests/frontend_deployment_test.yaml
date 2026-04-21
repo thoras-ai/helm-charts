@@ -1,0 +1,89 @@
+suite: Console Frontend Deployment
+templates:
+  - frontend/deployment.yaml
+set:
+  consoleFrontend:
+    unittesting: true
+tests:
+  - it: Should render with default values
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: thoras-console-frontend
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: Should set custom replicas
+    set:
+      consoleFrontend.replicas: 2
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+
+  - it: Should use consoleVersion for image tag
+    set:
+      consoleVersion: "2.0.0"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "console-frontend:2.0.0"
+
+  - it: Should override image tag per component
+    set:
+      consoleVersion: "2.0.0"
+      consoleFrontend.imageTag: "3.0.0"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "console-frontend:3.0.0"
+
+  - it: Should mount nginx configmap
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: nginx-config
+            configMap:
+              name: thoras-console-frontend-nginx-config
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+
+  - it: Should set tolerations if specified
+    set:
+      tolerations:
+        - key: "example-key"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "example-key"
+            operator: "Exists"
+            effect: "NoSchedule"
+
+  - it: Should set nodeSelector if specified
+    set:
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+
+  - it: Should set security context
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+          value: 101

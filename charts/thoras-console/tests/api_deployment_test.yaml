@@ -1,0 +1,76 @@
+suite: Console API Deployment
+templates:
+  - api/deployment.yaml
+tests:
+  - it: Should render with default values
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: thoras-console-api
+      - equal:
+          path: spec.replicas
+          value: 2
+
+  - it: Should set custom replicas
+    set:
+      consoleApi.replicas: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: Should use consoleVersion for image tag
+    set:
+      consoleVersion: "2.0.0"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "console-api:2.0.0"
+
+  - it: Should override image tag per component
+    set:
+      consoleVersion: "2.0.0"
+      consoleApi.imageTag: "3.0.0"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "console-api:3.0.0"
+
+  - it: Should inject DB secret env vars when secretRefName is set
+    set:
+      externalTimescale.secretRefName: my-db-secret
+      externalTimescale.secretRefKey: DATABASE_HOST
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: my-db-secret
+                key: DATABASE_HOST
+
+  - it: Should set tolerations if specified
+    set:
+      tolerations:
+        - key: "example-key"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "example-key"
+            operator: "Exists"
+            effect: "NoSchedule"
+
+  - it: Should set nodeSelector if specified
+    set:
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd

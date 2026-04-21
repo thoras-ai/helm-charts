@@ -1,0 +1,100 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-console-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleApi.labels) | nindent 4 }}
+spec:
+  replicas: {{ .Values.consoleApi.replicas }}
+  selector:
+    matchLabels:
+      app: thoras-console-api
+  template:
+    metadata:
+      labels:
+        app: thoras-console-api
+        {{- with include "thoras-console.componentLabels" (dict "root" $ "component" .Values.consoleApi.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
+      {{- with include "thoras-console.podAnnotations" (dict "root" $ "component" .Values.consoleApi.podAnnotations) }}
+      annotations:
+        {{- . | trim | nindent 8 }}
+      {{- end }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ .Values.consoleApi.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
+      containers:
+      - name: console-api
+        image: {{ .Values.imageCredentials.registry }}/console-api:{{ default .Values.consoleVersion .Values.consoleApi.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        ports:
+        - containerPort: {{ .Values.consoleApi.containerPort }}
+        env:
+          - name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+              {{- if .Values.externalTimescale.secretRefName }}
+                name: {{ .Values.externalTimescale.secretRefName }}
+                key: {{ .Values.externalTimescale.secretRefKey }}
+              {{- else }}
+                name: thoras-timescale-password
+                key: host
+              {{- end }}
+          - name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)"
+          - name: SERVICE_PORT
+            value: {{ .Values.consoleApi.containerPort | quote }}
+          - name: "SERVICE_LOG_LEVEL"
+            value: {{ default .Values.logLevel .Values.consoleApi.logLevel }}
+          {{- with include "thoras-console.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.consoleApi.containerPort }}
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.consoleApi.containerPort }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        {{- if .Values.consoleApi.resources }}
+        resources: {{ .Values.consoleApi.resources | toYaml | nindent 10 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.consoleApi.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.consoleApi.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with .Values.consoleApi.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}

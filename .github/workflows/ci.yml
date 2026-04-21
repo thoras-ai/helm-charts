@@ -22,7 +22,9 @@ jobs:
           version: "v3.19.2"
       - name: Install Helm Unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.2
-      - name: Run Helm Unit Tests
+      - name: Run Helm Unit Tests (thoras)
         run: helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
+      - name: Run Helm Unit Tests (thoras-console)
+        run: helm unittest ./charts/thoras-console --chart-tests-path ./charts/thoras-console/tests
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1

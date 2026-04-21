@@ -1,0 +1,114 @@
+---
+consoleVersion: "4.90.1"
+
+imageCredentials:
+  registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
+  username: "_json_key_base64"
+
+  # Set the license key directly as a variable (or alternatively
+  # use imageCredentials.secretRef to reference an existing secret)
+  password: ""
+
+  # Reference a pre-existing secret in the namespace
+  secretRef: ""
+  imagePullSecretInDeployment: false
+
+imagePullPolicy: "IfNotPresent"
+
+logLevel: info
+
+# -- Additional environment variables passed to all console components
+env: []
+
+# -- Proxy settings passed to all console components
+proxy:
+  httpProxy: ""
+  httpsProxy: ""
+  noProxy: ""
+
+labels: {}
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# External TimescaleDB configuration. The TimescaleDB extension must be
+# pre-installed and managed externally.
+externalTimescale:
+  # Full postgres DSN including the database name,
+  # e.g. "postgres://user:password@host:5432/tsdb?sslmode=require"
+  dsn: ""
+
+  # Or reference a pre-existing Secret containing the DSN.
+  # The secret key must contain the full postgres DSN including the database name.
+  secretRefName: ""
+  secretRefKey: ""
+
+consoleApi:
+  replicas: 2
+
+  port: 80
+  containerPort: 8080
+
+  # Override the image tag; defaults to consoleVersion
+  imageTag: ""
+
+  serviceAccount:
+    name: thoras-console-api
+  labels: {}
+  podAnnotations: {}
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  affinity: {}
+  useGlobalAffinity: true
+
+  logLevel: "info"
+
+  prometheus:
+    enabled: true
+  pprof:
+    enabled: false
+
+consoleFrontend:
+  replicas: 1
+
+  port: 80
+  containerPort: 80
+
+  # Override the image tag; defaults to consoleVersion
+  imageTag: ""
+
+  serviceAccount:
+    name: thoras-console-frontend
+
+  labels: {}
+  podAnnotations: {}
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  affinity: {}
+  useGlobalAffinity: true
+
+  ingress:
+    enabled: false
+    ingressClassName: "nginx"
+    annotations: {}
+    hosts:
+      - host: thoras-console.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []

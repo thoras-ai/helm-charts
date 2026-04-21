@@ -1,0 +1,8 @@
+apiVersion: v2
+name: thoras-console
+description: Helm chart to install the Thoras Console
+
+type: application
+
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 1.0.0
