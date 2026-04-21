@@ -950,6 +950,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
+                - name: SERVICE_PLATFORM_VERSION
+                  value: TEST
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-monitor
