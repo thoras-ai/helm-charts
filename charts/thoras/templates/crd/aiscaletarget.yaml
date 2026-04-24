@@ -533,6 +533,22 @@ spec:
                       - type
                       type: object
                     type: array
+                  maxReplicas:
+                    description: |-
+                      maxReplicas is the upper limit for the number of replicas to which the Thoras
+                      can scale up.
+                      If not set, Thoras will use the MaxReplicas value from the target's HPA if available.
+                    format: int32
+                    minimum: 0
+                    type: integer
+                  minReplicas:
+                    description: |-
+                      minReplicas is the lower limit for the number of replicas to which the Thoras
+                      can scale down.
+                      If not set, Thoras will use the MinReplicas value from the target's HPA if available.
+                    format: int32
+                    minimum: 0
+                    type: integer
                   mode:
                     enum:
                     - autonomous
@@ -625,6 +641,10 @@ spec:
                 required:
                 - mode
                 type: object
+                x-kubernetes-validations:
+                - message: minReplicas must not be greater than maxReplicas
+                  rule: '!has(self.minReplicas) || !has(self.maxReplicas) || self.minReplicas
+                    <= self.maxReplicas'
               model:
                 description: |-
                   Defines the forecasting and scaling behavior for an AIScaleTarget, including
@@ -1103,12 +1123,27 @@ spec:
                   - type
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               labelSelector:
                 type: string
               lastCollectionTime:
                 description: LastCollectionTime is the last time metrics were successfully
                   collected for this AIScaleTarget
                 format: date-time
+                type: string
+              lastOOMTime:
+                description: |-
+                  LastOOMTime is the most recent collection time at which OOM kills were observed.
+                  Used to determine when the episode is over.
+                format: date-time
+                type: string
+              lastProcessedSuggestionUID:
+                description: |-
+                  LastProcessedSuggestionUID is the SuggestionUID of the last suggestion the operator
+                  fully processed (PrepareAction → execute → audit written). Used to prevent reprocessing
+                  the same suggestion on every reconcile.
                 type: string
               latestSuggestion:
                 description: LatestSuggestion contains the most recent scaling recommendations
@@ -1117,11 +1152,25 @@ spec:
                   currentReplicas:
                     description: |-
                       CurrentReplicas is the number of replicas at the time this suggestion was generated.
-                      Used as a baseline for scaling calculations.
+                      NB: This does not reflect the current replica count, just the count at suggestion time.
+
+                      replica count rather than a snapshot from when the forecaster created the suggestion.
                     format: int32
                     type: integer
                   end:
                     format: date-time
+                    type: string
+                  forecastErrorGeneral:
+                    description: ForecastErrorGeneral is set when a general forecasting
+                      error occurred that blocks all scaling.
+                    type: string
+                  forecastErrorHorizontal:
+                    description: ForecastErrorHorizontal is set when a horizontal-specific
+                      forecasting error occurred.
+                    type: string
+                  forecastErrorVertical:
+                    description: ForecastErrorVertical is set when a vertical-specific
+                      forecasting error occurred.
                     type: string
                   forecastedTotals:
                     description: ForecastedTotals contains predicted resource usage
@@ -1133,6 +1182,11 @@ spec:
                         metric:
                           description: Metric name - can be "cpu", "memory", "heap",
                             "non-heap", etc.
+                          type: string
+                        metricType:
+                          description: |-
+                            MetricType indicates the aggregation type of the metric
+                            Values: "average" (per-pod) or "total" (deployment-wide)
                           type: string
                         targetName:
                           description: TargetName is the name of the deployment or
@@ -1158,18 +1212,6 @@ spec:
                       - value
                       type: object
                     type: array
-                  forecastErrorGeneral:
-                    description: ForecastErrorGeneral is set when a general forecasting
-                      error occurred that blocks all scaling.
-                    type: string
-                  forecastErrorHorizontal:
-                    description: ForecastErrorHorizontal is set when a horizontal-specific
-                      forecasting error occurred.
-                    type: string
-                  forecastErrorVertical:
-                    description: ForecastErrorVertical is set when a vertical-specific
-                      forecasting error occurred.
-                    type: string
                   hasEnoughDataToScale:
                     description: |-
                       HasEnoughDataToScale indicates whether sufficient data was available to generate reliable recommendations.
@@ -1232,11 +1274,6 @@ spec:
                 - start
                 - suggestedReplicas
                 type: object
-              lastProcessedSuggestionUID:
-                description: LastProcessedSuggestionUID is the SuggestionUID of the
-                  last suggestion the operator fully processed. Used to prevent reprocessing
-                  the same suggestion on every reconcile.
-                type: string
               previousVerticalMode:
                 type: string
               replicas:
@@ -1249,6 +1286,9 @@ spec:
                 anyOf:
                 - type: integer
                 - type: string
+                description: |-
+                  ThorasSuggestedReplicas is the latest recommended replica count.
+                  Deprecated: Use LatestSuggestion.SuggestedReplicas instead.
                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                 x-kubernetes-int-or-string: true
             type: object
