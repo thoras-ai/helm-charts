@@ -52,7 +52,7 @@ helm install \
 
 | Key                                | Type    | Default                                          | Description                                                                                                          |
 | ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.85.0                                           | Thoras app version                                                                                                   |
+| thorasVersion                      | String  | 4.92.0                                           | Thoras app version                                                                                                   |
 | imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
