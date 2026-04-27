@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.85.0"
+thorasVersion: "4.92.0"
 cluster:
   name: ""
 
@@ -42,6 +42,8 @@ proxy:
 
 featureFlags:
   enableNodeDetailsCollector: true
+  # When enabled, AST scale mode may be configured via API
+  enableUpdateScaleModeApi: false
   thorasManageThoras:
     enabled: false
     # Recommendation Mode by default
@@ -60,10 +62,12 @@ featureFlags:
   enableCostSavingsSettingsRefresh: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
-  enableDeploymentMonitor: false
-  enablePgLargeObjectStorage: false
+  enableDeploymentMonitor: true
+  enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastWorkerReadinessProbe: false
+  enableForecastWorkerLivenessProbe: false
+  enableForecastQueueStats: false
   # Dynamically size memory requests based on actual cluster pod and workload
   # counts, discovered via Helm `lookup` at install/upgrade time. When disabled
   # (default), the chart uses the hardcoded `requests.memory` values on each
@@ -317,7 +321,7 @@ thorasWorker:
   enableAstViewCacheStateReconcilerWorker: true
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: true
-  enableUnifiedAstUtilizationMonitor: false
+  enableUnifiedAstUtilizationMonitor: true
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
@@ -415,6 +419,7 @@ thorasForecast:
   podEligibilityMinRunningTime: "2m"
   enableDecoupledTraining: true
   trainingJitterMinutes: 0
+  useAstMetricsSeries: false
   # Minimum lookback window required before autonomous scaling is enabled (minimum 3h).
   minLookbackToScale: "3h"
   # Specify the complete resources block (takes precedence if set)

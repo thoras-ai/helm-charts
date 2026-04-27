@@ -102,6 +102,8 @@ spec:
             value: {{ .Values.thorasWorker.enableActiveSuggestionWorker | ternary "true" "false" | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         {{- if .Values.thorasMonitor.resources }}
         resources: {{ .Values.thorasMonitor.resources | toYaml | nindent 10 }}

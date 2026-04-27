@@ -97,6 +97,8 @@ Default matches snapshot:
                       key: clusterKey
                       name: thoras-cloud-sync
                 - name: SERVICE_ENABLE_PG_LARGE_OBJECT_STORAGE
+                  value: "true"
+                - name: SERVICE_ENABLE_UPDATE_SCALE_MODE_API
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
@@ -819,6 +821,8 @@ Default matches snapshot:
                   value: "1000"
                 - name: ENABLE_DECOUPLED_TRAINING
                   value: "true"
+                - name: USE_AST_METRICS_SERIES
+                  value: "false"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: METRICS_PORT
@@ -948,6 +952,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
+                - name: SERVICE_PLATFORM_VERSION
+                  value: TEST
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-monitor
@@ -1175,6 +1181,8 @@ Default matches snapshot:
                   value: "50"
                 - name: SERVICE_PORT
                   value: "9101"
+                - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
+                  value: "false"
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
                   value: 3h
                 - name: DATABASE_HOST
@@ -1195,6 +1203,8 @@ Default matches snapshot:
                     secretKeyRef:
                       key: clusterKey
                       name: thoras-cloud-sync
+                - name: SERVICE_ENABLE_MIGRATION_ON_START
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-operator
@@ -1353,6 +1363,12 @@ Default matches snapshot:
         verbs:
           - '*'
       - apiGroups:
+          - ""
+        resources:
+          - pods/resize
+        verbs:
+          - patch
+      - apiGroups:
           - apps
           - argoproj.io
         resources:
@@ -1505,7 +1521,7 @@ Default matches snapshot:
                 - name: SERVICE_COST_REFRESH_MAX_CONCURRENCY
                   value: "5"
                 - name: SERVICE_ENABLE_UNIFIED_AST_UTILIZATION_MONITOR
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
                   value: "false"
                 - name: SERVICE_ENABLE_CLOUD_SYNC_WORKER
@@ -1532,7 +1548,9 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "false"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
-                  value: "false"
+                  value: "true"
+                - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
+                  value: "true"
                 - name: SERVICE_POD_NAME
                   valueFrom:
                     fieldRef:
