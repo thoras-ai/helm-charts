@@ -209,7 +209,7 @@ spec:
         {{- else }}
         resources:
           limits: {{ .Values.thorasOperator.limits | toYaml | nindent 12 }}
-          requests: {{ .Values.thorasOperator.requests | toYaml | nindent 12 }}
+          requests: {{ mergeOverwrite (deepCopy .Values.thorasOperator.requests) (dict "memory" (include "thoras.operator.memoryRequest" .)) | toYaml | nindent 12 }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

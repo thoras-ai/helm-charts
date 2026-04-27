@@ -249,7 +249,7 @@ spec:
         {{- else }}
         resources:
           limits: {{ .Values.thorasApiServerV2.limits | toYaml | nindent 12 }}
-          requests: {{ .Values.thorasApiServerV2.requests | toYaml | nindent 12 }}
+          requests: {{ mergeOverwrite (deepCopy .Values.thorasApiServerV2.requests) (dict "memory" (include "thoras.apiServerV2.memoryRequest" .)) | toYaml | nindent 12 }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
