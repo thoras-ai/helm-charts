@@ -1147,6 +1147,16 @@ Default matches snapshot:
             globalLabel: globalValue
           name: thoras-operator
         spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - thoras-operator
+                  topologyKey: kubernetes.io/hostname
           containers:
             - command:
                 - /app/operator
