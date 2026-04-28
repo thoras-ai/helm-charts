@@ -1226,12 +1226,13 @@ Default matches snapshot:
                 - containerPort: 8081
                   name: http-health
               readinessProbe:
-                failureThreshold: 3
+                failureThreshold: 2
                 httpGet:
                   path: /readyz
                   port: http-health
                 initialDelaySeconds: 5
-                periodSeconds: 10
+                periodSeconds: 5
+                timeoutSeconds: 2
               resources:
                 limits:
                   memory: 2Gi
