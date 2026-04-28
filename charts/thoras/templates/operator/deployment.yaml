@@ -215,8 +215,9 @@ spec:
             path: /readyz
             port: http-health
           initialDelaySeconds: 5
-          periodSeconds: 10
-          failureThreshold: 3
+          periodSeconds: 5
+          failureThreshold: 2
+          timeoutSeconds: 2
         {{- if .Values.thorasOperator.resources }}
         resources: {{ .Values.thorasOperator.resources | toYaml | nindent 10 }}
         {{- else }}
