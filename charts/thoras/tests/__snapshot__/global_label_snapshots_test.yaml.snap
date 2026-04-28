@@ -1223,6 +1223,15 @@ Default matches snapshot:
                   name: https-web-hooks
                 - containerPort: 9101
                   name: http-metrics
+                - containerPort: 8081
+                  name: http-health
+              readinessProbe:
+                failureThreshold: 2
+                httpGet:
+                  path: /readyz
+                  port: http-health
+                periodSeconds: 5
+                timeoutSeconds: 2
               resources:
                 limits:
                   memory: 2Gi
@@ -1234,6 +1243,13 @@ Default matches snapshot:
                 capabilities:
                   drop:
                     - ALL
+              startupProbe:
+                failureThreshold: 60
+                httpGet:
+                  path: /readyz
+                  port: http-health
+                periodSeconds: 5
+                timeoutSeconds: 2
               volumeMounts:
                 - mountPath: /app/system-config.yaml
                   name: system-config
