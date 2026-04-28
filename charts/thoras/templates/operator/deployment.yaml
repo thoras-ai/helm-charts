@@ -208,6 +208,15 @@ spec:
             containerPort: 9443
           - name: http-metrics
             containerPort: {{ .Values.thorasOperator.prometheus.port }}
+          - name: http-health
+            containerPort: 8081
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http-health
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
         {{- if .Values.thorasOperator.resources }}
         resources: {{ .Values.thorasOperator.resources | toYaml | nindent 10 }}
         {{- else }}
