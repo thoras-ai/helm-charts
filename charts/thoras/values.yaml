@@ -68,6 +68,27 @@ featureFlags:
   enableForecastWorkerReadinessProbe: false
   enableForecastWorkerLivenessProbe: false
   enableForecastQueueStats: false
+  # Dynamically size memory requests based on actual cluster pod and workload
+  # counts, discovered via Helm `lookup` at install/upgrade time. When disabled
+  # (default), the chart uses the hardcoded `requests.memory` values on each
+  # component as today.
+  #
+  # Formula (when enabled):
+  #   mem_request_bytes = (perPodKB * podCount + perWorkloadKB * workloadCount) * 1024
+  #                     + baseMB * 1024 * 1024
+  #
+  # Coefficients are derived from empirical measurement; override only with data
+  # from your environment. Setting a component's `.resources` block still takes
+  # precedence over the computed value.
+  dynamicResourceSizing:
+    enabled: false
+    memoryRequest:
+      perPodKB: 128 # 102.93
+      perWorkloadKB: 128 # 102.42
+      baseMB: 48.0 # 33.55
+    # One forecast-worker replica per this many workloads (rounded up). The
+    # chart still respects thorasForecast.worker.replicas as a floor.
+    workloadsPerForecastWorker: 100
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
@@ -132,7 +153,10 @@ thorasOperator:
   # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 2Gi
-  # Legacy field for backward compatibility (used if resources is empty)
+  # When featureFlags.dynamicResourceSizing.enabled is true, memory is computed
+  # at install time from cluster pod + workload counts via Helm lookup. The
+  # value below is the fallback when the flag is off or lookup is unavailable.
+  # CPU is never auto-sized. To pin all fields, set thorasOperator.resources.
   requests:
     cpu: 100m
     memory: 128Mi
@@ -246,7 +270,10 @@ thorasApiServerV2:
   # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 2Gi
-  # Legacy field for backward compatibility (used if resources is empty)
+  # When featureFlags.dynamicResourceSizing.enabled is true, memory is computed
+  # at install time from cluster pod + workload counts via Helm lookup. The
+  # value below is the fallback when the flag is off or lookup is unavailable.
+  # CPU is never auto-sized. To pin all fields, set thorasApiServerV2.resources.
   requests:
     cpu: 128m
     memory: 256Mi
@@ -277,7 +304,10 @@ thorasWorker:
   # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: 2Gi
-  # Legacy field for backward compatibility (used if resources is empty)
+  # When featureFlags.dynamicResourceSizing.enabled is true, memory is computed
+  # at install time from cluster pod + workload counts via Helm lookup. The
+  # value below is the fallback when the flag is off or lookup is unavailable.
+  # CPU is never auto-sized. To pin all fields, set thorasWorker.resources.
   requests:
     cpu: 128m
     memory: 256Mi
@@ -403,6 +433,10 @@ thorasForecast:
     memory: "8Gi"
     cpu: "4"
   worker:
+    # When featureFlags.dynamicResourceSizing.enabled is true, this is the
+    # floor — the chart provisions one replica per workloadsPerForecastWorker
+    # workloads, never less than this. When the flag is off, this value is
+    # used verbatim.
     replicas: 1
     pollingInterval: 15
     podAnnotations: {}

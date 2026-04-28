@@ -1,0 +1,146 @@
+suite: Dynamic Resource Sizing
+templates:
+  - api-server-v2/deployment.yaml
+  - operator/deployment.yaml
+  - worker/deployment.yaml
+  - forecast-worker/deployment.yaml
+set:
+  thorasMonitor:
+    unittesting: true
+tests:
+  - it: api-server-v2 uses values.yaml fallback memory request when flag is off
+    template: api-server-v2/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 256Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 128m
+
+  - it: operator uses values.yaml fallback memory request when flag is off
+    template: operator/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 128Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+
+  - it: worker uses values.yaml fallback memory request when flag is off
+    template: worker/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 256Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 128m
+
+  - it: forecast-worker uses configured replicas when flag is off
+    template: forecast-worker/deployment.yaml
+    set:
+      thorasForecast:
+        worker:
+          replicas: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: api-server-v2 falls back to values.yaml memory when flag is on but lookup empty
+    template: api-server-v2/deployment.yaml
+    set:
+      featureFlags:
+        dynamicResourceSizing:
+          enabled: true
+          memoryRequest:
+            perPodKB: 102.93
+            perWorkloadKB: 102.42
+            baseMB: 33.55
+          workloadsPerForecastWorker: 100
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 256Mi
+
+  - it: operator falls back to values.yaml memory when flag is on but lookup empty
+    template: operator/deployment.yaml
+    set:
+      featureFlags:
+        dynamicResourceSizing:
+          enabled: true
+          memoryRequest:
+            perPodKB: 102.93
+            perWorkloadKB: 102.42
+            baseMB: 33.55
+          workloadsPerForecastWorker: 100
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 128Mi
+
+  - it: worker falls back to values.yaml memory when flag is on but lookup empty
+    template: worker/deployment.yaml
+    set:
+      featureFlags:
+        dynamicResourceSizing:
+          enabled: true
+          memoryRequest:
+            perPodKB: 102.93
+            perWorkloadKB: 102.42
+            baseMB: 33.55
+          workloadsPerForecastWorker: 100
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 256Mi
+
+  - it: forecast-worker keeps configured replicas as floor when flag is on but lookup empty
+    template: forecast-worker/deployment.yaml
+    set:
+      thorasForecast:
+        worker:
+          replicas: 2
+      featureFlags:
+        dynamicResourceSizing:
+          enabled: true
+          memoryRequest:
+            perPodKB: 102.93
+            perWorkloadKB: 102.42
+            baseMB: 33.55
+          workloadsPerForecastWorker: 100
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+
+  - it: explicit thorasApiServerV2.resources still wins over auto-sizing
+    template: api-server-v2/deployment.yaml
+    set:
+      featureFlags:
+        dynamicResourceSizing:
+          enabled: true
+          memoryRequest:
+            perPodKB: 102.93
+            perWorkloadKB: 102.42
+            baseMB: 33.55
+          workloadsPerForecastWorker: 100
+      thorasApiServerV2:
+        resources:
+          requests:
+            cpu: 999m
+            memory: 999Mi
+          limits:
+            memory: 9Gi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 999Mi
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 999m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 9Gi

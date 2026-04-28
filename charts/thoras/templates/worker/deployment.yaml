@@ -241,7 +241,7 @@ spec:
         {{- else }}
         resources:
           limits: {{ .Values.thorasWorker.limits | toYaml | nindent 12 }}
-          requests: {{ .Values.thorasWorker.requests | toYaml | nindent 12 }}
+          requests: {{ mergeOverwrite (deepCopy .Values.thorasWorker.requests) (dict "memory" (include "thoras.worker.memoryRequest" .)) | toYaml | nindent 12 }}
         {{- end }}
         volumeMounts:
         - name: monitor-config
