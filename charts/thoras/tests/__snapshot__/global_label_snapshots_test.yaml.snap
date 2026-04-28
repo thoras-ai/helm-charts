@@ -1223,6 +1223,15 @@ Default matches snapshot:
                   name: https-web-hooks
                 - containerPort: 9101
                   name: http-metrics
+                - containerPort: 8081
+                  name: http-health
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /readyz
+                  port: http-health
+                initialDelaySeconds: 5
+                periodSeconds: 10
               resources:
                 limits:
                   memory: 2Gi
