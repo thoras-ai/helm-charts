@@ -60,6 +60,21 @@ podAntiAffinity:
 {{- end }}
 
 {{/*
+Default affinity for thorasOperator - hard anti-affinity with self to spread replicas across nodes
+*/}}
+{{- define "thoras.thorasOperator.defaultAffinity" -}}
+podAntiAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+  - labelSelector:
+      matchExpressions:
+      - key: app
+        operator: In
+        values:
+        - thoras-operator
+    topologyKey: kubernetes.io/hostname
+{{- end }}
+
+{{/*
 Default affinity for thorasForecast - anti-affinity with metrics-collector and self
 */}}
 {{- define "thoras.thorasForecast.defaultAffinity" -}}

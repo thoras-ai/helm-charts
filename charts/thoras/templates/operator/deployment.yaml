@@ -223,17 +223,16 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- $defaultAffinity := include "thoras.thorasOperator.defaultAffinity" . | fromYaml }}
       {{- if .Values.thorasOperator.useGlobalAffinity }}
         {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
         {{- $componentAffinity := .Values.thorasOperator.affinity | default dict | deepCopy }}
-        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
-        {{- with $mergedAffinity }}
+        {{- $mergedAffinity := mustMerge dict $defaultAffinity $globalAffinity $componentAffinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- toYaml $mergedAffinity | nindent 8 }}
       {{- else }}
-        {{- with .Values.thorasOperator.affinity }}
+        {{- $componentAffinity := .Values.thorasOperator.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $defaultAffinity $componentAffinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- toYaml $mergedAffinity | nindent 8 }}
       {{- end }}
