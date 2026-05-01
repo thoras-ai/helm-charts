@@ -234,6 +234,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+          - name: SERVICE_TIMESCALE_EXTENSION_VERSION
+            value: {{ .Values.metricsCollector.timescale.extensionVersion | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics
