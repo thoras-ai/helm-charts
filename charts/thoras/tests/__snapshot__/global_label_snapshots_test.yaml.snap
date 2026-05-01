@@ -827,6 +827,8 @@ Default matches snapshot:
                   value: "0"
                 - name: METRICS_PORT
                   value: "9101"
+                - name: WORKER_HEARTBEAT_FILE
+                  value: /var/run/thoras/worker-heartbeat
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -869,6 +871,9 @@ Default matches snapshot:
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: thoras-forecast-worker
+          volumes:
+            - emptyDir: {}
+              name: worker-state
   18: |
     apiVersion: v1
     imagePullSecrets:

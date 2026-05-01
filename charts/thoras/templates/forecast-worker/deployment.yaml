@@ -84,10 +84,8 @@ spec:
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
           {{- end }}
-          {{- if .Values.featureFlags.enableForecastWorkerLivenessProbe }}
           - name: WORKER_HEARTBEAT_FILE
             value: /var/run/thoras/worker-heartbeat
-          {{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         {{- if .Values.thorasForecast.worker.resources }}
         resources: {{ .Values.thorasForecast.worker.resources | toYaml | nindent 10 }}
@@ -117,11 +115,9 @@ spec:
         volumeMounts:
           - name: worker-state
             mountPath: /var/run/thoras
-      {{- if .Values.featureFlags.enableForecastWorkerLivenessProbe }}
       volumes:
         - name: worker-state
           emptyDir: {}
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
