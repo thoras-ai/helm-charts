@@ -827,9 +827,29 @@ Default matches snapshot:
                   value: "0"
                 - name: METRICS_PORT
                   value: "9101"
+                - name: WORKER_HEARTBEAT_FILE
+                  value: /var/run/thoras/worker-heartbeat
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:TEST
               imagePullPolicy: IfNotPresent
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - test $(( $(date +%s) - $(stat -c %Y /var/run/thoras/worker-heartbeat 2>/dev/null || echo 0) )) -lt 600
+                failureThreshold: 5
+                initialDelaySeconds: 120
+                periodSeconds: 60
               name: thoras-forecast-worker
+              readinessProbe:
+                exec:
+                  command:
+                    - curl
+                    - -sf
+                    - http://thoras-api-server-v2/health
+                failureThreshold: 48
+                periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 limits:
                   cpu: 2
@@ -842,34 +862,18 @@ Default matches snapshot:
                 capabilities:
                   drop:
                     - ALL
-          initContainers:
-            - args:
-                - |
-                  curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
-                  if [ $? -ne 0 ]; then
-                    echo "Failed to connect to API service"
-                    exit 1
-                  fi
-              command:
-                - /bin/sh
-                - -c
-              env:
-                - name: API_HEALTH_URL
-                  value: http://thoras-api-server-v2/health
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
-              name: wait-for-api-service
-              resources: {}
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
+              volumeMounts:
+                - mountPath: /var/run/thoras
+                  name: worker-state
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: thoras-forecast-worker
+          volumes:
+            - emptyDir: {}
+              name: worker-state
   18: |
     apiVersion: v1
     imagePullSecrets:

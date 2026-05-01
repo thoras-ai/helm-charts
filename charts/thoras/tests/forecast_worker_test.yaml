@@ -306,37 +306,6 @@ tests:
             name: USE_AST_METRICS_SERIES
             value: "true"
 
-  - it: Uses init container by default
-    asserts:
-      - equal:
-          path: spec.template.spec.initContainers[0].name
-          value: wait-for-api-service
-      - notExists:
-          path: spec.template.spec.containers[0].readinessProbe
-
-  - it: Replaces init container with readiness probe when enableForecastWorkerReadinessProbe is true
-    set:
-      featureFlags:
-        enableForecastWorkerReadinessProbe: true
-    asserts:
-      - notExists:
-          path: spec.template.spec.initContainers
-      - equal:
-          path: spec.template.spec.containers[0].readinessProbe.exec.command
-          value:
-            - curl
-            - -sf
-            - http://thoras-api-server-v2/health
-      - equal:
-          path: spec.template.spec.containers[0].readinessProbe.periodSeconds
-          value: 5
-      - equal:
-          path: spec.template.spec.containers[0].readinessProbe.timeoutSeconds
-          value: 5
-      - equal:
-          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
-          value: 48
-
   - it: Should enable request and limit overrides
     set:
       thorasForecast:
