@@ -40,28 +40,6 @@ spec:
       imagePullSecrets:
       - name: {{ .Values.imageCredentials.secretRef }}
       {{- end }}
-      {{- if not .Values.featureFlags.enableForecastWorkerReadinessProbe }}
-      initContainers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
-        name: wait-for-api-service
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: [ALL]
-        env:
-          - name: API_HEALTH_URL
-            value: "http://thoras-api-server-v2/health"
-          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
-            if [ $? -ne 0 ]; then
-              echo "Failed to connect to API service"
-              exit 1
-            fi
-        resources: {}
-      {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -118,7 +96,6 @@ spec:
           limits: {{ .Values.thorasForecast.worker.limits | toYaml | nindent 12 }}
           requests: {{ .Values.thorasForecast.worker.requests | toYaml | nindent 12 }}
         {{- end }}
-        {{- if .Values.featureFlags.enableForecastWorkerReadinessProbe }}
         readinessProbe:
           exec:
             command:
@@ -128,21 +105,18 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 5
           failureThreshold: 48
-        {{- end }}
-        {{- if .Values.featureFlags.enableForecastWorkerLivenessProbe }}
         livenessProbe:
           exec:
             command:
               - /bin/sh
               - -c
-              - "test $(( $(date +%s) - $(stat -c %Y /var/run/thoras/worker-heartbeat 2>/dev/null || echo 0) )) -lt 300"
+              - "test $(( $(date +%s) - $(stat -c %Y /var/run/thoras/worker-heartbeat 2>/dev/null || echo 0) )) -lt 600"
           initialDelaySeconds: 120
           periodSeconds: 60
           failureThreshold: 5
         volumeMounts:
           - name: worker-state
             mountPath: /var/run/thoras
-        {{- end }}
       {{- if .Values.featureFlags.enableForecastWorkerLivenessProbe }}
       volumes:
         - name: worker-state
