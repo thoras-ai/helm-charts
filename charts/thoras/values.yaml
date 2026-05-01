@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.92.0"
+thorasVersion: "4.94.0"
 cluster:
   name: ""
 
@@ -292,6 +292,7 @@ thorasWorker:
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: true
   enableUnifiedAstUtilizationMonitor: true
+  forecastJobTimeoutInterval: "10m"
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
@@ -389,6 +390,7 @@ thorasForecast:
   podEligibilityMinRunningTime: "2m"
   enableDecoupledTraining: true
   trainingJitterMinutes: 0
+  useAstMetricsSeries: false
   # Minimum lookback window required before autonomous scaling is enabled (minimum 3h).
   minLookbackToScale: "3h"
   # Specify the complete resources block (takes precedence if set)

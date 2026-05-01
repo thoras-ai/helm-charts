@@ -821,6 +821,8 @@ Default matches snapshot:
                   value: "1000"
                 - name: ENABLE_DECOUPLED_TRAINING
                   value: "true"
+                - name: USE_AST_METRICS_SERIES
+                  value: "false"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: METRICS_PORT
@@ -1145,6 +1147,16 @@ Default matches snapshot:
             globalLabel: globalValue
           name: thoras-operator
         spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - thoras-operator
+                  topologyKey: kubernetes.io/hostname
           containers:
             - command:
                 - /app/operator
@@ -1211,6 +1223,15 @@ Default matches snapshot:
                   name: https-web-hooks
                 - containerPort: 9101
                   name: http-metrics
+                - containerPort: 8081
+                  name: http-health
+              readinessProbe:
+                failureThreshold: 2
+                httpGet:
+                  path: /readyz
+                  port: http-health
+                periodSeconds: 5
+                timeoutSeconds: 2
               resources:
                 limits:
                   memory: 2Gi
@@ -1222,6 +1243,13 @@ Default matches snapshot:
                 capabilities:
                   drop:
                     - ALL
+              startupProbe:
+                failureThreshold: 60
+                httpGet:
+                  path: /readyz
+                  port: http-health
+                periodSeconds: 5
+                timeoutSeconds: 2
               volumeMounts:
                 - mountPath: /app/system-config.yaml
                   name: system-config
@@ -1549,6 +1577,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
                   value: "true"
+                - name: SERVICE_FORECAST_JOB_TIMEOUT_INTERVAL
+                  value: 10m
                 - name: SERVICE_POD_NAME
                   valueFrom:
                     fieldRef:

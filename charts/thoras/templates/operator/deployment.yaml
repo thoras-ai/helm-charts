@@ -208,6 +208,22 @@ spec:
             containerPort: 9443
           - name: http-metrics
             containerPort: {{ .Values.thorasOperator.prometheus.port }}
+          - name: http-health
+            containerPort: 8081
+        startupProbe:
+          httpGet:
+            path: /readyz
+            port: http-health
+          periodSeconds: 5
+          failureThreshold: 60
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http-health
+          periodSeconds: 5
+          failureThreshold: 2
+          timeoutSeconds: 2
         {{- if .Values.thorasOperator.resources }}
         resources: {{ .Values.thorasOperator.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -223,17 +239,16 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- $defaultAffinity := include "thoras.thorasOperator.defaultAffinity" . | fromYaml }}
       {{- if .Values.thorasOperator.useGlobalAffinity }}
         {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
         {{- $componentAffinity := .Values.thorasOperator.affinity | default dict | deepCopy }}
-        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
-        {{- with $mergedAffinity }}
+        {{- $mergedAffinity := mustMerge dict $defaultAffinity $globalAffinity $componentAffinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- toYaml $mergedAffinity | nindent 8 }}
       {{- else }}
-        {{- with .Values.thorasOperator.affinity }}
+        {{- $componentAffinity := .Values.thorasOperator.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $defaultAffinity $componentAffinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- toYaml $mergedAffinity | nindent 8 }}
       {{- end }}
