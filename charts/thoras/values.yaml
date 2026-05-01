@@ -66,7 +66,7 @@ featureFlags:
   enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastQueueStats: false
-  enableOOMMemoryAdjustment: true
+  enableOOMMemoryAdjustment: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
