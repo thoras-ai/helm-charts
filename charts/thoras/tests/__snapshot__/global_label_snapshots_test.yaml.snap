@@ -1217,6 +1217,8 @@ Default matches snapshot:
                       name: thoras-cloud-sync
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "false"
+                - name: SERVICE_TIMESCALE_EXTENSION_VERSION
+                  value: 2.26.1
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-operator

@@ -186,6 +186,8 @@ spec:
           {{- end }}
           - name: SERVICE_ENABLE_MIGRATION_ON_START
             value: {{ .Values.featureFlags.enableMigrationOnStartup | ternary "true" "false" | quote }}
+          - name: SERVICE_TIMESCALE_EXTENSION_VERSION
+            value: {{ .Values.metricsCollector.timescale.extensionVersion | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: [
           "/app/operator"
