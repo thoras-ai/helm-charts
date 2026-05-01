@@ -200,8 +200,8 @@ must be pre-installed and managed externally.
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                 |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector              |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                              |
-| metricsCollector.timescale.imageTag                             | String  | 2.26.1-pg16      | Timescale image tag                                          |
-| metricsCollector.timescale.extensionVersion                     | String  | 2.26.1           | Timescale extension version - should match imageTag          |
+| metricsCollector.timescale.imageTag                             | String  | 2.26.4-pg16      | Timescale image tag                                          |
+| metricsCollector.timescale.extensionVersion                     | String  | 2.26.4           | Timescale extension version - should match imageTag          |
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                     |
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                               |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                   |
