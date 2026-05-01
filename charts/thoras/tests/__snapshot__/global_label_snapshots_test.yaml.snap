@@ -834,7 +834,7 @@ Default matches snapshot:
                   command:
                     - /bin/sh
                     - -c
-                    - test $(( $(date +%s) - $(stat -c %Y /var/run/thoras/worker-heartbeat 2>/dev/null || echo 0) )) -lt 300
+                    - test $(( $(date +%s) - $(stat -c %Y /var/run/thoras/worker-heartbeat 2>/dev/null || echo 0) )) -lt 600
                 failureThreshold: 5
                 initialDelaySeconds: 120
                 periodSeconds: 60
