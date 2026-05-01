@@ -1133,6 +1133,12 @@ spec:
                   collected for this AIScaleTarget
                 format: date-time
                 type: string
+              lastOOMMemoryAdjusted:
+                description: |-
+                  LastOOMMemoryAdjusted is when the operator last applied an OOM memory adjustment.
+                  Used to enforce the cooldown between successive adjustments.
+                format: date-time
+                type: string
               lastOOMTime:
                 description: |-
                   LastOOMTime is the most recent collection time at which OOM kills were observed.
@@ -1273,6 +1279,20 @@ spec:
                 - hasEnoughDataToScale
                 - start
                 - suggestedReplicas
+                type: object
+              oomAdjustedMemory:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: |-
+                  OOMAdjustedMemory holds the per-container memory values computed by the operator
+                  during an active OOM episode. Keyed by container name. The admission webhook
+                  injects these values on pod creation instead of LatestSuggestion memory
+                  recommendations, ensuring restarted or newly created pods receive the adjusted
+                  values. Cleared when a new suggestion is processed.
                 type: object
               previousVerticalMode:
                 type: string
