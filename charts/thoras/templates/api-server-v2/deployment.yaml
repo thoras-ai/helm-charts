@@ -224,6 +224,8 @@ spec:
             value: {{ .Values.featureFlags.enablePgLargeObjectStorage | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_UPDATE_SCALE_MODE_API
             value: {{ .Values.featureFlags.enableUpdateScaleModeApi | ternary "true" "false" | quote }}
+          - name: SERVICE_TIMESCALE_EXTENSION_VERSION
+            value: {{ .Values.metricsCollector.timescale.extensionVersion | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         volumeMounts:
           - name: monitor-config
