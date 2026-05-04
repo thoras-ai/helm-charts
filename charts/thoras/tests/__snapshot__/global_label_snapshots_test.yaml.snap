@@ -1197,8 +1197,6 @@ Default matches snapshot:
                   value: "9101"
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
                   value: "false"
-                - name: SERVICE_ENABLE_OOM_MEMORY_ADJUSTMENT
-                  value: "false"
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
                   value: 3h
                 - name: DATABASE_HOST

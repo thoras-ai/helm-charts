@@ -138,8 +138,6 @@ spec:
           {{- end }}
           - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
             value: {{ .Values.featureFlags.enableForecastQueueStats | ternary "true" "false" | quote }}
-          - name: SERVICE_ENABLE_OOM_MEMORY_ADJUSTMENT
-            value: {{ .Values.featureFlags.enableOOMMemoryAdjustment | ternary "true" "false" | quote }}
           - name: SERVICE_MIN_LOOKBACK_TO_SCALE
             value: {{ .Values.thorasForecast.minLookbackToScale | quote }}
           - name: DATABASE_HOST

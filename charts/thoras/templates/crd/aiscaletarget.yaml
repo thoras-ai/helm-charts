@@ -930,6 +930,16 @@ spec:
                     - recommend
                     - rec
                     type: string
+                  oom_remediation:
+                    description: |-
+                      OOMRemediation configures operator-driven memory adjustment during active OOM episodes.
+                      When nil or Enabled is false, no automatic adjustment is applied.
+                    properties:
+                      enabled:
+                        description: Enabled activates automatic memory adjustment
+                          when OOM kills are detected.
+                        type: boolean
+                    type: object
                   scaling_behavior:
                     description: Rules for how large a proposed scale event must be
                       before triggering
