@@ -60,18 +60,20 @@ podAntiAffinity:
 {{- end }}
 
 {{/*
-Default affinity for thorasOperator - hard anti-affinity with self to spread replicas across nodes
+Default affinity for thorasOperator - soft anti-affinity with self to spread replicas across nodes
 */}}
 {{- define "thoras.thorasOperator.defaultAffinity" -}}
 podAntiAffinity:
-  requiredDuringSchedulingIgnoredDuringExecution:
-  - labelSelector:
-      matchExpressions:
-      - key: app
-        operator: In
-        values:
-        - thoras-operator
-    topologyKey: kubernetes.io/hostname
+  preferredDuringSchedulingIgnoredDuringExecution:
+  - weight: 100
+    podAffinityTerm:
+      labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - thoras-operator
+      topologyKey: kubernetes.io/hostname
 {{- end }}
 
 {{/*
