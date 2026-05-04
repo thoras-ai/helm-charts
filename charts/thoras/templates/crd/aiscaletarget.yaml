@@ -934,6 +934,16 @@ spec:
                     - recommend
                     - rec
                     type: string
+                  oom_remediation:
+                    description: |-
+                      OOMRemediation configures operator-driven memory adjustment during active OOM episodes.
+                      When nil or Enabled is false, no automatic adjustment is applied.
+                    properties:
+                      enabled:
+                        description: Enabled activates automatic memory adjustment
+                          when OOM kills are detected.
+                        type: boolean
+                    type: object
                   scaling_behavior:
                     description: Rules for how large a proposed scale event must be
                       before triggering
@@ -1137,6 +1147,12 @@ spec:
                   collected for this AIScaleTarget
                 format: date-time
                 type: string
+              lastOOMMemoryAdjusted:
+                description: |-
+                  LastOOMMemoryAdjusted is when the operator last applied an OOM memory adjustment.
+                  Used to enforce the cooldown between successive adjustments.
+                format: date-time
+                type: string
               lastOOMTime:
                 description: |-
                   LastOOMTime is the most recent collection time at which OOM kills were observed.
@@ -1277,6 +1293,20 @@ spec:
                 - hasEnoughDataToScale
                 - start
                 - suggestedReplicas
+                type: object
+              oomAdjustedMemory:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: |-
+                  OOMAdjustedMemory holds the per-container memory values computed by the operator
+                  during an active OOM episode. Keyed by container name. The admission webhook
+                  injects these values on pod creation instead of LatestSuggestion memory
+                  recommendations, ensuring restarted or newly created pods receive the adjusted
+                  values. Cleared when a new suggestion is processed.
                 type: object
               previousVerticalMode:
                 type: string
