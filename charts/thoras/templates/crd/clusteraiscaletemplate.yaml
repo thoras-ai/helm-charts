@@ -778,6 +778,10 @@ spec:
                       rule: '!has(self.forecast_cron) || self.forecast_cron == ''''
                         || !has(self.forecast_interval) || self.forecast_interval
                         == '''''
+                    - message: forecastInterval must be less than or equal to forecastBlocks
+                      rule: '!has(self.forecast_interval) || self.forecast_interval
+                        == '''' || !has(self.forecast_blocks) || self.forecast_blocks
+                        == '''' || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
                   vertical:
                     properties:
                       containers:
