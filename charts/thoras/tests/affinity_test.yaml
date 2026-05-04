@@ -57,10 +57,13 @@ tests:
       - isNotNull:
           path: spec.template.spec.affinity
       - equal:
-          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 100
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
           value: thoras-operator
       - equal:
-          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.topologyKey
           value: kubernetes.io/hostname
 
   - it: other components have no affinity by default
@@ -142,7 +145,7 @@ tests:
       - isNotNull:
           path: spec.template.spec.affinity.podAntiAffinity
       - equal:
-          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
           value: thoras-operator
 
   - it: other components get only global affinity
@@ -191,7 +194,7 @@ tests:
       - isNotNull:
           path: spec.template.spec.affinity.podAntiAffinity
       - equal:
-          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
           value: thoras-operator
 
   # Test 3b: Component-specific only - dashboard gets only component-specific
@@ -267,27 +270,25 @@ tests:
                 - global-value
       thorasOperator:
         affinity:
-          podAntiAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 80
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                    - avoid-this
-                topologyKey: kubernetes.io/hostname
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - co-locate-with
+              topologyKey: kubernetes.io/hostname
     asserts:
       - equal:
           path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
           value: global-key
       - equal:
-          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
-          value: 80
+          path: spec.template.spec.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          value: co-locate-with
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
-          value: avoid-this
+          value: thoras-operator
 
   # Test 4b: Global + component - dashboard gets both merged
   - it: dashboard gets global plus component-specific affinity merged
