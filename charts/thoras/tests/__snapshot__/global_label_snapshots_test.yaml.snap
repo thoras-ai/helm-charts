@@ -1544,8 +1544,6 @@ Default matches snapshot:
                   value: 4.7.0
                 - name: SERVICE_PLATFORM_VERSION
                   value: TEST
-                - name: SERVICE_CHUNK_INTERVAL_UPDATER_DRY_RUN
-                  value: "false"
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER

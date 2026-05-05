@@ -249,7 +249,6 @@ must be pre-installed and managed externally.
 | thorasWorker.queriesPerSecond                        | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
 | thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                         |
 | thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                      |
-| thorasWorker.enableSnapshotChunkAutoSizing           | Boolean | false         | Enable auto resizing of metric snapshot chunks               |
 | thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
 | thorasWorker.enableActiveSuggestionWorker            | Boolean | true          | Enable active suggestions worker                             |
 | thorasWorker.enableMonitorActiveSuggestionFromCRD    | Boolean | false         | Enable monitoring active suggestions using the AST           |
