@@ -943,6 +943,12 @@ spec:
                         description: Enabled activates automatic memory adjustment
                           when OOM kills are detected.
                         type: boolean
+                      stabilization_window:
+                        description: |-
+                          StabilizationWindow is the minimum time the workload must run without a new OOM before the
+                          operator allows a forecast to lower memory below the OOM-adjusted value. The floor
+                          resets on each new OOM. When nil, defaults to max(forecast_interval, 1h).
+                        type: string
                     type: object
                   scaling_behavior:
                     description: Rules for how large a proposed scale event must be
@@ -1140,6 +1146,28 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              jobs:
+                additionalProperties:
+                  properties:
+                    jobID:
+                      description: JobID is the unique identifier for this job, assigned
+                        by Thoras when the job is created.
+                      type: string
+                    lastRunStatus:
+                      description: LastRunStatus is the status of the last execution
+                        of this job.
+                      type: string
+                    lastRunTime:
+                      description: LastRunTime is the timestamp of the last time this
+                        job was executed.
+                      format: date-time
+                      type: string
+                    workerID:
+                      description: WorkerID is the identifier of the Thoras worker
+                        that claimed this job for processing.
+                      type: string
+                  type: object
+                type: object
               labelSelector:
                 type: string
               lastCollectionTime:
@@ -1302,12 +1330,16 @@ spec:
                   pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                   x-kubernetes-int-or-string: true
                 description: |-
-                  OOMAdjustedMemory holds the per-container memory values computed by the operator
-                  during an active OOM episode. Keyed by container name. The admission webhook
-                  injects these values on pod creation instead of LatestSuggestion memory
-                  recommendations, ensuring restarted or newly created pods receive the adjusted
-                  values. Cleared when a new suggestion is processed.
+                  OOMAdjustedMemory holds the per-container memory floor values set by the operator
+                  during an active OOM episode. Keyed by container name. The admission webhook applies
+                  max(suggestion, floor) on pod creation. Cleared when oomStabilizationWindowExpiry passes.
                 type: object
+              oomStabilizationWindowExpiry:
+                description: |-
+                  OOMStabilizationWindowExpiry is the time after which the OOM memory floor expires and forecasts are
+                  allowed to lower memory freely. Reset to now+StabilizationWindow on each new OOM adjustment.
+                format: date-time
+                type: string
               previousVerticalMode:
                 type: string
               replicas:
