@@ -138,6 +138,8 @@ thorasOperator:
   prometheus:
     enabled: true
     port: 9101
+  pprof:
+    enabled: false
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
@@ -284,6 +286,8 @@ thorasWorker:
   prometheus:
     enabled: true
     port: 9102
+  pprof:
+    enabled: false
   enableSnapshotChunkAutoSizing: true
   # Cost will not work in the dashboard if this is disabled. Used for debugging purposes.
   enableAstViewCacheRefreshWorker: true

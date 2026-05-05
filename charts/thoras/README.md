@@ -174,6 +174,7 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasOperator.queriesPerSecond    | String  | "50"            | Sets a maximum threshold for K8s API qps                     |
 | thorasOperator.prometheus.enabled  | Boolean | true            | Enables a prometheus metric exporter                         |
 | thorasOperator.prometheus.port     | Number  | 9101            | Port for the prometheus metric exporter                      |
+| thorasOperator.pprof.enabled       | Boolean | false           | Enable pprof endpoint.                                       |
 
 ## External TimescaleDB
 
@@ -255,6 +256,7 @@ must be pre-installed and managed externally.
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | false         | Enable the unified AST utilization monitor                   |
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                      |
+| thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                       |
 
 ## Thoras Dashboard
 

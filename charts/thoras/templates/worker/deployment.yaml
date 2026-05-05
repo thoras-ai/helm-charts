@@ -154,6 +154,8 @@ spec:
             value: "{{ .Values.cluster.name }}"
           - name: SERVICE_QUERIES_PER_SECOND
             value: {{ .Values.thorasWorker.queriesPerSecond | default .Values.queriesPerSecond | quote }}
+          - name: SERVICE_ENABLE_PPROF
+            value: {{ .Values.thorasWorker.pprof.enabled | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
           - name: SERVICE_PLATFORM_VERSION
