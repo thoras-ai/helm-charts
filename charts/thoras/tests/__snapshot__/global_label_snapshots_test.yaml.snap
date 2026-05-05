@@ -1223,6 +1223,8 @@ Default matches snapshot:
                     secretKeyRef:
                       key: clusterKey
                       name: thoras-cloud-sync
+                - name: SERVICE_ENABLE_PPROF
+                  value: "false"
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "false"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
@@ -1536,6 +1538,8 @@ Default matches snapshot:
                   value: ""
                 - name: SERVICE_QUERIES_PER_SECOND
                   value: "50"
+                - name: SERVICE_ENABLE_PPROF
+                  value: "false"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
                 - name: SERVICE_PLATFORM_VERSION

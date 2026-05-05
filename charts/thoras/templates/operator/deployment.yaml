@@ -184,6 +184,8 @@ spec:
           - name: SERVICE_FIELD_MANAGER
             value: {{ .Values.flux.fieldManager | quote }}
           {{- end }}
+          - name: SERVICE_ENABLE_PPROF
+            value: {{ .Values.thorasOperator.pprof.enabled | quote }}
           - name: SERVICE_ENABLE_MIGRATION_ON_START
             value: {{ .Values.featureFlags.enableMigrationOnStartup | ternary "true" "false" | quote }}
           - name: SERVICE_TIMESCALE_EXTENSION_VERSION
