@@ -236,6 +236,8 @@ spec:
                 fieldPath: metadata.name
           - name: SERVICE_TIMESCALE_EXTENSION_VERSION
             value: {{ .Values.metricsCollector.timescale.extensionVersion | quote }}
+          - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
+            value: {{ .Values.featureFlags.enableInformersStripManagedFields | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics
