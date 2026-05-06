@@ -611,6 +611,22 @@ spec:
                           - type
                           type: object
                         type: array
+                      maxReplicas:
+                        description: |-
+                          maxReplicas is the upper limit for the number of replicas to which the Thoras
+                          can scale up.
+                          If not set, Thoras will use the MaxReplicas value from the target's HPA if available.
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      minReplicas:
+                        description: |-
+                          minReplicas is the lower limit for the number of replicas to which the Thoras
+                          can scale down.
+                          If not set, Thoras will use the MinReplicas value from the target's HPA if available.
+                        format: int32
+                        minimum: 0
+                        type: integer
                       mode:
                         enum:
                         - autonomous
@@ -705,6 +721,10 @@ spec:
                     required:
                     - mode
                     type: object
+                    x-kubernetes-validations:
+                    - message: minReplicas must not be greater than maxReplicas
+                      rule: '!has(self.minReplicas) || !has(self.maxReplicas) || self.minReplicas
+                        <= self.maxReplicas'
                   model:
                     description: |-
                       Defines the forecasting and scaling behavior for an AIScaleTarget, including
@@ -936,6 +956,22 @@ spec:
                         - recommend
                         - rec
                         type: string
+                      oom_remediation:
+                        description: |-
+                          OOMRemediation configures operator-driven memory adjustment during active OOM episodes.
+                          When nil or Enabled is false, no automatic adjustment is applied.
+                        properties:
+                          enabled:
+                            description: Enabled activates automatic memory adjustment
+                              when OOM kills are detected.
+                            type: boolean
+                          stabilization_window:
+                            description: |-
+                              StabilizationWindow is the minimum time the workload must run without a new OOM before the
+                              operator allows a forecast to lower memory below the OOM-adjusted value. The floor
+                              resets on each new OOM. When nil, defaults to max(forecast_interval, 1h).
+                            type: string
+                        type: object
                       scaling_behavior:
                         description: Rules for how large a proposed scale event must
                           be before triggering
