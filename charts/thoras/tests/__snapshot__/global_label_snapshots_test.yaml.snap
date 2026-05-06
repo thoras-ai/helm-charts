@@ -1584,7 +1584,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
                   value: "true"
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
                   value: "true"
                 - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
@@ -1607,10 +1607,24 @@ Default matches snapshot:
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: http-metrics
+                periodSeconds: 30
+                timeoutSeconds: 2
               name: thoras-worker
               ports:
                 - containerPort: 9102
                   name: http-metrics
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health
+                  port: http-metrics
+                periodSeconds: 10
+                timeoutSeconds: 2
               resources:
                 limits:
                   memory: 2Gi
@@ -1622,6 +1636,13 @@ Default matches snapshot:
                 capabilities:
                   drop:
                     - ALL
+              startupProbe:
+                failureThreshold: 30
+                httpGet:
+                  path: /health
+                  port: http-metrics
+                periodSeconds: 10
+                timeoutSeconds: 2
               volumeMounts:
                 - mountPath: /app/config.yaml
                   name: monitor-config
