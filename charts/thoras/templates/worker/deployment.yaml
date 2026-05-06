@@ -219,7 +219,7 @@ spec:
           - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
             value: {{ .Values.featureFlags.enableNodeDetailsCollector | ternary "true" "false" | quote}}
           - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
-            value: {{ .Values.featureFlags.enableCheckDatabaseHealth | ternary "true" "false" | quote }}
+            value: "true"
           - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
             value: {{ .Values.featureFlags.enableCostSavingsSettingsRefresh | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
@@ -244,6 +244,27 @@ spec:
         ports:
           - name: http-metrics
             containerPort: {{ .Values.thorasWorker.prometheus.port }}
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http-metrics
+          periodSeconds: 10
+          failureThreshold: 30
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http-metrics
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http-metrics
+          periodSeconds: 30
+          failureThreshold: 3
+          timeoutSeconds: 2
         {{- if .Values.thorasWorker.resources }}
         resources: {{ .Values.thorasWorker.resources | toYaml | nindent 10 }}
         {{- else }}
