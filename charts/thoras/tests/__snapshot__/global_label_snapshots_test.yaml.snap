@@ -106,6 +106,10 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "true"
+                - name: SERVICE_OVERPROVISIONED_THRESHOLD
+                  value: "60"
+                - name: SERVICE_UNDERPROVISIONED_THRESHOLD
+                  value: "92"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1239,8 +1243,6 @@ Default matches snapshot:
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "false"
-                - name: SERVICE_ENABLE_MEMORY_LIMIT
-                  value: "true"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-operator
@@ -1615,8 +1617,6 @@ Default matches snapshot:
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "false"
-                - name: SERVICE_ENABLE_MEMORY_LIMIT
-                  value: "true"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
