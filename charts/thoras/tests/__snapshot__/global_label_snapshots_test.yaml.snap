@@ -104,6 +104,8 @@ Default matches snapshot:
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "false"
+                - name: SERVICE_ENABLE_MEMORY_LIMIT
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -962,6 +964,8 @@ Default matches snapshot:
                   value: 4.7.0
                 - name: SERVICE_PLATFORM_VERSION
                   value: TEST
+                - name: SERVICE_ENABLE_MEMORY_LIMIT
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               name: thoras-monitor
@@ -1230,6 +1234,8 @@ Default matches snapshot:
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
+                  value: "false"
+                - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
@@ -1604,6 +1610,8 @@ Default matches snapshot:
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
+                  value: "false"
+                - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
