@@ -1312,6 +1312,15 @@ spec:
                   during an active OOM episode. Keyed by container name. The admission webhook applies
                   max(suggestion, floor) on pod creation. Cleared when oomStabilizationWindowExpiry passes.
                 type: object
+              oomKilledContainers:
+                description: |-
+                  OOMKilledContainers is the set of container names that had OOM kills in the most recent
+                  collection cycle. Replaced on every cycle: set to containers with kills when OOMs are
+                  observed, cleared when no kills are observed. The operator uses this to scope memory
+                  adjustments to only containers that actually OOMed.
+                items:
+                  type: string
+                type: array
               oomStabilizationWindowExpiry:
                 description: |-
                   OOMStabilizationWindowExpiry is the time after which the OOM memory floor expires and forecasts are
