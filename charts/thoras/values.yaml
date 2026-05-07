@@ -130,11 +130,11 @@ thorasOperator:
   resources: {}
   # Legacy field for backward compatibility (used if resources is empty)
   limits:
-    memory: 2Gi
+    memory: 4Gi
   # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 100m
-    memory: 128Mi
+    memory: 1Gi
   prometheus:
     enabled: true
     port: 9101
@@ -246,11 +246,11 @@ thorasApiServerV2:
   resources: {}
   # Legacy field for backward compatibility (used if resources is empty)
   limits:
-    memory: 2Gi
+    memory: 4Gi
   # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 128m
-    memory: 256Mi
+    memory: 1Gi
   port: 80
   logLevel: "info"
   prometheus:
@@ -277,11 +277,11 @@ thorasWorker:
   resources: {}
   # Legacy field for backward compatibility (used if resources is empty)
   limits:
-    memory: 2Gi
+    memory: 4Gi
   # Legacy field for backward compatibility (used if resources is empty)
   requests:
     cpu: 128m
-    memory: 256Mi
+    memory: 1Gi
   logLevel: "info"
   prometheus:
     enabled: true
