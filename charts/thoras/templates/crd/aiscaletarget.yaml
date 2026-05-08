@@ -689,8 +689,18 @@ spec:
                           - undershoot
                           - assurance_optimized
                           - overshoot
+                          - percentile
                           type: string
+                        percentile_value:
+                          description: |-
+                            Percentile value to use when mode is "percentile". Required when mode is "percentile", must not be set otherwise.
+                            Valid range: 0–100. Decimals supported via quoted string (e.g. "99.9"). Integer values do not need quotes (e.g. 75).
+                          type: string
+                          x-kubernetes-int-or-string: true
                       type: object
+                      x-kubernetes-validations:
+                      - message: percentile_value can only be set when mode is percentile
+                        rule: '!has(self.mode) || self.mode == ''percentile'' || !has(self.percentile_value)'
                     description: Per-metric forecast configuration. Overrides global
                       mode and forecast_buffer_percentage for specific metrics.
                     type: object
@@ -710,7 +720,14 @@ spec:
                     - undershoot
                     - assurance_optimized
                     - overshoot
+                    - percentile
                     type: string
+                  percentile_value:
+                    description: |-
+                      Percentile value to use when mode is "percentile". Required when mode is "percentile", must not be set otherwise.
+                      Valid range: 0–100. Decimals supported via quoted string (e.g. "99.9"). Integer values do not need quotes (e.g. 75).
+                    type: string
+                    x-kubernetes-int-or-string: true
                 type: object
                 x-kubernetes-validations:
                 - message: forecastCron and forecastInterval are mutually exclusive
@@ -720,6 +737,11 @@ spec:
                   rule: '!has(self.forecast_interval) || self.forecast_interval ==
                     '''' || !has(self.forecast_blocks) || self.forecast_blocks ==
                     '''' || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
+                - message: percentile_value is required when mode is percentile
+                  rule: '!has(self.mode) || self.mode != ''percentile'' || has(self.percentile_value)'
+                - message: percentile_value can only be set when mode is percentile
+                  rule: '!has(self.percentile_value) || (has(self.mode) && self.mode
+                    == ''percentile'')'
               scaleTargetRef:
                 properties:
                   apiVersion:
