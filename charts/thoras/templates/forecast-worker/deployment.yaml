@@ -80,6 +80,10 @@ spec:
             value: {{ .Values.thorasForecast.useAstMetricsSeries | ternary "true" "false" | quote }}
           - name: TRAINING_JITTER_MINUTES
             value: {{ .Values.thorasForecast.trainingJitterMinutes | quote }}
+          - name: AFFINITY_ID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.uid
           {{- if .Values.thorasForecast.prometheus.enabled }}
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
