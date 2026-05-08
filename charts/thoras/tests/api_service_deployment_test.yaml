@@ -208,3 +208,23 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_BLOB_SERVICE_API_URL')]
+  - it: Should set default utilization thresholds
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_OVERPROVISIONED_THRESHOLD')].value
+          value: "60"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_UNDERPROVISIONED_THRESHOLD')].value
+          value: "92"
+  - it: Should override utilization thresholds
+    set:
+      utilizationThresholds:
+        overprovisioned: 50
+        underprovisioned: 85
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_OVERPROVISIONED_THRESHOLD')].value
+          value: "50"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_UNDERPROVISIONED_THRESHOLD')].value
+          value: "85"

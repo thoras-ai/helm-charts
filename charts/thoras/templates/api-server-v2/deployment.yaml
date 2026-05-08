@@ -230,6 +230,10 @@ spec:
             value: {{ .Values.featureFlags.enableInformersStripManagedFields | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_MEMORY_LIMIT
             value: {{ .Values.featureFlags.enableMemoryLimit | ternary "true" "false" | quote }}
+          - name: SERVICE_OVERPROVISIONED_THRESHOLD
+            value: {{ .Values.utilizationThresholds.overprovisioned | quote }}
+          - name: SERVICE_UNDERPROVISIONED_THRESHOLD
+            value: {{ .Values.utilizationThresholds.underprovisioned | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         volumeMounts:
           - name: monitor-config

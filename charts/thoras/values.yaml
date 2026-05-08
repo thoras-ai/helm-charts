@@ -469,3 +469,8 @@ flux:
   # Field manager name used when patching Kubernetes resources (e.g. restartedAt).
   # Override only if your Flux installation uses a non-default field manager name.
   fieldManager: "flux-client-side-apply"
+
+# Utilization thresholds in which a target is considered over or under provisioned
+utilizationThresholds:
+  overprovisioned: 60
+  underprovisioned: 92
