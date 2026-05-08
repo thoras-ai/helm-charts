@@ -164,10 +164,6 @@ spec:
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
           {{- end }}
-          {{- if .Values.thorasWorker.enableSnapshotChunkAutoSizing }}
-          - name: SERVICE_CHUNK_INTERVAL_UPDATER_DRY_RUN
-            value: "false"
-          {{- end }}
           {{- with .Values.thorasWorker.riverLogLevel }}
           - name: SERVICE_RIVER_LOG_LEVEL
             value: {{ . | quote }}
