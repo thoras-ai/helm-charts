@@ -831,6 +831,10 @@ Default matches snapshot:
                   value: "false"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
+                - name: AFFINITY_ID
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.uid
                 - name: METRICS_PORT
                   value: "9101"
                 - name: WORKER_HEARTBEAT_FILE
