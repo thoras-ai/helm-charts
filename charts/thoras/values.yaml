@@ -67,7 +67,7 @@ featureFlags:
   enableNoBlobApiServer: false
   enableForecastQueueStats: false
   enableInformersStripManagedFields: false
-  enableMemoryLimit: false
+  enableMemoryLimit: true
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
