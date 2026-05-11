@@ -182,7 +182,7 @@ spec:
             command: ["pg_isready", "-U", "postgres"]
           periodSeconds: 10
           failureThreshold: 6
-          timeoutSeconds: 2
+          timeoutSeconds: 10
         volumeMounts:
         {{- if .Values.metricsCollector.timescale.config.enabled }}
           - name: timescale-config

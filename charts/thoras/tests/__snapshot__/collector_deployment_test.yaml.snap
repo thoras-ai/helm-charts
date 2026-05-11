@@ -26,7 +26,7 @@ Default containers should match snapshots:
           - postgres
       failureThreshold: 6
       periodSeconds: 10
-      timeoutSeconds: 2
+      timeoutSeconds: 10
     name: timescaledb
     ports:
       - containerPort: 5432
