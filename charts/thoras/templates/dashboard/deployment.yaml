@@ -39,27 +39,6 @@ spec:
         - name: nginx-config
           configMap:
             name: thoras-dashboard-nginx-config
-      initContainers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
-        name: wait-for-api-service
-        securityContext:
-          runAsUser: 65534 # user: nobody
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: [ALL]
-        env:
-          - name: API_HEALTH_URL
-            value: "http://thoras-api-server-v2/health"
-          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
-            if [ $? -ne 0 ]; then
-              echo "Failed to connect to API service"
-              exit 1
-            fi
-        resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard
@@ -75,6 +54,7 @@ spec:
         {{- end }}
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
+          name: http
         {{- if .Values.thorasDashboard.resources }}
         resources: {{ .Values.thorasDashboard.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -82,6 +62,24 @@ spec:
           limits: {{ .Values.thorasDashboard.limits | toYaml | nindent 12 }}
           requests: {{ .Values.thorasDashboard.requests | toYaml | nindent 12 }}
         {{- end }}
+        startupProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 5
+          failureThreshold: 12
+        readinessProbe:
+          exec:
+            command: ["curl", "-sf", "http://thoras-api-server-v2/health"]
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 5
+          failureThreshold: 48
         volumeMounts:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf
