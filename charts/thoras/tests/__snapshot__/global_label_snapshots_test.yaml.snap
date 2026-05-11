@@ -477,9 +477,27 @@ Default matches snapshot:
                       - stop
                       - -m
                       - fast
+              livenessProbe:
+                exec:
+                  command:
+                    - pg_isready
+                    - -U
+                    - postgres
+                failureThreshold: 6
+                periodSeconds: 10
+                timeoutSeconds: 2
               name: timescaledb
               ports:
                 - containerPort: 5432
+              readinessProbe:
+                exec:
+                  command:
+                    - pg_isready
+                    - -U
+                    - postgres
+                failureThreshold: 3
+                periodSeconds: 5
+                timeoutSeconds: 2
               resources:
                 limits:
                   memory: 16384Mi
@@ -491,6 +509,15 @@ Default matches snapshot:
                 capabilities:
                   drop:
                     - ALL
+              startupProbe:
+                exec:
+                  command:
+                    - pg_isready
+                    - -U
+                    - postgres
+                failureThreshold: 60
+                periodSeconds: 5
+                timeoutSeconds: 2
               volumeMounts:
                 - mountPath: /var/lib/share
                   name: timescale-data

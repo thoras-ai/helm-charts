@@ -165,6 +165,24 @@ spec:
           limits: {{ .Values.metricsCollector.timescale.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.timescale.requests | toYaml | nindent 12 }}
         {{- end }}
+        startupProbe:
+          exec:
+            command: ["pg_isready", "-U", "postgres"]
+          periodSeconds: 5
+          failureThreshold: 60
+          timeoutSeconds: 2
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "postgres"]
+          periodSeconds: 5
+          failureThreshold: 3
+          timeoutSeconds: 2
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-U", "postgres"]
+          periodSeconds: 10
+          failureThreshold: 6
+          timeoutSeconds: 2
         volumeMounts:
         {{- if .Values.metricsCollector.timescale.config.enabled }}
           - name: timescale-config
