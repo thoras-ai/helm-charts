@@ -245,17 +245,29 @@ spec:
             subPath: system-config.yaml
             readOnly: true
         ports:
-        - containerPort: {{ .Values.thorasApiServerV2.containerPort }}
+        - name: http
+          containerPort: {{ .Values.thorasApiServerV2.containerPort }}
         startupProbe:
           httpGet:
             path: /health
-            port: {{ .Values.thorasApiServerV2.containerPort }}
-          failureThreshold: 12
+            port: http
           periodSeconds: 10
+          failureThreshold: 30
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /health?db=true
+            port: http
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 2
         livenessProbe:
           httpGet:
             path: /health
-            port: {{ .Values.thorasApiServerV2.containerPort }}
+            port: http
+          periodSeconds: 30
+          failureThreshold: 3
+          timeoutSeconds: 2
         {{- if .Values.thorasApiServerV2.resources }}
         resources: {{ .Values.thorasApiServerV2.resources | toYaml | nindent 10 }}
         {{- else }}

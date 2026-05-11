@@ -113,12 +113,23 @@ Default matches snapshot:
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
+                failureThreshold: 3
                 httpGet:
                   path: /health
-                  port: 8080
+                  port: http
+                periodSeconds: 30
+                timeoutSeconds: 2
               name: thoras-api-server-v2
               ports:
                 - containerPort: 8080
+                  name: http
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /health?db=true
+                  port: http
+                periodSeconds: 10
+                timeoutSeconds: 2
               resources:
                 limits:
                   memory: 4Gi
@@ -131,11 +142,12 @@ Default matches snapshot:
                   drop:
                     - ALL
               startupProbe:
-                failureThreshold: 12
+                failureThreshold: 30
                 httpGet:
                   path: /health
-                  port: 8080
+                  port: http
                 periodSeconds: 10
+                timeoutSeconds: 2
               volumeMounts:
                 - mountPath: /app/config.yaml
                   name: monitor-config
