@@ -688,9 +688,25 @@ Default matches snapshot:
           containers:
             - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
               imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 48
+                httpGet:
+                  path: /
+                  port: http
+                periodSeconds: 5
               name: thoras-dashboard
               ports:
                 - containerPort: 8080
+                  name: http
+              readinessProbe:
+                exec:
+                  command:
+                    - curl
+                    - -sf
+                    - http://thoras-api-server-v2/health
+                failureThreshold: 2
+                periodSeconds: 5
+                timeoutSeconds: 5
               resources:
                 limits:
                   memory: 2Gi
@@ -703,33 +719,16 @@ Default matches snapshot:
                   drop:
                     - ALL
                 runAsUser: 101
+              startupProbe:
+                failureThreshold: 12
+                httpGet:
+                  path: /
+                  port: http
+                periodSeconds: 5
               volumeMounts:
                 - mountPath: /etc/nginx/nginx.conf
                   name: nginx-config
                   subPath: nginx.conf
-          initContainers:
-            - args:
-                - |
-                  curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
-                  if [ $? -ne 0 ]; then
-                    echo "Failed to connect to API service"
-                    exit 1
-                  fi
-              command:
-                - /bin/sh
-                - -c
-              env:
-                - name: API_HEALTH_URL
-                  value: http://thoras-api-server-v2/health
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
-              name: wait-for-api-service
-              resources: {}
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsUser: 65534
           securityContext:
             runAsNonRoot: true
             seccompProfile:
