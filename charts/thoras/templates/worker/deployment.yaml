@@ -258,6 +258,22 @@ spec:
             value: {{ .Values.featureFlags.thorasManageThoras.db.forecastBlocks | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_CRON
             value: {{ .Values.featureFlags.thorasManageThoras.db.forecastCron | quote }}
+          - name: SERVICE_ENABLE_FORECAST_WORKER_SCALER
+            value: {{ .Values.featureFlags.forecastWorkerScaler.enabled | ternary "true" "false" | quote }}
+          - name: SERVICE_FORECAST_WORKER_SCALER_INTERVAL
+            value: {{ .Values.featureFlags.forecastWorkerScaler.interval | quote }}
+          - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAME
+            value: {{ .Values.featureFlags.forecastWorkerScaler.deploymentName | quote }}
+          - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: SERVICE_FORECAST_WORKER_MIN_REPLICAS
+            value: {{ .Values.featureFlags.forecastWorkerScaler.minReplicas | quote }}
+          - name: SERVICE_FORECAST_WORKER_MAX_REPLICAS
+            value: {{ .Values.featureFlags.forecastWorkerScaler.maxReplicas | quote }}
+          - name: SERVICE_FORECAST_WORKER_ASTS_PER_REPLICA
+            value: {{ .Values.featureFlags.forecastWorkerScaler.astsPerReplica | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics
