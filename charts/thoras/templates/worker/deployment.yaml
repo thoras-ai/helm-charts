@@ -265,9 +265,7 @@ spec:
           - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAME
             value: {{ .Values.featureFlags.forecastWorkerScaler.deploymentName | quote }}
           - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
+            value: {{ .Values.featureFlags.forecastWorkerScaler.deploymentNamespace | quote }}
           - name: SERVICE_FORECAST_WORKER_MIN_REPLICAS
             value: {{ .Values.featureFlags.forecastWorkerScaler.minReplicas | quote }}
           - name: SERVICE_FORECAST_WORKER_MAX_REPLICAS

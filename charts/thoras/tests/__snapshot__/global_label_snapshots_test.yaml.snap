@@ -1693,9 +1693,7 @@ Default matches snapshot:
                 - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAME
                   value: thoras-forecast-worker
                 - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.namespace
+                  value: thoras
                 - name: SERVICE_FORECAST_WORKER_MIN_REPLICAS
                   value: "1"
                 - name: SERVICE_FORECAST_WORKER_MAX_REPLICAS
