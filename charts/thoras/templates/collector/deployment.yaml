@@ -292,6 +292,30 @@ spec:
           limits: {{ .Values.metricsCollector.blobService.limits | toYaml | nindent 12 }}
           requests: {{ .Values.metricsCollector.blobService.requests | toYaml | nindent 12 }}
         {{- end }}
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 10
+          failureThreshold: 30
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /health?db=true
+            port: http
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 30
+          failureThreshold: 3
+          timeoutSeconds: 2
+        ports:
+        - containerPort: {{ .Values.metricsCollector.blobService.containerPort }}
+          name: http
         volumeMounts:
           - mountPath: /var/lib/share
       {{- if and .Values.metricsCollector.persistence.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
