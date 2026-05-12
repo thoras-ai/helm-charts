@@ -246,6 +246,18 @@ spec:
             value: {{ .Values.utilizationThresholds.overprovisioned | quote }}
           - name: SERVICE_UNDERPROVISIONED_THRESHOLD
             value: {{ .Values.utilizationThresholds.underprovisioned | quote }}
+          - name: SERVICE_ENABLE_THORAS_SCALING_THORAS_WORKER
+            value: {{ .Values.featureFlags.thorasManageThoras.enabled | ternary "true" "false" | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_MODE
+            value: {{ .Values.featureFlags.thorasManageThoras.mode | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_UPDATE_MODE
+            value: {{ .Values.featureFlags.thorasManageThoras.updateMode | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_UPDATE_MODE
+            value: {{ .Values.featureFlags.thorasManageThoras.db.updateMode | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_BLOCKS
+            value: {{ .Values.featureFlags.thorasManageThoras.db.forecastBlocks | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_CRON
+            value: {{ .Values.featureFlags.thorasManageThoras.db.forecastCron | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics

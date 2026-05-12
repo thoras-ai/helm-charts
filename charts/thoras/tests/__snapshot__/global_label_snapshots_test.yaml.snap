@@ -1674,6 +1674,18 @@ Default matches snapshot:
                   value: "60"
                 - name: SERVICE_UNDERPROVISIONED_THRESHOLD
                   value: "92"
+                - name: SERVICE_ENABLE_THORAS_SCALING_THORAS_WORKER
+                  value: "false"
+                - name: SERVICE_THORAS_SCALING_THORAS_MODE
+                  value: recommendation
+                - name: SERVICE_THORAS_SCALING_THORAS_UPDATE_MODE
+                  value: recreate
+                - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_UPDATE_MODE
+                  value: recreate
+                - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_BLOCKS
+                  value: 4h0s
+                - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_CRON
+                  value: 17 * * * *
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
