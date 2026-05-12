@@ -79,8 +79,6 @@ Default matches snapshot:
                   value: 2m
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
                   value: 3h
-                - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
-                  value: "false"
                 - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
                   value: "false"
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
