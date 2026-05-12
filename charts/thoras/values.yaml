@@ -65,8 +65,8 @@ featureFlags:
   enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastQueueStats: false
-  enableInformersStripManagedFields: false
-  enableTypedInformers: false
+  enableInformersStripManagedFields: true
+  enableTypedInformers: true
   enableMemoryLimit: true
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
