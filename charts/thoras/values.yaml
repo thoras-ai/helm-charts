@@ -295,7 +295,8 @@ thorasWorker:
   enableMetricIntegrityWorker: false
   enableActiveSuggestionWorker: true
   enableUnifiedAstUtilizationMonitor: true
-  forecastJobTimeoutInterval: "10m"
+  forecastJobTimeoutInterval: "2m"
+  trainJobTimeoutInterval: "10m"
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
