@@ -12,7 +12,7 @@ spec:
   model:
     forecast_blocks: 20m
     forecast_interval: '15m'
-    mode: balanced
+    mode: overshoot
   scaleTargetRef:
     kind: Deployment
     name: thoras-operator
