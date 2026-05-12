@@ -87,9 +87,9 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableMigrationOnStartup          | Boolean | false   | If true, the main container handles migrations             |
 | featureFlags.enableCostSavingsSettingsRefresh  | Boolean | true    | If true, refreshes the costs savings settings periodically |
 | featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects   |
-| featureFlags.enableInformersStripManagedFields | Boolean | false   | If true, enables informer memory optimizations             |
-| featureFlags.enableTypedInformers              | Boolean | false   | If true, enables additional informer memory optimizations  |
-| featureFlags.enableMemoryLimit                 | Boolean | false   | If true, enables dynamic GOMEMLIMIT                        |
+| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations             |
+| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations  |
+| featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                        |
 
 ## Affinity Configuration
 

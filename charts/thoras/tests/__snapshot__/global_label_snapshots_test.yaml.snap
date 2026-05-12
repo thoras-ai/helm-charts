@@ -103,9 +103,9 @@ Default matches snapshot:
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
@@ -1278,9 +1278,9 @@ Default matches snapshot:
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
@@ -1667,9 +1667,9 @@ Default matches snapshot:
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
