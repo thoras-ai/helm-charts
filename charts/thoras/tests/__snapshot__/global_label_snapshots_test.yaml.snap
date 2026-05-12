@@ -1626,6 +1626,8 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
                   value: "true"
                 - name: SERVICE_FORECAST_JOB_TIMEOUT_INTERVAL
+                  value: 2m
+                - name: SERVICE_TRAIN_JOB_TIMEOUT_INTERVAL
                   value: 10m
                 - name: SERVICE_POD_NAME
                   valueFrom:

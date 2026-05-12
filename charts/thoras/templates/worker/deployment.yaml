@@ -228,6 +228,8 @@ spec:
             value: {{ not .Values.featureFlags.enableForecastQueueStats | ternary "true" "false" | quote }}
           - name: SERVICE_FORECAST_JOB_TIMEOUT_INTERVAL
             value: {{ .Values.thorasWorker.forecastJobTimeoutInterval | quote }}
+          - name: SERVICE_TRAIN_JOB_TIMEOUT_INTERVAL
+            value: {{ .Values.thorasWorker.trainJobTimeoutInterval | quote }}
           - name: SERVICE_POD_NAME
             valueFrom:
               fieldRef:
