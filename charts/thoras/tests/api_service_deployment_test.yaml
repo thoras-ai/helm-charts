@@ -106,6 +106,8 @@ tests:
           value: "test-value"
   - it: Should ensure default extensionVersion is substring of default imageTag
     set:
+      featureFlags:
+        enableMigrationOnStartup: false
       metricsCollector:
         timescale:
           extensionVersion: "2.26.1"

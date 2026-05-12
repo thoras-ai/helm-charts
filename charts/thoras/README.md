@@ -84,7 +84,7 @@ The following flags are considered temporary and gate access to specific behavio
 | ---------------------------------------------- | ------- | ------- | ---------------------------------------------------------- |
 | featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                        |
 | featureFlags.enableCheckDatabaseHealth         | Boolean | false   | If true, pings the database in the health endpoint         |
-| featureFlags.enableMigrationOnStartup          | Boolean | false   | If true, the main container handles migrations             |
+| featureFlags.enableMigrationOnStartup          | Boolean | true    | If true, the main container handles migrations             |
 | featureFlags.enableCostSavingsSettingsRefresh  | Boolean | true    | If true, refreshes the costs savings settings periodically |
 | featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects   |
 | featureFlags.enableInformersStripManagedFields | Boolean | false   | If true, enables informer memory optimizations             |

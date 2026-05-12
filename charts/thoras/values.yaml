@@ -58,7 +58,7 @@ featureFlags:
       # Forecast once per hour by default
       forecastCron: "17 * * * *"
   enableCheckDatabaseHealth: false
-  enableMigrationOnStartup: false
+  enableMigrationOnStartup: true
   enableCostSavingsSettingsRefresh: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
