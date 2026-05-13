@@ -95,3 +95,40 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasWorker.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
+{{- if .Values.thorasForecast.worker.scaler.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: thoras-worker-forecast-scaler
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments/scale
+  resourceNames:
+  - thoras-forecast-worker
+  verbs:
+  - get
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: thoras-worker-forecast-scaler
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: thoras-worker-forecast-scaler
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
