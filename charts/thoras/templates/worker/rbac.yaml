@@ -95,7 +95,7 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasWorker.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
-{{- if .Values.featureFlags.forecastWorkerScaler.enabled }}
+{{- if .Values.thorasForecast.worker.scaler.enabled }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -110,7 +110,7 @@ rules:
   resources:
   - deployments/scale
   resourceNames:
-  - {{ .Values.featureFlags.forecastWorkerScaler.deploymentName }}
+  - thoras-forecast-worker
   verbs:
   - get
   - update

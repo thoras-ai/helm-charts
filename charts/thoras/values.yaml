@@ -426,7 +426,7 @@ thorasForecast:
       cpu: 1
       memory: 256Mi
     forecastTimeout: 600
-    forecastWorkerScaler:
+    scaler:
       enabled: false
       interval: "1m"
       minReplicas: 1
