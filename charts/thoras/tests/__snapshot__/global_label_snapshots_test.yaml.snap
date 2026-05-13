@@ -99,7 +99,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_UPDATE_SCALE_MODE_API
                   value: "false"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
-                  value: 2.26.1
+                  value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
@@ -198,7 +198,7 @@ Default matches snapshot:
                 - name: DATABASE_URL
                   value: $(DATABASE_HOST)/thoras?sslmode=disable
                 - name: EXTENSION_VERSION
-                  value: 2.26.1
+                  value: 2.27.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
               resources: {}
@@ -467,7 +467,7 @@ Default matches snapshot:
                       name: thoras-timescale-password
                 - name: PGDATA
                   value: /var/lib/share/postgresql
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.26.1-pg16
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.27.0-pg16
               imagePullPolicy: IfNotPresent
               lifecycle:
                 preStop:
@@ -1274,7 +1274,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "false"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
-                  value: 2.26.1
+                  value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
@@ -1663,7 +1663,7 @@ Default matches snapshot:
                     fieldRef:
                       fieldPath: metadata.name
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
-                  value: 2.26.1
+                  value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
@@ -1784,7 +1784,7 @@ Default matches snapshot:
                 - name: DATABASE_URL
                   value: $(DATABASE_HOST)/thoras?sslmode=disable
                 - name: EXTENSION_VERSION
-                  value: 2.26.1
+                  value: 2.27.0
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               name: wait-for-postgres
               resources: {}
