@@ -57,13 +57,6 @@ featureFlags:
       forecastBlocks: "4h0s"
       # Forecast once per hour by default
       forecastCron: "17 * * * *"
-  forecastWorkerScaler:
-    enabled: false
-    interval: "1m"
-    deploymentName: "thoras-forecast-worker"
-    minReplicas: 1
-    maxReplicas: 100
-    astsPerReplica: 67
   enableMigrationOnStartup: false
   enableCostSavingsSettingsRefresh: true
   enablePrometheusMetricScraping: false
@@ -433,6 +426,12 @@ thorasForecast:
       cpu: 1
       memory: 256Mi
     forecastTimeout: 600
+    forecastWorkerScaler:
+      enabled: false
+      interval: "1m"
+      minReplicas: 1
+      maxReplicas: 100
+      astsPerReplica: 67
   prometheus:
     enabled: true
     port: 9101
