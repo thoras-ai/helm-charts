@@ -57,7 +57,7 @@ featureFlags:
       forecastBlocks: "4h0s"
       # Forecast once per hour by default
       forecastCron: "17 * * * *"
-  enableMigrationOnStartup: false
+  enableMigrationOnStartup: true
   enableCostSavingsSettingsRefresh: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false

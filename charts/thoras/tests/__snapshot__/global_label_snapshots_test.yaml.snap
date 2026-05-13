@@ -82,7 +82,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
                   value: "false"
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_CLOUD_SYNC
                   value: "false"
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
@@ -157,56 +157,6 @@ Default matches snapshot:
                   name: system-config
                   readOnly: true
                   subPath: system-config.yaml
-          initContainers:
-            - args:
-                - |
-                  retries=0
-                  max_retries=48
-                  until [ $retries -ge $max_retries ]; do
-                    if pg_isready -q -d ${DATABASE_URL}; then
-                      break
-                    else
-                      echo "postgres not ready"
-                      retries=$((retries+1))
-                      sleep 5
-                    fi
-                  done
-                  if [ $retries -ge $max_retries ]; then
-                    echo "Failed to connect to database after $max_retries retries"
-                    exit 1
-                  fi
-
-                  # Update the timescale extension first
-                  # Validate version format (only allow alphanumeric, dots, and hyphens)
-                  if ! echo "$EXTENSION_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-                    echo "Invalid extension version format: $EXTENSION_VERSION"
-                    exit 1
-                  fi
-                  /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '$EXTENSION_VERSION';"
-
-                  # run any migrations, accounting for upgrade/downgrade scenarios
-                  ./scripts/migrate_database.sh
-              command:
-                - /bin/sh
-                - -c
-              env:
-                - name: DATABASE_HOST
-                  valueFrom:
-                    secretKeyRef:
-                      key: host
-                      name: thoras-timescale-password
-                - name: DATABASE_URL
-                  value: $(DATABASE_HOST)/thoras?sslmode=disable
-                - name: EXTENSION_VERSION
-                  value: 2.27.0
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
-              name: wait-for-postgres
-              resources: {}
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
@@ -1272,7 +1222,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_PPROF
                   value: "false"
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
@@ -1649,7 +1599,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
                   value: "false"
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
                   value: "true"
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
@@ -1743,56 +1693,6 @@ Default matches snapshot:
                   name: monitor-config
                   readOnly: true
                   subPath: config.yaml
-          initContainers:
-            - args:
-                - |
-                  retries=0
-                  max_retries=48
-                  until [ $retries -ge $max_retries ]; do
-                    if pg_isready -q -d ${DATABASE_URL}; then
-                      break
-                    else
-                      echo "postgres not ready"
-                      retries=$((retries+1))
-                      sleep 5
-                    fi
-                  done
-                  if [ $retries -ge $max_retries ]; then
-                    echo "Failed to connect to database after $max_retries retries"
-                    exit 1
-                  fi
-
-                  # Update the timescale extension first
-                  # Validate version format (only allow alphanumeric, dots, and hyphens)
-                  if ! echo "$EXTENSION_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-                    echo "Invalid extension version format: $EXTENSION_VERSION"
-                    exit 1
-                  fi
-                  /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '$EXTENSION_VERSION';"
-
-                  # run any migrations, accounting for upgrade/downgrade scenarios
-                  ./scripts/migrate_database.sh
-              command:
-                - /bin/sh
-                - -c
-              env:
-                - name: DATABASE_HOST
-                  valueFrom:
-                    secretKeyRef:
-                      key: host
-                      name: thoras-timescale-password
-                - name: DATABASE_URL
-                  value: $(DATABASE_HOST)/thoras?sslmode=disable
-                - name: EXTENSION_VERSION
-                  value: 2.27.0
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
-              name: wait-for-postgres
-              resources: {}
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
