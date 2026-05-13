@@ -236,7 +236,7 @@ spec:
             psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
         {{- end }}
 
-            ./blob-service
+            exec ./blob-service
         env:
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"

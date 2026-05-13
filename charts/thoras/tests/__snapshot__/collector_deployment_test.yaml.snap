@@ -92,7 +92,7 @@ Default containers should match snapshots:
         echo "setting password"
         psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
 
-        ./blob-service
+        exec ./blob-service
     command:
       - /bin/sh
       - -c
