@@ -79,8 +79,6 @@ Default matches snapshot:
                   value: 2m
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
                   value: 3h
-                - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
-                  value: "false"
                 - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
                   value: "false"
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
@@ -103,9 +101,9 @@ Default matches snapshot:
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
@@ -1228,9 +1226,9 @@ Default matches snapshot:
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
@@ -1617,15 +1615,27 @@ Default matches snapshot:
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.26.1
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
                   value: "60"
                 - name: SERVICE_UNDERPROVISIONED_THRESHOLD
                   value: "92"
+                - name: SERVICE_ENABLE_THORAS_SCALING_THORAS_WORKER
+                  value: "false"
+                - name: SERVICE_THORAS_SCALING_THORAS_MODE
+                  value: recommendation
+                - name: SERVICE_THORAS_SCALING_THORAS_UPDATE_MODE
+                  value: recreate
+                - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_UPDATE_MODE
+                  value: recreate
+                - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_BLOCKS
+                  value: 4h0s
+                - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_CRON
+                  value: 17 * * * *
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:

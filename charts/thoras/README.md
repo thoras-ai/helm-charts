@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.119.1](https://img.shields.io/badge/Version-4.119.1-informational?style=flat-square) ![AppVersion: 4.98.1](https://img.shields.io/badge/AppVersion-4.98.1-informational?style=flat-square)
+![Version: 4.120.0](https://img.shields.io/badge/Version-4.120.0-informational?style=flat-square) ![AppVersion: 4.99.0](https://img.shields.io/badge/AppVersion-4.99.0-informational?style=flat-square)
 
 # Installs
 
@@ -83,13 +83,12 @@ The following flags are considered temporary and gate access to specific behavio
 | Key                                            | Type    | Default | Description                                                |
 | ---------------------------------------------- | ------- | ------- | ---------------------------------------------------------- |
 | featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                        |
-| featureFlags.enableCheckDatabaseHealth         | Boolean | false   | If true, pings the database in the health endpoint         |
 | featureFlags.enableMigrationOnStartup          | Boolean | true    | If true, the main container handles migrations             |
 | featureFlags.enableCostSavingsSettingsRefresh  | Boolean | true    | If true, refreshes the costs savings settings periodically |
 | featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects   |
-| featureFlags.enableInformersStripManagedFields | Boolean | false   | If true, enables informer memory optimizations             |
-| featureFlags.enableTypedInformers              | Boolean | false   | If true, enables additional informer memory optimizations  |
-| featureFlags.enableMemoryLimit                 | Boolean | false   | If true, enables dynamic GOMEMLIMIT                        |
+| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations             |
+| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations  |
+| featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                        |
 
 ## Affinity Configuration
 

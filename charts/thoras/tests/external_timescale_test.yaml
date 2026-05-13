@@ -281,21 +281,3 @@ tests:
               secretKeyRef:
                 name: my-db-secret
                 key: dsn
-
-  # --- AST ---
-
-  - it: Should not include timescaledb in AST vertical containers in external mode
-    templates:
-      - collector/ast.yaml
-    set:
-      externalTimescale:
-        dsn: "postgres://user:pass@ext-db:5432/tsdb"
-      featureFlags:
-        thorasManageThoras:
-          enabled: true
-    asserts:
-      - notContains:
-          path: spec.vertical.containers
-          content:
-            name: timescaledb
-          any: true

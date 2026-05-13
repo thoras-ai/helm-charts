@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.98.1"
+thorasVersion: "4.99.0"
 cluster:
   name: ""
 
@@ -57,7 +57,6 @@ featureFlags:
       forecastBlocks: "4h0s"
       # Forecast once per hour by default
       forecastCron: "17 * * * *"
-  enableCheckDatabaseHealth: false
   enableMigrationOnStartup: true
   enableCostSavingsSettingsRefresh: true
   enablePrometheusMetricScraping: false
@@ -66,8 +65,8 @@ featureFlags:
   enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastQueueStats: false
-  enableInformersStripManagedFields: false
-  enableTypedInformers: false
+  enableInformersStripManagedFields: true
+  enableTypedInformers: true
   enableMemoryLimit: true
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
