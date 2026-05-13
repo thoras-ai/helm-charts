@@ -99,7 +99,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_UPDATE_SCALE_MODE_API
                   value: "false"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
-                  value: 2.26.1
+                  value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
@@ -417,7 +417,7 @@ Default matches snapshot:
                       name: thoras-timescale-password
                 - name: PGDATA
                   value: /var/lib/share/postgresql
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.26.1-pg16
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.27.0-pg16
               imagePullPolicy: IfNotPresent
               lifecycle:
                 preStop:
@@ -500,7 +500,7 @@ Default matches snapshot:
                   echo "setting password"
                   psql -U postgres -h localhost -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASSWORD}'";
 
-                  ./blob-service
+                  exec ./blob-service
               command:
                 - /bin/sh
                 - -c
@@ -1224,7 +1224,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "true"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
-                  value: 2.26.1
+                  value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
@@ -1613,7 +1613,7 @@ Default matches snapshot:
                     fieldRef:
                       fieldPath: metadata.name
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
-                  value: 2.26.1
+                  value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
@@ -1636,6 +1636,20 @@ Default matches snapshot:
                   value: 4h0s
                 - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_CRON
                   value: 17 * * * *
+                - name: SERVICE_ENABLE_FORECAST_WORKER_SCALER
+                  value: "false"
+                - name: SERVICE_FORECAST_WORKER_SCALER_INTERVAL
+                  value: 1m
+                - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAME
+                  value: thoras-forecast-worker
+                - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAMESPACE
+                  value: foo
+                - name: SERVICE_FORECAST_WORKER_MIN_REPLICAS
+                  value: "1"
+                - name: SERVICE_FORECAST_WORKER_MAX_REPLICAS
+                  value: "100"
+                - name: SERVICE_FORECAST_WORKER_ASTS_PER_REPLICA
+                  value: "67"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:

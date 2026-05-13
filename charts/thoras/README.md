@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.120.0](https://img.shields.io/badge/Version-4.120.0-informational?style=flat-square) ![AppVersion: 4.99.0](https://img.shields.io/badge/AppVersion-4.99.0-informational?style=flat-square)
+![Version: 4.121.0](https://img.shields.io/badge/Version-4.121.0-informational?style=flat-square) ![AppVersion: 4.100.0](https://img.shields.io/badge/AppVersion-4.100.0-informational?style=flat-square)
 
 # Installs
 
@@ -203,8 +203,8 @@ must be pre-installed and managed externally.
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                 |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector              |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                              |
-| metricsCollector.timescale.imageTag                             | String  | 2.26.1-pg16      | Timescale image tag                                          |
-| metricsCollector.timescale.extensionVersion                     | String  | 2.26.1           | Timescale extension version - should match imageTag          |
+| metricsCollector.timescale.imageTag                             | String  | 2.27.0-pg16      | Timescale image tag                                          |
+| metricsCollector.timescale.extensionVersion                     | String  | 2.27.0           | Timescale extension version - should match imageTag          |
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                     |
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                               |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                   |
