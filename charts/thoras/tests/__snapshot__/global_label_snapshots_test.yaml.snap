@@ -1636,6 +1636,34 @@ Default matches snapshot:
                   value: 4h0s
                 - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_CRON
                   value: 17 * * * *
+                - name: SERVICE_THORAS_SCALING_THORAS_FORECAST_WORKER_CPU_UPPER_BOUND
+                  value: "2"
+                - name: SERVICE_THORAS_SCALING_THORAS_FORECAST_WORKER_MEMORY_UPPER_BOUND
+                  value: 4Gi
+                - name: SERVICE_THORAS_SCALING_THORAS_API_SERVER_CPU_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_API_SERVER_MEMORY_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_DASHBOARD_CPU_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_DASHBOARD_MEMORY_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_CPU_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_MEMORY_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_CPU_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_MEMORY_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_WORKER_CPU_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_WORKER_MEMORY_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_CPU_UPPER_BOUND
+                  value: ""
+                - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_MEMORY_UPPER_BOUND
+                  value: ""
                 - name: SERVICE_ENABLE_FORECAST_WORKER_SCALER
                   value: "false"
                 - name: SERVICE_FORECAST_WORKER_SCALER_INTERVAL

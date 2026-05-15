@@ -121,6 +121,11 @@ rbac:
 
 thorasOperator:
   replicas: 2
+  # Resource upperbound used when thorasManageThoras is enabled. Empty means
+  # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
+  upperbound:
+    cpu: ""
+    memory: ""
   serviceAccount:
     name: thoras-operator
   podAnnotations: {}
@@ -166,6 +171,11 @@ thorasOperator:
   extraEgressRules: []
 
 metricsCollector:
+  # Resource upperbound used when thorasManageThoras is enabled. Empty means
+  # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
+  upperbound:
+    cpu: ""
+    memory: ""
   persistence:
     enabled: false
     volumeName: ""
@@ -233,6 +243,11 @@ metricsCollector:
   extraEgressRules: []
 
 thorasApiServerV2:
+  # Resource upperbound used when thorasManageThoras is enabled. Empty means
+  # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
+  upperbound:
+    cpu: ""
+    memory: ""
   rbac:
     create: true
   serviceAccount:
@@ -267,6 +282,11 @@ thorasApiServerV2:
 
 thorasWorker:
   enabled: true
+  # Resource upperbound used when thorasManageThoras is enabled. Empty means
+  # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
+  upperbound:
+    cpu: ""
+    memory: ""
   serviceAccount:
     name: thoras-worker
   podAnnotations: {}
@@ -305,6 +325,11 @@ thorasWorker:
 
 thorasDashboard:
   enabled: true
+  # Resource upperbound used when thorasManageThoras is enabled. Empty means
+  # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
+  upperbound:
+    cpu: ""
+    memory: ""
   serviceAccount:
     name: thoras-dashboard
     create: true
@@ -365,6 +390,11 @@ thorasDashboard:
 
 thorasMonitor:
   enabled: false
+  # Resource upperbound used when thorasManageThoras is enabled. Empty means
+  # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
+  upperbound:
+    cpu: ""
+    memory: ""
   serviceAccount:
     name: thoras-monitor
   unittesting: false
@@ -409,6 +439,11 @@ thorasForecast:
     cpu: "4"
   worker:
     replicas: 1
+    # Resource upperbound used when thorasManageThoras is enabled. Empty means
+    # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
+    upperbound:
+      cpu: "2"
+      memory: "4Gi"
     pollingInterval: 15
     podAnnotations: {}
     retrainSteadyStateHours: ""
