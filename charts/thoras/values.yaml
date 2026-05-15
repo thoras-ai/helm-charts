@@ -397,16 +397,6 @@ thorasForecast:
   useAstMetricsSeries: false
   # Minimum lookback window required before autonomous scaling is enabled (minimum 3h).
   minLookbackToScale: "3h"
-  # Specify the complete resources block (takes precedence if set)
-  resources: {}
-  # Legacy field for backward compatibility (used if resources is empty)
-  requests:
-    cpu: "256m"
-    memory: "256Mi"
-  # Legacy field for backward compatibility (used if resources is empty)
-  limits:
-    memory: "8Gi"
-    cpu: "4"
   worker:
     replicas: 1
     pollingInterval: 15
