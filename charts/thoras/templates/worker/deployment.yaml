@@ -258,6 +258,34 @@ spec:
             value: {{ .Values.featureFlags.thorasManageThoras.db.forecastBlocks | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_FORECAST_CRON
             value: {{ .Values.featureFlags.thorasManageThoras.db.forecastCron | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_FORECAST_WORKER_CPU_UPPER_BOUND
+            value: {{ .Values.thorasForecast.worker.upperbound.cpu | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_FORECAST_WORKER_MEMORY_UPPER_BOUND
+            value: {{ .Values.thorasForecast.worker.upperbound.memory | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_API_SERVER_CPU_UPPER_BOUND
+            value: {{ .Values.thorasApiServerV2.upperbound.cpu | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_API_SERVER_MEMORY_UPPER_BOUND
+            value: {{ .Values.thorasApiServerV2.upperbound.memory | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_DASHBOARD_CPU_UPPER_BOUND
+            value: {{ .Values.thorasDashboard.upperbound.cpu | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_DASHBOARD_MEMORY_UPPER_BOUND
+            value: {{ .Values.thorasDashboard.upperbound.memory | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_CPU_UPPER_BOUND
+            value: {{ .Values.thorasMonitor.upperbound.cpu | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_MEMORY_UPPER_BOUND
+            value: {{ .Values.thorasMonitor.upperbound.memory | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_CPU_UPPER_BOUND
+            value: {{ .Values.thorasOperator.upperbound.cpu | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_MEMORY_UPPER_BOUND
+            value: {{ .Values.thorasOperator.upperbound.memory | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_WORKER_CPU_UPPER_BOUND
+            value: {{ .Values.thorasWorker.upperbound.cpu | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_WORKER_MEMORY_UPPER_BOUND
+            value: {{ .Values.thorasWorker.upperbound.memory | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_CPU_UPPER_BOUND
+            value: {{ .Values.metricsCollector.upperbound.cpu | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_MEMORY_UPPER_BOUND
+            value: {{ .Values.metricsCollector.upperbound.memory | quote }}
           - name: SERVICE_ENABLE_FORECAST_WORKER_SCALER
             value: {{ .Values.thorasForecast.worker.scaler.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_FORECAST_WORKER_SCALER_INTERVAL
