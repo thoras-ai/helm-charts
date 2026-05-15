@@ -586,11 +586,11 @@ Default matches snapshot:
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
-                failureThreshold: 3
+                failureThreshold: 9
                 httpGet:
                   path: /health
                   port: http
-                periodSeconds: 30
+                periodSeconds: 10
                 timeoutSeconds: 2
               name: thoras-blob-api
               ports:

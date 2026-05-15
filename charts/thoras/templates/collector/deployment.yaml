@@ -310,8 +310,8 @@ spec:
           httpGet:
             path: /health
             port: http
-          periodSeconds: 30
-          failureThreshold: 3
+          periodSeconds: 10
+          failureThreshold: 9
           timeoutSeconds: 2
         ports:
         - containerPort: {{ .Values.metricsCollector.blobService.containerPort }}
