@@ -953,7 +953,7 @@ Default matches snapshot:
                 - name: SERVICE_THORAS_API_BASE_URL
                   value: http://thoras-api-server-v2
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
                   value: "true"
                 - name: SERVICE_CHART_VERSION
@@ -1556,7 +1556,7 @@ Default matches snapshot:
                 - name: SERVICE_PLATFORM_VERSION
                   value: TEST
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
                   value: "true"
                 - name: SERVICE_COLLECTOR_MEM_REQUEST
