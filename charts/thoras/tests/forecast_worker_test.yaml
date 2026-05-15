@@ -287,24 +287,24 @@ tests:
             name: TRAINING_JITTER_MINUTES
             value: "30"
 
-  - it: renders USE_AST_METRICS_SERIES as false by default
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
-          content:
-            name: USE_AST_METRICS_SERIES
-            value: "false"
-
-  - it: renders USE_AST_METRICS_SERIES as true when useAstMetricsSeries is true
-    set:
-      thorasForecast:
-        useAstMetricsSeries: true
+  - it: renders USE_AST_METRICS_SERIES as true by default
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
           content:
             name: USE_AST_METRICS_SERIES
             value: "true"
+
+  - it: renders USE_AST_METRICS_SERIES as false when useAstMetricsSeries is false
+    set:
+      thorasForecast:
+        useAstMetricsSeries: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: USE_AST_METRICS_SERIES
+            value: "false"
 
   - it: Should enable request and limit overrides
     set:
