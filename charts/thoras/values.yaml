@@ -312,7 +312,7 @@ thorasWorker:
   # Cost will not work in the dashboard if this is disabled. Used for debugging purposes.
   enableAstViewCacheRefreshWorker: true
   enableAstViewCacheStateReconcilerWorker: true
-  enableMetricIntegrityWorker: false
+  enableMetricIntegrityWorker: true
   enableActiveSuggestionWorker: true
   enableUnifiedAstUtilizationMonitor: true
   forecastJobTimeoutInterval: "2m"
