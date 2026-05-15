@@ -820,7 +820,7 @@ Default matches snapshot:
                 - name: ENABLE_DECOUPLED_TRAINING
                   value: "true"
                 - name: USE_AST_METRICS_SERIES
-                  value: "false"
+                  value: "true"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: AFFINITY_ID

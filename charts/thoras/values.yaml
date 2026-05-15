@@ -424,7 +424,7 @@ thorasForecast:
   podEligibilityMinRunningTime: "2m"
   enableDecoupledTraining: true
   trainingJitterMinutes: 0
-  useAstMetricsSeries: false
+  useAstMetricsSeries: true
   # Minimum lookback window required before autonomous scaling is enabled (minimum 3h).
   minLookbackToScale: "3h"
   worker:
