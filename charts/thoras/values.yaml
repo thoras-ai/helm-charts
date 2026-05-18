@@ -126,6 +126,14 @@ thorasOperator:
   upperbound:
     cpu: ""
     memory: ""
+  # OOM remediation used when thorasManageThoras is enabled. Enabled by
+  # default so that an OOM on a Thoras workload raises its memory floor via
+  # the operator's standard OOM remediation flow. stabilization_window is a
+  # duration string (e.g. "1h"); empty defers to the operator default of
+  # max(forecast_interval, 1h).
+  oom_remediation:
+    enabled: true
+    stabilization_window: ""
   serviceAccount:
     name: thoras-operator
   podAnnotations: {}
@@ -176,6 +184,14 @@ metricsCollector:
   upperbound:
     cpu: ""
     memory: ""
+  # OOM remediation used when thorasManageThoras is enabled. Enabled by
+  # default so that an OOM on a Thoras workload raises its memory floor via
+  # the operator's standard OOM remediation flow. stabilization_window is a
+  # duration string (e.g. "1h"); empty defers to the operator default of
+  # max(forecast_interval, 1h).
+  oom_remediation:
+    enabled: true
+    stabilization_window: ""
   persistence:
     enabled: false
     volumeName: ""
@@ -248,6 +264,14 @@ thorasApiServerV2:
   upperbound:
     cpu: ""
     memory: ""
+  # OOM remediation used when thorasManageThoras is enabled. Enabled by
+  # default so that an OOM on a Thoras workload raises its memory floor via
+  # the operator's standard OOM remediation flow. stabilization_window is a
+  # duration string (e.g. "1h"); empty defers to the operator default of
+  # max(forecast_interval, 1h).
+  oom_remediation:
+    enabled: true
+    stabilization_window: ""
   rbac:
     create: true
   serviceAccount:
@@ -287,6 +311,14 @@ thorasWorker:
   upperbound:
     cpu: ""
     memory: ""
+  # OOM remediation used when thorasManageThoras is enabled. Enabled by
+  # default so that an OOM on a Thoras workload raises its memory floor via
+  # the operator's standard OOM remediation flow. stabilization_window is a
+  # duration string (e.g. "1h"); empty defers to the operator default of
+  # max(forecast_interval, 1h).
+  oom_remediation:
+    enabled: true
+    stabilization_window: ""
   serviceAccount:
     name: thoras-worker
   podAnnotations: {}
@@ -330,6 +362,14 @@ thorasDashboard:
   upperbound:
     cpu: ""
     memory: ""
+  # OOM remediation used when thorasManageThoras is enabled. Enabled by
+  # default so that an OOM on a Thoras workload raises its memory floor via
+  # the operator's standard OOM remediation flow. stabilization_window is a
+  # duration string (e.g. "1h"); empty defers to the operator default of
+  # max(forecast_interval, 1h).
+  oom_remediation:
+    enabled: true
+    stabilization_window: ""
   serviceAccount:
     name: thoras-dashboard
     create: true
@@ -395,6 +435,14 @@ thorasMonitor:
   upperbound:
     cpu: ""
     memory: ""
+  # OOM remediation used when thorasManageThoras is enabled. Enabled by
+  # default so that an OOM on a Thoras workload raises its memory floor via
+  # the operator's standard OOM remediation flow. stabilization_window is a
+  # duration string (e.g. "1h"); empty defers to the operator default of
+  # max(forecast_interval, 1h).
+  oom_remediation:
+    enabled: true
+    stabilization_window: ""
   serviceAccount:
     name: thoras-monitor
   unittesting: false
@@ -434,6 +482,14 @@ thorasForecast:
     upperbound:
       cpu: "2"
       memory: "4Gi"
+    # OOM remediation used when thorasManageThoras is enabled. Enabled by
+    # default so that an OOM on the forecast worker raises its memory floor
+    # via the operator's standard OOM remediation flow. stabilization_window
+    # is a duration string (e.g. "1h"); empty defers to the operator default
+    # of max(forecast_interval, 1h).
+    oom_remediation:
+      enabled: true
+      stabilization_window: ""
     pollingInterval: 15
     podAnnotations: {}
     retrainSteadyStateHours: ""
