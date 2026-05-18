@@ -48,11 +48,9 @@ featureFlags:
     enabled: false
     # Recommendation Mode by default
     mode: "recommendation"
-    # Restart by default
-    updateMode: "recreate"
+    updateMode: "in_place_or_recreate"
     db:
-      # Restart by default
-      updateMode: "recreate"
+      updateMode: "in_place_or_recreate"
       # Look 4h ahead by default
       forecastBlocks: "4h0s"
       # Forecast once per hour by default
