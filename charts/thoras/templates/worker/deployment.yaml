@@ -287,31 +287,31 @@ spec:
           - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_MEMORY_UPPER_BOUND
             value: {{ .Values.metricsCollector.upperbound.memory | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_FORECAST_WORKER_OOM_REMEDIATION_ENABLED
-            value: {{ .Values.thorasForecast.worker.oom_remediation.enabled | quote }}
+            value: {{ .Values.thorasForecast.worker.oom_remediation.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_FORECAST_WORKER_OOM_REMEDIATION_STABILIZATION_WINDOW
             value: {{ .Values.thorasForecast.worker.oom_remediation.stabilization_window | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_API_SERVER_OOM_REMEDIATION_ENABLED
-            value: {{ .Values.thorasApiServerV2.oom_remediation.enabled | quote }}
+            value: {{ .Values.thorasApiServerV2.oom_remediation.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_API_SERVER_OOM_REMEDIATION_STABILIZATION_WINDOW
             value: {{ .Values.thorasApiServerV2.oom_remediation.stabilization_window | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_DASHBOARD_OOM_REMEDIATION_ENABLED
-            value: {{ .Values.thorasDashboard.oom_remediation.enabled | quote }}
+            value: {{ .Values.thorasDashboard.oom_remediation.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_DASHBOARD_OOM_REMEDIATION_STABILIZATION_WINDOW
             value: {{ .Values.thorasDashboard.oom_remediation.stabilization_window | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_OOM_REMEDIATION_ENABLED
-            value: {{ .Values.thorasMonitor.oom_remediation.enabled | quote }}
+            value: {{ .Values.thorasMonitor.oom_remediation.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_OOM_REMEDIATION_STABILIZATION_WINDOW
             value: {{ .Values.thorasMonitor.oom_remediation.stabilization_window | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_OOM_REMEDIATION_ENABLED
-            value: {{ .Values.thorasOperator.oom_remediation.enabled | quote }}
+            value: {{ .Values.thorasOperator.oom_remediation.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_OOM_REMEDIATION_STABILIZATION_WINDOW
             value: {{ .Values.thorasOperator.oom_remediation.stabilization_window | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_WORKER_OOM_REMEDIATION_ENABLED
-            value: {{ .Values.thorasWorker.oom_remediation.enabled | quote }}
+            value: {{ .Values.thorasWorker.oom_remediation.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_WORKER_OOM_REMEDIATION_STABILIZATION_WINDOW
             value: {{ .Values.thorasWorker.oom_remediation.stabilization_window | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_OOM_REMEDIATION_ENABLED
-            value: {{ .Values.metricsCollector.oom_remediation.enabled | quote }}
+            value: {{ .Values.metricsCollector.oom_remediation.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_OOM_REMEDIATION_STABILIZATION_WINDOW
             value: {{ .Values.metricsCollector.oom_remediation.stabilization_window | quote }}
           - name: SERVICE_ENABLE_FORECAST_WORKER_SCALER
