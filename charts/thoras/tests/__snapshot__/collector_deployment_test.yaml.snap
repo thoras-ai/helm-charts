@@ -125,7 +125,24 @@ Default containers should match snapshots:
         value: "false"
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 9
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 2
     name: thoras-blob-api
+    ports:
+      - containerPort: 8080
+        name: http
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /health?db=true
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 2
     resources:
       limits:
         memory: 8192Mi
@@ -137,6 +154,13 @@ Default containers should match snapshots:
       capabilities:
         drop:
           - ALL
+    startupProbe:
+      failureThreshold: 30
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 2
     volumeMounts:
       - mountPath: /var/lib/share
         name: timescale-data
