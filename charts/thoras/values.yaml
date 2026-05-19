@@ -45,7 +45,7 @@ featureFlags:
   # When enabled, AST scale mode may be configured via API
   enableUpdateScaleModeApi: false
   thorasManageThoras:
-    enabled: false
+    enabled: true
     # Recommendation Mode by default
     mode: "recommendation"
     updateMode: "in_place_or_recreate"
