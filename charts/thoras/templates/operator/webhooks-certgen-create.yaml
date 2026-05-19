@@ -1,3 +1,4 @@
+{{- if not .Values.thorasOperator.webhookCertGen.certManager.enabled }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -48,3 +49,4 @@ spec:
             runAsUser: 65532
             seccompProfile:
               type: RuntimeDefault
+{{- end }}

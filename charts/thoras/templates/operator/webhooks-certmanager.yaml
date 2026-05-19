@@ -1,0 +1,32 @@
+{{- if .Values.thorasOperator.webhookCertGen.certManager.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: thoras-webhooks-selfsigned
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: thoras-tls-certs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  secretName: thoras-tls-certs
+  dnsNames:
+    - thoras-webhooks
+    - thoras-webhooks.{{ .Release.Namespace }}
+    - thoras-webhooks.{{ .Release.Namespace }}.svc
+    - thoras-webhooks.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    name: thoras-webhooks-selfsigned
+    kind: Issuer
+{{- end }}

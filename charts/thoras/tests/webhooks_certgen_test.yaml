@@ -163,3 +163,171 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].image
           pattern: kube-webhook-certgen:v2.0.0$
+
+  ############################
+  # cert-manager mode
+  ############################
+  - it: Skips certgen create Job when cert-manager is enabled
+    template: operator/webhooks-certgen-create.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Skips certgen patch Jobs when cert-manager is enabled
+    template: operator/webhooks-certgen-patch.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Skips certgen ServiceAccount when cert-manager is enabled
+    template: operator/webhooks-certgen-serviceaccount.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Skips certgen ClusterRole when cert-manager is enabled
+    template: operator/webhooks-certgen-clusterrole.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Skips certgen ClusterRoleBinding when cert-manager is enabled
+    template: operator/webhooks-certgen-clusterrolebinding.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Skips certgen Role when cert-manager is enabled
+    template: operator/webhooks-certgen-role.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Skips certgen RoleBinding when cert-manager is enabled
+    template: operator/webhooks-certgen-rolebinding.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Skips certgen registry pull secret when cert-manager is enabled
+    template: operator/webhooks-certgen-registry-secret.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      imageCredentials.password: "test-password"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Skips certgen NetworkPolicy when cert-manager is enabled
+    template: operator/webhooks-certgen-network-policy.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      networkPolicy.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Omits cert-manager Issuer and Certificate by default
+    template: operator/webhooks-certmanager.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Creates self-signed Issuer and Certificate when cert-manager is enabled
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: Issuer
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: thoras-webhooks-selfsigned
+        documentIndex: 0
+      - exists:
+          path: spec.selfSigned
+        documentIndex: 0
+      - isKind:
+          of: Certificate
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: thoras-tls-certs
+        documentIndex: 1
+      - equal:
+          path: spec.secretName
+          value: thoras-tls-certs
+        documentIndex: 1
+      - equal:
+          path: spec.issuerRef.name
+          value: thoras-webhooks-selfsigned
+        documentIndex: 1
+      - equal:
+          path: spec.issuerRef.kind
+          value: Issuer
+        documentIndex: 1
+      - contains:
+          path: spec.dnsNames
+          content: thoras-webhooks
+        documentIndex: 1
+      - contains:
+          path: spec.dnsNames
+          content: thoras-webhooks.NAMESPACE.svc
+        documentIndex: 1
+
+  - it: Annotates webhook configs with cert-manager inject-ca-from when enabled
+    template: operator/webhooks.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["cert-manager.io/inject-ca-from"]
+          value: NAMESPACE/thoras-tls-certs
+        documentIndex: 0
+      - equal:
+          path: metadata.annotations["cert-manager.io/inject-ca-from"]
+          value: NAMESPACE/thoras-tls-certs
+        documentIndex: 1
+
+  - it: Does not add inject-ca-from annotation when cert-manager is disabled
+    template: operator/webhooks.yaml
+    asserts:
+      - notExists:
+          path: metadata.annotations["cert-manager.io/inject-ca-from"]
+        documentIndex: 0
+      - notExists:
+          path: metadata.annotations["cert-manager.io/inject-ca-from"]
+        documentIndex: 1
+
+  - it: Operator deployment volume uses tls.crt/tls.key keys when cert-manager is enabled
+    template: operator/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'tls')].secret.items
+          content:
+            key: tls.crt
+            path: tls.crt
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'tls')].secret.items
+          content:
+            key: tls.key
+            path: tls.key
