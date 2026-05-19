@@ -3,6 +3,10 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: "pods.thoras.ai"
+  {{- if .Values.thorasOperator.webhookCertGen.certManager.enabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/thoras-tls-certs
+  {{- end }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
 webhooks:
@@ -55,6 +59,10 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: "validation.thoras.ai"
+  {{- if .Values.thorasOperator.webhookCertGen.certManager.enabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/thoras-tls-certs
+  {{- end }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
 webhooks:

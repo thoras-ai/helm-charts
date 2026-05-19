@@ -159,6 +159,12 @@ thorasOperator:
   # Webhook certificate generation configuration
   webhookCertGen:
     imageTag: v1.4.4
+    # When enabled, cert-manager provisions the thoras-tls-certs secret and
+    # injects the CA bundle into the webhook configurations. The bundled
+    # kube-webhook-certgen Jobs (and their RBAC/NetworkPolicy/registry secret)
+    # are skipped. Requires cert-manager to be installed in the cluster.
+    certManager:
+      enabled: false
   # namespaceSelector applied to all webhook configurations. Set to null when
   # using an admission enforcer (e.g. OPA Gatekeeper's admissionsenforcer) that
   # manages namespaceSelector itself, to avoid upgrade conflicts:
