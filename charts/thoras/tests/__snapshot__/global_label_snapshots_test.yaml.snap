@@ -1649,7 +1649,7 @@ Default matches snapshot:
                 - name: SERVICE_UNDERPROVISIONED_THRESHOLD
                   value: "92"
                 - name: SERVICE_ENABLE_THORAS_SCALING_THORAS_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_THORAS_SCALING_THORAS_MODE
                   value: recommendation
                 - name: SERVICE_THORAS_SCALING_THORAS_UPDATE_MODE
