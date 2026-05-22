@@ -50,68 +50,6 @@ spec:
       - name: system-config
         configMap:
           name: thoras-operator-system-config
-      {{- if .Values.featureFlags.enableMigrationOnStartup }}
-      {{- else }}
-      initContainers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
-        name: wait-for-postgres
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: [ALL]
-        env:
-          - name: DATABASE_HOST
-            valueFrom:
-              secretKeyRef:
-              {{- if .Values.externalTimescale.secretRefName }}
-                name: {{ .Values.externalTimescale.secretRefName }}
-                key: {{ .Values.externalTimescale.secretRefKey }}
-              {{- else }}
-                name: thoras-timescale-password
-                key: host
-              {{- end }}
-          - name: DATABASE_URL
-          {{- if include "thoras.externalTimescaleEnabled" . }}
-            value: "$(DATABASE_HOST)"
-          {{- else }}
-            value: "$(DATABASE_HOST)/thoras?sslmode=disable"
-          {{- end }}
-          - name: EXTENSION_VERSION
-            value: "{{ .Values.metricsCollector.timescale.extensionVersion }}"
-          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            retries=0
-            max_retries=48
-            until [ $retries -ge $max_retries ]; do
-              if pg_isready -q -d ${DATABASE_URL}; then
-                break
-              else
-                echo "postgres not ready"
-                retries=$((retries+1))
-                sleep 5
-              fi
-            done
-            if [ $retries -ge $max_retries ]; then
-              echo "Failed to connect to database after $max_retries retries"
-              exit 1
-            fi
-        {{- if not (include "thoras.externalTimescaleEnabled" .) }}
-
-            # Update the timescale extension first
-            # Validate version format (only allow alphanumeric, dots, and hyphens)
-            if ! echo "$EXTENSION_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-              echo "Invalid extension version format: $EXTENSION_VERSION"
-              exit 1
-            fi
-            /usr/bin/psql $DATABASE_URL -c "ALTER EXTENSION timescaledb UPDATE TO '$EXTENSION_VERSION';"
-        {{- end }}
-
-            # run any migrations, accounting for upgrade/downgrade scenarios
-            ./scripts/migrate_database.sh
-        resources: {}
-      {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -192,8 +130,6 @@ spec:
             value: "{{ .Values.thorasForecast.minLookbackToScale | default "3h" }}"
           - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
             value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
-          - name: SERVICE_ENABLE_MIGRATION_ON_START
-            value: {{ .Values.featureFlags.enableMigrationOnStartup | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC
           {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
             value: "true"

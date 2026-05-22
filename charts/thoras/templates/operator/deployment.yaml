@@ -193,8 +193,6 @@ spec:
           {{- end }}
           - name: SERVICE_ENABLE_PPROF
             value: {{ .Values.thorasOperator.pprof.enabled | quote }}
-          - name: SERVICE_ENABLE_MIGRATION_ON_START
-            value: {{ .Values.featureFlags.enableMigrationOnStartup | ternary "true" "false" | quote }}
           - name: SERVICE_TIMESCALE_EXTENSION_VERSION
             value: {{ .Values.metricsCollector.timescale.extensionVersion | quote }}
           - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS

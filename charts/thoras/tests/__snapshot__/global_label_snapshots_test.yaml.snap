@@ -81,8 +81,6 @@ Default matches snapshot:
                   value: 3h
                 - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
                   value: "false"
-                - name: SERVICE_ENABLE_MIGRATION_ON_START
-                  value: "true"
                 - name: SERVICE_ENABLE_CLOUD_SYNC
                   value: "false"
                 - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
@@ -1245,8 +1243,6 @@ Default matches snapshot:
                       name: thoras-cloud-sync
                 - name: SERVICE_ENABLE_PPROF
                   value: "false"
-                - name: SERVICE_ENABLE_MIGRATION_ON_START
-                  value: "true"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
@@ -1622,8 +1618,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
                   value: "false"
-                - name: SERVICE_ENABLE_MIGRATION_ON_START
-                  value: "true"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
                   value: "true"
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
