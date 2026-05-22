@@ -78,6 +78,8 @@ spec:
             value: "http://thoras-api-server-v2"
           - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
             value: {{ .Values.thorasWorker.enableMetricIntegrityWorker | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
+            value: {{ .Values.thorasWorker.enableDeploymentMonitorWorker | ternary "true" "false" | quote }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
           - name: SERVICE_PLATFORM_VERSION
