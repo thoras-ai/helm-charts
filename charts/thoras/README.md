@@ -251,7 +251,6 @@ must be pre-installed and managed externally.
 | thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                         |
 | thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                      |
 | thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
-| thorasWorker.enableActiveSuggestionWorker            | Boolean | true          | Enable active suggestions worker                             |
 | thorasWorker.enableMonitorActiveSuggestionFromCRD    | Boolean | false         | Enable monitoring active suggestions using the AST           |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | false         | Enable the unified AST utilization monitor                   |
