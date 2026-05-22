@@ -216,8 +216,6 @@ spec:
             value: {{ .Values.featureFlags.enableNodeDetailsCollector | ternary "true" "false" | quote}}
           - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
             value: "true"
-          - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
-            value: {{ .Values.featureFlags.enableCostSavingsSettingsRefresh | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
             value: {{ .Values.featureFlags.enableMonitorActiveSuggestionFromCRD | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_MIGRATION_ON_START

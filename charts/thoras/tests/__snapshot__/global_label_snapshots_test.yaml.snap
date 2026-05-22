@@ -1618,8 +1618,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "true"
-                - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
-                  value: "true"
                 - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
                   value: "false"
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
