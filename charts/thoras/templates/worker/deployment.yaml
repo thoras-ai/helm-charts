@@ -340,6 +340,8 @@ spec:
             value: {{ .Values.thorasForecast.worker.scaler.maxReplicas | quote }}
           - name: SERVICE_FORECAST_WORKER_ASTS_PER_REPLICA
             value: {{ .Values.thorasForecast.worker.scaler.astsPerReplica | quote }}
+          - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
+            value: {{ .Values.featureFlags.enableDisruptionSchedulerWorker | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics
