@@ -80,15 +80,14 @@ helm install \
 
 The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
 
-| Key                                            | Type    | Default | Description                                                |
-| ---------------------------------------------- | ------- | ------- | ---------------------------------------------------------- |
-| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                        |
-| featureFlags.enableMigrationOnStartup          | Boolean | true    | If true, the main container handles migrations             |
-| featureFlags.enableCostSavingsSettingsRefresh  | Boolean | true    | If true, refreshes the costs savings settings periodically |
-| featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects   |
-| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations             |
-| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations  |
-| featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                        |
+| Key                                            | Type    | Default | Description                                               |
+| ---------------------------------------------- | ------- | ------- | --------------------------------------------------------- |
+| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                       |
+| featureFlags.enableMigrationOnStartup          | Boolean | true    | If true, the main container handles migrations            |
+| featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects  |
+| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations            |
+| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
+| featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                       |
 
 ## Affinity Configuration
 
