@@ -250,8 +250,8 @@ must be pre-installed and managed externally.
 | thorasWorker.queriesPerSecond                        | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
 | thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                         |
 | thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                      |
-| thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
-| thorasWorker.enableActiveSuggestionWorker            | Boolean | true          | Enable active suggestions worker                             |
+| thorasWorker.enableMetricIntegrityWorker             | Boolean | true          | Enable metric integrity worker                               |
+| thorasWorker.enableDeploymentMonitorWorker           | Boolean | false         | Enable deployment monitor worker                             |
 | thorasWorker.enableMonitorActiveSuggestionFromCRD    | Boolean | false         | Enable monitoring active suggestions using the AST           |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | false         | Enable the unified AST utilization monitor                   |
