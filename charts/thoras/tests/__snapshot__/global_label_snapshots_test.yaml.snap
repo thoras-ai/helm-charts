@@ -979,7 +979,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "true"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
                 - name: SERVICE_PLATFORM_VERSION
@@ -1584,7 +1584,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
                   value: "true"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_COLLECTOR_MEM_REQUEST
                   value: 3072Mi
                 - name: SERVICE_PORT
@@ -1625,7 +1625,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_MIGRATION_ON_START
                   value: "true"
                 - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
-                  value: "true"
+                  value: "false"
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
                   value: "true"
                 - name: SERVICE_FORECAST_JOB_TIMEOUT_INTERVAL

@@ -58,7 +58,7 @@ featureFlags:
   enableMigrationOnStartup: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
-  enableDeploymentMonitor: true
+  enableDeploymentMonitor: false
   enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastQueueStats: false
@@ -349,7 +349,7 @@ thorasWorker:
   enableAstViewCacheRefreshWorker: true
   enableAstViewCacheStateReconcilerWorker: true
   enableMetricIntegrityWorker: true
-  enableDeploymentMonitorWorker: false
+  enableDeploymentMonitorWorker: true
   enableUnifiedAstUtilizationMonitor: true
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
