@@ -1259,6 +1259,8 @@ Default matches snapshot:
                   value: "60"
                 - name: SERVICE_UNDERPROVISIONED_THRESHOLD
                   value: "92"
+                - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1714,6 +1716,8 @@ Default matches snapshot:
                   value: "100"
                 - name: SERVICE_FORECAST_WORKER_ASTS_PER_REPLICA
                   value: "67"
+                - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
