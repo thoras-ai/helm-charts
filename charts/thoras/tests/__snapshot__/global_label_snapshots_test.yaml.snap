@@ -1799,6 +1799,18 @@ Default matches snapshot:
           - get
           - create
           - update
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
+      - apiGroups:
+          - ""
+        resources:
+          - pods/resize
+        verbs:
+          - patch
   35: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
