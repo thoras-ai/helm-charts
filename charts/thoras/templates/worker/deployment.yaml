@@ -24,6 +24,9 @@ spec:
         {{- end }}
       {{- if or .Values.podAnnotations .Values.thorasWorker.prometheus.enabled .Values.thorasWorker.podAnnotations }}
       annotations:
+        {{- if not .Values.thorasMonitor.unittesting }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
+        {{- end }}
         {{- if .Values.thorasWorker.prometheus.enabled }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
