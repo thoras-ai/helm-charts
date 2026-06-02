@@ -1703,7 +1703,7 @@ Default matches snapshot:
                 - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_OOM_REMEDIATION_ENABLED
                   value: "true"
                 - name: SERVICE_ENABLE_FORECAST_WORKER_SCALER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_FORECAST_WORKER_SCALER_INTERVAL
                   value: 1m
                 - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAME
@@ -1871,6 +1871,49 @@ Default matches snapshot:
         name: thoras-worker
         namespace: foo
   38: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-forecast-scaler
+      namespace: foo
+    rules:
+      - apiGroups:
+          - apps
+        resourceNames:
+          - thoras-forecast-worker
+        resources:
+          - deployments/scale
+        verbs:
+          - get
+          - update
+          - patch
+  39: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-forecast-scaler
+      namespace: foo
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-worker-forecast-scaler
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: foo
+  40: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1884,7 +1927,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: foo
-  39: |
+  41: |
     apiVersion: v1
     kind: Service
     metadata:
