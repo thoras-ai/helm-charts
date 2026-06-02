@@ -512,7 +512,7 @@ thorasForecast:
       memory: 256Mi
     forecastTimeout: 600
     scaler:
-      enabled: false
+      enabled: true
       interval: "1m"
       minReplicas: 1
       maxReplicas: 100
