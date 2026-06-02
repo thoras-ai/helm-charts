@@ -59,8 +59,10 @@ data:
         # POST — dashboard-initiated mutations
         ~*^POST/v1/ast/candidates/[^/]+(\?|$)                                     1;
         ~*^POST/v1/ast/enroll/all(\?|$)                                           1;
-        ~*^POST/v1/ast/[^/]+/metrics/series(\?|$)                                 1;
         ~*^POST/v1/cost-savings/settings(\?|$)                                    1;
+
+        # POST — reads that pass a request body (query payloads, not mutations)
+        ~*^POST/v1/ast/[^/]+/metrics/series(\?|$)                                 1;
 
         # PATCH — scale mode toggle
         ~*^PATCH/v1/ast/[^/]+/[^/]+/mode(\?|$)                                    1;
