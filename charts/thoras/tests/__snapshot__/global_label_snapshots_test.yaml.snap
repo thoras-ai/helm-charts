@@ -41,7 +41,7 @@ Default matches snapshot:
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
                 - name: SERVICE_POSTGRESQL_MAX_CONNS
-                  value: "10"
+                  value: "20"
                 - name: SERVICE_POSTGRESQL_MAX_CONN_IDLE_TIME
                   value: 5m
                 - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
@@ -1243,7 +1243,7 @@ Default matches snapshot:
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
                 - name: SERVICE_POSTGRESQL_MAX_CONNS
-                  value: "10"
+                  value: "20"
                 - name: SERVICE_POSTGRESQL_MAX_CONN_IDLE_TIME
                   value: 5m
                 - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
@@ -1589,7 +1589,7 @@ Default matches snapshot:
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
                 - name: SERVICE_POSTGRESQL_MAX_CONNS
-                  value: "10"
+                  value: "20"
                 - name: SERVICE_POSTGRESQL_MAX_CONN_IDLE_TIME
                   value: 5m
                 - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
