@@ -119,7 +119,7 @@ externalTimescale:
 # `postgresql` block.
 postgresql:
   # Maximum number of connections in the pool.
-  maxConns: 10
+  maxConns: 20
   # Maximum amount of time a connection may sit idle before being closed.
   maxConnIdleTime: 5m
   # Maximum amount of time a connection may be reused before being closed.
