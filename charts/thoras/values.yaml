@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.102.2"
+thorasVersion: "4.103.1"
 cluster:
   name: ""
 
@@ -58,7 +58,7 @@ featureFlags:
   enableMigrationOnStartup: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
-  enableDeploymentMonitor: false
+  enableDeploymentMonitor: true
   enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastQueueStats: false
@@ -66,6 +66,7 @@ featureFlags:
   enableTypedInformers: true
   enableMemoryLimit: true
   enableDisruptionSchedulerWorker: false
+  enableASTOwnerReference: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
@@ -512,7 +513,7 @@ thorasForecast:
       memory: 256Mi
     forecastTimeout: 600
     scaler:
-      enabled: false
+      enabled: true
       interval: "1m"
       minReplicas: 1
       maxReplicas: 100

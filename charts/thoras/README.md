@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.125.1](https://img.shields.io/badge/Version-4.125.1-informational?style=flat-square) ![AppVersion: 4.102.2](https://img.shields.io/badge/AppVersion-4.102.2-informational?style=flat-square)
+![Version: 4.126.2](https://img.shields.io/badge/Version-4.126.2-informational?style=flat-square) ![AppVersion: 4.103.1](https://img.shields.io/badge/AppVersion-4.103.1-informational?style=flat-square)
 
 # Installs
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                                | Type    | Default                                          | Description                                                                                                          |
 | ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.102.2                                          | Thoras app version                                                                                                   |
+| thorasVersion                      | String  | 4.103.1                                          | Thoras app version                                                                                                   |
 | imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
@@ -88,6 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations            |
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
 | featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                       |
+| featureFlags.enableASTOwnerReference           | Boolean | false   | If true, sets owner reference on ASTs to target workload  |
 
 ## Affinity Configuration
 
