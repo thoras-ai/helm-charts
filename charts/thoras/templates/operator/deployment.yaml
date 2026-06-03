@@ -163,6 +163,12 @@ spec:
           {{- else }}
             value: "$(DATABASE_HOST)/thoras"
           {{- end }}
+          - name: SERVICE_POSTGRESQL_MAX_CONNS
+            value: {{ coalesce .Values.thorasOperator.postgresql.maxConns .Values.postgresql.maxConns | quote }}
+          - name: SERVICE_POSTGRESQL_MAX_CONN_IDLE_TIME
+            value: {{ coalesce .Values.thorasOperator.postgresql.maxConnIdleTime .Values.postgresql.maxConnIdleTime | quote }}
+          - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
+            value: {{ coalesce .Values.thorasOperator.postgresql.maxConnLifetime .Values.postgresql.maxConnLifetime | quote }}
           - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
             value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC

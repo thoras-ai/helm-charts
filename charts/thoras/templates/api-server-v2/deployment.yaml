@@ -140,6 +140,12 @@ spec:
           {{- else }}
             value: "$(DATABASE_HOST)/thoras"
           {{- end }}
+          - name: SERVICE_POSTGRESQL_MAX_CONNS
+            value: {{ coalesce .Values.thorasApiServerV2.postgresql.maxConns .Values.postgresql.maxConns | quote }}
+          - name: SERVICE_POSTGRESQL_MAX_CONN_IDLE_TIME
+            value: {{ coalesce .Values.thorasApiServerV2.postgresql.maxConnIdleTime .Values.postgresql.maxConnIdleTime | quote }}
+          - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
+            value: {{ coalesce .Values.thorasApiServerV2.postgresql.maxConnLifetime .Values.postgresql.maxConnLifetime | quote }}
           - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:

@@ -40,6 +40,12 @@ Default matches snapshot:
                   value: "8080"
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
+                - name: SERVICE_POSTGRESQL_MAX_CONNS
+                  value: "10"
+                - name: SERVICE_POSTGRESQL_MAX_CONN_IDLE_TIME
+                  value: 5m
+                - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
+                  value: 1h
                 - name: SERVICE_SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
@@ -1234,6 +1240,12 @@ Default matches snapshot:
                       name: thoras-timescale-password
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
+                - name: SERVICE_POSTGRESQL_MAX_CONNS
+                  value: "10"
+                - name: SERVICE_POSTGRESQL_MAX_CONN_IDLE_TIME
+                  value: 5m
+                - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
+                  value: 1h
                 - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
                   value: "false"
                 - name: SERVICE_ENABLE_CLOUD_SYNC
@@ -1574,6 +1586,12 @@ Default matches snapshot:
                       name: thoras-timescale-password
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
+                - name: SERVICE_POSTGRESQL_MAX_CONNS
+                  value: "10"
+                - name: SERVICE_POSTGRESQL_MAX_CONN_IDLE_TIME
+                  value: 5m
+                - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
+                  value: 1h
                 - name: SERVICE_SLACK_WEBHOOK_URL
                   valueFrom:
                     secretKeyRef:
