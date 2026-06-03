@@ -853,6 +853,8 @@ Default matches snapshot:
                   value: "true"
                 - name: USE_FORECASTER_COMPUTED_METRIC_ID
                   value: "false"
+                - name: USE_FORECAST_ENRICHMENT
+                  value: "false"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: AFFINITY_ID

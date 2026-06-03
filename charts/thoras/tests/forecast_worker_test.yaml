@@ -325,6 +325,25 @@ tests:
             name: USE_FORECASTER_COMPUTED_METRIC_ID
             value: "true"
 
+  - it: renders USE_FORECAST_ENRICHMENT as false by default
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: USE_FORECAST_ENRICHMENT
+            value: "false"
+
+  - it: renders USE_FORECAST_ENRICHMENT as true when useForecastEnrichment is true
+    set:
+      thorasForecast:
+        useForecastEnrichment: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: USE_FORECAST_ENRICHMENT
+            value: "true"
+
   - it: Should enable request and limit overrides
     set:
       thorasForecast:
