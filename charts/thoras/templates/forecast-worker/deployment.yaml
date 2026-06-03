@@ -78,6 +78,8 @@ spec:
             value: {{ .Values.thorasForecast.enableDecoupledTraining | ternary "true" "false" | quote }}
           - name: USE_AST_METRICS_SERIES
             value: {{ .Values.thorasForecast.useAstMetricsSeries | ternary "true" "false" | quote }}
+          - name: USE_FORECASTER_COMPUTED_METRIC_ID
+            value: {{ .Values.thorasForecast.useForecasterComputedMetricId | ternary "true" "false" | quote }}
           - name: TRAINING_JITTER_MINUTES
             value: {{ .Values.thorasForecast.trainingJitterMinutes | quote }}
           - name: AFFINITY_ID

@@ -845,6 +845,8 @@ Default matches snapshot:
                   value: "true"
                 - name: USE_AST_METRICS_SERIES
                   value: "true"
+                - name: USE_FORECASTER_COMPUTED_METRIC_ID
+                  value: "false"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: AFFINITY_ID

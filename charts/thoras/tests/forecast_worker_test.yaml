@@ -306,6 +306,25 @@ tests:
             name: USE_AST_METRICS_SERIES
             value: "false"
 
+  - it: renders USE_FORECASTER_COMPUTED_METRIC_ID as false by default
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: USE_FORECASTER_COMPUTED_METRIC_ID
+            value: "false"
+
+  - it: renders USE_FORECASTER_COMPUTED_METRIC_ID as true when useForecasterComputedMetricId is true
+    set:
+      thorasForecast:
+        useForecasterComputedMetricId: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: USE_FORECASTER_COMPUTED_METRIC_ID
+            value: "true"
+
   - it: Should enable request and limit overrides
     set:
       thorasForecast:
