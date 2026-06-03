@@ -114,11 +114,28 @@ externalTimescale:
   secretRefName: ""
   secretRefKey: ""
 
+# Default PostgreSQL connection-pool settings for the api-server, operator,
+# and worker. Each component can override any of these under its own
+# `postgresql` block.
+postgresql:
+  # Maximum number of connections in the pool.
+  maxConns: 10
+  # Maximum amount of time a connection may sit idle before being closed.
+  maxConnIdleTime: 5m
+  # Maximum amount of time a connection may be reused before being closed.
+  maxConnLifetime: 1h
+
 rbac:
   namespaces: []
 
 thorasOperator:
   replicas: 2
+  # Overrides for the global `postgresql` connection-pool settings. Any field
+  # left unset falls back to the corresponding `postgresql` default.
+  postgresql:
+    maxConns: ""
+    maxConnIdleTime: ""
+    maxConnLifetime: ""
   # Resource upperbound used when thorasManageThoras is enabled. Empty means
   # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
   upperbound:
@@ -263,6 +280,12 @@ metricsCollector:
   extraEgressRules: []
 
 thorasApiServerV2:
+  # Overrides for the global `postgresql` connection-pool settings. Any field
+  # left unset falls back to the corresponding `postgresql` default.
+  postgresql:
+    maxConns: ""
+    maxConnIdleTime: ""
+    maxConnLifetime: ""
   # Resource upperbound used when thorasManageThoras is enabled. Empty means
   # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
   upperbound:
@@ -310,6 +333,12 @@ thorasApiServerV2:
 
 thorasWorker:
   enabled: true
+  # Overrides for the global `postgresql` connection-pool settings. Any field
+  # left unset falls back to the corresponding `postgresql` default.
+  postgresql:
+    maxConns: ""
+    maxConnIdleTime: ""
+    maxConnLifetime: ""
   # Resource upperbound used when thorasManageThoras is enabled. Empty means
   # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
   upperbound:
