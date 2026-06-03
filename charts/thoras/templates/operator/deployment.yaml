@@ -193,10 +193,10 @@ spec:
           {{- end }}
           - name: SERVICE_ENABLE_PPROF
             value: {{ .Values.thorasOperator.pprof.enabled | quote }}
-          - name: SERVICE_TIMESCALE_EXTENSION_VERSION
-            value: {{ .Values.metricsCollector.timescale.extensionVersion | quote }}
           - name: SERVICE_SHOULD_MIGRATE_ON_START
             value: true
+          - name: SERVICE_TIMESCALE_EXTENSION_VERSION
+            value: {{ .Values.metricsCollector.timescale.extensionVersion | quote }}
           - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
             value: {{ .Values.featureFlags.enableInformersStripManagedFields | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_TYPED_INFORMERS
