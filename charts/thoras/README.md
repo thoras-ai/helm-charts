@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.125.1](https://img.shields.io/badge/Version-4.125.1-informational?style=flat-square) ![AppVersion: 4.102.2](https://img.shields.io/badge/AppVersion-4.102.2-informational?style=flat-square)
+![Version: 4.126.2](https://img.shields.io/badge/Version-4.126.2-informational?style=flat-square) ![AppVersion: 4.103.1](https://img.shields.io/badge/AppVersion-4.103.1-informational?style=flat-square)
 
 # Installs
 
@@ -52,7 +52,7 @@ helm install \
 
 | Key                                | Type    | Default                                          | Description                                                                                                          |
 | ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.102.2                                          | Thoras app version                                                                                                   |
+| thorasVersion                      | String  | 4.103.1                                          | Thoras app version                                                                                                   |
 | imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
 | imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
 | imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
@@ -80,14 +80,14 @@ helm install \
 
 The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
 
-| Key                                            | Type    | Default | Description                                                |
-| ---------------------------------------------- | ------- | ------- | ---------------------------------------------------------- |
-| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                        |
-| featureFlags.enableCostSavingsSettingsRefresh  | Boolean | true    | If true, refreshes the costs savings settings periodically |
-| featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects   |
-| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations             |
-| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations  |
-| featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                        |
+| Key                                            | Type    | Default | Description                                               |
+| ---------------------------------------------- | ------- | ------- | --------------------------------------------------------- |
+| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                       |
+| featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects  |
+| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations            |
+| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
+| featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                       |
+| featureFlags.enableASTOwnerReference           | Boolean | false   | If true, sets owner reference on ASTs to target workload  |
 
 ## Affinity Configuration
 
@@ -249,8 +249,8 @@ must be pre-installed and managed externally.
 | thorasWorker.queriesPerSecond                        | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
 | thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                         |
 | thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                      |
-| thorasWorker.enableMetricIntegrityWorker             | Boolean | false         | Enable metric integrity worker                               |
-| thorasWorker.enableActiveSuggestionWorker            | Boolean | true          | Enable active suggestions worker                             |
+| thorasWorker.enableMetricIntegrityWorker             | Boolean | true          | Enable metric integrity worker                               |
+| thorasWorker.enableDeploymentMonitorWorker           | Boolean | false         | Enable deployment monitor worker                             |
 | thorasWorker.enableMonitorActiveSuggestionFromCRD    | Boolean | false         | Enable monitoring active suggestions using the AST           |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction              |
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | false         | Enable the unified AST utilization monitor                   |

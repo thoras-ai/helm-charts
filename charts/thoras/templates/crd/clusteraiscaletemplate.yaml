@@ -634,6 +634,8 @@ spec:
                         - recommendation
                         - recommend
                         - rec
+                        - observe
+                        - observation
                         type: string
                       scaling_behavior:
                         description: Rules for how large a proposed scale event must
@@ -977,6 +979,8 @@ spec:
                         - recommendation
                         - recommend
                         - rec
+                        - observe
+                        - observation
                         type: string
                       oom_remediation:
                         description: |-

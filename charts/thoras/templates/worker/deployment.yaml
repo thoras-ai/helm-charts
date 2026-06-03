@@ -108,8 +108,8 @@ spec:
           {{- end }}
           - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
             value: {{ .Values.thorasWorker.enableMetricIntegrityWorker | ternary "true" "false" | quote }}
-          - name: SERVICE_ENABLE_ACTIVE_SUGGESTION_WORKER
-            value: {{ .Values.thorasWorker.enableActiveSuggestionWorker | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
+            value: {{ .Values.thorasWorker.enableDeploymentMonitorWorker | ternary "true" "false" | quote }}
           - name: SERVICE_COLLECTOR_MEM_REQUEST
             value: "{{ .Values.metricsCollector.timescale.requests.memory | default "3072Mi" }}"
           - name: SERVICE_PORT
@@ -154,12 +154,8 @@ spec:
             value: {{ .Values.featureFlags.enableNodeDetailsCollector | ternary "true" "false" | quote}}
           - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
             value: "true"
-          - name: SERVICE_ENABLE_COST_SAVINGS_SETTINGS_REFRESH
-            value: {{ .Values.featureFlags.enableCostSavingsSettingsRefresh | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_MONITOR_ACTIVE_SUGGESTION_FROM_CRD
             value: {{ .Values.featureFlags.enableMonitorActiveSuggestionFromCRD | ternary "true" "false" | quote }}
-          - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
-            value: {{ .Values.featureFlags.enableDeploymentMonitor | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
             value: {{ not .Values.featureFlags.enableForecastQueueStats | ternary "true" "false" | quote }}
           - name: SERVICE_FORECAST_JOB_TIMEOUT_INTERVAL
@@ -278,6 +274,8 @@ spec:
             value: {{ .Values.thorasForecast.worker.scaler.maxReplicas | quote }}
           - name: SERVICE_FORECAST_WORKER_ASTS_PER_REPLICA
             value: {{ .Values.thorasForecast.worker.scaler.astsPerReplica | quote }}
+          - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
+            value: {{ .Values.featureFlags.enableDisruptionSchedulerWorker | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics

@@ -22,6 +22,55 @@ data:
 
       include       mime.types;
 
+      # Least-privilege allowlist for dashboard -> API calls.
+      # Deny by default; only routes the dashboard actually uses are allowed.
+      # New dashboard API calls require a matching entry here or they will 403.
+      map $request_method$request_uri $thoras_dashboard_api_allowed {
+        default 0;
+
+        # GET — reads
+        ~*^GET/v1/ast(\?|$)                                                       1;
+        ~*^GET/v1/ast/[^/]+/[^/]+(\?|$)                                           1;
+        ~*^GET/v1/ast/[^/]+/[^/]+/pods(\?|$)                                      1;
+        ~*^GET/v1/ast/[^/]+/[^/]+/metrics/current(\?|$)                           1;
+        ~*^GET/v1/ast/[^/]+/[^/]+/suggestions(\?|$)                               1;
+        ~*^GET/v1/cost-savings/settings(\?|$)                                     1;
+        ~*^GET/v1/export(\?|$)                                                    1;
+        ~*^GET/v1/instance-costs/current(\?|$)                                    1;
+        ~*^GET/v1/system/jobs/status(\?|$)                                        1;
+        ~*^GET/v1/system/namespaces(\?|$)                                         1;
+        ~*^GET/v1/system/status(\?|$)                                             1;
+        ~*^GET/v1/views/asts(\?|$)                                                1;
+        ~*^GET/v1/views/asts/[^/]+/[^/]+(\?|$)                                    1;
+        ~*^GET/v1/views/cost/analysis(\?|$)                                       1;
+        ~*^GET/v1/views/cost/details(\?|$)                                        1;
+        ~*^GET/v1/views/cost/details/namespaces/[^/]+(\?|$)                       1;
+        ~*^GET/v1/views/cost/projected(\?|$)                                      1;
+        ~*^GET/v1/views/cost/savings-summary(\?|$)                                1;
+        ~*^GET/v1/views/cost/savings-summary/namespaces/[^/]+(\?|$)               1;
+        ~*^GET/v1/views/kpis(\?|$)                                                1;
+        ~*^GET/v1/views/labels(\?|$)                                              1;
+        ~*^GET/v1/views/namespaces/[^/]+/asts(\?|$)                               1;
+        ~*^GET/v1/views/namespaces/[^/]+/kpis(\?|$)                               1;
+        ~*^GET/v1/views/namespaces/[^/]+/labels(\?|$)                             1;
+        ~*^GET/v1/views/node-pools(\?|$)                                          1;
+        ~*^GET/v1/views/nodes(\?|$)                                               1;
+
+        # POST — dashboard-initiated mutations
+        ~*^POST/v1/ast/candidates/[^/]+(\?|$)                                     1;
+        ~*^POST/v1/ast/enroll/all(\?|$)                                           1;
+        ~*^POST/v1/cost-savings/settings(\?|$)                                    1;
+
+        # POST — reads that pass a request body (query payloads, not mutations)
+        ~*^POST/v1/ast/[^/]+/metrics/series(\?|$)                                 1;
+
+        # PATCH — scale mode toggle
+        ~*^PATCH/v1/ast/[^/]+/[^/]+/mode(\?|$)                                    1;
+
+        # PUT — pause/resume system-wide scaling
+        ~*^PUT/v1/system/scaling(\?|$)                                            1;
+      }
+
       server {
         listen       {{ .Values.thorasDashboard.containerPort }};
         listen       [::]:{{ .Values.thorasDashboard.containerPort }} ipv6only=on;
@@ -31,6 +80,9 @@ data:
         index  index.html index.htm;
 
         location /v1/ {
+          if ($thoras_dashboard_api_allowed != 1) {
+            return 403;
+          }
           proxy_pass http://thoras-api-server-v2;
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;

@@ -205,6 +205,10 @@ spec:
             value: {{ .Values.utilizationThresholds.overprovisioned | quote }}
           - name: SERVICE_UNDERPROVISIONED_THRESHOLD
             value: {{ .Values.utilizationThresholds.underprovisioned | quote }}
+          - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
+            value: {{ .Values.featureFlags.enableDisruptionSchedulerWorker | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_AST_OWNER_REFERENCE
+            value: {{ .Values.featureFlags.enableASTOwnerReference | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: [
           "/app/operator"

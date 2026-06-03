@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.102.2"
+thorasVersion: "4.103.1"
 cluster:
   name: ""
 
@@ -55,16 +55,16 @@ featureFlags:
       forecastBlocks: "4h0s"
       # Forecast once per hour by default
       forecastCron: "17 * * * *"
-  enableCostSavingsSettingsRefresh: true
   enablePrometheusMetricScraping: false
   enableMonitorActiveSuggestionFromCRD: false
-  enableDeploymentMonitor: true
   enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastQueueStats: false
   enableInformersStripManagedFields: true
   enableTypedInformers: true
   enableMemoryLimit: true
+  enableDisruptionSchedulerWorker: false
+  enableASTOwnerReference: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
@@ -348,7 +348,7 @@ thorasWorker:
   enableAstViewCacheRefreshWorker: true
   enableAstViewCacheStateReconcilerWorker: true
   enableMetricIntegrityWorker: true
-  enableActiveSuggestionWorker: true
+  enableDeploymentMonitorWorker: false
   enableUnifiedAstUtilizationMonitor: true
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
@@ -511,7 +511,7 @@ thorasForecast:
       memory: 256Mi
     forecastTimeout: 600
     scaler:
-      enabled: false
+      enabled: true
       interval: "1m"
       minReplicas: 1
       maxReplicas: 100
