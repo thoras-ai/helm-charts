@@ -88,7 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations            |
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
 | featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                       |
-| featureFlags.enableASTOwnerReference           | Boolean | false   | If true, sets owner reference on ASTs to target workload  |
+| featureFlags.enableASTOwnerReference           | Boolean | true    | If true, sets owner reference on ASTs to target workload  |
 
 ## Affinity Configuration
 
