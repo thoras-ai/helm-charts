@@ -65,6 +65,7 @@ featureFlags:
   enableTypedInformers: true
   enableMemoryLimit: true
   enableDisruptionSchedulerWorker: false
+  enableASTOwnerReference: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:

@@ -1261,6 +1261,8 @@ Default matches snapshot:
                   value: "92"
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
                   value: "false"
+                - name: SERVICE_ENABLE_AST_OWNER_REFERENCE
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
