@@ -40,3 +40,45 @@ jobs:
         uses: helm/chart-releaser-action@v1.6.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Extract versions for release notes
+        if: steps.version_bump.outputs.is_bump == 'true'
+        id: versions
+        shell: bash
+        run: |
+          LATEST_HELM=$(git diff HEAD^1..HEAD charts/thoras/Chart.yaml | grep '^+version:' | sed 's/^+version: *//')
+          PREV_HELM=$(git diff HEAD^1..HEAD charts/thoras/Chart.yaml | grep '^-version:' | sed 's/^-version: *//')
+
+          LATEST_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml | grep '^+thorasVersion:' | sed 's/^+thorasVersion: *"\?\([^"]*\)"\?.*/\1/')
+          PREV_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml | grep '^-thorasVersion:' | sed 's/^-thorasVersion: *"\?\([^"]*\)"\?.*/\1/')
+
+          # If app version didn't change in this release, use current version for both
+          if [ -z "$LATEST_APP" ]; then
+            CURRENT_APP=$(grep '^thorasVersion:' charts/thoras/values.yaml | sed 's/^thorasVersion: *"\?\([^"]*\)"\?.*/\1/')
+            LATEST_APP="$CURRENT_APP"
+            PREV_APP="$CURRENT_APP"
+          fi
+
+          echo "latest_helm=$LATEST_HELM" >> $GITHUB_OUTPUT
+          echo "prev_helm=$PREV_HELM" >> $GITHUB_OUTPUT
+          echo "latest_app=$LATEST_APP" >> $GITHUB_OUTPUT
+          echo "prev_app=$PREV_APP" >> $GITHUB_OUTPUT
+
+      - name: Trigger release notes generation
+        if: steps.version_bump.outputs.is_bump == 'true'
+        shell: bash
+        env:
+          PLATFORM_DISPATCH_TOKEN: ${{ secrets.PLATFORM_DISPATCH_TOKEN }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg prev_helm "${{ steps.versions.outputs.prev_helm }}" \
+            --arg latest_helm "${{ steps.versions.outputs.latest_helm }}" \
+            --arg prev_app "${{ steps.versions.outputs.prev_app }}" \
+            --arg latest_app "${{ steps.versions.outputs.latest_app }}" \
+            '{event_type: "generate-release-notes", client_payload: {prev_helm: $prev_helm, latest_helm: $latest_helm, prev_app: $prev_app, latest_app: $latest_app}}')
+
+          curl -f --max-time 30 -X POST \
+            -H "Authorization: token $PLATFORM_DISPATCH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/thoras-ai/platform/dispatches \
+            -d "$PAYLOAD"
