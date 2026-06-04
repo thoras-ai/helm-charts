@@ -756,6 +756,11 @@ spec:
                         x-kubernetes-int-or-string: true
                       metrics:
                         additionalProperties:
+                          description: |-
+                            Only the "forbidden" direction is enforced here — percentile_value set without mode: percentile.
+                            The "required" direction (mode: percentile without percentile_value) is intentionally omitted
+                            because CEL cannot see the parent spec; a metric may inherit percentile_value from spec.model.
+                            That check is handled by the admission webhook, which has full context.
                           properties:
                             forecast_buffer_percentage:
                               description: Buffer percentage for this metric. Overrides
@@ -781,8 +786,10 @@ spec:
                               x-kubernetes-int-or-string: true
                           type: object
                           x-kubernetes-validations:
-                          - message: percentile_value can only be set when mode is percentile
-                            rule: '!has(self.mode) || self.mode == ''percentile'' || !has(self.percentile_value)'
+                          - message: percentile_value can only be set when mode is
+                              percentile
+                            rule: '!has(self.mode) || self.mode == ''percentile''
+                              || !has(self.percentile_value)'
                         description: Per-metric forecast configuration. Overrides
                           global mode and forecast_buffer_percentage for specific
                           metrics.
@@ -962,6 +969,46 @@ spec:
                             rule: '!has(self.jvm_options) || !self.jvm_options.enable_auto_heap_size
                               || (has(self.memory) && has(self.memory.limit))'
                         type: array
+                      disruption:
+                        description: |-
+                          Disruption controls how aggressively Thoras evicts pods when applying
+                          vertical recommendations that require pod recreation.
+                        properties:
+                          interval:
+                            default: 60s
+                            description: |-
+                              Interval is the minimum duration the operator waits after a batch of
+                              evictions before evicting the next batch. Defaults to 60s.
+                            type: string
+                          max_disrupted:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            default: 20%
+                            description: |-
+                              MaxDisrupted is the maximum number of pods that may be
+                              disrupted at once across the workload. A pod is "disrupted" if it is
+                              terminating or its Ready condition is not True. The operator only
+                              evicts up to the remaining headroom in each batch, so prior batches
+                              that haven't finished rolling reduce the next batch's size. After
+                              issuing a batch, the operator waits Interval before issuing the next
+                              batch. Unlike PodDisruptionBudget.maxUnavailable, this cap is enforced
+                              by the operator itself: pods that are unavailable for reasons
+                              unrelated to Thoras (e.g. failing readiness probes) still consume the
+                              budget.
+
+                              Accepts an absolute integer (e.g. 2) or a percentage of the workload's
+                              desired replicas (e.g. "25%"). Defaults to 20%.
+                            x-kubernetes-int-or-string: true
+                        type: object
+                        x-kubernetes-validations:
+                        - message: max_disrupted must be a positive integer or a percentage
+                            between 1% and 100%
+                          rule: '!has(self.max_disrupted) || (type(self.max_disrupted)
+                            == int ? self.max_disrupted >= 1 : self.max_disrupted.matches(''^([1-9][0-9]?|100)%$''))'
+                        - message: interval must be a positive duration
+                          rule: '!has(self.interval) || duration(self.interval) >
+                            duration(''0s'')'
                       in_place_resizing:
                         description: |-
                           Deprecated: Use UpdatePolicy instead.
