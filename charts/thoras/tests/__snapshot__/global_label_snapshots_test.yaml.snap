@@ -103,7 +103,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_UPDATE_SCALE_MODE_API
                   value: "false"
                 - name: SERVICE_SHOULD_MIGRATE_ON_START
-                  value: true
+                  value: "true"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
@@ -1262,7 +1262,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_PPROF
                   value: "false"
                 - name: SERVICE_SHOULD_MIGRATE_ON_START
-                  value: true
+                  value: "true"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
@@ -1665,7 +1665,7 @@ Default matches snapshot:
                     fieldRef:
                       fieldPath: metadata.name
                 - name: SERVICE_SHOULD_MIGRATE_ON_START
-                  value: true
+                  value: "true"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
                   value: 2.27.0
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
