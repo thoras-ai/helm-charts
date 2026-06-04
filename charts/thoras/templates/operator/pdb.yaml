@@ -1,13 +1,1 @@
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: thoras-operator
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app: thoras-operator
+{{- include "thoras.pdb" (dict "root" . "pdb" .Values.thorasOperator.pdb "name" "thoras-operator" "app" "thoras-operator" "labels" .Values.thorasOperator.labels) }}

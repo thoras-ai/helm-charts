@@ -1,0 +1,3 @@
+{{- if .Values.thorasMonitor.enabled }}
+{{- include "thoras.pdb" (dict "root" . "pdb" .Values.thorasMonitor.pdb "name" "thoras-monitor" "app" "thoras-monitor" "labels" .Values.thorasMonitor.labels) }}
+{{- end }}

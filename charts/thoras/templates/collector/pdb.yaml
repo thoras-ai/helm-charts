@@ -1,0 +1,3 @@
+{{- if or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .)) }}
+{{- include "thoras.pdb" (dict "root" . "pdb" .Values.metricsCollector.pdb "name" "metrics-collector" "app" "metrics-collector" "labels" .Values.metricsCollector.labels) }}
+{{- end }}

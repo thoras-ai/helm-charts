@@ -1,0 +1,189 @@
+suite: PodDisruptionBudgets
+templates:
+  - operator/pdb.yaml
+  - api-server-v2/pdb.yaml
+  - worker/pdb.yaml
+  - dashboard/pdb.yaml
+  - forecast-worker/pdb.yaml
+  - monitor/pdb.yaml
+  - collector/pdb.yaml
+tests:
+  ############################
+  # Default behavior
+  ############################
+  - it: operator PDB renders by default with maxUnavailable 1
+    template: operator/pdb.yaml
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - notExists:
+          path: spec.minAvailable
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-operator
+
+  - it: api-server-v2 PDB renders by default with maxUnavailable 1
+    template: api-server-v2/pdb.yaml
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-api-server-v2
+
+  - it: worker PDB is not rendered by default
+    template: worker/pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: dashboard PDB is not rendered by default
+    template: dashboard/pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: forecast-worker PDB is not rendered by default
+    template: forecast-worker/pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: monitor PDB is not rendered by default
+    template: monitor/pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  ############################
+  # enabled flag
+  ############################
+  - it: worker PDB renders when enabled with default maxUnavailable 1
+    template: worker/pdb.yaml
+    set:
+      thorasWorker:
+        pdb:
+          enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-worker
+
+  - it: operator PDB is not rendered when disabled
+    template: operator/pdb.yaml
+    set:
+      thorasOperator:
+        pdb:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: forecast-worker PDB renders when enabled
+    template: forecast-worker/pdb.yaml
+    set:
+      thorasForecast:
+        worker:
+          pdb:
+            enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-forecast-worker
+
+  ############################
+  # minAvailable / maxUnavailable precedence
+  ############################
+  - it: minAvailable override renders minAvailable and drops maxUnavailable
+    template: api-server-v2/pdb.yaml
+    set:
+      thorasApiServerV2:
+        pdb:
+          minAvailable: 2
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 2
+      - notExists:
+          path: spec.maxUnavailable
+
+  - it: maxUnavailable override is honored
+    template: api-server-v2/pdb.yaml
+    set:
+      thorasApiServerV2:
+        pdb:
+          maxUnavailable: 3
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 3
+      - notExists:
+          path: spec.minAvailable
+
+  - it: minAvailable takes precedence when both are set
+    template: api-server-v2/pdb.yaml
+    set:
+      thorasApiServerV2:
+        pdb:
+          minAvailable: 2
+          maxUnavailable: 5
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 2
+      - notExists:
+          path: spec.maxUnavailable
+
+  - it: minAvailable of 0 is honored and not treated as unset
+    template: api-server-v2/pdb.yaml
+    set:
+      thorasApiServerV2:
+        pdb:
+          minAvailable: 0
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 0
+      - notExists:
+          path: spec.maxUnavailable
+
+  ############################
+  # Gated components
+  ############################
+  - it: monitor PDB renders when both monitor and pdb are enabled
+    template: monitor/pdb.yaml
+    set:
+      thorasMonitor:
+        enabled: true
+        pdb:
+          enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-monitor
+
+  - it: monitor PDB is not rendered when pdb enabled but monitor disabled
+    template: monitor/pdb.yaml
+    set:
+      thorasMonitor:
+        enabled: false
+        pdb:
+          enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
