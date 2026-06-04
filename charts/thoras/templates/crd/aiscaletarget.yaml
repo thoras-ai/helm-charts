@@ -1374,17 +1374,15 @@ spec:
                 - suggestedReplicas
                 type: object
               oomAdjustedMemory:
-                additionalProperties:
-                  anyOf:
-                  - type: integer
-                  - type: string
-                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                  x-kubernetes-int-or-string: true
                 description: |-
-                  OOMAdjustedMemory holds the per-container memory floor values set by the operator
+                  OOMAdjustedMemory holds the per-container memory adjustments set by the operator
                   during an active OOM episode. Keyed by container name. The admission webhook applies
-                  max(suggestion, floor) on pod creation. Cleared when oomStabilizationWindowExpiry passes.
-                type: object
+                  the adjusted request (floor on max(suggestion, floor)) and, when Limit is non-nil,
+                  applies the adjusted limit. Cleared when oomStabilizationWindowExpiry passes.
+
+                  The value type accepts both the legacy bare-Quantity form (request only, Limit nil)
+                  and the struct form {request, limit} via OOMContainerMemoryAdjustment.UnmarshalJSON.
+                x-kubernetes-preserve-unknown-fields: true
               oomKilledContainers:
                 description: |-
                   OOMKilledContainers is the set of container names that had OOM kills in the most recent
