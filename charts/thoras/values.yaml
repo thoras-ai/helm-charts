@@ -377,7 +377,7 @@ thorasWorker:
   enableAstViewCacheRefreshWorker: true
   enableAstViewCacheStateReconcilerWorker: true
   enableMetricIntegrityWorker: true
-  enableDeploymentMonitorWorker: false
+  enableDeploymentMonitorWorker: true
   enableUnifiedAstUtilizationMonitor: true
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
