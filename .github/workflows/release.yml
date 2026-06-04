@@ -23,8 +23,13 @@ jobs:
         id: version_bump
         run: |
           # Diff HEAD against pre-merge state and look for version bump
-          if git diff $(git rev-parse HEAD^1)..HEAD charts/*/Chart.yaml | grep -E '^\+version:'; then
+          DIFF=$(git diff $(git rev-parse HEAD^1)..HEAD charts/*/Chart.yaml)
+          LATEST_HELM=$(echo "$DIFF" | grep -E '^\+version:' | sed 's/^+version: *//')
+          if [ -n "$LATEST_HELM" ]; then
+            PREV_HELM=$(echo "$DIFF" | grep -E '^\-version:' | sed 's/^-version: *//')
             echo "is_bump=true" >> $GITHUB_OUTPUT
+            echo "latest_helm=$LATEST_HELM" >> $GITHUB_OUTPUT
+            echo "prev_helm=$PREV_HELM" >> $GITHUB_OUTPUT
           else
             echo "is_bump=false" >> $GITHUB_OUTPUT
           fi
@@ -46,9 +51,6 @@ jobs:
         id: versions
         shell: bash
         run: |
-          LATEST_HELM=$(git diff HEAD^1..HEAD charts/thoras/Chart.yaml | grep '^+version:' | sed 's/^+version: *//')
-          PREV_HELM=$(git diff HEAD^1..HEAD charts/thoras/Chart.yaml | grep '^-version:' | sed 's/^-version: *//')
-
           LATEST_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml | grep '^+thorasVersion:' | sed 's/^+thorasVersion: *"\?\([^"]*\)"\?.*/\1/')
           PREV_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml | grep '^-thorasVersion:' | sed 's/^-thorasVersion: *"\?\([^"]*\)"\?.*/\1/')
 
@@ -59,8 +61,6 @@ jobs:
             PREV_APP="$CURRENT_APP"
           fi
 
-          echo "latest_helm=$LATEST_HELM" >> $GITHUB_OUTPUT
-          echo "prev_helm=$PREV_HELM" >> $GITHUB_OUTPUT
           echo "latest_app=$LATEST_APP" >> $GITHUB_OUTPUT
           echo "prev_app=$PREV_APP" >> $GITHUB_OUTPUT
 
@@ -71,8 +71,8 @@ jobs:
           PLATFORM_DISPATCH_TOKEN: ${{ secrets.PLATFORM_DISPATCH_TOKEN }}
         run: |
           PAYLOAD=$(jq -n \
-            --arg prev_helm "${{ steps.versions.outputs.prev_helm }}" \
-            --arg latest_helm "${{ steps.versions.outputs.latest_helm }}" \
+            --arg prev_helm "${{ steps.version_bump.outputs.prev_helm }}" \
+            --arg latest_helm "${{ steps.version_bump.outputs.latest_helm }}" \
             --arg prev_app "${{ steps.versions.outputs.prev_app }}" \
             --arg latest_app "${{ steps.versions.outputs.latest_app }}" \
             '{event_type: "generate-release-notes", client_payload: {prev_helm: $prev_helm, latest_helm: $latest_helm, prev_app: $prev_app, latest_app: $latest_app}}')
