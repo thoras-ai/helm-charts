@@ -24,9 +24,9 @@ jobs:
         run: |
           # Diff HEAD against pre-merge state and look for version bump
           DIFF=$(git diff $(git rev-parse HEAD^1)..HEAD charts/*/Chart.yaml)
-          LATEST_HELM=$(echo "$DIFF" | grep -E '^\+version:' | sed 's/^+version: *//')
+          LATEST_HELM=$(echo "$DIFF" | grep -E '^\+version:' | sed 's/^+version: *//' || true)
           if [ -n "$LATEST_HELM" ]; then
-            PREV_HELM=$(echo "$DIFF" | grep -E '^\-version:' | sed 's/^-version: *//')
+            PREV_HELM=$(echo "$DIFF" | grep -E '^\-version:' | sed 's/^-version: *//' || true)
             echo "is_bump=true" >> $GITHUB_OUTPUT
             echo "latest_helm=$LATEST_HELM" >> $GITHUB_OUTPUT
             echo "prev_helm=$PREV_HELM" >> $GITHUB_OUTPUT
