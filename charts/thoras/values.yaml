@@ -152,6 +152,12 @@ thorasOperator:
     name: thoras-operator
   podAnnotations: {}
   labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+    # minAvailable:
   service:
     annotations: {}
   # Specify the complete resources block (takes precedence if set)
@@ -222,6 +228,12 @@ metricsCollector:
     pvcStorageRequestSize: "3Gi"
   podAnnotations: {}
   labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+    # minAvailable:
   service:
     annotations: {}
   serviceAccount:
@@ -305,6 +317,12 @@ thorasApiServerV2:
   containerPort: 8080
   podAnnotations: {}
   labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+    # minAvailable:
   service:
     annotations: {}
   replicas: 1
@@ -355,6 +373,12 @@ thorasWorker:
     name: thoras-worker
   podAnnotations: {}
   labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+    # minAvailable:
   service:
     annotations: {}
   replicas: 1
@@ -409,6 +433,12 @@ thorasDashboard:
     create: true
   podAnnotations: {}
   labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+    # minAvailable:
   containerPort: 8080
   # Specify the complete resources block (takes precedence if set)
   resources: {}
@@ -489,6 +519,13 @@ thorasMonitor:
     memory: "64Mi"
   podAnnotations: {}
   labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set. Only rendered when
+  # thorasMonitor.enabled is also true.
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+    # minAvailable:
   config: |
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
@@ -530,6 +567,12 @@ thorasForecast:
     retrainOverrideHours: ""
     maxTimeseriesMetricCacheSizeMb: 1000
     labels: {}
+    # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is
+    # set below. minAvailable takes precedence if both are set.
+    pdb:
+      enabled: false
+      maxUnavailable: 1
+      # minAvailable:
     # Specify the complete resources block (takes precedence if set)
     resources: {}
     # Legacy field for backward compatibility (used if resources is empty)

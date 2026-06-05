@@ -139,3 +139,35 @@ true
 {{ toYaml $out -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+PodDisruptionBudget for a component. Renders nothing when pdb.enabled is falsey.
+Spec precedence: minAvailable wins if set, else maxUnavailable, else defaults to
+maxUnavailable: 1. Uses kindIs "invalid" so an explicit 0 is honored.
+Usage: include "thoras.pdb" (dict "root" . "pdb" .Values.thorasWorker.pdb
+         "name" "thoras-worker" "app" "thoras-worker"
+         "labels" .Values.thorasWorker.labels)
+*/}}
+{{- define "thoras.pdb" -}}
+{{- if .pdb.enabled -}}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .name }}
+  namespace: {{ .root.Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .root "component" .labels) | nindent 4 }}
+spec:
+  {{- if not (kindIs "invalid" .pdb.minAvailable) }}
+  minAvailable: {{ .pdb.minAvailable }}
+  {{- else if not (kindIs "invalid" .pdb.maxUnavailable) }}
+  maxUnavailable: {{ .pdb.maxUnavailable }}
+  {{- else }}
+  maxUnavailable: 1
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .app }}
+{{- end -}}
+{{- end -}}

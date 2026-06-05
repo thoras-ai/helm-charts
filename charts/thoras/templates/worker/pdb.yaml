@@ -1,0 +1,1 @@
+{{- include "thoras.pdb" (dict "root" . "pdb" .Values.thorasWorker.pdb "name" "thoras-worker" "app" "thoras-worker" "labels" .Values.thorasWorker.labels) }}
