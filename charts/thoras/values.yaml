@@ -56,7 +56,6 @@ featureFlags:
       # Forecast once per hour by default
       forecastCron: "17 * * * *"
   enablePrometheusMetricScraping: false
-  enableMonitorActiveSuggestionFromCRD: false
   enablePgLargeObjectStorage: true
   enableNoBlobApiServer: false
   enableForecastQueueStats: false
