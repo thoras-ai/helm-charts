@@ -64,6 +64,7 @@ featureFlags:
   enableMemoryLimit: true
   enableDisruptionSchedulerWorker: false
   enableASTOwnerReference: true
+  enableAstRecordMirroring: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
