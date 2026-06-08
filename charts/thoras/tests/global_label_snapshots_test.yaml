@@ -13,7 +13,6 @@ set:
     worker:
       enabled: true
   thorasMonitor:
-    enabled: true
     unittesting: true
   thorasDashboard:
     unittesting: true

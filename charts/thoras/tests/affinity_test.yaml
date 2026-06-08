@@ -1,7 +1,6 @@
 suite: Affinity Configuration
 set:
   thorasMonitor:
-    enabled: true
     unittesting: true
   thorasDashboard:
     unittesting: true
@@ -71,7 +70,6 @@ tests:
       - api-server-v2/deployment.yaml
       - worker/deployment.yaml
       - dashboard/deployment.yaml
-      - monitor/deployment.yaml
     asserts:
       - isNull:
           path: spec.template.spec.affinity
@@ -153,7 +151,6 @@ tests:
       - api-server-v2/deployment.yaml
       - worker/deployment.yaml
       - dashboard/deployment.yaml
-      - monitor/deployment.yaml
     set:
       affinity:
         nodeAffinity:
