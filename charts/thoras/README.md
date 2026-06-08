@@ -88,6 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
 | featureFlags.enableMemoryLimit                 | Boolean | true    | If true, enables dynamic GOMEMLIMIT                       |
 | featureFlags.enableASTOwnerReference           | Boolean | true    | If true, sets owner reference on ASTs to target workload  |
+| featureFlags.enableAstRecordMirroring          | Boolean | false   | If true, ASTs are mirrored to the database component      |
 
 ## Affinity Configuration
 
