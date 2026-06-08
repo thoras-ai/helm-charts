@@ -512,19 +512,8 @@ thorasMonitor:
   # Legacy field for backward compatibility (used if resources is empty)
   limits:
     memory: "8192Mi"
-  # Legacy field for backward compatibility (used if resources is empty)
-  requests:
-    cpu: "16m"
-    memory: "64Mi"
   podAnnotations: {}
   labels: {}
-  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
-  # below. minAvailable takes precedence if both are set. Only rendered when
-  # thorasMonitor.enabled is also true.
-  pdb:
-    enabled: false
-    maxUnavailable: 1
-    # minAvailable:
   config: |
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true

@@ -296,15 +296,10 @@ must be pre-installed and managed externally.
 
 ## Thoras Monitor
 
-| Key                               | Type    | Default        | Description                                                  |
-| --------------------------------- | ------- | -------------- | ------------------------------------------------------------ |
-| thorasMonitor.enabled             | Bool    | false          | Enable Thoras monitoring                                     |
-| thorasMonitor.serviceAccount.name | String  | thoras-monitor | Service account name for Thoras monitor pod                  |
-| thorasMonitor.podAnnotations      | Object  | {}             | Pod Annotations for Thoras monitor                           |
-| thorasMonitor.labels              | Object  | {}             | Pod labels for Thoras monitor                                |
-| thorasMonitor.slackErrorsEnabled  | Boolean | false          | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasMonitor.config              | String  | ""             | Thoras Monitor configuration yaml                            |
-| thorasMonitor.logLevel            | String  | Nil            | Logging level                                                |
+| Key                  | Type   | Default | Description                       |
+| -------------------- | ------ | ------- | --------------------------------- |
+| thorasMonitor.labels | Object | {}      | Pod labels for Thoras monitor     |
+| thorasMonitor.config | String | ""      | Thoras Monitor configuration yaml |
 
 ## Example Thoras Dashboard Ingress Configuration
 
