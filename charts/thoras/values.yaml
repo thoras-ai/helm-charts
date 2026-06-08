@@ -490,36 +490,9 @@ thorasDashboard:
   extraEgressRules: []
 
 thorasMonitor:
-  enabled: false
-  # Resource upperbound used when thorasManageThoras is enabled. Empty means
-  # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
-  upperbound:
-    cpu: ""
-    memory: ""
-  # OOM remediation used when thorasManageThoras is enabled. Enabled by
-  # default so that an OOM on a Thoras workload raises its memory floor via
-  # the operator's standard OOM remediation flow. stabilization_window is a
-  # duration string (e.g. "1h"); empty defers to the operator default of
-  # max(forecast_interval, 1h).
-  oom_remediation:
-    enabled: true
-    stabilization_window: ""
-  serviceAccount:
-    name: thoras-monitor
   unittesting: false
-  # Specify the complete resources block (takes precedence if set)
-  resources: {}
-  # Legacy field for backward compatibility (used if resources is empty)
-  limits:
-    memory: "8192Mi"
-  podAnnotations: {}
   labels: {}
   config: |
-  # Set to true to apply global affinity rules to this component
-  useGlobalAffinity: true
-  # Component-specific affinity (merged with global if useGlobalAffinity is true)
-  affinity: {}
-  extraEgressRules: []
 
 thorasForecast:
   serviceAccount:

@@ -3,8 +3,6 @@ set:
   networkPolicy:
     enabled: true
     flavor: kubernetes
-  thorasMonitor:
-    enabled: true
 tests:
   # --- Rendering guards ---
 
@@ -26,15 +24,6 @@ tests:
     template: dashboard/network-policy.yaml
     set:
       thorasDashboard:
-        enabled: false
-    asserts:
-      - hasDocuments:
-          count: 0
-
-  - it: Does not render monitor policy when monitor is disabled
-    template: monitor/network-policy.yaml
-    set:
-      thorasMonitor:
         enabled: false
     asserts:
       - hasDocuments:

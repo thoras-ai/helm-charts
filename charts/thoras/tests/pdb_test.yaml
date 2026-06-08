@@ -5,7 +5,6 @@ templates:
   - worker/pdb.yaml
   - dashboard/pdb.yaml
   - forecast-worker/pdb.yaml
-  - monitor/pdb.yaml
   - collector/pdb.yaml
 tests:
   ############################
@@ -51,12 +50,6 @@ tests:
 
   - it: forecast-worker PDB is not rendered by default
     template: forecast-worker/pdb.yaml
-    asserts:
-      - hasDocuments:
-          count: 0
-
-  - it: monitor PDB is not rendered by default
-    template: monitor/pdb.yaml
     asserts:
       - hasDocuments:
           count: 0
@@ -159,31 +152,3 @@ tests:
           value: 0
       - notExists:
           path: spec.maxUnavailable
-
-  ############################
-  # Gated components
-  ############################
-  - it: monitor PDB renders when both monitor and pdb are enabled
-    template: monitor/pdb.yaml
-    set:
-      thorasMonitor:
-        enabled: true
-        pdb:
-          enabled: true
-    asserts:
-      - isKind:
-          of: PodDisruptionBudget
-      - equal:
-          path: spec.selector.matchLabels.app
-          value: thoras-monitor
-
-  - it: monitor PDB is not rendered when pdb enabled but monitor disabled
-    template: monitor/pdb.yaml
-    set:
-      thorasMonitor:
-        enabled: false
-        pdb:
-          enabled: true
-    asserts:
-      - hasDocuments:
-          count: 0

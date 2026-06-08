@@ -955,217 +955,6 @@ Default matches snapshot:
         app.kubernetes.io/name: thoras
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
-      name: thoras-monitor
-      namespace: foo
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          app: thoras-monitor
-      template:
-        metadata:
-          labels:
-            app: thoras-monitor
-            app.kubernetes.io/name: thoras
-            globalLabel: globalValue
-        spec:
-          containers:
-            - command:
-                - /app/monitor
-              env:
-                - name: SERVICE_LOG_LEVEL
-                  value: info
-                - name: SERVICE_SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef:
-                      key: webhookUrl
-                      name: thoras-slack
-                - name: SERVICE_SLACK_ERRORS_ENABLED
-                  value: "false"
-                - name: SERVICE_CLUSTER_NAME
-                  value: ""
-                - name: SERVICE_THORAS_API_BASE_URL
-                  value: http://thoras-api-server-v2
-                - name: SERVICE_ENABLE_METRIC_INTEGRITY_WORKER
-                  value: "true"
-                - name: SERVICE_ENABLE_DEPLOYMENT_MONITOR_WORKER
-                  value: "true"
-                - name: SERVICE_CHART_VERSION
-                  value: 4.7.0
-                - name: SERVICE_PLATFORM_VERSION
-                  value: TEST
-                - name: SERVICE_ENABLE_MEMORY_LIMIT
-                  value: "true"
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                exec:
-                  command:
-                    - curl
-                    - -sf
-                    - http://thoras-api-server-v2/health
-                failureThreshold: 48
-                periodSeconds: 5
-                timeoutSeconds: 5
-              name: thoras-monitor
-              readinessProbe:
-                exec:
-                  command:
-                    - curl
-                    - -sf
-                    - http://thoras-api-server-v2/health
-                failureThreshold: 48
-                periodSeconds: 5
-                timeoutSeconds: 5
-              resources:
-                limits:
-                  memory: 8192Mi
-                requests:
-                  cpu: 16m
-                  memory: 64Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-              volumeMounts:
-                - mountPath: /app/config.yaml
-                  name: config
-                  readOnly: true
-                  subPath: config.yaml
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534
-            seccompProfile:
-              type: RuntimeDefault
-          serviceAccountName: thoras-monitor
-          volumes:
-            - configMap:
-                name: thoras-monitor-config
-              name: config
-  21: |
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-monitor
-    rules:
-      - apiGroups:
-          - '*'
-        resources:
-          - '*'
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - autoscaling
-        resources:
-          - horizontalpodautoscalers
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - autoscaling.k8s.io
-        resources:
-          - verticalpodautoscalers
-        verbs:
-          - get
-          - list
-          - watch
-  22: |
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-monitor
-      namespace: foo
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: ClusterRole
-      name: thoras-monitor
-    subjects:
-      - kind: ServiceAccount
-        name: thoras-monitor
-        namespace: foo
-  23: |
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-monitor-thoras
-      namespace: foo
-    rules:
-      - apiGroups:
-          - thoras.ai
-        resources:
-          - AIScaleTarget
-          - aiscaletargets/status
-          - aiscaletargets
-        verbs:
-          - get
-          - list
-          - watch
-  24: |
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-monitor-thoras
-      namespace: foo
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: ClusterRole
-      name: thoras-monitor-thoras
-    subjects:
-      - kind: ServiceAccount
-        name: thoras-monitor
-        namespace: foo
-  25: |
-    apiVersion: v1
-    imagePullSecrets:
-      - name: test-secret-registry
-    kind: ServiceAccount
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
-      name: thoras-monitor
-      namespace: foo
-  26: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      labels:
-        app.kubernetes.io/instance: RELEASE-NAME
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: thoras
-        globalLabel: globalValue
-        helm.sh/chart: thoras-4.7.0
       name: thoras-operator
       namespace: foo
     spec:
@@ -1375,7 +1164,7 @@ Default matches snapshot:
                   - key: key
                     path: tls.key
                 secretName: thoras-tls-certs
-  27: |
+  21: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1398,7 +1187,7 @@ Default matches snapshot:
           - clusteraiscaletemplates/status
         verbs:
           - '*'
-  28: |
+  22: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1418,7 +1207,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-operator
         namespace: foo
-  29: |
+  23: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1489,7 +1278,7 @@ Default matches snapshot:
           - create
           - update
           - watch
-  30: |
+  24: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1509,7 +1298,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-operator
         namespace: foo
-  31: |
+  25: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1523,7 +1312,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-operator
       namespace: foo
-  32: |
+  26: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1548,7 +1337,7 @@ Default matches snapshot:
           targetPort: 9101
       selector:
         app: thoras-operator
-  33: |
+  27: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1700,10 +1489,6 @@ Default matches snapshot:
                   value: ""
                 - name: SERVICE_THORAS_SCALING_THORAS_DASHBOARD_MEMORY_UPPER_BOUND
                   value: ""
-                - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_CPU_UPPER_BOUND
-                  value: ""
-                - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_MEMORY_UPPER_BOUND
-                  value: ""
                 - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_CPU_UPPER_BOUND
                   value: ""
                 - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_MEMORY_UPPER_BOUND
@@ -1721,8 +1506,6 @@ Default matches snapshot:
                 - name: SERVICE_THORAS_SCALING_THORAS_API_SERVER_OOM_REMEDIATION_ENABLED
                   value: "true"
                 - name: SERVICE_THORAS_SCALING_THORAS_DASHBOARD_OOM_REMEDIATION_ENABLED
-                  value: "true"
-                - name: SERVICE_THORAS_SCALING_THORAS_MONITOR_OOM_REMEDIATION_ENABLED
                   value: "true"
                 - name: SERVICE_THORAS_SCALING_THORAS_OPERATOR_OOM_REMEDIATION_ENABLED
                   value: "true"
@@ -1799,7 +1582,7 @@ Default matches snapshot:
             - configMap:
                 name: thoras-monitor-config
               name: monitor-config
-  34: |
+  28: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1839,7 +1622,7 @@ Default matches snapshot:
           - pods/resize
         verbs:
           - patch
-  35: |
+  29: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1859,7 +1642,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  36: |
+  30: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1878,7 +1661,7 @@ Default matches snapshot:
           - '*'
         verbs:
           - '*'
-  37: |
+  31: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1898,7 +1681,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  38: |
+  32: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -1921,7 +1704,7 @@ Default matches snapshot:
           - get
           - update
           - patch
-  39: |
+  33: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -1941,7 +1724,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  40: |
+  34: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1955,7 +1738,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: foo
-  41: |
+  35: |
     apiVersion: v1
     kind: Service
     metadata:
