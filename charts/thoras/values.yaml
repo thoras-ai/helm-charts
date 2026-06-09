@@ -504,7 +504,7 @@ thorasForecast:
   enableDecoupledTraining: true
   trainingJitterMinutes: 0
   useAstMetricsSeries: true
-  useForecasterComputedMetricId: false
+  useForecasterComputedMetricId: true
   useForecastEnrichment: false
   # Minimum lookback window required before autonomous scaling is enabled (minimum 3h).
   minLookbackToScale: "3h"

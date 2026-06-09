@@ -312,18 +312,18 @@ tests:
           path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
           content:
             name: USE_FORECASTER_COMPUTED_METRIC_ID
-            value: "false"
+            value: "true"
 
   - it: renders USE_FORECASTER_COMPUTED_METRIC_ID as true when useForecasterComputedMetricId is true
     set:
       thorasForecast:
-        useForecasterComputedMetricId: true
+        useForecasterComputedMetricId: false
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
           content:
             name: USE_FORECASTER_COMPUTED_METRIC_ID
-            value: "true"
+            value: "false"
 
   - it: Should enable request and limit overrides
     set:
