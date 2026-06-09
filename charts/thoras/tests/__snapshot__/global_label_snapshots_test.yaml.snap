@@ -852,7 +852,7 @@ Default matches snapshot:
                 - name: USE_AST_METRICS_SERIES
                   value: "true"
                 - name: USE_FORECASTER_COMPUTED_METRIC_ID
-                  value: "false"
+                  value: "true"
                 - name: USE_FORECAST_ENRICHMENT
                   value: "false"
                 - name: TRAINING_JITTER_MINUTES
