@@ -51,8 +51,8 @@ jobs:
         id: versions
         shell: bash
         run: |
-          LATEST_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml | grep '^+thorasVersion:' | sed 's/^+thorasVersion: *"\?\([^"]*\)"\?.*/\1/')
-          PREV_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml | grep '^-thorasVersion:' | sed 's/^-thorasVersion: *"\?\([^"]*\)"\?.*/\1/')
+          LATEST_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml | grep '^+thorasVersion:' | sed 's/^+thorasVersion: *"\?\([^"]*\)"\?.*/\1/' || true)
+          PREV_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml | grep '^-thorasVersion:' | sed 's/^-thorasVersion: *"\?\([^"]*\)"\?.*/\1/' || true)
 
           # If app version didn't change in this release, use current version for both
           if [ -z "$LATEST_APP" ]; then
