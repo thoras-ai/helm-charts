@@ -561,6 +561,8 @@ thorasForecast:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Set to false to disable the default self anti-affinity between forecast-worker replicas
+  enableSelfAntiAffinity: true
   extraEgressRules: []
 
 # K8s client max queries per second

@@ -34,6 +34,39 @@ tests:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[1].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
           value: thoras-forecast-worker
 
+  # Test 1a-ii: forecast-worker self anti-affinity absent when disabled
+  - it: forecast-worker self anti-affinity is absent when disabled
+    templates:
+      - forecast-worker/deployment.yaml
+    set:
+      thorasForecast:
+        enableSelfAntiAffinity: false
+    asserts:
+      - contains:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution
+          content:
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - metrics-collector
+              topologyKey: kubernetes.io/hostname
+          any: true
+      - notContains:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution
+          content:
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - thoras-forecast-worker
+              topologyKey: kubernetes.io/hostname
+          any: true
+
   # Test 1b: Default - collector has only thoras-specific affinities
   - it: metrics-collector has thoras-specific affinities by default
     templates:

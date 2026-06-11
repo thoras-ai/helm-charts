@@ -91,6 +91,7 @@ podAntiAffinity:
           values:
           - metrics-collector
       topologyKey: kubernetes.io/hostname
+  {{- if .Values.thorasForecast.enableSelfAntiAffinity }}
   - weight: 95
     podAffinityTerm:
       labelSelector:
@@ -100,6 +101,7 @@ podAntiAffinity:
           values:
           - thoras-forecast-worker
       topologyKey: kubernetes.io/hostname
+  {{- end }}
 {{- end }}
 
 {{/*
