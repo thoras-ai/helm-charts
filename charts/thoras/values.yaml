@@ -65,6 +65,7 @@ featureFlags:
   enableDisruptionSchedulerWorker: false
   enableASTOwnerReference: true
   enableAstRecordMirroring: false
+  enableForecastCollectorAntiAffinity: true
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:

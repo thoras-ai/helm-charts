@@ -46,6 +46,7 @@ Usage: include "thoras.podAnnotations" (dict "root" . "component" .Values.thoras
 Default affinity for metricsCollector - anti-affinity with forecast-worker
 */}}
 {{- define "thoras.metricsCollector.defaultAffinity" -}}
+{{- if .Values.featureFlags.enableForecastCollectorAntiAffinity }}
 podAntiAffinity:
   preferredDuringSchedulingIgnoredDuringExecution:
   - weight: 100
@@ -57,6 +58,7 @@ podAntiAffinity:
           values:
           - thoras-forecast-worker
       topologyKey: kubernetes.io/hostname
+{{- end }}
 {{- end }}
 
 {{/*
@@ -80,8 +82,10 @@ podAntiAffinity:
 Default affinity for thorasForecast - anti-affinity with metrics-collector and self
 */}}
 {{- define "thoras.thorasForecast.defaultAffinity" -}}
+{{- if or .Values.featureFlags.enableForecastCollectorAntiAffinity .Values.thorasForecast.enableSelfAntiAffinity }}
 podAntiAffinity:
   preferredDuringSchedulingIgnoredDuringExecution:
+  {{- if .Values.featureFlags.enableForecastCollectorAntiAffinity }}
   - weight: 100
     podAffinityTerm:
       labelSelector:
@@ -91,6 +95,7 @@ podAntiAffinity:
           values:
           - metrics-collector
       topologyKey: kubernetes.io/hostname
+  {{- end }}
   {{- if .Values.thorasForecast.enableSelfAntiAffinity }}
   - weight: 95
     podAffinityTerm:
@@ -102,6 +107,7 @@ podAntiAffinity:
           - thoras-forecast-worker
       topologyKey: kubernetes.io/hostname
   {{- end }}
+{{- end }}
 {{- end }}
 
 {{/*
