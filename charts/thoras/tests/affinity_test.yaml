@@ -34,6 +34,59 @@ tests:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[1].podAffinityTerm.labelSelector.matchExpressions[0].values[0]
           value: thoras-forecast-worker
 
+  # Test 1a-ii: forecast-worker self anti-affinity absent when disabled
+  - it: forecast-worker self anti-affinity is absent when disabled
+    templates:
+      - forecast-worker/deployment.yaml
+    set:
+      thorasForecast:
+        enableSelfAntiAffinity: false
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution
+          value:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - metrics-collector
+                topologyKey: kubernetes.io/hostname
+
+  # Test 1a-iii: forecast-collector anti-affinity absent on forecast-worker when disabled
+  - it: forecast-collector anti-affinity is absent on forecast-worker when disabled
+    templates:
+      - forecast-worker/deployment.yaml
+    set:
+      featureFlags:
+        enableForecastCollectorAntiAffinity: false
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution
+          value:
+            - weight: 95
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - thoras-forecast-worker
+                topologyKey: kubernetes.io/hostname
+
+  # Test 1a-iv: forecast-collector anti-affinity absent on metrics-collector when disabled
+  - it: forecast-collector anti-affinity is absent on metrics-collector when disabled
+    templates:
+      - collector/deployment.yaml
+    set:
+      featureFlags:
+        enableForecastCollectorAntiAffinity: false
+    asserts:
+      - isNull:
+          path: spec.template.spec.affinity
+
   # Test 1b: Default - collector has only thoras-specific affinities
   - it: metrics-collector has thoras-specific affinities by default
     templates:

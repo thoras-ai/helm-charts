@@ -65,6 +65,7 @@ featureFlags:
   enableDisruptionSchedulerWorker: false
   enableASTOwnerReference: true
   enableAstRecordMirroring: false
+  enableForecastCollectorAntiAffinity: true
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
@@ -561,6 +562,8 @@ thorasForecast:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Set to false to disable the default self anti-affinity between forecast-worker replicas
+  enableSelfAntiAffinity: true
   extraEgressRules: []
 
 # K8s client max queries per second
