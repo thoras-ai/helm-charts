@@ -110,8 +110,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
                   value: "true"
-                - name: SERVICE_ENABLE_MEMORY_LIMIT
-                  value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
                   value: "60"
                 - name: SERVICE_UNDERPROVISIONED_THRESHOLD
@@ -1058,8 +1056,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
                   value: "true"
-                - name: SERVICE_ENABLE_MEMORY_LIMIT
-                  value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
                   value: "60"
                 - name: SERVICE_UNDERPROVISIONED_THRESHOLD
@@ -1460,8 +1456,6 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_INFORMERS_STRIP_MANAGED_FIELDS
                   value: "true"
                 - name: SERVICE_ENABLE_TYPED_INFORMERS
-                  value: "true"
-                - name: SERVICE_ENABLE_MEMORY_LIMIT
                   value: "true"
                 - name: SERVICE_OVERPROVISIONED_THRESHOLD
                   value: "60"
