@@ -80,14 +80,15 @@ helm install \
 
 The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
 
-| Key                                            | Type    | Default | Description                                               |
-| ---------------------------------------------- | ------- | ------- | --------------------------------------------------------- |
-| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                       |
-| featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects  |
-| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations            |
-| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
-| featureFlags.enableASTOwnerReference           | Boolean | true    | If true, sets owner reference on ASTs to target workload  |
-| featureFlags.enableAstRecordMirroring          | Boolean | false   | If true, ASTs are mirrored to the database component      |
+| Key                                            | Type    | Default | Description                                                     |
+| ---------------------------------------------- | ------- | ------- | --------------------------------------------------------------- |
+| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                             |
+| featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects        |
+| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations                  |
+| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations       |
+| featureFlags.enableASTOwnerReference           | Boolean | true    | If true, sets owner reference on ASTs to target workload        |
+| featureFlags.enableAstRecordMirroring          | Boolean | false   | If true, ASTs are mirrored to the database component            |
+| featureFlags.enableDaemonSetVerticalAutoscaler | Boolean | false   | If true, DaemonSetVerticalAutoscaler objects will be reconciled |
 
 ## Affinity Configuration
 

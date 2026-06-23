@@ -116,6 +116,10 @@ rules:
   - 'aiscaletargets'
   - 'clusteraiscaletemplates'
   - 'clusteraiscaletemplates/status'
+{{- if .Values.featureFlags.enableDaemonSetVerticalAutoscaler }}
+  - 'daemonsetverticalautoscalers'
+  - 'daemonsetverticalautoscalers/status'
+{{- end }}
   verbs:
   - '*'
 ---

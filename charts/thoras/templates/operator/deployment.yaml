@@ -217,6 +217,8 @@ spec:
             value: {{ .Values.featureFlags.enableASTOwnerReference | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
             value: {{ .Values.featureFlags.enableAstRecordMirroring | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_DAEMON_SET_VERTICAL_AUTOSCALER_CONTROLLER
+            value: {{ .Values.featureFlags.enableDaemonSetVerticalAutoscaler | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: [
           "/app/operator"

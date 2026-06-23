@@ -1066,6 +1066,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
                   value: "false"
+                - name: SERVICE_ENABLE_DAEMON_SET_VERTICAL_AUTOSCALER_CONTROLLER
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
