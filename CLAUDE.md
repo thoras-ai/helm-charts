@@ -29,6 +29,7 @@ The chart includes Custom Resource Definitions (CRDs) for:
 
 - AI Scale Targets (`aiscaletarget.yaml`)
 - Cluster AI Scale Template (`clusteraiscaletemplate.yaml`)
+- DaemonSet Vertical Autoscaler (`daemonsetverticalautoscaler.yaml`)
 
 ## Common Development Tasks
 
