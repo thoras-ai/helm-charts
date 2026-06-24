@@ -88,7 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
 | featureFlags.enableASTOwnerReference           | Boolean | true    | If true, sets owner reference on ASTs to target workload  |
 | featureFlags.enableAstRecordMirroring          | Boolean | false   | If true, ASTs are mirrored to the database component      |
-| featureFlags.enableDaemonSetAutoscaler         | Boolean | false   | If true, DaemonSetAutoscaler are enabled                  |
+| featureFlags.enableDaemonSetAutoscaler         | Boolean | false   | If true, DaemonSetAutoscaler resources are enabled        |
 
 ## Affinity Configuration
 
