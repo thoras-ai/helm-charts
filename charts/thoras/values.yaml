@@ -65,7 +65,7 @@ featureFlags:
   enableASTOwnerReference: true
   enableAstRecordMirroring: false
   enableForecastCollectorAntiAffinity: true
-  enableDaemonSetVerticalAutoscaler: false
+  enableDaemonSetAutoscaler: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
