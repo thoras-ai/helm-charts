@@ -113,6 +113,30 @@ spec:
                   - name
                   type: object
                 type: array
+              minObservationWindow:
+                description: |-
+                  Minimum amount of historical data needed before autonomous scaling is
+                  enabled. Autonomous scaling will only occur if historical data spans at
+                  least this duration. Defaults internally to 3 hours.
+                type: string
+                x-kubernetes-int-or-string: true
+              observationWindow:
+                description: |-
+                  Window of historical data used to determine the desired resource values.
+                  Defaults internally to 8 days.
+                type: string
+                x-kubernetes-int-or-string: true
+              percentile:
+                description: |-
+                  When set, the DaemonSet will be scaled using the percentile over the
+                  observation window. Decimal values supported via quoted string (e.g.
+                  "99.9"). Valid range: 0-100. Defaults internally to 90.
+                type: string
+                x-kubernetes-int-or-string: true
+              scaleInterval:
+                description: Interval for how frequently Thoras scales the DaemonSet.
+                type: string
+                x-kubernetes-int-or-string: true
               scaleMode:
                 enum:
                 - autonomous
@@ -128,6 +152,22 @@ spec:
                   apiVersion:
                     type: string
                   name:
+                    type: string
+                type: object
+              updatePolicy:
+                description: Defines how pod updates are handled.
+                properties:
+                  updateMode:
+                    allOf:
+                    - enum:
+                      - Initial
+                      - InPlace
+                    - enum:
+                      - Initial
+                      - InPlace
+                    default: InPlace
+                    description: Specifies the update strategy. Defaults to "InPlace"
+                      if not set.
                     type: string
                 type: object
             required:
