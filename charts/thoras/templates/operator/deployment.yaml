@@ -61,26 +61,6 @@ spec:
               - key: key
                 path: tls.key
               {{- end }}
-      initContainers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
-        name: wait-for-api-service
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: [ALL]
-        env:
-          - name: API_HEALTH_URL
-            value: "http://thoras-api-server-v2/health"
-          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
-            if [ $? -ne 0 ]; then
-              echo "Failed to connect to API service"
-              exit 1
-            fi
-        resources: {}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: thoras-operator
@@ -120,8 +100,6 @@ spec:
             value: {{ default .Values.logLevel .Values.thorasOperator.logLevel }}
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
-          - name: SERVICE_THORAS_API_BASE_URL
-            value: "http://thoras-api-server-v2"
           - name: FORECAST_IMAGE_PULL_POLICY
             value: "{{ .Values.imagePullPolicy }}"
           - name: MODEL_SKIP_CACHE
