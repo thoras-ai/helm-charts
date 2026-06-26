@@ -1008,8 +1008,6 @@ Default matches snapshot:
                   value: info
                 - name: SERVICE_CLUSTER_NAME
                   value: ""
-                - name: SERVICE_THORAS_API_BASE_URL
-                  value: http://thoras-api-server-v2
                 - name: FORECAST_IMAGE_PULL_POLICY
                   value: IfNotPresent
                 - name: MODEL_SKIP_CACHE
@@ -1123,28 +1121,6 @@ Default matches snapshot:
                   name: tls
                   readOnly: true
                   subPath: tls.key
-          initContainers:
-            - args:
-                - |
-                  curl -s --fail-with-body --retry-all-errors --retry 48 --retry-delay 5 ${API_HEALTH_URL}
-                  if [ $? -ne 0 ]; then
-                    echo "Failed to connect to API service"
-                    exit 1
-                  fi
-              command:
-                - /bin/sh
-                - -c
-              env:
-                - name: API_HEALTH_URL
-                  value: http://thoras-api-server-v2/health
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
-              name: wait-for-api-service
-              resources: {}
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
