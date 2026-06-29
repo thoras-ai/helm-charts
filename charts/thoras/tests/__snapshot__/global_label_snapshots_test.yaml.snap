@@ -133,7 +133,7 @@ Default matches snapshot:
                   path: /health?db=true
                   port: http
                 periodSeconds: 10
-                timeoutSeconds: 2
+                timeoutSeconds: 3
               resources:
                 limits:
                   memory: 4Gi
