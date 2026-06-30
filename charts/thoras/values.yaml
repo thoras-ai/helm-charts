@@ -510,7 +510,10 @@ thorasForecast:
   # Minimum lookback window required before autonomous scaling is enabled (minimum 3h).
   minLookbackToScale: "3h"
   worker:
-    replicas: 1
+    # Number of forecast-worker replicas. Leave unset to let the scaler manage
+    # the replica count. Set to a fixed number to pin a static count and disable
+    # the scaler.
+    # replicas: 1
     # Resource upperbound used when thorasManageThoras is enabled. Empty means
     # no upperbound. Use K8s resource.Quantity syntax (e.g. "2", "4Gi").
     upperbound:
@@ -548,7 +551,6 @@ thorasForecast:
       memory: 256Mi
     forecastTimeout: 600
     scaler:
-      enabled: true
       interval: "1m"
       minReplicas: 1
       maxReplicas: 100

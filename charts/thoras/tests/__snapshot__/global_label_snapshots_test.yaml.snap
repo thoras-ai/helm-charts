@@ -791,7 +791,6 @@ Default matches snapshot:
       name: thoras-forecast-worker
       namespace: foo
     spec:
-      replicas: 1
       selector:
         matchLabels:
           app: thoras-forecast-worker

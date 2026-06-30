@@ -116,6 +116,23 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME')].value
           value: "5m"
+  - it: Enables forecast worker scaler when replicas is unset
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_FORECAST_WORKER_SCALER')].value
+          value: "true"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_FORECAST_WORKER_ASTS_PER_REPLICA')].value
+          value: "67"
+  - it: Disables forecast worker scaler when replicas is set
+    set:
+      thorasForecast:
+        worker:
+          replicas: 3
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_FORECAST_WORKER_SCALER')].value
+          value: "false"
   - it: Should set default utilization thresholds
     asserts:
       - equal:

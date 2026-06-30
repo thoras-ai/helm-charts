@@ -258,7 +258,7 @@ spec:
             value: {{ . | quote }}
           {{- end }}
           - name: SERVICE_ENABLE_FORECAST_WORKER_SCALER
-            value: {{ .Values.thorasForecast.worker.scaler.enabled | ternary "true" "false" | quote }}
+            value: {{ not (hasKey .Values.thorasForecast.worker "replicas") | ternary "true" "false" | quote }}
           - name: SERVICE_FORECAST_WORKER_SCALER_INTERVAL
             value: {{ .Values.thorasForecast.worker.scaler.interval | quote }}
           - name: SERVICE_FORECAST_WORKER_DEPLOYMENT_NAME
