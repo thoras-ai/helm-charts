@@ -44,6 +44,7 @@ data:
         ~*^GET/v1/views/asts/[^/]+/[^/]+(\?|$)                                    1;
         ~*^GET/v1/views/cost/analysis(\?|$)                                       1;
         ~*^GET/v1/views/cost/details(\?|$)                                        1;
+        ~*^GET/v1/views/cost/details/export(\?|$)                                 1;
         ~*^GET/v1/views/cost/details/namespaces/[^/]+(\?|$)                       1;
         ~*^GET/v1/views/cost/projected(\?|$)                                      1;
         ~*^GET/v1/views/cost/savings-summary(\?|$)                                1;
