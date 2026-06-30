@@ -119,13 +119,11 @@ spec:
                   enabled. Autonomous scaling will only occur if historical data spans at
                   least this duration. Defaults internally to 3 hours.
                 type: string
-                x-kubernetes-int-or-string: true
               observationWindow:
                 description: |-
                   Window of historical data used to determine the desired resource values.
                   Defaults internally to 8 days.
                 type: string
-                x-kubernetes-int-or-string: true
               percentile:
                 description: |-
                   When set, the DaemonSet will be scaled using the percentile over the
@@ -134,9 +132,9 @@ spec:
                 type: string
                 x-kubernetes-int-or-string: true
               scaleInterval:
+                default: 15m0s
                 description: Interval for how frequently Thoras scales the DaemonSet.
                 type: string
-                x-kubernetes-int-or-string: true
               scaleMode:
                 enum:
                 - autonomous
