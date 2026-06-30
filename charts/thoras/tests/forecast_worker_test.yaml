@@ -94,6 +94,11 @@ tests:
             name: METRICS_PORT
             value: "9101"
 
+  - it: omits spec.replicas when worker.replicas is unset
+    asserts:
+      - notExists:
+          path: spec.replicas
+
   - it: sets RETRAIN_STEADY_STATE_HOURS when value is an integer
     set:
       thorasForecast:
