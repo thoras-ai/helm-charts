@@ -490,6 +490,7 @@ thorasDashboard:
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
   extraEgressRules: []
+  extraContainers: []
 
 thorasMonitor:
   unittesting: false
