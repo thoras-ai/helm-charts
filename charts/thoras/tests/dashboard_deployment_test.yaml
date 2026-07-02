@@ -54,6 +54,27 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
+  - it: Should add extra containers if specified
+    set:
+      thorasDashboard:
+        unittesting: true
+        extraContainers:
+          - name: sidecar
+            image: example/sidecar:latest
+    asserts:
+      - contains:
+          path: spec.template.spec.containers
+          content:
+            name: sidecar
+            image: example/sidecar:latest
+  - it: Should not add extra containers if not specified
+    set:
+      thorasDashboard:
+        unittesting: true
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
   - it: Can override resources block
     set:
       thorasDashboard:

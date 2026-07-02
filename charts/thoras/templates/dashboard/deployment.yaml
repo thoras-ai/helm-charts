@@ -84,6 +84,9 @@ spec:
           - name: nginx-config
             mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
+      {{- if .Values.thorasDashboard.extraContainers }}
+      {{- toYaml .Values.thorasDashboard.extraContainers | nindent 6 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
