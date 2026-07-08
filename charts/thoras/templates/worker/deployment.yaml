@@ -275,6 +275,8 @@ spec:
             value: {{ .Values.featureFlags.enableDisruptionSchedulerWorker | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
             value: {{ .Values.featureFlags.enableDaemonSetAutoscaler | ternary "true" "false" | quote }}
+          - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
+            value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics

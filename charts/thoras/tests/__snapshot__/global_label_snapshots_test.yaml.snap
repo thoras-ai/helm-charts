@@ -854,6 +854,8 @@ Default matches snapshot:
                   value: "false"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
+                - name: MULTI_DIMENSIONAL_ENABLED
+                  value: "false"
                 - name: AFFINITY_ID
                   valueFrom:
                     fieldRef:
@@ -1064,6 +1066,8 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
                   value: "false"
                 - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
+                  value: "false"
+                - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
@@ -1503,6 +1507,8 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
                   value: "false"
                 - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
+                  value: "false"
+                - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent

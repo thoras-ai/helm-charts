@@ -66,6 +66,7 @@ featureFlags:
   enableAstRecordMirroring: false
   enableForecastCollectorAntiAffinity: true
   enableDaemonSetAutoscaler: false
+  enableMultiDimensional: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:

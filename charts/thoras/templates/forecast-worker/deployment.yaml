@@ -86,6 +86,8 @@ spec:
             value: {{ .Values.thorasForecast.useForecastEnrichment | ternary "true" "false" | quote }}
           - name: TRAINING_JITTER_MINUTES
             value: {{ .Values.thorasForecast.trainingJitterMinutes | quote }}
+          - name: MULTI_DIMENSIONAL_ENABLED
+            value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
           - name: AFFINITY_ID
             valueFrom:
               fieldRef:
