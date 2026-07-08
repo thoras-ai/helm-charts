@@ -191,8 +191,6 @@ spec:
             value: {{ .Values.utilizationThresholds.underprovisioned | quote }}
           - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
             value: {{ .Values.featureFlags.enableDisruptionSchedulerWorker | ternary "true" "false" | quote }}
-          - name: SERVICE_ENABLE_AST_OWNER_REFERENCE
-            value: {{ .Values.featureFlags.enableASTOwnerReference | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
             value: {{ .Values.featureFlags.enableAstRecordMirroring | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
