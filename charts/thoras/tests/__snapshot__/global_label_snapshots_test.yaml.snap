@@ -1441,7 +1441,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_THORAS_SCALING_THORAS_WORKER
                   value: "true"
                 - name: SERVICE_THORAS_SCALING_THORAS_MODE
-                  value: recommendation
+                  value: autonomous
                 - name: SERVICE_THORAS_SCALING_THORAS_UPDATE_MODE
                   value: in_place_or_recreate
                 - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_UPDATE_MODE
