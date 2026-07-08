@@ -311,7 +311,7 @@ tests:
             name: USE_AST_METRICS_SERIES
             value: "false"
 
-  - it: renders USE_FORECASTER_COMPUTED_METRIC_ID as false by default
+  - it: renders USE_FORECASTER_COMPUTED_METRIC_ID as true by default
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
@@ -319,7 +319,7 @@ tests:
             name: USE_FORECASTER_COMPUTED_METRIC_ID
             value: "true"
 
-  - it: renders USE_FORECASTER_COMPUTED_METRIC_ID as true when useForecasterComputedMetricId is true
+  - it: renders USE_FORECASTER_COMPUTED_METRIC_ID as false when useForecasterComputedMetricId is false
     set:
       thorasForecast:
         useForecasterComputedMetricId: false

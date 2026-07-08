@@ -148,7 +148,7 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasForecast.ignoreNewPods                 | Boolean  | true                   | Directs forecaster to adjust CPU and memory metrics temporarily for new pods                   |
 | thorasForecast.enableDecoupledTraining       | Boolean  | true                   | Enables async training mode where forecasts report "needs_training" instead of training inline |
 | thorasForecast.useAstMetricsSeries           | Boolean  | false                  | Enables catalog-free training data fetching via the AST metrics series endpoint                |
-| thorasForecast.useForecasterComputedMetricId | Boolean  | false                  | Computes legacy metric IDs locally in Python instead of fetching from the catalog              |
+| thorasForecast.useForecasterComputedMetricId | Boolean  | true                   | Computes legacy metric IDs locally in Python instead of fetching from the catalog              |
 | thorasForecast.worker.podAnnotations         | Object   | {}                     | Pod Annotations for Thoras Forecast                                                            |
 | thorasForecast.worker.labels                 | Object   | {}                     | Pod labels for Thoras Forecast                                                                 |
 | thorasForecast.worker.replicas               | Number   | 1                      | Number of `thoras-forecast-worker` replicas to use                                             |
