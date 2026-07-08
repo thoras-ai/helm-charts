@@ -1059,8 +1059,6 @@ Default matches snapshot:
                   value: "92"
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
                   value: "false"
-                - name: SERVICE_ENABLE_AST_OWNER_REFERENCE
-                  value: "true"
                 - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
                   value: "false"
                 - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER

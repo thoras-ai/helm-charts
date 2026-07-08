@@ -62,7 +62,6 @@ featureFlags:
   enableInformersStripManagedFields: true
   enableTypedInformers: true
   enableDisruptionSchedulerWorker: false
-  enableASTOwnerReference: true
   enableAstRecordMirroring: false
   enableForecastCollectorAntiAffinity: true
   enableDaemonSetAutoscaler: false
