@@ -1040,6 +1040,9 @@ spec:
                         name:
                           description: name of container to scale
                           type: string
+                          x-kubernetes-validations:
+                          - message: name must not be empty
+                            rule: size(self) > 0
                       required:
                       - name
                       type: object
@@ -1048,7 +1051,12 @@ spec:
                           is set
                         rule: '!has(self.jvm_options) || !self.jvm_options.enable_auto_heap_size
                           || (has(self.memory) && has(self.memory.limit))'
+                      - message: At least one of cpu or memory must be specified
+                        rule: has(self.cpu) || has(self.memory)
                     type: array
+                    x-kubernetes-validations:
+                    - message: at least one container must be specified
+                      rule: self.size() > 0
                   disruption:
                     description: |-
                       Disruption controls how aggressively Thoras applies pod changes (in-place
