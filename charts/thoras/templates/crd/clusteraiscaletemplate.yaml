@@ -637,6 +637,115 @@ spec:
                         - observe
                         - observation
                         type: string
+                      model:
+                        description: |-
+                          Defines the forecasting and scaling behavior for an AIScaleTarget, including
+                          how often forecasts are generated, how far ahead to predict, and how
+                          aggressively to scale.
+                        properties:
+                          forecast_blocks:
+                            default: 15m0s
+                            description: Time duration for how far into the future
+                              Thoras should forecast into.
+                            type: string
+                            x-kubernetes-int-or-string: true
+                          forecast_buffer_percentage:
+                            default: 0%
+                            description: Percentage, represented as a int between
+                              1 and 100, that Thoras will apply on top of predictions
+                              for safety.
+                            type: string
+                            x-kubernetes-int-or-string: true
+                          forecast_cron:
+                            type: string
+                          forecast_interval:
+                            description: |-
+                              Time duration for the how frequently Thoras forecasts. This provides
+                              control for how often scaling decisions are made. Mutually exclusive with
+                              forecastCron.
+                            type: string
+                            x-kubernetes-int-or-string: true
+                          metrics:
+                            additionalProperties:
+                              description: |-
+                                Only the "forbidden" direction is enforced here — percentile_value set without mode: percentile.
+                                The "required" direction (mode: percentile without percentile_value) is intentionally omitted
+                                because CEL cannot see the parent spec; a metric may inherit percentile_value from spec.model.
+                                That check is handled by the admission webhook, which has full context.
+                              properties:
+                                forecast_buffer_percentage:
+                                  description: Buffer percentage for this metric.
+                                    Overrides global forecast_buffer_percentage.
+                                  type: string
+                                  x-kubernetes-int-or-string: true
+                                mode:
+                                  description: Forecast mode for this metric. Overrides
+                                    global model.mode.
+                                  enum:
+                                  - balanced
+                                  - cost_optimized
+                                  - undershoot
+                                  - assurance_optimized
+                                  - overshoot
+                                  - percentile
+                                  type: string
+                                percentile_value:
+                                  description: |-
+                                    Percentile value to use when mode is "percentile". Required when mode is "percentile", must not be set otherwise.
+                                    Valid range: 0–100. Decimals supported via quoted string (e.g. "99.9"). Integer values do not need quotes (e.g. 75).
+                                  type: string
+                                  x-kubernetes-int-or-string: true
+                              type: object
+                              x-kubernetes-validations:
+                              - message: percentile_value can only be set when mode
+                                  is percentile
+                                rule: '!has(self.mode) || self.mode == ''percentile''
+                                  || !has(self.percentile_value)'
+                            description: Per-metric forecast configuration. Overrides
+                              global mode and forecast_buffer_percentage for specific
+                              metrics.
+                            type: object
+                          min_lookback_to_scale:
+                            description: Minimum lookback window before autonomous
+                              scaling is enabled. Autonomous scaling will only occur
+                              if historical data spans at least this duration.
+                            type: string
+                            x-kubernetes-int-or-string: true
+                          mode:
+                            description: While Thoras models always bias for reliability,
+                              you have the option to set a "mode" for the model to
+                              inform the level of aggression in scaling.
+                            enum:
+                            - balanced
+                            - cost_optimized
+                            - undershoot
+                            - assurance_optimized
+                            - overshoot
+                            - percentile
+                            type: string
+                          percentile_value:
+                            description: |-
+                              Percentile value to use when mode is "percentile". Required when mode is "percentile", must not be set otherwise.
+                              Valid range: 0–100. Decimals supported via quoted string (e.g. "99.9"). Integer values do not need quotes (e.g. 75).
+                            type: string
+                            x-kubernetes-int-or-string: true
+                        type: object
+                        x-kubernetes-validations:
+                        - message: forecastCron and forecastInterval are mutually
+                            exclusive
+                          rule: '!has(self.forecast_cron) || self.forecast_cron ==
+                            '''' || !has(self.forecast_interval) || self.forecast_interval
+                            == '''''
+                        - message: forecastInterval must be less than or equal to
+                            forecastBlocks
+                          rule: '!has(self.forecast_interval) || !has(self.forecast_blocks)
+                            || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
+                        - message: percentile_value is required when mode is percentile
+                          rule: '!has(self.mode) || self.mode != ''percentile'' ||
+                            has(self.percentile_value)'
+                        - message: percentile_value can only be set when mode is percentile
+                          rule: '!has(self.percentile_value) || (has(self.mode) &&
+                            self.mode == ''percentile'')'
                       scaling_behavior:
                         description: Rules for how large a proposed scale event must
                           be before triggering
@@ -825,9 +934,8 @@ spec:
                         || !has(self.forecast_interval) || self.forecast_interval
                         == '''''
                     - message: forecastInterval must be less than or equal to forecastBlocks
-                      rule: '!has(self.forecast_interval) || self.forecast_interval
-                        == '''' || !has(self.forecast_blocks) || self.forecast_blocks
-                        == '''' || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
+                      rule: '!has(self.forecast_interval) || !has(self.forecast_blocks)
+                        || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
                     - message: percentile_value is required when mode is percentile
                       rule: '!has(self.mode) || self.mode != ''percentile'' || has(self.percentile_value)'
                     - message: percentile_value can only be set when mode is percentile
@@ -971,14 +1079,14 @@ spec:
                         type: array
                       disruption:
                         description: |-
-                          Disruption controls how aggressively Thoras evicts pods when applying
-                          vertical recommendations that require pod recreation.
+                          Disruption controls how aggressively Thoras applies pod changes (in-place
+                          resize or eviction) when applying vertical recommendations.
                         properties:
                           interval:
                             default: 60s
                             description: |-
                               Interval is the minimum duration the operator waits after a batch of
-                              evictions before evicting the next batch. Defaults to 60s.
+                              pod changes (resize or evict) before applying the next batch. Defaults to 60s.
                             type: string
                           max_disrupted:
                             anyOf:
@@ -989,13 +1097,13 @@ spec:
                               MaxDisrupted is the maximum number of pods that may be
                               disrupted at once across the workload. A pod is "disrupted" if it is
                               terminating or its Ready condition is not True. The operator only
-                              evicts up to the remaining headroom in each batch, so prior batches
-                              that haven't finished rolling reduce the next batch's size. After
-                              issuing a batch, the operator waits Interval before issuing the next
-                              batch. Unlike PodDisruptionBudget.maxUnavailable, this cap is enforced
-                              by the operator itself: pods that are unavailable for reasons
-                              unrelated to Thoras (e.g. failing readiness probes) still consume the
-                              budget.
+                              applies pod changes (resize or evict) up to the remaining headroom in
+                              each batch, so prior batches that haven't finished rolling reduce the
+                              next batch's size. After issuing a batch, the operator waits Interval
+                              before issuing the next batch. Unlike PodDisruptionBudget.maxUnavailable,
+                              this cap is enforced by the operator itself: pods that are unavailable
+                              for reasons unrelated to Thoras (e.g. failing readiness probes) still
+                              consume the budget.
 
                               Accepts an absolute integer (e.g. 2) or a percentage of the workload's
                               desired replicas (e.g. "25%"). Defaults to 20%.
@@ -1029,6 +1137,115 @@ spec:
                         - observe
                         - observation
                         type: string
+                      model:
+                        description: |-
+                          Defines the forecasting and scaling behavior for an AIScaleTarget, including
+                          how often forecasts are generated, how far ahead to predict, and how
+                          aggressively to scale.
+                        properties:
+                          forecast_blocks:
+                            default: 15m0s
+                            description: Time duration for how far into the future
+                              Thoras should forecast into.
+                            type: string
+                            x-kubernetes-int-or-string: true
+                          forecast_buffer_percentage:
+                            default: 0%
+                            description: Percentage, represented as a int between
+                              1 and 100, that Thoras will apply on top of predictions
+                              for safety.
+                            type: string
+                            x-kubernetes-int-or-string: true
+                          forecast_cron:
+                            type: string
+                          forecast_interval:
+                            description: |-
+                              Time duration for the how frequently Thoras forecasts. This provides
+                              control for how often scaling decisions are made. Mutually exclusive with
+                              forecastCron.
+                            type: string
+                            x-kubernetes-int-or-string: true
+                          metrics:
+                            additionalProperties:
+                              description: |-
+                                Only the "forbidden" direction is enforced here — percentile_value set without mode: percentile.
+                                The "required" direction (mode: percentile without percentile_value) is intentionally omitted
+                                because CEL cannot see the parent spec; a metric may inherit percentile_value from spec.model.
+                                That check is handled by the admission webhook, which has full context.
+                              properties:
+                                forecast_buffer_percentage:
+                                  description: Buffer percentage for this metric.
+                                    Overrides global forecast_buffer_percentage.
+                                  type: string
+                                  x-kubernetes-int-or-string: true
+                                mode:
+                                  description: Forecast mode for this metric. Overrides
+                                    global model.mode.
+                                  enum:
+                                  - balanced
+                                  - cost_optimized
+                                  - undershoot
+                                  - assurance_optimized
+                                  - overshoot
+                                  - percentile
+                                  type: string
+                                percentile_value:
+                                  description: |-
+                                    Percentile value to use when mode is "percentile". Required when mode is "percentile", must not be set otherwise.
+                                    Valid range: 0–100. Decimals supported via quoted string (e.g. "99.9"). Integer values do not need quotes (e.g. 75).
+                                  type: string
+                                  x-kubernetes-int-or-string: true
+                              type: object
+                              x-kubernetes-validations:
+                              - message: percentile_value can only be set when mode
+                                  is percentile
+                                rule: '!has(self.mode) || self.mode == ''percentile''
+                                  || !has(self.percentile_value)'
+                            description: Per-metric forecast configuration. Overrides
+                              global mode and forecast_buffer_percentage for specific
+                              metrics.
+                            type: object
+                          min_lookback_to_scale:
+                            description: Minimum lookback window before autonomous
+                              scaling is enabled. Autonomous scaling will only occur
+                              if historical data spans at least this duration.
+                            type: string
+                            x-kubernetes-int-or-string: true
+                          mode:
+                            description: While Thoras models always bias for reliability,
+                              you have the option to set a "mode" for the model to
+                              inform the level of aggression in scaling.
+                            enum:
+                            - balanced
+                            - cost_optimized
+                            - undershoot
+                            - assurance_optimized
+                            - overshoot
+                            - percentile
+                            type: string
+                          percentile_value:
+                            description: |-
+                              Percentile value to use when mode is "percentile". Required when mode is "percentile", must not be set otherwise.
+                              Valid range: 0–100. Decimals supported via quoted string (e.g. "99.9"). Integer values do not need quotes (e.g. 75).
+                            type: string
+                            x-kubernetes-int-or-string: true
+                        type: object
+                        x-kubernetes-validations:
+                        - message: forecastCron and forecastInterval are mutually
+                            exclusive
+                          rule: '!has(self.forecast_cron) || self.forecast_cron ==
+                            '''' || !has(self.forecast_interval) || self.forecast_interval
+                            == '''''
+                        - message: forecastInterval must be less than or equal to
+                            forecastBlocks
+                          rule: '!has(self.forecast_interval) || !has(self.forecast_blocks)
+                            || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
+                        - message: percentile_value is required when mode is percentile
+                          rule: '!has(self.mode) || self.mode != ''percentile'' ||
+                            has(self.percentile_value)'
+                        - message: percentile_value can only be set when mode is percentile
+                          rule: '!has(self.percentile_value) || (has(self.mode) &&
+                            self.mode == ''percentile'')'
                       oom_remediation:
                         description: |-
                           OOMRemediation configures operator-driven memory adjustment during active OOM episodes.
