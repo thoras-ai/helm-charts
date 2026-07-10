@@ -22,6 +22,9 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: thoras-tls-certsgen
+      {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
       {{- if .Values.imageCredentials.secretRef }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.secretRef }}
@@ -72,6 +75,9 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: thoras-tls-certsgen
+      {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
       {{- if .Values.imageCredentials.secretRef }}
       imagePullSecrets:
         - name: {{ .Values.imageCredentials.secretRef }}

@@ -22,6 +22,9 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
+      {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
       restartPolicy: OnFailure
       containers:
       - name: thoras-delete-asts
