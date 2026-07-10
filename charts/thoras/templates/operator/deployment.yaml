@@ -270,3 +270,6 @@ spec:
       affinity:
         {{- toYaml $mergedAffinity | nindent 8 }}
       {{- end }}
+      {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}

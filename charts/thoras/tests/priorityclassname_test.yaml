@@ -1,0 +1,116 @@
+suite: PriorityClassName Configuration
+set:
+  thorasMonitor:
+    unittesting: true
+  thorasDashboard:
+    unittesting: true
+  thorasForecast:
+    worker:
+      enabled: true
+tests:
+  - it: no priorityClassName set by default
+    templates:
+      - operator/deployment.yaml
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+      - dashboard/deployment.yaml
+      - collector/deployment.yaml
+      - forecast-worker/deployment.yaml
+    asserts:
+      - isNull:
+          path: spec.template.spec.priorityClassName
+
+  - it: global priorityClassName applies to all components
+    templates:
+      - operator/deployment.yaml
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+      - dashboard/deployment.yaml
+      - collector/deployment.yaml
+      - forecast-worker/deployment.yaml
+    set:
+      priorityClassName: global-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: global-priority
+
+  - it: component-specific priorityClassName takes precedence over global
+    templates:
+      - operator/deployment.yaml
+    set:
+      priorityClassName: global-priority
+      thorasOperator:
+        priorityClassName: operator-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: operator-priority
+
+  - it: component-specific priorityClassName works for api-server-v2
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      thorasApiServerV2:
+        priorityClassName: api-server-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: api-server-priority
+
+  - it: component-specific priorityClassName works for worker
+    templates:
+      - worker/deployment.yaml
+    set:
+      thorasWorker:
+        priorityClassName: worker-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: worker-priority
+
+  - it: component-specific priorityClassName works for dashboard
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        priorityClassName: dashboard-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: dashboard-priority
+
+  - it: component-specific priorityClassName works for collector
+    templates:
+      - collector/deployment.yaml
+    set:
+      metricsCollector:
+        priorityClassName: collector-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: collector-priority
+
+  - it: component-specific priorityClassName works for forecast-worker
+    templates:
+      - forecast-worker/deployment.yaml
+    set:
+      thorasForecast:
+        priorityClassName: forecast-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: forecast-priority
+
+  - it: operator-owned jobs inherit operator priorityClassName
+    templates:
+      - operator/pre-delete-hook.yaml
+      - operator/webhooks-certgen-create.yaml
+      - operator/webhooks-certgen-patch.yaml
+    set:
+      thorasOperator:
+        priorityClassName: operator-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: operator-priority

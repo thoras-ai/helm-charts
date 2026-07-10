@@ -179,6 +179,8 @@ thorasOperator:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
   # Webhook certificate generation configuration
   webhookCertGen:
     imageTag: v1.4.4
@@ -289,6 +291,8 @@ metricsCollector:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
   extraEgressRules: []
 
 thorasApiServerV2:
@@ -347,6 +351,8 @@ thorasApiServerV2:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
   extraEgressRules: []
 
 thorasWorker:
@@ -410,6 +416,8 @@ thorasWorker:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
   extraEgressRules: []
 
 thorasDashboard:
@@ -489,6 +497,8 @@ thorasDashboard:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
   extraEgressRules: []
   extraContainers: []
 
@@ -565,6 +575,8 @@ thorasForecast:
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
   # Set to false to disable the default self anti-affinity between forecast-worker replicas
   enableSelfAntiAffinity: true
   extraEgressRules: []
@@ -579,6 +591,10 @@ tolerations: []
 
 # Global affinity rules that components can opt into
 affinity: {}
+
+# priorityClassName is used to assign a PriorityClass to all components.
+# Component-specific priorityClassName takes precedence when set.
+priorityClassName: ""
 
 # Create Prometheus ServiceMonitors for all Prometheus-enabled components
 serviceMonitor:
