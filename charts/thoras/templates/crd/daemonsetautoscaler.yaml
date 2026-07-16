@@ -116,7 +116,7 @@ spec:
                   - name
                   type: object
                   x-kubernetes-validations:
-                  - message: At least one of cpu or memory must be specified
+                  - message: at least one of cpu or memory must be specified
                     rule: has(self.cpu) || has(self.memory)
                 type: array
               minObservationWindow:
@@ -164,10 +164,8 @@ spec:
                   updateMode:
                     allOf:
                     - enum:
-                      - Initial
                       - InPlace
                     - enum:
-                      - Initial
                       - InPlace
                     default: InPlace
                     description: Specifies the update strategy. Defaults to "InPlace"
@@ -243,6 +241,13 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              lastResizedAt:
+                format: date-time
+                type: string
+              podsObserved:
+                type: integer
+              podsResized:
+                type: integer
             type: object
         required:
         - metadata
