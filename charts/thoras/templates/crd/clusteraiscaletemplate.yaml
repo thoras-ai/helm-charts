@@ -746,6 +746,16 @@ spec:
                         - message: percentile_value can only be set when mode is percentile
                           rule: '!has(self.percentile_value) || (has(self.mode) &&
                             self.mode == ''percentile'')'
+                      multipleOf:
+                        description: |-
+                          MultipleOf constrains autonomous replica scaling to multiples of this value.
+                          When set, any desired replica count is rounded up to the nearest multiple:
+                          ceil(n / multipleOf) * multipleOf. The result is always an exact multiple —
+                          if maxReplicas is not itself a multiple, the practical scaling ceiling is the
+                          largest multiple <= maxReplicas (e.g. max=10, multipleOf=4 caps at 8, not 10).
+                        format: int32
+                        minimum: 1
+                        type: integer
                       scaling_behavior:
                         description: Rules for how large a proposed scale event must
                           be before triggering
@@ -835,6 +845,9 @@ spec:
                     x-kubernetes-validations:
                     - message: minReplicas must not be greater than maxReplicas
                       rule: '!has(self.minReplicas) || !has(self.maxReplicas) || self.minReplicas
+                        <= self.maxReplicas'
+                    - message: multipleOf must not be greater than maxReplicas
+                      rule: '!has(self.multipleOf) || !has(self.maxReplicas) || self.multipleOf
                         <= self.maxReplicas'
                   model:
                     description: |-
@@ -1079,7 +1092,7 @@ spec:
                               is set
                             rule: '!has(self.jvm_options) || !self.jvm_options.enable_auto_heap_size
                               || (has(self.memory) && has(self.memory.limit))'
-                          - message: At least one of cpu or memory must be specified
+                          - message: at least one of cpu or memory must be specified
                             rule: has(self.cpu) || has(self.memory)
                         type: array
                         x-kubernetes-validations:
