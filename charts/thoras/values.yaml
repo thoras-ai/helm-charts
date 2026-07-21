@@ -61,7 +61,7 @@ featureFlags:
   enableForecastQueueStats: false
   enableInformersStripManagedFields: true
   enableTypedInformers: true
-  enableDisruptionSchedulerWorker: false
+  enableDisruptionSchedulerWorker: true
   enableAstRecordMirroring: false
   enableForecastCollectorAntiAffinity: true
   enableDaemonSetAutoscaler: false
