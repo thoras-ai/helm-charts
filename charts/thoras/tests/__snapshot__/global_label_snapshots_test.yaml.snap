@@ -1060,7 +1060,7 @@ Default matches snapshot:
                 - name: SERVICE_UNDERPROVISIONED_THRESHOLD
                   value: "92"
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
                   value: "false"
                 - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
@@ -1503,7 +1503,7 @@ Default matches snapshot:
                 - name: SERVICE_FORECAST_WORKER_ASTS_PER_REPLICA
                   value: "67"
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
                   value: "false"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
