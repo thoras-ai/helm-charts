@@ -1062,7 +1062,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
                   value: "true"
                 - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
-                  value: "false"
+                  value: "true"
                 - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
                   value: "false"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
