@@ -463,6 +463,9 @@ thorasDashboard:
   service:
     type: ClusterIP
     annotations: {}
+    # Overrides the Service target port. Defaults to containerPort. Set to the
+    # oauth2-proxy sidecar port (e.g. 4180) to force traffic through auth.
+    targetPort: ""
   ingress:
     enabled: false
     ingressClassName: "nginx"
