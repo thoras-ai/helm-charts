@@ -400,18 +400,6 @@ Default matches snapshot:
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
         spec:
-          affinity:
-            podAntiAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-                - podAffinityTerm:
-                    labelSelector:
-                      matchExpressions:
-                        - key: app
-                          operator: In
-                          values:
-                            - thoras-forecast-worker
-                    topologyKey: kubernetes.io/hostname
-                  weight: 100
           containers:
             - env:
                 - name: POSTGRES_PASSWORD
@@ -805,27 +793,6 @@ Default matches snapshot:
             app.kubernetes.io/name: thoras
             globalLabel: globalValue
         spec:
-          affinity:
-            podAntiAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-                - podAffinityTerm:
-                    labelSelector:
-                      matchExpressions:
-                        - key: app
-                          operator: In
-                          values:
-                            - metrics-collector
-                    topologyKey: kubernetes.io/hostname
-                  weight: 100
-                - podAffinityTerm:
-                    labelSelector:
-                      matchExpressions:
-                        - key: app
-                          operator: In
-                          values:
-                            - thoras-forecast-worker
-                    topologyKey: kubernetes.io/hostname
-                  weight: 95
           containers:
             - command:
                 - worker

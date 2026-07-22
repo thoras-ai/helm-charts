@@ -83,7 +83,7 @@ The following flags are considered temporary and gate access to specific behavio
 | Key                                            | Type    | Default | Description                                               |
 | ---------------------------------------------- | ------- | ------- | --------------------------------------------------------- |
 | featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                       |
-| featureFlags.enablePgLargeObjectStorage        | Boolean | false   | If true, enables storing blobs as postgres large objects  |
+| featureFlags.enablePgLargeObjectStorage        | Boolean | true    | If true, enables storing blobs as postgres large objects  |
 | featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations            |
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
 | featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component      |
