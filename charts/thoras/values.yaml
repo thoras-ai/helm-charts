@@ -63,7 +63,7 @@ featureFlags:
   enableTypedInformers: true
   enableDisruptionSchedulerWorker: true
   enableAstRecordMirroring: true
-  enableForecastCollectorAntiAffinity: true
+  enableForecastCollectorAntiAffinity: false
   enableDaemonSetAutoscaler: false
   enableMultiDimensional: false
 
@@ -581,7 +581,7 @@ thorasForecast:
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
   # Set to false to disable the default self anti-affinity between forecast-worker replicas
-  enableSelfAntiAffinity: true
+  enableSelfAntiAffinity: false
   extraEgressRules: []
 
 # K8s client max queries per second
