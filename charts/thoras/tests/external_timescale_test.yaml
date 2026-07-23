@@ -223,6 +223,7 @@ tests:
       metricsCollector:
         persistence:
           enabled: true
+          storageClassName: "efs-sc"
           createEFSStorageClass:
             fileSystemId: "fs-12345"
     asserts:
