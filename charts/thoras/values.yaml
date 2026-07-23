@@ -496,6 +496,12 @@ thorasDashboard:
     show_node_details: true
     # Show option in the dashboard to pause scaling cluster wide.
     enable_scaling_pause: true
+    # Experimental: highlight resource changes above these thresholds on the
+    # Observation view so the biggest changes stand out; smaller ones are
+    # muted. Keep disabled until validated with design; not yet for GA.
+    enable_change_highlighting: false
+    highlight_cpu_change_above_millicores: 50
+    highlight_memory_change_above_mib: 100
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
