@@ -126,6 +126,22 @@ true
 {{- end -}}
 {{- end -}}
 
+{{/*
+True when the metrics collector should use a persistent volume.
+Tri-state: an explicit metricsCollector.persistence.enabled (true/false) is
+always honored. When it is unset, infer "on" if the customer configured any
+persistence knob (storageClassName, pvcStorageRequestSize, or a fileSystemId).
+This avoids the silent footgun where knobs are set but enabled is forgotten.
+*/}}
+{{- define "thoras.persistenceEnabled" -}}
+{{- $p := .Values.metricsCollector.persistence -}}
+{{- if not (kindIs "invalid" $p.enabled) -}}
+{{- if $p.enabled -}}true{{- end -}}
+{{- else if or $p.storageClassName $p.pvcStorageRequestSize $p.createEFSStorageClass.fileSystemId -}}
+true
+{{- end -}}
+{{- end -}}
+
 {{- define "thoras.globalEnv" -}}
 {{- $out := list -}}
 {{- with .Values.proxy.httpProxy -}}

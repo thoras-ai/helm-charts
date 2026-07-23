@@ -1,0 +1,39 @@
+suite: StorageClass
+templates:
+  - collector/storageclass.yaml
+tests:
+  - it: Fails when fileSystemId is set without storageClassName
+    set:
+      metricsCollector:
+        persistence:
+          createEFSStorageClass:
+            fileSystemId: "fs-12345"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Error: 'metricsCollector.persistence.createEFSStorageClass.fileSystemId' is set but 'metricsCollector.persistence.storageClassName' is empty. Set storageClassName to name the StorageClass to create."
+
+  - it: Creates StorageClass when both fileSystemId and storageClassName are set
+    set:
+      metricsCollector:
+        persistence:
+          storageClassName: "efs-sc"
+          createEFSStorageClass:
+            fileSystemId: "fs-12345"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: "efs-sc"
+      - equal:
+          path: parameters.fileSystemId
+          value: "fs-12345"
+
+  - it: Doesn't create StorageClass when fileSystemId is not set
+    set:
+      metricsCollector:
+        persistence:
+          storageClassName: "gp3"
+    asserts:
+      - hasDocuments:
+          count: 0

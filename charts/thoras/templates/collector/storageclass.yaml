@@ -1,4 +1,7 @@
-{{- if and .Values.metricsCollector.persistence.enabled .Values.metricsCollector.persistence.createEFSStorageClass.fileSystemId (or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .))) }}
+{{- if and .Values.metricsCollector.persistence.createEFSStorageClass.fileSystemId (not .Values.metricsCollector.persistence.storageClassName) }}
+{{- fail "Error: 'metricsCollector.persistence.createEFSStorageClass.fileSystemId' is set but 'metricsCollector.persistence.storageClassName' is empty. Set storageClassName to name the StorageClass to create." }}
+{{- end }}
+{{- if and (include "thoras.persistenceEnabled" .) .Values.metricsCollector.persistence.createEFSStorageClass.fileSystemId (or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .))) }}
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:

@@ -1,0 +1,11 @@
+Thoras platform installed in namespace {{ .Release.Namespace }}.
+
+{{ if (include "thoras.persistenceEnabled" .) -}}
+Metrics collector persistence: ENABLED
+  StorageClass: {{ .Values.metricsCollector.persistence.storageClassName | default "(cluster default)" }}
+  Size:         {{ .Values.metricsCollector.persistence.pvcStorageRequestSize | default "3Gi" }}
+{{- else -}}
+Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on pod restart).
+  To enable, set metricsCollector.persistence.enabled=true, or configure a
+  storageClassName / pvcStorageRequestSize and it will be enabled automatically.
+{{- end }}

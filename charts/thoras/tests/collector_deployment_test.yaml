@@ -45,6 +45,19 @@ tests:
           value:
             - mountPath: /var/lib/share
               name: elastic-search-data
+  - it: Should mount pvc when persistence is inferred from a knob
+    set:
+      metricsCollector:
+        persistence:
+          storageClassName: "gp3"
+    template: collector/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes
+          value:
+            - name: elastic-search-data
+              persistentVolumeClaim:
+                claimName: elastic-search-data
   - it: Should not mount timescale config when config is disabled
     set:
       metricsCollector:

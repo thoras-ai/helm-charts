@@ -222,13 +222,18 @@ metricsCollector:
     enabled: true
     stabilization_window: ""
   persistence:
-    enabled: false
+    # Leave unset (null) to auto-detect: persistence turns on if you set any of
+    # storageClassName / pvcStorageRequestSize / createEFSStorageClass.fileSystemId.
+    # Set explicitly to true/false to override auto-detection (false always wins).
+    enabled: null
     volumeName: ""
-    storageClassName: "efs-sc-thoras"
+    # Empty uses the cluster's default StorageClass. Set to bind a specific class.
+    storageClassName: ""
     accessMode: "ReadWriteOnce"
     createEFSStorageClass:
       fileSystemId: ""
-    pvcStorageRequestSize: "3Gi"
+    # Empty defaults to 3Gi (applied in the PVC template).
+    pvcStorageRequestSize: ""
   podAnnotations: {}
   labels: {}
   # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set

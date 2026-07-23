@@ -50,7 +50,7 @@ spec:
           configMap:
             name: thoras-timescale-config
       {{- end }}
-      {{- if and .Values.metricsCollector.persistence.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
+      {{- if and (include "thoras.persistenceEnabled" .) (not (include "thoras.externalTimescaleEnabled" .)) }}
         - name: elastic-search-data
           persistentVolumeClaim:
             claimName:  elastic-search-data
@@ -88,7 +88,7 @@ spec:
         {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
-      {{- if and .Values.metricsCollector.persistence.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
+      {{- if and (include "thoras.persistenceEnabled" .) (not (include "thoras.externalTimescaleEnabled" .)) }}
             name: elastic-search-data
       {{- else }}
             name: timescale-data
@@ -124,7 +124,7 @@ spec:
         {{- end }}
         volumeMounts:
           - mountPath: /var/lib/share
-      {{- if .Values.metricsCollector.persistence.enabled }}
+      {{- if (include "thoras.persistenceEnabled" .) }}
             name: elastic-search-data
       {{- else }}
             name: timescale-data
@@ -190,7 +190,7 @@ spec:
             subPath: custom.conf
         {{- end }}
           - mountPath: /var/lib/share
-      {{- if .Values.metricsCollector.persistence.enabled }}
+      {{- if (include "thoras.persistenceEnabled" .) }}
             name: elastic-search-data
       {{- else }}
             name: timescale-data
@@ -318,7 +318,7 @@ spec:
           name: http
         volumeMounts:
           - mountPath: /var/lib/share
-      {{- if and .Values.metricsCollector.persistence.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
+      {{- if and (include "thoras.persistenceEnabled" .) (not (include "thoras.externalTimescaleEnabled" .)) }}
             name: elastic-search-data
       {{- else }}
             name: timescale-data
