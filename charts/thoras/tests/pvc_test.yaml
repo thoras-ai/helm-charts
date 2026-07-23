@@ -32,3 +32,55 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: Infers persistence when only storageClassName is set
+    templates:
+      - collector/pvc.yaml
+    set:
+      metricsCollector:
+        persistence:
+          storageClassName: "gp3"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.storageClassName
+          value: "gp3"
+
+  - it: Infers persistence when only pvcStorageRequestSize is set
+    templates:
+      - collector/pvc.yaml
+    set:
+      metricsCollector:
+        persistence:
+          pvcStorageRequestSize: "5Gi"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.resources.requests.storage
+          value: "5Gi"
+
+  - it: Explicit enabled false suppresses inference
+    templates:
+      - collector/pvc.yaml
+    set:
+      metricsCollector:
+        persistence:
+          enabled: false
+          storageClassName: "gp3"
+          pvcStorageRequestSize: "5Gi"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Omits storageClassName field when empty (uses cluster default)
+    templates:
+      - collector/pvc.yaml
+    set:
+      metricsCollector:
+        persistence:
+          enabled: true
+    asserts:
+      - notExists:
+          path: spec.storageClassName

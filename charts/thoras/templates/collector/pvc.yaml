@@ -1,4 +1,4 @@
-{{- if and .Values.metricsCollector.persistence.enabled (or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .)))}}
+{{- if and (include "thoras.persistenceEnabled" .) (or (not .Values.featureFlags.enableNoBlobApiServer) (not (include "thoras.externalTimescaleEnabled" .)))}}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -11,10 +11,12 @@ spec:
   {{- if .Values.metricsCollector.persistence.volumeName }}
   volumeName: {{ .Values.metricsCollector.persistence.volumeName }}
   {{- end }}
-  storageClassName: {{ .Values.metricsCollector.persistence.storageClassName }}
+  {{- with .Values.metricsCollector.persistence.storageClassName }}
+  storageClassName: {{ . }}
+  {{- end }}
   accessModes:
     - {{ .Values.metricsCollector.persistence.accessMode | default "ReadWriteOnce" }}
   resources:
     requests:
-      storage: {{ .Values.metricsCollector.persistence.pvcStorageRequestSize }}
+      storage: {{ .Values.metricsCollector.persistence.pvcStorageRequestSize | default "3Gi" }}
 {{- end }}
