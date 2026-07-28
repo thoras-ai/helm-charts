@@ -1030,8 +1030,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
                   value: "true"
-                - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
-                  value: "false"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
@@ -1129,6 +1127,8 @@ Default matches snapshot:
           - aiscaletargets
           - clusteraiscaletemplates
           - clusteraiscaletemplates/status
+          - daemonsetautoscalers
+          - daemonsetautoscalers/status
         verbs:
           - '*'
   22: |
@@ -1471,8 +1471,6 @@ Default matches snapshot:
                   value: "67"
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
                   value: "true"
-                - name: SERVICE_ENABLE_DAEMON_SET_AUTOSCALER
-                  value: "false"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
