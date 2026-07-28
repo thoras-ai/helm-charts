@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.110.0"
+thorasVersion: "4.111.0"
 cluster:
   name: ""
 
@@ -275,7 +275,12 @@ metricsCollector:
       enabled: false
       content: ""
     walRecovery:
-      enabled: false
+      # If the database fails to start, Thoras assume WAL corruption and reset
+      # the WAL: when enabled, pg_resetwal -f is run to force recovery,
+      # discarding WAL after the last valid checkpoint (lossy, but unblocks
+      # startup). When disabled, the corrupt state is left as-is.
+      enabled: true
+      timeoutSeconds: 30
   blobService:
     logLevel: "info"
     pprof:

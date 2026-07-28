@@ -587,6 +587,51 @@ Default matches snapshot:
               volumeMounts:
                 - mountPath: /var/lib/share
                   name: timescale-data
+            - args:
+                - |
+                  echo "Checking WAL integrity..."
+                  if [ ! -f "$PGDATA/PG_VERSION" ]; then
+                    echo "No existing database found; nothing to recover."
+                  elif pg_ctl start -D "$PGDATA" -w -t "$WAL_RECOVERY_TIMEOUT_SECONDS" -l /tmp/wal-check.log; then
+                    echo "Postgres started cleanly; WAL is healthy."
+                    pg_ctl stop -D "$PGDATA" -m fast -w
+                  elif [ "$WAL_RECOVERY_FORCE" = "true" ]; then
+                    echo "Postgres failed to start within ${WAL_RECOVERY_TIMEOUT_SECONDS}s (see log below) -- forcing pg_resetwal -f. This discards WAL after the last valid checkpoint and WILL lose recent data."
+                    cat /tmp/wal-check.log || true
+                    pg_ctl stop -D "$PGDATA" -m immediate -w -t 30 2>/dev/null || true
+                    pg_resetwal -f "$PGDATA"
+                  else
+                    echo "Postgres failed to start within ${WAL_RECOVERY_TIMEOUT_SECONDS}s (see log below). Automatic recovery is disabled (metricsCollector.timescale.walRecovery.enabled=false); leaving the database as-is."
+                    cat /tmp/wal-check.log || true
+                    pg_ctl stop -D "$PGDATA" -m immediate -w -t 30 2>/dev/null || true
+                  fi
+              command:
+                - /bin/sh
+                - -c
+              env:
+                - name: PGDATA
+                  value: /var/lib/share/postgresql
+                - name: WAL_RECOVERY_FORCE
+                  value: "true"
+                - name: WAL_RECOVERY_TIMEOUT_SECONDS
+                  value: "30"
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.28.2-pg16
+              imagePullPolicy: IfNotPresent
+              name: reset-wal-on-startup
+              resources:
+                limits:
+                  memory: 16384Mi
+                requests:
+                  cpu: 1024m
+                  memory: 3072Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - mountPath: /var/lib/share
+                  name: timescale-data
           securityContext:
             fsGroup: 1000
             runAsGroup: 1000

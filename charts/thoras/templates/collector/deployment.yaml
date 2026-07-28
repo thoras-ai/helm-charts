@@ -93,7 +93,7 @@ spec:
       {{- else }}
             name: timescale-data
       {{- end }}
-      {{- if and .Values.metricsCollector.timescale.walRecovery.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
+      {{- if not (include "thoras.externalTimescaleEnabled" .) }}
       - name: reset-wal-on-startup
         image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -105,15 +105,28 @@ spec:
         args:
           - |
             echo "Checking WAL integrity..."
-            if ! pg_resetwal --check "$PGDATA" 2>/dev/null; then
-              echo "WAL check failed, running pg_resetwal -f"
+            if [ ! -f "$PGDATA/PG_VERSION" ]; then
+              echo "No existing database found; nothing to recover."
+            elif pg_ctl start -D "$PGDATA" -w -t "$WAL_RECOVERY_TIMEOUT_SECONDS" -l /tmp/wal-check.log{{ if .Values.metricsCollector.timescale.config.enabled }} -o "-c config_file=/etc/postgresql.conf"{{ end }}; then
+              echo "Postgres started cleanly; WAL is healthy."
+              pg_ctl stop -D "$PGDATA" -m fast -w
+            elif [ "$WAL_RECOVERY_FORCE" = "true" ]; then
+              echo "Postgres failed to start within ${WAL_RECOVERY_TIMEOUT_SECONDS}s (see log below) -- forcing pg_resetwal -f. This discards WAL after the last valid checkpoint and WILL lose recent data."
+              cat /tmp/wal-check.log || true
+              pg_ctl stop -D "$PGDATA" -m immediate -w -t 30 2>/dev/null || true
               pg_resetwal -f "$PGDATA"
             else
-              echo "WAL OK"
+              echo "Postgres failed to start within ${WAL_RECOVERY_TIMEOUT_SECONDS}s (see log below). Automatic recovery is disabled (metricsCollector.timescale.walRecovery.enabled=false); leaving the database as-is."
+              cat /tmp/wal-check.log || true
+              pg_ctl stop -D "$PGDATA" -m immediate -w -t 30 2>/dev/null || true
             fi
         env:
           - name: PGDATA
             value: /var/lib/share/postgresql
+          - name: WAL_RECOVERY_FORCE
+            value: {{ .Values.metricsCollector.timescale.walRecovery.enabled | quote }}
+          - name: WAL_RECOVERY_TIMEOUT_SECONDS
+            value: {{ .Values.metricsCollector.timescale.walRecovery.timeoutSeconds | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         {{- if .Values.metricsCollector.timescale.resources }}
         resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
@@ -123,6 +136,11 @@ spec:
           requests: {{ .Values.metricsCollector.timescale.requests | toYaml | nindent 12 }}
         {{- end }}
         volumeMounts:
+        {{- if .Values.metricsCollector.timescale.config.enabled }}
+          - name: timescale-config
+            mountPath: /etc/postgresql.conf
+            subPath: custom.conf
+        {{- end }}
           - mountPath: /var/lib/share
       {{- if (include "thoras.persistenceEnabled" .) }}
             name: elastic-search-data
