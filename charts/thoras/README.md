@@ -87,7 +87,6 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations            |
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
 | featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component      |
-| featureFlags.enableDaemonSetAutoscaler         | Boolean | false   | If true, DaemonSetAutoscaler resources are enabled        |
 
 ## Affinity Configuration
 
