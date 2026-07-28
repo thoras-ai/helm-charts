@@ -56,6 +56,8 @@ data:
         ~*^GET/v1/views/namespaces/[^/]+/labels(\?|$)                             1;
         ~*^GET/v1/views/node-pools(\?|$)                                          1;
         ~*^GET/v1/views/nodes(\?|$)                                               1;
+        ~*^GET/v1/persistent-volumes(\?|$)                                        1;
+
 
         # POST — dashboard-initiated mutations
         ~*^POST/v1/ast/candidates/[^/]+(\?|$)                                     1;
