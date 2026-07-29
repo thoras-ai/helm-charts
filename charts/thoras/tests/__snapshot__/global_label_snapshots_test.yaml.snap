@@ -590,20 +590,37 @@ Default matches snapshot:
             - args:
                 - |
                   echo "Checking WAL integrity..."
+
+                  # Mirror docker-entrypoint.sh's docker_create_db_directories: it always
+                  # chmods PGDATA to 700 before exec'ing postgres, since some volume/CSI
+                  # drivers don't preserve the permissions postgres requires. This
+                  # container starts postgres directly via pg_ctl, so that safety net
+                  # doesn't run unless we do it ourselves.
+                  chmod 700 "$PGDATA" 2>/dev/null || true
+
                   if [ ! -f "$PGDATA/PG_VERSION" ]; then
                     echo "No existing database found; nothing to recover."
                   elif pg_ctl start -D "$PGDATA" -w -t "$WAL_RECOVERY_TIMEOUT_SECONDS" -l /tmp/wal-check.log; then
                     echo "Postgres started cleanly; WAL is healthy."
                     pg_ctl stop -D "$PGDATA" -m fast -w
-                  elif [ "$WAL_RECOVERY_FORCE" = "true" ]; then
-                    echo "Postgres failed to start within ${WAL_RECOVERY_TIMEOUT_SECONDS}s (see log below) -- forcing pg_resetwal -f. This discards WAL after the last valid checkpoint and WILL lose recent data."
-                    cat /tmp/wal-check.log || true
-                    pg_ctl stop -D "$PGDATA" -m immediate -w -t 30 2>/dev/null || true
-                    pg_resetwal -f "$PGDATA"
                   else
-                    echo "Postgres failed to start within ${WAL_RECOVERY_TIMEOUT_SECONDS}s (see log below). Automatic recovery is disabled (metricsCollector.timescale.walRecovery.enabled=false); leaving the database as-is."
+                    echo "Postgres failed to start within ${WAL_RECOVERY_TIMEOUT_SECONDS}s. Log:"
                     cat /tmp/wal-check.log || true
                     pg_ctl stop -D "$PGDATA" -m immediate -w -t 30 2>/dev/null || true
+                    # Looking for known, well-documented Postgres error messages to
+                    # avoid rescuing other reason (permissions, resources, config) is
+                    # never misdiagnosed as corruption.
+                    WAL_CORRUPTION_SIGNATURES='could not locate a valid checkpoint record|invalid data in file "global/pg_control"'
+                    if grep -qE "$WAL_CORRUPTION_SIGNATURES" /tmp/wal-check.log; then
+                      if [ "$WAL_RECOVERY_FORCE" = "true" ]; then
+                        echo "Log indicates WAL corruption -- forcing pg_resetwal -f. This discards WAL after the last valid checkpoint and WILL lose recent data."
+                        pg_resetwal -f "$PGDATA"
+                      else
+                        echo "Log indicates WAL corruption, but automatic recovery is disabled (metricsCollector.timescale.walRecovery.enabled=false); leaving the database as-is."
+                      fi
+                    else
+                      echo "Failure does not match a known WAL corruption signature; leaving the database as-is for manual investigation."
+                    fi
                   fi
               command:
                 - /bin/sh
@@ -614,7 +631,7 @@ Default matches snapshot:
                 - name: WAL_RECOVERY_FORCE
                   value: "true"
                 - name: WAL_RECOVERY_TIMEOUT_SECONDS
-                  value: "30"
+                  value: "300"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.28.2-pg16
               imagePullPolicy: IfNotPresent
               name: reset-wal-on-startup

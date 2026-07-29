@@ -280,7 +280,7 @@ metricsCollector:
       # discarding WAL after the last valid checkpoint (lossy, but unblocks
       # startup). When disabled, the corrupt state is left as-is.
       enabled: true
-      timeoutSeconds: 30
+      timeoutSeconds: 300
   blobService:
     logLevel: "info"
     pprof:
