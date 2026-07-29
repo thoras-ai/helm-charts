@@ -614,7 +614,7 @@ Default matches snapshot:
                 - name: WAL_RECOVERY_FORCE
                   value: "true"
                 - name: WAL_RECOVERY_TIMEOUT_SECONDS
-                  value: "30"
+                  value: "300"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.28.2-pg16
               imagePullPolicy: IfNotPresent
               name: reset-wal-on-startup
