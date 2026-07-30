@@ -1,0 +1,593 @@
+Default matches snapshot:
+  1: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api
+      namespace: thoras
+    rules:
+      - apiGroups:
+          - '*'
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling
+        resources:
+          - horizontalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - batch
+        resources:
+          - jobs
+        verbs:
+          - '*'
+      - apiGroups:
+          - apps
+          - argoproj.io
+        resources:
+          - '*'
+        verbs:
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/resize
+        verbs:
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
+  2: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api
+      namespace: thoras
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-api
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  3: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - '*'
+      - apiGroups:
+          - ""
+        resources:
+          - namespaces
+        verbs:
+          - list
+  4: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-api-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  5: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-cluster-scoped
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - nodes
+          - persistentvolumes
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - storage.k8s.io
+        resources:
+          - storageclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - metrics.k8s.io
+        resources:
+          - nodes
+        verbs:
+          - list
+  6: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-cluster-scoped
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-api-cluster-scoped
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  7: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - delete
+      - apiGroups:
+          - ""
+        resources:
+          - configmaps
+        verbs:
+          - get
+          - update
+          - patch
+  8: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-api-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-api-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-api
+        namespace: NAMESPACE
+  9: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - AIScaleTarget
+          - aiscaletargets/status
+          - aiscaletargets
+          - clusteraiscaletemplates
+          - clusteraiscaletemplates/status
+          - daemonsetautoscalers
+          - daemonsetautoscalers/status
+        verbs:
+          - '*'
+  10: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-operator-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-operator
+        namespace: NAMESPACE
+  11: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator-cluster-scoped
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - nodes
+          - persistentvolumes
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - storage.k8s.io
+        resources:
+          - storageclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - metrics.k8s.io
+        resources:
+          - nodes
+        verbs:
+          - list
+  12: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator-cluster-scoped
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-operator-cluster-scoped
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-operator
+        namespace: NAMESPACE
+  13: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator
+      namespace: thoras
+    rules:
+      - apiGroups:
+          - '*'
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - '*'
+        resources:
+          - '*/scale'
+          - '*/status'
+        verbs:
+          - get
+          - patch
+          - update
+      - apiGroups:
+          - autoscaling
+        resources:
+          - horizontalpodautoscalers
+        verbs:
+          - '*'
+      - apiGroups:
+          - autoscaling.k8s.io
+        resources:
+          - verticalpodautoscalers
+        verbs:
+          - '*'
+      - apiGroups:
+          - ""
+        resources:
+          - pods/resize
+        verbs:
+          - patch
+      - apiGroups:
+          - apps
+          - argoproj.io
+        resources:
+          - '*'
+        verbs:
+          - patch
+      - apiGroups:
+          - ""
+        resources:
+          - events
+        verbs:
+          - create
+          - patch
+          - update
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - create
+          - update
+          - watch
+  14: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator
+      namespace: thoras
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-operator
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-operator
+        namespace: NAMESPACE
+  15: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker
+      namespace: thoras
+    rules:
+      - apiGroups:
+          - '*'
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - create
+          - update
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
+      - apiGroups:
+          - ""
+        resources:
+          - pods/resize
+        verbs:
+          - patch
+  16: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker
+      namespace: thoras
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-worker
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: NAMESPACE
+  17: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-thoras
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - '*'
+  18: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-thoras
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-worker-thoras
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: NAMESPACE
+  19: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-cluster-scoped
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - nodes
+          - persistentvolumes
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - storage.k8s.io
+        resources:
+          - storageclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - metrics.k8s.io
+        resources:
+          - nodes
+        verbs:
+          - list
+  20: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-cluster-scoped
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-worker-cluster-scoped
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: NAMESPACE
+  21: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-forecast-scaler
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - apps
+        resourceNames:
+          - thoras-forecast-worker
+        resources:
+          - deployments/scale
+        verbs:
+          - get
+          - update
+          - patch
+  22: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-forecast-scaler
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-worker-forecast-scaler
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: NAMESPACE

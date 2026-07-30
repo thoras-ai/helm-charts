@@ -127,6 +127,7 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasApiServerV2.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
+{{ include "thoras.clusterScopedReadRbac" (dict "root" . "name" (print .Values.thorasApiServerV2.serviceAccount.name "-cluster-scoped") "labels" .Values.thorasApiServerV2.labels "serviceAccountName" .Values.thorasApiServerV2.serviceAccount.name) }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role

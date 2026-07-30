@@ -111,6 +111,63 @@ podAntiAffinity:
 {{- end }}
 
 {{/*
+ClusterRole + ClusterRoleBinding for read-only access to cluster-scoped
+resources (nodes, PVs, storageclasses) — a namespaced Role can never grant these.
+Usage: include "thoras.clusterScopedReadRbac" (dict "root" . "name" "thoras-operator-cluster-scoped"
+         "labels" .Values.thorasOperator.labels "serviceAccountName" .Values.thorasOperator.serviceAccount.name)
+*/}}
+{{- define "thoras.clusterScopedReadRbac" -}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .name }}
+  namespace: {{ .root.Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .root "component" .labels) | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - metrics.k8s.io
+  resources:
+  - nodes
+  verbs:
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .root "component" .labels) | nindent 4 }}
+  name: {{ .name }}
+  namespace: {{ .root.Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .serviceAccountName }}
+  namespace: {{ .root.Release.Namespace }}
+{{- end -}}
+
+{{/*
 Global environment variables (proxy settings + user-defined env) injected into all containers.
 */}}
 {{/*
