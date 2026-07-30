@@ -46,14 +46,17 @@ featureFlags:
   enableUpdateScaleModeApi: false
   thorasManageThoras:
     enabled: true
-    # Recommendation Mode by default
-    mode: "recommendation"
+    mode: "autonomous"
     updateMode: "in_place_or_recreate"
     db:
       updateMode: "in_place_or_recreate"
       # Look 4h ahead by default
       forecastBlocks: "4h0s"
       # Forecast once per hour by default
+      #
+      # TODO: Consider using interval-based scheduling instead of cron
+      # to prevent the scenario where the no forecast is generated due to
+      # missed cron schedules (e.g. due to a restart).
       forecastCron: "17 * * * *"
   enablePrometheusMetricScraping: false
   enablePgLargeObjectStorage: true
