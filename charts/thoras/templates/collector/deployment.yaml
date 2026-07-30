@@ -106,11 +106,9 @@ spec:
           - |
             echo "Checking WAL integrity..."
 
-            # Mirror docker-entrypoint.sh's docker_create_db_directories: it always
-            # chmods PGDATA to 700 before exec'ing postgres, since some volume/CSI
-            # drivers don't preserve the permissions postgres requires. This
-            # container starts postgres directly via pg_ctl, so that safety net
-            # doesn't run unless we do it ourselves.
+            # Some volume/CSI drivers don't preserve postgres's required
+            # permissions. Enforce them ourselves since we start postgres
+            # directly via pg_ctl.
             chmod 700 "$PGDATA" 2>/dev/null || true
 
             if [ ! -f "$PGDATA/PG_VERSION" ]; then
@@ -122,9 +120,9 @@ spec:
               echo "Postgres failed to start within ${WAL_RECOVERY_TIMEOUT_SECONDS}s. Log:"
               cat /tmp/wal-check.log || true
               pg_ctl stop -D "$PGDATA" -m immediate -w -t 30 2>/dev/null || true
-              # Looking for known, well-documented Postgres error messages to
-              # avoid rescuing other reason (permissions, resources, config) is
-              # never misdiagnosed as corruption.
+              # Match only known, well-documented WAL corruption signatures to
+              # avoid misdiagnosing other failures (permissions, resources,
+              # config) as corruption.
               WAL_CORRUPTION_SIGNATURES='could not locate a valid checkpoint record|invalid data in file "global/pg_control"'
               if grep -qE "$WAL_CORRUPTION_SIGNATURES" /tmp/wal-check.log; then
                 if [ "$WAL_RECOVERY_FORCE" = "true" ]; then
