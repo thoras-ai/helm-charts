@@ -889,6 +889,8 @@ Default matches snapshot:
                       fieldPath: metadata.uid
                 - name: METRICS_PORT
                   value: "9101"
+                - name: METRICS_HOST
+                  value: '::'
                 - name: WORKER_HEARTBEAT_FILE
                   value: /var/run/thoras/worker-heartbeat
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:TEST

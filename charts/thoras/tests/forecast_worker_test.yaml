@@ -93,6 +93,11 @@ tests:
           content:
             name: METRICS_PORT
             value: "9101"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "::"
 
   - it: omits spec.replicas when worker.replicas is unset
     asserts:

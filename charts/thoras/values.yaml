@@ -587,6 +587,9 @@ thorasForecast:
   prometheus:
     enabled: true
     port: 9101
+    # Address the metrics server binds to. Defaults to the dual-stack
+    # wildcard so it's reachable on both IPv4-only and IPv6-only clusters.
+    host: "::"
   service:
     annotations: {}
   # Set to true to apply global affinity rules to this component
