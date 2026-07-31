@@ -95,6 +95,8 @@ spec:
           {{- if .Values.thorasForecast.prometheus.enabled }}
           - name: METRICS_PORT
             value: {{ .Values.thorasForecast.prometheus.port | quote }}
+          - name: METRICS_HOST
+            value: {{ .Values.thorasForecast.prometheus.host | quote }}
           {{- end }}
           - name: WORKER_HEARTBEAT_FILE
             value: /var/run/thoras/worker-heartbeat
