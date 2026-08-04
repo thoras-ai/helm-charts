@@ -130,9 +130,11 @@ spec:
                   pg_resetwal -f "$PGDATA"
                 else
                   echo "Log indicates WAL corruption, but automatic recovery is disabled (metricsCollector.timescale.walRecovery.enabled=false); leaving the database as-is."
+                  exit 1
                 fi
               else
                 echo "Failure does not match a known WAL corruption signature; leaving the database as-is for manual investigation."
+                exit 1
               fi
             fi
         env:
