@@ -107,6 +107,7 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasWorker.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
+{{ include "thoras.clusterScopedReadRbac" (dict "root" . "name" "thoras-worker-cluster-scoped" "labels" .Values.thorasWorker.labels "serviceAccountName" .Values.thorasWorker.serviceAccount.name) }}
 {{- if not (hasKey .Values.thorasForecast.worker "replicas") }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1

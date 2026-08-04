@@ -136,6 +136,7 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Values.thorasOperator.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
+{{ include "thoras.clusterScopedReadRbac" (dict "root" . "name" "thoras-operator-cluster-scoped" "labels" .Values.thorasOperator.labels "serviceAccountName" .Values.thorasOperator.serviceAccount.name) }}
 
 {{- if .Values.rbac.namespaces}}
   {{- range $idx, $namespace := .Values.rbac.namespaces }}

@@ -1,0 +1,19 @@
+suite: RBAC services
+templates:
+  - "*/rbac.yaml"
+set:
+  thorasVersion: TEST
+  imageCredentials:
+    secretRef: test-secret-registry
+  thorasApiServerV2:
+    rbac:
+      create: true
+  rbac:
+    namespaces:
+      - thoras
+tests:
+  - it: Default matches snapshot
+    chart:
+      version: "4.7.0"
+    asserts:
+      - matchSnapshot: {}
