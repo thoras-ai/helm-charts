@@ -161,6 +161,8 @@ spec:
                 name: thoras-cloud-sync
                 key: clusterKey
             {{- end }}
+          - name: SERVICE_MIN_LOOKBACK_TO_SCALE
+            value: {{ .Values.thorasForecast.minLookbackToScale | quote }}
           - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
             value: "{{ .Values.thorasForecast.podEligibilityMinRunningTime }}"
           - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR

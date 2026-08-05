@@ -536,8 +536,8 @@ thorasForecast:
   useAstMetricsSeries: true
   useForecasterComputedMetricId: true
   useForecastEnrichment: false
-  # Minimum lookback window required before autonomous scaling is enabled (minimum 3h).
-  minLookbackToScale: "3h"
+  # Minimum lookback window required before autonomous scaling is enabled.
+  minLookbackToScale: "24h"
   worker:
     # Number of forecast-worker replicas. Leave unset to let the scaler manage
     # the replica count. Set to a fixed number to pin a static count and disable

@@ -84,7 +84,7 @@ Default matches snapshot:
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
-                  value: 3h
+                  value: 24h
                 - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
                   value: "false"
                 - name: SERVICE_ENABLE_CLOUD_SYNC
@@ -1105,7 +1105,7 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
                   value: "false"
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
-                  value: 3h
+                  value: 24h
                 - name: DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
@@ -1561,6 +1561,8 @@ Default matches snapshot:
                     secretKeyRef:
                       key: clusterKey
                       name: thoras-cloud-sync
+                - name: SERVICE_MIN_LOOKBACK_TO_SCALE
+                  value: 24h
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
                 - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
