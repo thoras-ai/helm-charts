@@ -170,7 +170,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_MIN_LOOKBACK_TO_SCALE')].value
-          value: "3h"
+          value: "24h"
   - it: Should override SERVICE_MIN_LOOKBACK_TO_SCALE
     set:
       thorasForecast:
@@ -186,7 +186,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_MIN_LOOKBACK_TO_SCALE')].value
-          value: "3h"
+          value: "24h"
   - it: Should set SERVICE_BLOB_SERVICE_API_URL by default
     asserts:
       - equal:
