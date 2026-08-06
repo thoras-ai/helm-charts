@@ -1201,14 +1201,9 @@ Default matches snapshot:
                   name: system-config
                   readOnly: true
                   subPath: system-config.yaml
-                - mountPath: /tmp/k8s-webhook-server/serving-certs/tls.crt
+                - mountPath: /tmp/k8s-webhook-server/serving-certs
                   name: tls
                   readOnly: true
-                  subPath: tls.crt
-                - mountPath: /tmp/k8s-webhook-server/serving-certs/tls.key
-                  name: tls
-                  readOnly: true
-                  subPath: tls.key
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
