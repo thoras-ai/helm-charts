@@ -195,6 +195,8 @@ spec:
             value: {{ .Values.featureFlags.thorasManageThoras.enabled | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_MODE
             value: {{ .Values.featureFlags.thorasManageThoras.mode | quote }}
+          - name: SERVICE_THORAS_SCALING_THORAS_METRICS_COLLECTOR_FOLLOWS_MODE
+            value: {{ .Values.featureFlags.thorasManageThoras.metricsCollectorFollowsMode | ternary "true" "false" | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_UPDATE_MODE
             value: {{ .Values.featureFlags.thorasManageThoras.updateMode | quote }}
           - name: SERVICE_THORAS_SCALING_THORAS_DATABASE_UPDATE_MODE
