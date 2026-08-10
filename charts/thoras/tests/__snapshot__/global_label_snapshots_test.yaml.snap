@@ -114,6 +114,8 @@ Default matches snapshot:
                   value: "60"
                 - name: SERVICE_UNDERPROVISIONED_THRESHOLD
                   value: "92"
+                - name: SERVICE_IDLE_THRESHOLD
+                  value: "5"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:

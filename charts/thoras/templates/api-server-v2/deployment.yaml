@@ -176,6 +176,8 @@ spec:
             value: {{ .Values.utilizationThresholds.overprovisioned | quote }}
           - name: SERVICE_UNDERPROVISIONED_THRESHOLD
             value: {{ .Values.utilizationThresholds.underprovisioned | quote }}
+          - name: SERVICE_IDLE_THRESHOLD
+            value: {{ .Values.utilizationThresholds.idle | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         volumeMounts:
           - name: monitor-config

@@ -644,3 +644,4 @@ flux:
 utilizationThresholds:
   overprovisioned: 60
   underprovisioned: 92
+  idle: 5
