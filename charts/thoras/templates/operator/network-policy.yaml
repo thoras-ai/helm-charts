@@ -24,6 +24,9 @@ spec:
   - ports:
     - port: 9443
       protocol: TCP
+  {{- with .Values.thorasOperator.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
   egress:
   # Allow all egress to pods within the same namespace
   - to:
@@ -71,6 +74,9 @@ spec:
   # Allow webhook callbacks from the Kubernetes API server
   - fromEntities:
     - kube-apiserver
+  {{- with .Values.thorasOperator.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
   egress:
   # Allow all egress to endpoints within the same namespace
   - toEndpoints:

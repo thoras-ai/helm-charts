@@ -216,6 +216,42 @@ tests:
             toFQDNs:
             - matchName: "my-database.example.com"
 
+  # --- extraIngressRules ---
+
+  - it: Injects extraIngressRules into the kubernetes ingress list
+    template: api-server-v2/network-policy.yaml
+    set:
+      thorasApiServerV2:
+        extraIngressRules:
+          - ports:
+            - port: 8443
+              protocol: TCP
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            ports:
+            - port: 8443
+              protocol: TCP
+
+  - it: Injects extraIngressRules into the cilium ingress list
+    template: collector/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+      metricsCollector:
+        extraIngressRules:
+          - fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: monitoring
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+            - matchLabels:
+                k8s:io.kubernetes.pod.namespace: monitoring
+
   # --- Certgen network policy ---
 
   - it: Certgen kubernetes policy targets the webhook-certgen component selector
