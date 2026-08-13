@@ -88,6 +88,16 @@ featureFlags:
   # SERVICE_SIMPLE_AUTH_SECRET, with SERVICE_ENABLE_SIMPLE_AUTH_SECRET="true".
   enableSimpleAuthSecret: false
 
+# Shared secret Thoras components send to the API server. Only used when
+# featureFlags.enableSimpleAuthSecret is true.
+apiClientSecret:
+  # Plaintext value; the chart base64-encodes it. Leave empty to generate one.
+  # A value already present in the cluster takes precedence, so setting this
+  # after install has no effect until the api-client-secret Secret is deleted.
+  # Set it when rendering without cluster access (helm template, Argo CD),
+  # where a generated value would differ on every render.
+  secret: ""
+
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
   enabled: true
