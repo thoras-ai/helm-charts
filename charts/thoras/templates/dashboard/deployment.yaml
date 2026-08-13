@@ -48,9 +48,20 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
+        args: ["nginx", "-c", "/tmp/nginx.conf", "-g", "daemon off;"]
         env:
-          {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
-          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+        {{- with include "thoras.globalEnv" . }}
+          {{- . | nindent 10 }}
+        {{- end }}
+          - name: NGINX_ENVSUBST_OUTPUT_DIR
+            value: /tmp
+        {{- if .Values.featureFlags.enableSimpleAuthSecret }}
+          - name: SIMPLE_AUTH_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: api-client-secret
+                key: secret
+        {{- end }}
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
           name: http
@@ -81,8 +92,8 @@ spec:
           failureThreshold: 48
         volumeMounts:
           - name: nginx-config
-            mountPath: /etc/nginx/nginx.conf
-            subPath: nginx.conf
+            mountPath: /etc/nginx/templates/nginx.conf.template
+            subPath: nginx.conf.template
       {{- if .Values.thorasDashboard.extraContainers }}
       {{- toYaml .Values.thorasDashboard.extraContainers | nindent 6 }}
       {{- end }}
