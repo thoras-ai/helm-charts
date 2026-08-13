@@ -18,6 +18,9 @@ spec:
   # Allow all ingress from pods within the same namespace
   - from:
     - podSelector: {}
+  {{- with .Values.metricsCollector.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
   egress:
   # Allow all egress to pods within the same namespace
   - to:
@@ -54,6 +57,9 @@ spec:
   # Allow all ingress from endpoints within the same namespace
   - fromEndpoints:
     - {}
+  {{- with .Values.metricsCollector.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
   egress:
   # Allow all egress to endpoints within the same namespace
   - toEndpoints:

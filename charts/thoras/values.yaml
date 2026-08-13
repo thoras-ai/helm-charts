@@ -209,6 +209,7 @@ thorasOperator:
       pods: IfNeeded
       scale: Never
   extraEgressRules: []
+  extraIngressRules: []
 
 metricsCollector:
   # Resource upperbound used when thorasManageThoras is enabled. Empty means
@@ -307,6 +308,7 @@ metricsCollector:
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
   extraEgressRules: []
+  extraIngressRules: []
 
 thorasApiServerV2:
   # Overrides for the global `postgresql` connection-pool settings. Any field
@@ -367,6 +369,7 @@ thorasApiServerV2:
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
   extraEgressRules: []
+  extraIngressRules: []
 
 thorasWorker:
   enabled: true
@@ -432,6 +435,7 @@ thorasWorker:
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
   extraEgressRules: []
+  extraIngressRules: []
 
 thorasDashboard:
   enabled: true
@@ -522,6 +526,7 @@ thorasDashboard:
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
   extraEgressRules: []
+  extraIngressRules: []
   extraContainers: []
 
 thorasMonitor:
@@ -605,6 +610,7 @@ thorasForecast:
   # Set to false to disable the default self anti-affinity between forecast-worker replicas
   enableSelfAntiAffinity: false
   extraEgressRules: []
+  extraIngressRules: []
 
 # K8s client max queries per second
 queriesPerSecond: "50"
