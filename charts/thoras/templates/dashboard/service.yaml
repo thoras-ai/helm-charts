@@ -1,3 +1,4 @@
+{{- if .Values.thorasDashboard.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -39,3 +40,4 @@ spec:
     targetPort: {{ .Values.thorasDashboard.service.targetPort | default .Values.thorasDashboard.containerPort }}
   selector:
     app: thoras-dashboard
+{{- end }}

@@ -1,3 +1,4 @@
+{{- if .Values.thorasDashboard.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -122,3 +123,4 @@ spec:
       {{- with .Values.thorasDashboard.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
+{{- end }}
