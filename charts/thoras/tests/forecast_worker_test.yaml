@@ -91,6 +91,11 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
+            name: WRITE_UBJ_ARTIFACTS
+            value: "false"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: METRICS_PORT
             value: "9101"
       - contains:

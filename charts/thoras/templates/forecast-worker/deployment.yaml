@@ -84,6 +84,8 @@ spec:
             value: {{ .Values.thorasForecast.useForecasterComputedMetricId | ternary "true" "false" | quote }}
           - name: USE_FORECAST_ENRICHMENT
             value: {{ .Values.thorasForecast.useForecastEnrichment | ternary "true" "false" | quote }}
+          - name: WRITE_UBJ_ARTIFACTS
+            value: {{ .Values.thorasForecast.writeUbjArtifacts | ternary "true" "false" | quote }}
           - name: TRAINING_JITTER_MINUTES
             value: {{ .Values.thorasForecast.trainingJitterMinutes | quote }}
           - name: MULTI_DIMENSIONAL_ENABLED
