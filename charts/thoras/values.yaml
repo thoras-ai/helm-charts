@@ -69,6 +69,11 @@ featureFlags:
   enableAstRecordMirroring: true
   enableForecastCollectorAntiAffinity: false
   enableMultiDimensional: false
+  # When enabled, the chart generates an `api-client-secret` Secret in the
+  # release namespace holding a random shared secret (generated once and
+  # preserved across upgrades) and wires it into every Thoras component as
+  # SERVICE_SIMPLE_AUTH_SECRET, with SERVICE_ENABLE_SIMPLE_AUTH_SECRET="true".
+  enableSimpleAuthSecret: false
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:

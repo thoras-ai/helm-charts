@@ -178,6 +178,7 @@ spec:
             value: {{ .Values.utilizationThresholds.underprovisioned | quote }}
           - name: SERVICE_IDLE_THRESHOLD
             value: {{ .Values.utilizationThresholds.idle | quote }}
+          {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         volumeMounts:
           - name: monitor-config

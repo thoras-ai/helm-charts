@@ -48,10 +48,9 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
-        {{- with include "thoras.globalEnv" . }}
         env:
-          {{- . | nindent 10 }}
-        {{- end }}
+          {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
           name: http

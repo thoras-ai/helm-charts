@@ -199,6 +199,7 @@ spec:
             value: {{ .Values.featureFlags.enableAstRecordMirroring | ternary "true" "false" | quote }}
           - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
             value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
+          {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: [
           "/app/operator"

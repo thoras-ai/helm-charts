@@ -116,6 +116,8 @@ Default matches snapshot:
                   value: "92"
                 - name: SERVICE_IDLE_THRESHOLD
                   value: "5"
+                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -581,6 +583,8 @@ Default matches snapshot:
                   value: /var/lib/share
                 - name: SERVICE_ENABLE_PPROF
                   value: "false"
+                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -797,7 +801,10 @@ Default matches snapshot:
             globalLabel: globalValue
         spec:
           containers:
-            - image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
+            - env:
+                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
+                  value: "false"
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 48
@@ -951,6 +958,8 @@ Default matches snapshot:
                   value: '::'
                 - name: WORKER_HEARTBEAT_FILE
                   value: /var/run/thoras/worker-heartbeat
+                - name: ENABLE_SIMPLE_AUTH_SECRET
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1155,6 +1164,8 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
+                  value: "false"
+                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
@@ -1655,6 +1666,8 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
+                  value: "false"
+                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
