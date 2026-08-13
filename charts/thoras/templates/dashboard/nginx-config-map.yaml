@@ -58,6 +58,7 @@ data:
         ~*^GET/v1/views/node-pools(\?|$)                                          1;
         ~*^GET/v1/views/nodes(\?|$)                                               1;
         ~*^GET/v1/views/nodes/summary(\?|$)                                       1;
+        ~*^GET/v1/pods/[^/]+/[^/]+/logs(\?|$)                                     1;
         ~*^GET/v1/persistent-volumes(\?|$)                                        1;
 
 
