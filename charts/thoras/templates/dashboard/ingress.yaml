@@ -1,4 +1,4 @@
-{{- if .Values.thorasDashboard.ingress.enabled -}}
+{{- if and .Values.thorasDashboard.enabled .Values.thorasDashboard.ingress.enabled -}}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
