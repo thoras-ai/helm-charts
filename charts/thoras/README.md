@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.139.0](https://img.shields.io/badge/Version-4.139.0-informational?style=flat-square) ![AppVersion: 4.116.0](https://img.shields.io/badge/AppVersion-4.116.0-informational?style=flat-square)
+![Version: 4.140.0](https://img.shields.io/badge/Version-4.140.0-informational?style=flat-square) ![AppVersion: 4.116.0](https://img.shields.io/badge/AppVersion-4.116.0-informational?style=flat-square)
 
 # Installs
 
@@ -75,6 +75,7 @@ helm install \
 | costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                   |
 | costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                             |
 | costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                |
+| apiClientSecret.secret             | String  | ""                                               | Shared secret components send to the API server when `featureFlags.enableSimpleAuthSecret` is true. Generated if empty |
 
 ## Feature Flags
 
