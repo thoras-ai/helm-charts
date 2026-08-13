@@ -123,6 +123,8 @@ Default containers should match snapshots:
         value: /var/lib/share
       - name: SERVICE_ENABLE_PPROF
         value: "false"
+      - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
+        value: "false"
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     livenessProbe:

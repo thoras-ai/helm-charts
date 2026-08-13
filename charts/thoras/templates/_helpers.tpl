@@ -222,6 +222,27 @@ true
 {{- end }}
 
 {{/*
+Simple auth env vars injected into every Thoras component. The enable flag is
+always emitted so the components have an explicit "false"; the secret itself is
+only bound when the flag is on. "prefix" is required and must be passed
+explicitly (an empty string is falsey, so it cannot be defaulted): the Go
+services read SERVICE_-prefixed vars, the forecaster reads them unprefixed.
+Usage: {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
+*/}}
+{{- define "thoras.simpleAuthEnv" -}}
+{{- $enabled := .root.Values.featureFlags.enableSimpleAuthSecret -}}
+- name: {{ .prefix }}ENABLE_SIMPLE_AUTH_SECRET
+  value: {{ $enabled | ternary "true" "false" | quote }}
+{{- if $enabled }}
+- name: {{ .prefix }}SIMPLE_AUTH_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: api-client-secret
+      key: secret
+{{- end }}
+{{- end -}}
+
+{{/*
 PodDisruptionBudget for a component. Renders nothing when pdb.enabled is falsey.
 Spec precedence: minAvailable wins if set, else maxUnavailable, else defaults to
 maxUnavailable: 1. Uses kindIs "invalid" so an explicit 0 is honored.
