@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.140.0](https://img.shields.io/badge/Version-4.140.0-informational?style=flat-square) ![AppVersion: 4.116.0](https://img.shields.io/badge/AppVersion-4.116.0-informational?style=flat-square)
+![Version: 4.141.0](https://img.shields.io/badge/Version-4.141.0-informational?style=flat-square) ![AppVersion: 4.116.0](https://img.shields.io/badge/AppVersion-4.116.0-informational?style=flat-square)
 
 # Installs
 
@@ -50,44 +50,44 @@ helm install \
 
 ## Global
 
-| Key                                | Type    | Default                                          | Description                                                                                                          |
-| ---------------------------------- | ------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.116.0                                          | Thoras app version                                                                                                   |
-| imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                              |
-| imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                          |
-| imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                       |
-| resourceQuota.enabled              | Bool    | false                                            | Enables resource quotas within Thoras                                                                                |
-| resourceQuota.pods                 | Number  | 200                                              | Maximum number of pods allowed                                                                                       |
-| resourceQuota.cronjobs             | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                   |
-| resourceQuota.jobs                 | Number  | 200                                              | Maximum number of jobs allowed                                                                                       |
-| logLevel                           | String  | info                                             | Default log level                                                                                                    |
-| env                                | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                      |
-| slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                     |
-| slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                         |
-| cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                               |
-| cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                    |
-| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                               |
-| queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                             |
-| nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                   |
-| tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                     |
-| affinity                           | Object  | {}                                               | Global affinity rules applied to all components (components opt-in by default via useGlobalAffinity)                 |
-| rbac.namespaces                    | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead |
-| costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                   |
-| costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                             |
-| costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                |
+| Key                                | Type    | Default                                          | Description                                                                                                            |
+| ---------------------------------- | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| thorasVersion                      | String  | 4.116.0                                          | Thoras app version                                                                                                     |
+| imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                |
+| imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                            |
+| imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                         |
+| resourceQuota.enabled              | Bool    | false                                            | Enables resource quotas within Thoras                                                                                  |
+| resourceQuota.pods                 | Number  | 200                                              | Maximum number of pods allowed                                                                                         |
+| resourceQuota.cronjobs             | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                     |
+| resourceQuota.jobs                 | Number  | 200                                              | Maximum number of jobs allowed                                                                                         |
+| logLevel                           | String  | info                                             | Default log level                                                                                                      |
+| env                                | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                        |
+| slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                       |
+| slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                           |
+| cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                                 |
+| cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                      |
+| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                                 |
+| queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                               |
+| nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                     |
+| tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                       |
+| affinity                           | Object  | {}                                               | Global affinity rules applied to all components (components opt-in by default via useGlobalAffinity)                   |
+| rbac.namespaces                    | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead   |
+| costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                     |
+| costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                               |
+| costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                  |
 | apiClientSecret.secret             | String  | ""                                               | Shared secret components send to the API server when `featureFlags.enableSimpleAuthSecret` is true. Generated if empty |
 
 ## Feature Flags
 
 The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
 
-| Key                                            | Type    | Default | Description                                               |
-| ---------------------------------------------- | ------- | ------- | --------------------------------------------------------- |
-| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                       |
-| featureFlags.enablePgLargeObjectStorage        | Boolean | true    | If true, enables storing blobs as postgres large objects  |
-| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations            |
-| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations |
-| featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component      |
+| Key                                            | Type    | Default | Description                                                                        |
+| ---------------------------------------------- | ------- | ------- | ---------------------------------------------------------------------------------- |
+| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                                                |
+| featureFlags.enablePgLargeObjectStorage        | Boolean | true    | If true, enables storing blobs as postgres large objects                           |
+| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations                                     |
+| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations                          |
+| featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                               |
 | featureFlags.enableSimpleAuthSecret            | Boolean | false   | If true, generates the `api-client-secret` Secret and wires it into all components |
 
 ## Affinity Configuration
