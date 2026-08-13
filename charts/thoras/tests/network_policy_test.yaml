@@ -82,6 +82,72 @@ tests:
             - port: 6443
               protocol: TCP
 
+  - it: All kubernetes policies allow API server egress on custom ports
+    templates:
+      - api-server-v2/network-policy.yaml
+      - operator/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      networkPolicy:
+        apiServerPorts:
+        - 443
+        - 6443
+        - 8443
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+            - port: 8443
+              protocol: TCP
+
+  # An empty list must drop the rule entirely. Rendering a rule with no ports
+  # would allow egress to every port instead of none.
+  - it: Empty apiServerPorts omits the API server egress rule
+    templates:
+      - api-server-v2/network-policy.yaml
+      - operator/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      networkPolicy:
+        apiServerPorts: []
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+      - notContains:
+          path: spec.egress
+          content:
+            ports: null
+
+  - it: Cilium policies target the API server entity regardless of apiServerPorts
+    templates:
+      - api-server-v2/network-policy.yaml
+      - operator/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+        apiServerPorts: []
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+            - kube-apiserver
+
   - it: Dashboard kubernetes policy allows external ingress on port 8080
     template: dashboard/network-policy.yaml
     asserts:

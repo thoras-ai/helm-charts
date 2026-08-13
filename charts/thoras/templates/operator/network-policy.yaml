@@ -31,14 +31,8 @@ spec:
   # Allow all egress to pods within the same namespace
   - to:
     - podSelector: {}
-  # Allow access to the Kubernetes API server (metrics-server API is proxied through here).
-  # Note: standard NetworkPolicy cannot target the API server by label, so this permits
-  # egress to any destination on these ports. Use the cilium flavor for precise scoping.
-  - ports:
-    - port: 443
-      protocol: TCP
-    - port: 6443
-      protocol: TCP
+  # Allow access to the Kubernetes API server (metrics-server API is proxied through here)
+  {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
   # Allow DNS resolution
   - to:
     - namespaceSelector:
