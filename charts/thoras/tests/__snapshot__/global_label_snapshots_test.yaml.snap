@@ -801,9 +801,15 @@ Default matches snapshot:
             globalLabel: globalValue
         spec:
           containers:
-            - env:
-                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
-                  value: "false"
+            - args:
+                - nginx
+                - -c
+                - /tmp/nginx.conf
+                - -g
+                - daemon off;
+              env:
+                - name: NGINX_ENVSUBST_OUTPUT_DIR
+                  value: /tmp
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -844,9 +850,9 @@ Default matches snapshot:
                   port: http
                 periodSeconds: 5
               volumeMounts:
-                - mountPath: /etc/nginx/nginx.conf
+                - mountPath: /etc/nginx/templates/nginx.conf.template
                   name: nginx-config
-                  subPath: nginx.conf
+                  subPath: nginx.conf.template
           securityContext:
             runAsNonRoot: true
             seccompProfile:

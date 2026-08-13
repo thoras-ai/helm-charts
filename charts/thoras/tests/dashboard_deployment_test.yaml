@@ -21,8 +21,8 @@ tests:
           path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].volumeMounts[0]
           value:
             name: nginx-config
-            mountPath: /etc/nginx/nginx.conf
-            subPath: nginx.conf
+            mountPath: /etc/nginx/templates/nginx.conf.template
+            subPath: nginx.conf.template
       - equal:
           path: spec.replicas
           value: 12
