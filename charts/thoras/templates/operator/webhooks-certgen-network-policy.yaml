@@ -19,14 +19,8 @@ spec:
   policyTypes:
   - Egress
   egress:
-  # Allow access to the Kubernetes API server to read/write secrets and patch webhooks.
-  # Note: standard NetworkPolicy cannot target the API server by label, so this permits
-  # egress to any destination on these ports. Use the cilium flavor for precise scoping.
-  - ports:
-    - port: 443
-      protocol: TCP
-    - port: 6443
-      protocol: TCP
+  # Allow access to the Kubernetes API server to read/write secrets and patch webhooks
+  {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
   # Allow DNS resolution
   - to:
     - namespaceSelector:
