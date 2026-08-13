@@ -598,6 +598,22 @@ spec:
                           - type
                           type: object
                         type: array
+                      allowedReplicas:
+                        description: |-
+                          AllowedReplicas restricts autonomous horizontal scaling to a specific set of
+                          replica counts — useful for sharded or partitioned workloads where only certain
+                          counts divide evenly across pods. Thoras rounds the desired replica count up to
+                          the smallest allowed value that meets or exceeds it, and never scales beyond the
+                          largest value in the set. Values must fall within minReplicas and maxReplicas when
+                          those are set, and cannot be combined with multipleOf.
+                        items:
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        maxItems: 64
+                        minItems: 1
+                        type: array
+                        x-kubernetes-list-type: set
                       exclude_metrics:
                         description: Metrics from HPA for thoras to ignore
                         items:
@@ -849,6 +865,14 @@ spec:
                     - message: multipleOf must not be greater than maxReplicas
                       rule: '!has(self.multipleOf) || !has(self.maxReplicas) || self.multipleOf
                         <= self.maxReplicas'
+                    - message: allowedReplicas values must be within minReplicas and
+                        maxReplicas
+                      rule: '!has(self.allowedReplicas) || self.allowedReplicas.all(r,
+                        (!has(self.minReplicas) || r >= self.minReplicas) && (!has(self.maxReplicas)
+                        || r <= self.maxReplicas))'
+                    - message: allowedReplicas and multipleOf are mutually exclusive
+                      rule: '!has(self.allowedReplicas) || self.allowedReplicas.size()
+                        == 0 || !has(self.multipleOf)'
                   model:
                     description: |-
                       Defines the forecasting and scaling behavior for an AIScaleTarget, including
