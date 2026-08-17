@@ -963,8 +963,6 @@ Default matches snapshot:
                   value: "true"
                 - name: USE_FORECASTER_COMPUTED_METRIC_ID
                   value: "true"
-                - name: USE_FORECAST_ENRICHMENT
-                  value: "false"
                 - name: WRITE_UBJ_ARTIFACTS
                   value: "false"
                 - name: TRAINING_JITTER_MINUTES
