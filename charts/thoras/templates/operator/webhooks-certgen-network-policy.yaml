@@ -1,40 +1,4 @@
 {{- if and .Values.networkPolicy.enabled (not .Values.thorasOperator.webhookCertGen.certManager.enabled) }}
-{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: {{ .Release.Name }}-certgen
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    # Weight -10 ensures this policy exists before the certgen-create job (weight -5) runs.
-    "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-weight": "-10"
-    "helm.sh/hook-delete-policy": before-hook-creation
-  labels:
-    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/component: webhook-certgen
-  policyTypes:
-  - Egress
-  egress:
-  # Allow access to the Kubernetes API server to read/write secrets and patch webhooks
-  {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
-  # Allow DNS resolution
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-      podSelector:
-        matchLabels:
-          k8s-app: kube-dns
-    ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
-{{- else if eq .Values.networkPolicy.flavor "cilium" }}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -67,5 +31,4 @@ spec:
       rules:
         dns:
         - matchPattern: "*"
-{{- end }}
 {{- end }}
