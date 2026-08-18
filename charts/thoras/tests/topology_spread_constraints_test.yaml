@@ -1,0 +1,250 @@
+suite: TopologySpreadConstraints Configuration
+set:
+  thorasMonitor:
+    unittesting: true
+  thorasDashboard:
+    unittesting: true
+  thorasForecast:
+    worker:
+      enabled: true
+tests:
+  - it: no topologySpreadConstraints by default for components without a default
+    templates:
+      - dashboard/deployment.yaml
+      - collector/deployment.yaml
+      - forecast-worker/deployment.yaml
+      - worker/deployment.yaml
+    asserts:
+      - isNull:
+          path: spec.template.spec.topologySpreadConstraints
+
+  - it: api-server-v2 defaults to a soft self spread across nodes
+    templates:
+      - api-server-v2/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints
+          value:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app: thoras-api-server-v2
+
+  - it: operator defaults to a soft self spread across nodes
+    templates:
+      - operator/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints
+          value:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app: thoras-operator
+
+  - it: operator default takes precedence over the global list
+    templates:
+      - operator/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 5
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 1
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: kubernetes.io/hostname
+
+  - it: clearing the operator list falls back to the global list
+    templates:
+      - operator/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 5
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+      thorasOperator:
+        topologySpreadConstraints: []
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+
+  - it: operator topologySpreadConstraints overrides the default
+    templates:
+      - operator/deployment.yaml
+    set:
+      thorasOperator:
+        topologySpreadConstraints:
+          - maxSkew: 3
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 1
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
+          value: DoNotSchedule
+
+  - it: component topologySpreadConstraints overrides the default
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      thorasApiServerV2:
+        topologySpreadConstraints:
+          - maxSkew: 3
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 1
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
+          value: DoNotSchedule
+
+  - it: api server default takes precedence over the global list
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 5
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 1
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: kubernetes.io/hostname
+
+  - it: clearing the api server list falls back to the global list
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 5
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+      thorasApiServerV2:
+        topologySpreadConstraints: []
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+
+  - it: global topologySpreadConstraints applies to components without a default
+    templates:
+      - worker/deployment.yaml
+      - dashboard/deployment.yaml
+      - collector/deployment.yaml
+      - forecast-worker/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: thoras
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints
+          value:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app: thoras
+
+  - it: component-specific topologySpreadConstraints replaces the global list
+    templates:
+      - worker/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+      thorasWorker:
+        topologySpreadConstraints:
+          - maxSkew: 2
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 1
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: kubernetes.io/hostname
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 2
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
+          value: DoNotSchedule
+
+  - it: component override does not affect other components
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+      thorasWorker:
+        topologySpreadConstraints:
+          - maxSkew: 2
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+
+  - it: component topologySpreadConstraints applies without a global list
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: kubernetes.io/hostname
+
+  - it: multiple constraints are supported
+    templates:
+      - collector/deployment.yaml
+    set:
+      metricsCollector:
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: DoNotSchedule
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 2

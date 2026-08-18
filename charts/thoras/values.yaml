@@ -195,6 +195,14 @@ thorasOperator:
   affinity: {}
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: thoras-operator
   # Webhook certificate generation configuration
   webhookCertGen:
     imageTag: v1.4.4
@@ -318,6 +326,8 @@ metricsCollector:
   affinity: {}
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
+  topologySpreadConstraints: []
   extraEgressRules: []
   extraIngressRules: []
 
@@ -379,6 +389,16 @@ thorasApiServerV2:
   affinity: {}
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty).
+  # Defaults to a soft spread of API server pods across nodes; ScheduleAnyway keeps this
+  # a preference, so scheduling never blocks when nodes are scarce.
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: thoras-api-server-v2
   extraEgressRules: []
   extraIngressRules: []
 
@@ -445,6 +465,8 @@ thorasWorker:
   affinity: {}
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
+  topologySpreadConstraints: []
   extraEgressRules: []
   extraIngressRules: []
 
@@ -536,6 +558,8 @@ thorasDashboard:
   affinity: {}
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
+  topologySpreadConstraints: []
   extraEgressRules: []
   extraIngressRules: []
   extraContainers: []
@@ -618,6 +642,8 @@ thorasForecast:
   affinity: {}
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
+  topologySpreadConstraints: []
   # Set to false to disable the default self anti-affinity between forecast-worker replicas
   enableSelfAntiAffinity: false
   extraEgressRules: []
@@ -637,6 +663,11 @@ affinity: {}
 # priorityClassName is used to assign a PriorityClass to all components.
 # Component-specific priorityClassName takes precedence when set.
 priorityClassName: ""
+
+# topologySpreadConstraints applied to all components.
+# A component-specific list fully replaces this one when set (lists are not merged).
+# Setting this also overrides the default spread configured for the API server.
+topologySpreadConstraints: []
 
 # Create Prometheus ServiceMonitors for all Prometheus-enabled components
 serviceMonitor:

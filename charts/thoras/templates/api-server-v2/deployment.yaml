@@ -245,3 +245,4 @@ spec:
       {{- with .Values.thorasApiServerV2.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- include "thoras.topologySpreadConstraints" (dict "root" . "component" .Values.thorasApiServerV2.topologySpreadConstraints) | nindent 6 }}
