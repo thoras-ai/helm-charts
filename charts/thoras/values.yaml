@@ -196,7 +196,13 @@ thorasOperator:
   # Component-specific priorityClassName (takes precedence over the global priorityClassName)
   priorityClassName: ""
   # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
-  topologySpreadConstraints: []
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: thoras-operator
   # Webhook certificate generation configuration
   webhookCertGen:
     imageTag: v1.4.4
