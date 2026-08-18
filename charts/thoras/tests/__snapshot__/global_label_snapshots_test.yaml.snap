@@ -1261,6 +1261,13 @@ Default matches snapshot:
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: thoras-operator
+          topologySpreadConstraints:
+            - labelSelector:
+                matchLabels:
+                  app: thoras-operator
+              maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
           volumes:
             - configMap:
                 name: thoras-operator-system-config

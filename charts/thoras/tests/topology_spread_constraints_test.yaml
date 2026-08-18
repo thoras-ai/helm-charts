@@ -10,7 +10,6 @@ set:
 tests:
   - it: no topologySpreadConstraints by default for components without a default
     templates:
-      - operator/deployment.yaml
       - dashboard/deployment.yaml
       - collector/deployment.yaml
       - forecast-worker/deployment.yaml
@@ -32,6 +31,71 @@ tests:
               labelSelector:
                 matchLabels:
                   app: thoras-api-server-v2
+
+  - it: operator defaults to a soft self spread across nodes
+    templates:
+      - operator/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints
+          value:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app: thoras-operator
+
+  - it: operator default takes precedence over the global list
+    templates:
+      - operator/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 5
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 1
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: kubernetes.io/hostname
+
+  - it: clearing the operator list falls back to the global list
+    templates:
+      - operator/deployment.yaml
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 5
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+      thorasOperator:
+        topologySpreadConstraints: []
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+
+  - it: operator topologySpreadConstraints overrides the default
+    templates:
+      - operator/deployment.yaml
+    set:
+      thorasOperator:
+        topologySpreadConstraints:
+          - maxSkew: 3
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 1
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
+          value: DoNotSchedule
 
   - it: component topologySpreadConstraints overrides the default
     templates:
@@ -86,7 +150,6 @@ tests:
 
   - it: global topologySpreadConstraints applies to components without a default
     templates:
-      - operator/deployment.yaml
       - worker/deployment.yaml
       - dashboard/deployment.yaml
       - collector/deployment.yaml
@@ -139,7 +202,7 @@ tests:
 
   - it: component override does not affect other components
     templates:
-      - operator/deployment.yaml
+      - dashboard/deployment.yaml
     set:
       topologySpreadConstraints:
         - maxSkew: 1
