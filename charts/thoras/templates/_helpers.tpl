@@ -273,3 +273,16 @@ spec:
       app: {{ .app }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Topology spread constraints - component list takes precedence over the global list.
+A non-empty component list fully replaces the global one; lists are not merged.
+Usage: include "thoras.topologySpreadConstraints" (dict "root" . "component" .Values.thorasWorker.topologySpreadConstraints)
+*/}}
+{{- define "thoras.topologySpreadConstraints" -}}
+{{- $constraints := .component | default .root.Values.topologySpreadConstraints }}
+{{- with $constraints -}}
+topologySpreadConstraints:
+{{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}

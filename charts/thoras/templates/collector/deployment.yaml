@@ -386,4 +386,5 @@ spec:
       {{- with .Values.metricsCollector.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- include "thoras.topologySpreadConstraints" (dict "root" . "component" .Values.metricsCollector.topologySpreadConstraints) | nindent 6 }}
 {{- end }}

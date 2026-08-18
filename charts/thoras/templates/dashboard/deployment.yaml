@@ -123,4 +123,5 @@ spec:
       {{- with .Values.thorasDashboard.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- include "thoras.topologySpreadConstraints" (dict "root" . "component" .Values.thorasDashboard.topologySpreadConstraints) | nindent 6 }}
 {{- end }}

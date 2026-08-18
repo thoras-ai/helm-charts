@@ -271,3 +271,4 @@ spec:
       {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- include "thoras.topologySpreadConstraints" (dict "root" . "component" .Values.thorasOperator.topologySpreadConstraints) | nindent 6 }}
