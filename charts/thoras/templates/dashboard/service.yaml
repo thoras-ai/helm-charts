@@ -37,7 +37,14 @@ spec:
   - name: http
     port: {{ .Values.thorasDashboard.port }}
     protocol: TCP
-    targetPort: {{ .Values.thorasDashboard.service.targetPort | default .Values.thorasDashboard.containerPort }}
+    {{- /* Precedence: explicit service.targetPort wins, then the oauth2-proxy
+           sidecar port when auth is enabled, then the raw dashboard nginx
+           containerPort. */}}
+    {{- $defaultTargetPort := .Values.thorasDashboard.containerPort }}
+    {{- if .Values.thorasDashboard.auth.enabled }}
+    {{- $defaultTargetPort = .Values.thorasDashboard.auth.containerPort }}
+    {{- end }}
+    targetPort: {{ .Values.thorasDashboard.service.targetPort | default $defaultTargetPort }}
   selector:
     app: thoras-dashboard
 {{- end }}

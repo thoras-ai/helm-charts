@@ -513,9 +513,59 @@ thorasDashboard:
   service:
     type: ClusterIP
     annotations: {}
-    # Overrides the Service target port. Defaults to containerPort. Set to the
-    # oauth2-proxy sidecar port (e.g. 4180) to force traffic through auth.
+    # Overrides the Service target port. Defaults to auth.containerPort when
+    # auth.enabled (see thorasDashboard.auth), otherwise containerPort. Set
+    # this explicitly to force traffic through a custom auth sidecar.
     targetPort: ""
+  # HTTP auth for the dashboard, terminated by an oauth2-proxy sidecar so
+  # users get a real login page (not the browser's basic-auth popup). Enabled
+  # by default; opt out if you're fronting the dashboard with your own auth
+  # (e.g. an SSO sidecar wired via extraContainers + service.targetPort).
+  #
+  # Basic auth credentials travel on every request and are only meaningful
+  # behind TLS - terminate TLS at your ingress.
+  auth:
+    enabled: true
+    username: thoras
+    # Leave empty to generate a random password on first install and persist
+    # it in the thoras-dashboard-auth Secret. `lookup` returns nothing under
+    # `helm template` and Argo CD, so set this explicitly for GitOps installs
+    # (see the note in templates/api-client-secret.yaml).
+    password: ""
+    # TODO: pin to a specific tag/digest and mirror into the Thoras registry
+    # once we're ready to own the supply chain for it.
+    image:
+      repository: quay.io/oauth2-proxy/oauth2-proxy
+      tag: v7.15.0
+      pullPolicy: IfNotPresent
+    # Sidecar port. The dashboard Service will route to this port when auth
+    # is enabled, forcing all traffic through the sidecar.
+    containerPort: 4180
+    # Set to false if the dashboard is reached over plain HTTP (no TLS at
+    # the ingress). Cookies stay secure by default.
+    cookieSecure: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
+    # Init container that generates the bcrypt htpasswd line at pod start.
+    # oauth2-proxy's --htpasswd-file requires bcrypt (`htpasswd -B`), and
+    # Sprig's htpasswd function only emits APR1-MD5. Regenerating on every
+    # pod start keeps the Secret deterministic (plaintext password only),
+    # avoiding the "bcrypt is salted so the Secret churns on every render"
+    # concern from issue #4980.
+    htpasswdInit:
+      image:
+        repository: httpd
+        tag: "2.4-alpine"
+        pullPolicy: IfNotPresent
+    # TODO: ship a Thoras-themed --custom-templates-dir template so the
+    # oauth2-proxy sign-in page shows only the htpasswd form (no SSO button)
+    # and is branded. Tracked separately from the initial rollout.
+    # Escape hatch. Appended to the sidecar's args verbatim.
+    extraArgs: []
   ingress:
     enabled: false
     ingressClassName: "nginx"

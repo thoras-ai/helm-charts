@@ -81,8 +81,13 @@ tests:
             toEntities:
             - kube-apiserver
 
-  - it: Dashboard policy allows external ingress on port 8080
+  # TODO: auth-on port (4180) coverage lives in dashboard_auth_test.yaml.
+  - it: Dashboard policy allows external ingress on port 8080 when auth is disabled
     template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
     asserts:
       - contains:
           path: spec.ingress

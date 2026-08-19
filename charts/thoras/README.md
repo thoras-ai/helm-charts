@@ -303,6 +303,65 @@ must be pre-installed and managed externally.
 | thorasMonitor.labels | Object | {}      | Pod labels for Thoras monitor     |
 | thorasMonitor.config | String | ""      | Thoras Monitor configuration yaml |
 
+## Thoras Dashboard Authentication
+
+The dashboard ships with HTTP authentication enabled by default, terminated by
+an [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) sidecar with an
+htpasswd backend. Users are presented with a login page rather than the
+browser's basic-auth popup.
+
+On first install a random 24-character password is generated and stored in the
+`thoras-dashboard-auth` Secret alongside the plaintext username. The bcrypt
+htpasswd line is regenerated in an init container on every pod start, so the
+Secret itself only holds deterministic values and does not churn on upgrade.
+
+Retrieve the password with:
+
+```bash
+kubectl get secret thoras-dashboard-auth -n <namespace> \
+  -o jsonpath='{.data.password}' | base64 -d
+```
+
+Basic auth credentials travel on every request and are only meaningful behind
+TLS — terminate TLS at your ingress.
+
+### Setting the password explicitly
+
+`helm template` and Argo CD cannot use `lookup`, so a randomly generated
+password is not stable across renders in GitOps installs. Set the password
+explicitly in those environments:
+
+```yaml
+thorasDashboard:
+  auth:
+    username: thoras
+    password: <your-password>
+```
+
+### Disabling built-in auth
+
+Set `thorasDashboard.auth.enabled: false` when fronting the dashboard with
+your own auth — for example an SSO sidecar wired through `extraContainers`
+and `service.targetPort`.
+
+```yaml
+thorasDashboard:
+  auth:
+    enabled: false
+```
+
+### Notes
+
+- `thorasDashboard.auth.cookieSecure` defaults to `true`. Set it to `false`
+  only if the dashboard is reached over plain HTTP (no TLS at the ingress).
+- **TODO:** the oauth2-proxy image is currently pulled from
+  `quay.io/oauth2-proxy/oauth2-proxy`. Air-gapped installs need to mirror it
+  and override `thorasDashboard.auth.image.repository`. Longer term we should
+  pin to a digest and mirror into `us-east4-docker.pkg.dev/thoras-registry/platform`.
+- **TODO:** the oauth2-proxy sign-in page still shows an SSO button next to
+  the htpasswd form. A follow-up will bundle a Thoras-themed
+  `--custom-templates-dir` template that shows only the login form.
+
 ## Example Thoras Dashboard Ingress Configuration
 
 ```yaml
