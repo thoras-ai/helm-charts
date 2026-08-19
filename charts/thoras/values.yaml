@@ -579,7 +579,7 @@ thorasForecast:
   trainingJitterMinutes: 0
   useAstMetricsSeries: true
   useForecasterComputedMetricId: true
-  writeUbjArtifacts: false
+  writeUbjArtifacts: true
   # Minimum lookback window required before autonomous scaling is enabled.
   minLookbackToScale: "24h"
   worker:

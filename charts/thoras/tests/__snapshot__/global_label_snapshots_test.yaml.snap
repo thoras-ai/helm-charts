@@ -971,7 +971,7 @@ Default matches snapshot:
                 - name: USE_FORECASTER_COMPUTED_METRIC_ID
                   value: "true"
                 - name: WRITE_UBJ_ARTIFACTS
-                  value: "false"
+                  value: "true"
                 - name: TRAINING_JITTER_MINUTES
                   value: "0"
                 - name: MULTI_DIMENSIONAL_ENABLED

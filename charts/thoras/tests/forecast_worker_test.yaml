@@ -92,7 +92,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: WRITE_UBJ_ARTIFACTS
-            value: "false"
+            value: "true"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
