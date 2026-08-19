@@ -91,6 +91,18 @@ The chart is configured through `values.yaml` with these key sections:
 - **Persistence**: Optional storage configuration for metrics collector
 - **Monitoring**: Slack integration and Prometheus metrics
 
+## Git Commits
+
+Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
+
+- Format: `<type>[scope][!]: <description>`.
+- **Accepted types** (lowercase, do not invent new ones):
+  `feat`, `fix`, `docs`, `chore`, `refactor`, `build`, `ci`, `test`.
+- Additional house rules (on top of the spec):
+  - Subject in imperative mood, lowercase first letter, no trailing period.
+  - Subject ≤72 characters.
+  - Optional body/footers follow a blank line.
+
 ## CI/CD Pipeline
 
 - **CI**: Runs Helm unit tests and pre-commit hooks on PRs
