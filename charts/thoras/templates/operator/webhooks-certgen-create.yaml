@@ -1,4 +1,4 @@
-{{- if not .Values.thorasOperator.webhookCertGen.certManager.enabled }}
+{{- if not (include "thoras.webhookCertManagerEnabled" .) }}
 ---
 apiVersion: batch/v1
 kind: Job

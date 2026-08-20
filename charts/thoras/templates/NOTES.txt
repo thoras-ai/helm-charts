@@ -9,7 +9,7 @@ Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on 
   To enable, set metricsCollector.persistence.enabled=true, or configure a
   storageClassName / pvcStorageRequestSize and it will be enabled automatically.
 {{- end }}
-{{- if .Values.thorasOperator.webhookCertGen.certManager.enabled }}
+{{- if (include "thoras.webhookCertManagerEnabled" .) }}
 
 Webhook TLS: cert-manager (CA chain)
   The webhook CA (thoras-webhooks-ca) is valid for {{ ((.Values.thorasOperator.webhookCertGen.certManager).ca).duration | default "87600h" }}

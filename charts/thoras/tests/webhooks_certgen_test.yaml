@@ -393,6 +393,39 @@ tests:
           path: metadata.annotations["cert-manager.io/inject-ca-from"]
         documentIndex: 1
 
+  # helm upgrade --reuse-values from a chart older than the certManager block
+  # (< 4.124.0) renders with no certManager key at all; the default certgen
+  # path must still work.
+  - it: Renders the default certgen path when the certManager block is missing entirely
+    template: operator/webhooks-certgen-create.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager: null
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Job
+
+  - it: Skips the cert-manager chain and inject-ca-from when the certManager block is missing entirely
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders webhook configs without annotations when the certManager block is missing entirely
+    template: operator/webhooks.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager: null
+    asserts:
+      - notExists:
+          path: metadata.annotations["cert-manager.io/inject-ca-from"]
+        documentIndex: 0
+      - notExists:
+          path: metadata.annotations["cert-manager.io/inject-ca-from"]
+        documentIndex: 1
+
   - it: Operator deployment volume uses tls.crt/tls.key keys when cert-manager is enabled
     template: operator/deployment.yaml
     set:

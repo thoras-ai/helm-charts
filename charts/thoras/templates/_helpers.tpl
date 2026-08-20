@@ -286,3 +286,15 @@ topologySpreadConstraints:
 {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end }}
+
+{{/*
+Nil-safe check for thorasOperator.webhookCertGen.certManager.enabled.
+Values stored by releases older than the certManager block (chart < 4.124.0)
+lack the key entirely, and `helm upgrade --reuse-values` does not merge in
+new chart defaults, so a direct .certManager.enabled traversal panics at
+render for those upgrades — including on the default kube-webhook-certgen
+path. Returns "true" or "" so it is usable directly in `if`/`if not`.
+*/}}
+{{- define "thoras.webhookCertManagerEnabled" -}}
+{{- if ((.Values.thorasOperator.webhookCertGen).certManager).enabled -}}true{{- end -}}
+{{- end -}}

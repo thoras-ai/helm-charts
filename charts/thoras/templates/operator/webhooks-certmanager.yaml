@@ -1,4 +1,4 @@
-{{- if .Values.thorasOperator.webhookCertGen.certManager.enabled }}
+{{- if (include "thoras.webhookCertManagerEnabled" .) }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Issuer
