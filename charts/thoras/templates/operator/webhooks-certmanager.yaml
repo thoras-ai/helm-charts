@@ -14,6 +14,35 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  name: thoras-webhooks-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  isCA: true
+  commonName: thoras-webhooks-ca
+  secretName: thoras-webhooks-ca
+  duration: {{ .Values.thorasOperator.webhookCertGen.certManager.ca.duration }}
+  issuerRef:
+    name: thoras-webhooks-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: thoras-webhooks-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  ca:
+    secretName: thoras-webhooks-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
   name: thoras-tls-certs
   namespace: {{ .Release.Namespace }}
   labels:
@@ -27,6 +56,6 @@ spec:
     - thoras-webhooks.{{ .Release.Namespace }}.svc
     - thoras-webhooks.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
-    name: thoras-webhooks-selfsigned
+    name: thoras-webhooks-ca
     kind: Issuer
 {{- end }}

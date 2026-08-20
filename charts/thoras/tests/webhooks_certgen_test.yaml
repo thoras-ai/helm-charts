@@ -247,13 +247,13 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: Creates self-signed Issuer and Certificate when cert-manager is enabled
+  - it: Creates the selfSigned to CA to leaf cert-manager chain when enabled
     template: operator/webhooks-certmanager.yaml
     set:
       thorasOperator.webhookCertGen.certManager.enabled: true
     asserts:
       - hasDocuments:
-          count: 2
+          count: 4
       - isKind:
           of: Issuer
         documentIndex: 0
@@ -269,11 +269,19 @@ tests:
         documentIndex: 1
       - equal:
           path: metadata.name
-          value: thoras-tls-certs
+          value: thoras-webhooks-ca
+        documentIndex: 1
+      - equal:
+          path: spec.isCA
+          value: true
         documentIndex: 1
       - equal:
           path: spec.secretName
-          value: thoras-tls-certs
+          value: thoras-webhooks-ca
+        documentIndex: 1
+      - equal:
+          path: spec.duration
+          value: 87600h
         documentIndex: 1
       - equal:
           path: spec.issuerRef.name
@@ -283,13 +291,54 @@ tests:
           path: spec.issuerRef.kind
           value: Issuer
         documentIndex: 1
+      - isKind:
+          of: Issuer
+        documentIndex: 2
+      - equal:
+          path: metadata.name
+          value: thoras-webhooks-ca
+        documentIndex: 2
+      - equal:
+          path: spec.ca.secretName
+          value: thoras-webhooks-ca
+        documentIndex: 2
+      - isKind:
+          of: Certificate
+        documentIndex: 3
+      - equal:
+          path: metadata.name
+          value: thoras-tls-certs
+        documentIndex: 3
+      - equal:
+          path: spec.secretName
+          value: thoras-tls-certs
+        documentIndex: 3
+      - equal:
+          path: spec.issuerRef.name
+          value: thoras-webhooks-ca
+        documentIndex: 3
+      - equal:
+          path: spec.issuerRef.kind
+          value: Issuer
+        documentIndex: 3
       - contains:
           path: spec.dnsNames
           content: thoras-webhooks
-        documentIndex: 1
+        documentIndex: 3
       - contains:
           path: spec.dnsNames
           content: thoras-webhooks.NAMESPACE.svc
+        documentIndex: 3
+
+  - it: Renders a custom CA duration when overridden
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      thorasOperator.webhookCertGen.certManager.ca.duration: 43800h
+    asserts:
+      - equal:
+          path: spec.duration
+          value: 43800h
         documentIndex: 1
 
   - it: Annotates webhook configs with cert-manager inject-ca-from when enabled
