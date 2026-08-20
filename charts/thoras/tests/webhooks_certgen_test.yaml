@@ -341,6 +341,17 @@ tests:
           value: 43800h
         documentIndex: 1
 
+  - it: Falls back to the default CA duration when ca is missing from the values (e.g. helm upgrade --reuse-values from a pre-CA-chain release)
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.duration
+          value: 87600h
+        documentIndex: 1
+
   - it: Annotates webhook configs with cert-manager inject-ca-from when enabled
     template: operator/webhooks.yaml
     set:
