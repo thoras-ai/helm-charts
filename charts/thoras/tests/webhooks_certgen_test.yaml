@@ -284,6 +284,10 @@ tests:
           value: 87600h
         documentIndex: 1
       - equal:
+          path: spec.privateKey.rotationPolicy
+          value: Never
+        documentIndex: 1
+      - equal:
           path: spec.issuerRef.name
           value: thoras-webhooks-selfsigned
         documentIndex: 1
@@ -339,6 +343,17 @@ tests:
       - equal:
           path: spec.duration
           value: 43800h
+        documentIndex: 1
+
+  - it: Renders a numeric CA duration as a string so the CRD schema rejects only the field, not the type
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      thorasOperator.webhookCertGen.certManager.ca.duration: 43800
+    asserts:
+      - equal:
+          path: spec.duration
+          value: "43800"
         documentIndex: 1
 
   - it: Falls back to the default CA duration when ca is missing from the values (e.g. helm upgrade --reuse-values from a pre-CA-chain release)

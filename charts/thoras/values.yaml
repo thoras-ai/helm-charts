@@ -214,8 +214,11 @@ thorasOperator:
       enabled: false
       ca:
         # Long-lived CA that signs the webhook leaf cert, so leaf renewals
-        # don't rotate the injected CA bundle. Not auto-rotated by
-        # cert-manager; plan a manual re-issue before it expires.
+        # don't rotate the injected CA bundle. cert-manager auto-renews the
+        # CA certificate at ~2/3 of this duration, reusing the same key
+        # (rotationPolicy: Never), so the injected bundle stays valid across
+        # renewals. Rotating the key itself requires deleting the
+        # thoras-webhooks-ca secret and Certificate so they are re-issued.
         duration: 87600h # 10y
   # namespaceSelector applied to all webhook configurations. Set to null when
   # using an admission enforcer (e.g. OPA Gatekeeper's admissionsenforcer) that

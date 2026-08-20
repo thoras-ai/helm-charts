@@ -23,7 +23,15 @@ spec:
   isCA: true
   commonName: thoras-webhooks-ca
   secretName: thoras-webhooks-ca
-  duration: {{ ((.Values.thorasOperator.webhookCertGen.certManager).ca).duration | default "87600h" }}
+  duration: {{ ((.Values.thorasOperator.webhookCertGen.certManager).ca).duration | default "87600h" | quote }}
+  privateKey:
+    # cert-manager auto-renews this CA at ~2/3 of its duration; since
+    # cert-manager v1.18 the default rotationPolicy is Always, which would
+    # mint a new CA key on renewal and invalidate the injected caBundle
+    # until the next leaf renewal — the no-overlap race this chain exists
+    # to prevent. Reusing the key keeps renewed CA certs verifiable
+    # against the bundle already injected in the webhook configurations.
+    rotationPolicy: Never
   issuerRef:
     name: thoras-webhooks-selfsigned
     kind: Issuer
