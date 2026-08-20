@@ -1,4 +1,4 @@
-{{- if .Values.thorasOperator.webhookCertGen.certManager.enabled }}
+{{- if (include "thoras.webhookCertManagerEnabled" .) }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Issuer
@@ -10,6 +10,39 @@ metadata:
     app.kubernetes.io/component: webhook-certgen
 spec:
   selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: thoras-webhooks-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  isCA: true
+  commonName: thoras-webhooks-ca
+  secretName: thoras-webhooks-ca
+  duration: {{ ((.Values.thorasOperator.webhookCertGen.certManager).ca).duration | default "87600h" | quote }}
+  privateKey:
+    # cert-manager >= 1.18 defaults to Always, which would re-key the CA at
+    # auto-renewal (~2/3 of duration) and invalidate the injected caBundle.
+    rotationPolicy: Never
+  issuerRef:
+    name: thoras-webhooks-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: thoras-webhooks-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+    app.kubernetes.io/component: webhook-certgen
+spec:
+  ca:
+    secretName: thoras-webhooks-ca
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -27,6 +60,6 @@ spec:
     - thoras-webhooks.{{ .Release.Namespace }}.svc
     - thoras-webhooks.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
-    name: thoras-webhooks-selfsigned
+    name: thoras-webhooks-ca
     kind: Issuer
 {{- end }}

@@ -1,0 +1,20 @@
+suite: Reuse-values upgrade smoke test
+# helm upgrade --reuse-values renders the new chart against the previous
+# release's values without merging new chart defaults, so traversing a values
+# key newer than that release panics at render for every customer. When adding
+# a new values block, add a case here with the block nulled out.
+templates:
+  - "**/*.yaml"
+tests:
+  - it: All templates render when the certManager block is missing from stored values
+    set:
+      thorasOperator.webhookCertGen.certManager: null
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when certManager.ca is missing from stored values
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      thorasOperator.webhookCertGen.certManager.ca: null
+    asserts:
+      - notFailedTemplate: {}

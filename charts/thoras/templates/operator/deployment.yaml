@@ -50,7 +50,7 @@ spec:
             defaultMode: 420
             secretName: thoras-tls-certs
             items:
-              {{- if .Values.thorasOperator.webhookCertGen.certManager.enabled }}
+              {{- if (include "thoras.webhookCertManagerEnabled" .) }}
               - key: tls.crt
                 path: tls.crt
               - key: tls.key

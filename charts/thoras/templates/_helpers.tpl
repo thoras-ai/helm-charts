@@ -286,3 +286,12 @@ topologySpreadConstraints:
 {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end }}
+
+{{/*
+Nil-safe thorasOperator.webhookCertGen.certManager.enabled ("true" or "").
+Releases older than the certManager block (chart < 4.124.0) upgraded with
+--reuse-values have no certManager key, so a direct traversal panics.
+*/}}
+{{- define "thoras.webhookCertManagerEnabled" -}}
+{{- if ((.Values.thorasOperator.webhookCertGen).certManager).enabled -}}true{{- end -}}
+{{- end -}}

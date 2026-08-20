@@ -247,13 +247,13 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: Creates self-signed Issuer and Certificate when cert-manager is enabled
+  - it: Creates the selfSigned to CA to leaf cert-manager chain when enabled
     template: operator/webhooks-certmanager.yaml
     set:
       thorasOperator.webhookCertGen.certManager.enabled: true
     asserts:
       - hasDocuments:
-          count: 2
+          count: 4
       - isKind:
           of: Issuer
         documentIndex: 0
@@ -269,11 +269,23 @@ tests:
         documentIndex: 1
       - equal:
           path: metadata.name
-          value: thoras-tls-certs
+          value: thoras-webhooks-ca
+        documentIndex: 1
+      - equal:
+          path: spec.isCA
+          value: true
         documentIndex: 1
       - equal:
           path: spec.secretName
-          value: thoras-tls-certs
+          value: thoras-webhooks-ca
+        documentIndex: 1
+      - equal:
+          path: spec.duration
+          value: 87600h
+        documentIndex: 1
+      - equal:
+          path: spec.privateKey.rotationPolicy
+          value: Never
         documentIndex: 1
       - equal:
           path: spec.issuerRef.name
@@ -283,13 +295,77 @@ tests:
           path: spec.issuerRef.kind
           value: Issuer
         documentIndex: 1
+      - isKind:
+          of: Issuer
+        documentIndex: 2
+      - equal:
+          path: metadata.name
+          value: thoras-webhooks-ca
+        documentIndex: 2
+      - equal:
+          path: spec.ca.secretName
+          value: thoras-webhooks-ca
+        documentIndex: 2
+      - isKind:
+          of: Certificate
+        documentIndex: 3
+      - equal:
+          path: metadata.name
+          value: thoras-tls-certs
+        documentIndex: 3
+      - equal:
+          path: spec.secretName
+          value: thoras-tls-certs
+        documentIndex: 3
+      - equal:
+          path: spec.issuerRef.name
+          value: thoras-webhooks-ca
+        documentIndex: 3
+      - equal:
+          path: spec.issuerRef.kind
+          value: Issuer
+        documentIndex: 3
       - contains:
           path: spec.dnsNames
           content: thoras-webhooks
-        documentIndex: 1
+        documentIndex: 3
       - contains:
           path: spec.dnsNames
           content: thoras-webhooks.NAMESPACE.svc
+        documentIndex: 3
+
+  - it: Renders a custom CA duration when overridden
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      thorasOperator.webhookCertGen.certManager.ca.duration: 43800h
+    asserts:
+      - equal:
+          path: spec.duration
+          value: 43800h
+        documentIndex: 1
+
+  - it: Renders a numeric CA duration as a quoted string
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      thorasOperator.webhookCertGen.certManager.ca.duration: 43800
+    asserts:
+      - equal:
+          path: spec.duration
+          value: "43800"
+        documentIndex: 1
+
+  - it: Falls back to the default CA duration when ca is missing from the values
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      # null drops the key at coalescing, like values stored before the ca block existed
+      thorasOperator.webhookCertGen.certManager.ca: null
+    asserts:
+      - equal:
+          path: spec.duration
+          value: 87600h
         documentIndex: 1
 
   - it: Annotates webhook configs with cert-manager inject-ca-from when enabled
@@ -308,6 +384,36 @@ tests:
 
   - it: Does not add inject-ca-from annotation when cert-manager is disabled
     template: operator/webhooks.yaml
+    asserts:
+      - notExists:
+          path: metadata.annotations["cert-manager.io/inject-ca-from"]
+        documentIndex: 0
+      - notExists:
+          path: metadata.annotations["cert-manager.io/inject-ca-from"]
+        documentIndex: 1
+
+  - it: Renders the default certgen path when the certManager block is missing entirely
+    template: operator/webhooks-certgen-create.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager: null
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Job
+
+  - it: Skips the cert-manager chain when the certManager block is missing entirely
+    template: operator/webhooks-certmanager.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders webhook configs without annotations when the certManager block is missing entirely
+    template: operator/webhooks.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager: null
     asserts:
       - notExists:
           path: metadata.annotations["cert-manager.io/inject-ca-from"]

@@ -1,4 +1,4 @@
-{{- if and .Values.networkPolicy.enabled (not .Values.thorasOperator.webhookCertGen.certManager.enabled) }}
+{{- if and .Values.networkPolicy.enabled (not (include "thoras.webhookCertManagerEnabled" .)) }}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
