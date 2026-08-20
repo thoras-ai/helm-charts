@@ -345,7 +345,7 @@ tests:
           value: 43800h
         documentIndex: 1
 
-  - it: Renders a numeric CA duration as a string so the CRD schema rejects only the field, not the type
+  - it: Renders a numeric CA duration as a quoted string
     template: operator/webhooks-certmanager.yaml
     set:
       thorasOperator.webhookCertGen.certManager.enabled: true
@@ -356,12 +356,11 @@ tests:
           value: "43800"
         documentIndex: 1
 
-  - it: Falls back to the default CA duration when ca is missing from the values (e.g. helm upgrade --reuse-values from a pre-CA-chain release)
+  - it: Falls back to the default CA duration when ca is missing from the values
     template: operator/webhooks-certmanager.yaml
     set:
       thorasOperator.webhookCertGen.certManager.enabled: true
-      # null removes the key during coalescing, reproducing values saved by a
-      # release from before the ca block existed
+      # null drops the key at coalescing, like values stored before the ca block existed
       thorasOperator.webhookCertGen.certManager.ca: null
     asserts:
       - equal:
@@ -393,9 +392,6 @@ tests:
           path: metadata.annotations["cert-manager.io/inject-ca-from"]
         documentIndex: 1
 
-  # helm upgrade --reuse-values from a chart older than the certManager block
-  # (< 4.124.0) renders with no certManager key at all; the default certgen
-  # path must still work.
   - it: Renders the default certgen path when the certManager block is missing entirely
     template: operator/webhooks-certgen-create.yaml
     set:
@@ -406,7 +402,7 @@ tests:
       - isKind:
           of: Job
 
-  - it: Skips the cert-manager chain and inject-ca-from when the certManager block is missing entirely
+  - it: Skips the cert-manager chain when the certManager block is missing entirely
     template: operator/webhooks-certmanager.yaml
     set:
       thorasOperator.webhookCertGen.certManager: null
