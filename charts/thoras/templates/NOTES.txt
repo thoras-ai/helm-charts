@@ -9,3 +9,19 @@ Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on 
   To enable, set metricsCollector.persistence.enabled=true, or configure a
   storageClassName / pvcStorageRequestSize and it will be enabled automatically.
 {{- end }}
+
+{{ if and .Values.thorasDashboard.enabled .Values.thorasDashboard.auth.enabled -}}
+Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
+  Username: {{ .Values.thorasDashboard.auth.username }}
+  Retrieve the password:
+    kubectl get secret thoras-dashboard-auth -n {{ .Release.Namespace }} \
+      -o jsonpath='{.data.password}' | base64 -d
+  Basic auth credentials are only meaningful behind TLS — terminate TLS at
+  your ingress. To disable and front the dashboard with your own auth, set
+  thorasDashboard.auth.enabled=false.
+{{- else if .Values.thorasDashboard.enabled -}}
+Dashboard authentication: DISABLED
+  The dashboard is exposed without authentication. Front it with your own
+  auth (oauth2-proxy sidecar via extraContainers + service.targetPort, or
+  ingress annotations) or set thorasDashboard.auth.enabled=true.
+{{- end }}
