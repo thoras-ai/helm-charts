@@ -102,6 +102,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_UPDATE_SCALE_MODE_API
                   value: "false"
+                - name: SERVICE_ENABLE_POD_LOG_STREAMING
+                  value: "false"
                 - name: SERVICE_SHOULD_MIGRATE_ON_START
                   value: "true"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION

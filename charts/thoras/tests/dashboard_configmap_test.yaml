@@ -23,6 +23,14 @@ tests:
     asserts:
       - matchSnapshot:
           path: data["nginx.conf.template"]
+  - it: Should render enablePodLogStreaming in config.json
+    set:
+      featureFlags:
+        enablePodLogStreaming: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enablePodLogStreaming": true'
   - it: Should render the nginx config under the nginx.conf.template key
     asserts:
       - exists:
