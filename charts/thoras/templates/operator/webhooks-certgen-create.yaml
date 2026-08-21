@@ -23,6 +23,9 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: thoras-tls-certsgen
+      {{- with (include "thoras.hookJobScheduling" . | trim) }}
+      {{- . | nindent 6 }}
+      {{- end }}
       {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
