@@ -1,0 +1,54 @@
+suite: PodLogStreaming
+# featureFlags.enablePodLogStreaming feeds two consumers that must move
+# together: the api-server env var and the dashboard's config.json. Enabling
+# only the dashboard yields a Logs button the api-server refuses with a 501, so
+# each values state below is asserted against both consumers.
+templates:
+  - api-server-v2/deployment.yaml
+  - dashboard/nginx-config-map.yaml
+set:
+  thorasMonitor:
+    unittesting: true
+tests:
+  - it: api-server has pod log streaming off by default
+    template: api-server-v2/deployment.yaml
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_POD_LOG_STREAMING')].value
+          value: "false"
+
+  - it: config.json has pod log streaming off by default
+    template: dashboard/nginx-config-map.yaml
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enablePodLogStreaming": *false[,}]'
+
+  - it: api-server follows the flag when enabled
+    template: api-server-v2/deployment.yaml
+    set:
+      featureFlags:
+        enablePodLogStreaming: true
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_POD_LOG_STREAMING')].value
+          value: "true"
+
+  - it: config.json follows the flag when enabled
+    template: dashboard/nginx-config-map.yaml
+    set:
+      featureFlags:
+        enablePodLogStreaming: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enablePodLogStreaming": *true[,}]'
+
+  - it: config.json falls back to false when the key is missing from stored values
+    template: dashboard/nginx-config-map.yaml
+    set:
+      featureFlags.enablePodLogStreaming: null
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enablePodLogStreaming": *false[,}]'
