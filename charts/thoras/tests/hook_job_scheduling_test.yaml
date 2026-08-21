@@ -1,0 +1,68 @@
+suite: Hook Job Scheduling
+templates:
+  - operator/webhooks-certgen-create.yaml
+  - operator/webhooks-certgen-patch.yaml
+  - operator/pre-delete-hook.yaml
+tests:
+  - it: no nodeSelector or tolerations by default
+    asserts:
+      - isNull:
+          path: spec.template.spec.nodeSelector
+      - isNull:
+          path: spec.template.spec.tolerations
+
+  - it: hook jobs get the global nodeSelector
+    set:
+      nodeSelector:
+        node-pool: standard-pool
+    asserts:
+      - isSubset:
+          path: spec.template.spec
+          content:
+            nodeSelector:
+              node-pool: standard-pool
+
+  - it: hook jobs get the global tolerations
+    set:
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: thoras
+          effect: NoSchedule
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: dedicated
+            operator: Equal
+            value: thoras
+            effect: NoSchedule
+
+  # nodeSelector and tolerations are not gated on the operator affinity opt-in:
+  # a tainted node pool still needs its toleration to schedule the hook.
+  - it: nodeSelector and tolerations apply when the operator opts out of global affinity
+    set:
+      thorasOperator:
+        useGlobalAffinity: false
+      nodeSelector:
+        node-pool: standard-pool
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: thoras
+          effect: NoSchedule
+    asserts:
+      - isSubset:
+          path: spec.template.spec
+          content:
+            nodeSelector:
+              node-pool: standard-pool
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: dedicated
+            operator: Equal
+            value: thoras
+            effect: NoSchedule
+      - isNull:
+          path: spec.template.spec.affinity

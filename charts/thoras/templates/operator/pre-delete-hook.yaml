@@ -22,7 +22,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
-      {{- with (include "thoras.hookJobAffinity" . | trim) }}
+      {{- with (include "thoras.hookJobScheduling" . | trim) }}
       {{- . | nindent 6 }}
       {{- end }}
       {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
