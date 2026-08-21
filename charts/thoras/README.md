@@ -249,6 +249,7 @@ must be pre-installed and managed externally.
 | thorasWorker.requests.cpu                            | String  | 1000Mi        | Legacy field for setting Thoras API CPU request              |
 | thorasWorker.requests.memory                         | String  | 1000Mi        | Legacy field for setting Thoras API memory request           |
 | thorasWorker.slackErrorsEnabled                      | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl` |
+| thorasWorker.forecastRescueMaxAttempts               | Number  | 3             | Times a stuck forecast may be fast-tracked to the head of the queue before it falls back to its normal schedule |
 | thorasWorker.logLevel                                | String  | Nil           | Logging level                                                |
 | thorasWorker.queriesPerSecond                        | String  | "50"          | Sets a maximum threshold for K8s API qps                     |
 | thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                         |
