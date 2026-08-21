@@ -14,21 +14,14 @@ spec:
   # Allow all ingress from endpoints within the same namespace
   - fromEndpoints:
     - {}
-  # Allow ingress from users and ingress controllers on the port the Service
-  # targets: the oauth2-proxy sidecar port when auth is enabled, otherwise
-  # the raw dashboard nginx port. Same-pod traffic between the sidecar and
-  # nginx is not gated by CiliumNetworkPolicy.
+  # Public dashboard port (containerPort). Owned by nginx or the sidecar
+  # depending on auth.enabled; the policy is the same either way.
   - fromEntities:
     - all
     toPorts:
     - ports:
-      {{- if .Values.thorasDashboard.auth.enabled }}
-      - port: "{{ .Values.thorasDashboard.auth.containerPort }}"
-        protocol: TCP
-      {{- else }}
       - port: "{{ .Values.thorasDashboard.containerPort }}"
         protocol: TCP
-      {{- end }}
   {{- with .Values.thorasDashboard.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}

@@ -16,8 +16,7 @@ set:
     unittesting: true
   thorasDashboard:
     unittesting: true
-    # TODO: keep this snapshot pinned to the pre-auth shape until we're ready
-    # to update it. Auth-on shape is covered in dashboard_auth_test.yaml.
+    # Pin to pre-auth shape; auth-on lives in dashboard_auth_test.yaml.
     auth:
       enabled: false
   thorasSlmAgent:

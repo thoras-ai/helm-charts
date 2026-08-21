@@ -286,3 +286,6 @@ topologySpreadConstraints:
 {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end }}
+
+{{/* Loopback port for nginx behind the oauth2-proxy sidecar. */}}
+{{- define "thoras.dashboard.internalNginxPort" -}}8181{{- end -}}

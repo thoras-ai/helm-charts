@@ -1,9 +1,7 @@
 suite: Dashboard
 templates:
   - dashboard/deployment.yaml
-# TODO: these cases disable thorasDashboard.auth so they keep asserting the
-# pre-auth shape (single container, no init containers). Auth-on coverage
-# lives in dashboard_auth_test.yaml; when we're comfortable, merge the two.
+# Auth-off; auth-on cases live in dashboard_auth_test.yaml.
 tests:
   - it: Deployment name and image should be correct
     set:

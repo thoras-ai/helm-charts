@@ -3,9 +3,7 @@ templates:
   - dashboard/service.yaml
 chart:
   version: "4.36.0"
-# TODO: these cases disable thorasDashboard.auth so the Service targetPort
-# keeps pointing at the raw nginx port (8080) instead of the sidecar (4180).
-# Auth-on Service coverage lives in dashboard_auth_test.yaml.
+# Auth-off; auth-on Service/NetworkPolicy live in dashboard_auth_test.yaml.
 tests:
   - it: Default matches snapshot
     set:

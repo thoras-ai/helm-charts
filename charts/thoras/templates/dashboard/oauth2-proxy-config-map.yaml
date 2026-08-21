@@ -8,26 +8,19 @@ metadata:
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
 data:
-  # TODO: bundle a Thoras-themed custom-templates-dir so the sign-in page
-  # shows only the htpasswd form (no SSO button) and is branded.
+  # TODO: brand the sign-in page via custom-templates-dir and drop the SSO button.
   oauth2-proxy.cfg: |
-    http_address = "0.0.0.0:{{ .Values.thorasDashboard.auth.containerPort }}"
-    upstreams = ["http://127.0.0.1:{{ .Values.thorasDashboard.containerPort }}"]
-    # oauth2-proxy insists on a provider even when the real auth backend is
-    # htpasswd. `google` is a harmless default; skip_provider_button hides
-    # the SSO button so users land straight on the username/password form.
+    http_address = "0.0.0.0:{{ .Values.thorasDashboard.containerPort }}"
+    upstreams = ["http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}"]
+    # provider must be set; the dummy value below is unused by htpasswd auth.
     provider = "google"
     client_id = "thoras-dashboard"
     client_secret = "unused"
     email_domains = ["*"]
     htpasswd_file = "/etc/oauth2-proxy/generated/htpasswd"
     display_htpasswd_form = true
-    # NOTE: don't enable skip_provider_button when the real auth backend is
-    # htpasswd. That flag skips the sign-in page entirely and jumps to
-    # /oauth2/start, which then redirects to the (dummy) Google provider
-    # and 401s. Users need the sign-in page to see the htpasswd form. The
-    # SSO button on that page is inert until we ship a Thoras-themed
-    # custom template that removes it (see TODO above).
+    # Do NOT set skip_provider_button=true - it bypasses the sign-in page
+    # and calls the dummy provider, which 401s.
     cookie_secret_file = "/etc/oauth2-proxy/secret/cookie-secret"
     cookie_secure = {{ .Values.thorasDashboard.auth.cookieSecure }}
     reverse_proxy = true

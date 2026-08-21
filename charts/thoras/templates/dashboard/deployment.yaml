@@ -48,10 +48,8 @@ spec:
         - name: oauth2-proxy-config
           configMap:
             name: thoras-dashboard-oauth2-proxy-config
-        # NOTE: don't set defaultMode < 0444 here. Projected Secret files are
-        # owned by uid 0, and the sidecar runs as uid 2000 - a restrictive
-        # mode locks the process out of its own cookie secret. readOnly at
-        # the mount point already prevents writes.
+        # Do not set defaultMode < 0444: files are uid 0 and the sidecar
+        # runs as uid 2000; readOnly already prevents writes.
         - name: oauth2-proxy-secret
           secret:
             secretName: thoras-dashboard-auth
@@ -124,8 +122,13 @@ spec:
                 key: secret
         {{- end }}
         ports:
+        {{- if .Values.thorasDashboard.auth.enabled }}
+        - containerPort: {{ include "thoras.dashboard.internalNginxPort" . | int }}
+          name: nginx-int
+        {{- else }}
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
           name: http
+        {{- end }}
         {{- if .Values.thorasDashboard.resources }}
         resources: {{ .Values.thorasDashboard.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -133,10 +136,16 @@ spec:
           limits: {{ .Values.thorasDashboard.limits | toYaml | nindent 12 }}
           requests: {{ .Values.thorasDashboard.requests | toYaml | nindent 12 }}
         {{- end }}
+        {{- /* exec probes under auth because nginx is loopback-only. */}}
         startupProbe:
+          {{- if .Values.thorasDashboard.auth.enabled }}
+          exec:
+            command: ["curl", "-sf", "http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}/"]
+          {{- else }}
           httpGet:
             path: /
             port: http
+          {{- end }}
           periodSeconds: 5
           failureThreshold: 12
         readinessProbe:
@@ -148,9 +157,14 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 2
         livenessProbe:
+          {{- if .Values.thorasDashboard.auth.enabled }}
+          exec:
+            command: ["curl", "-sf", "http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}/"]
+          {{- else }}
           httpGet:
             path: /
             port: http
+          {{- end }}
           periodSeconds: 5
           failureThreshold: 48
         volumeMounts:
@@ -174,19 +188,19 @@ spec:
           {{- toYaml . | nindent 10 }}
           {{- end }}
         ports:
-        - containerPort: {{ .Values.thorasDashboard.auth.containerPort }}
-          name: auth
+        - containerPort: {{ .Values.thorasDashboard.containerPort }}
+          name: http
         resources: {{ .Values.thorasDashboard.auth.resources | toYaml | nindent 10 }}
         livenessProbe:
           httpGet:
             path: /ping
-            port: auth
+            port: http
           periodSeconds: 10
           failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /ready
-            port: auth
+            port: http
           periodSeconds: 5
           failureThreshold: 2
         volumeMounts:

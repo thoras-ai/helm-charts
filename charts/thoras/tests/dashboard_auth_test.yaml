@@ -89,9 +89,7 @@ tests:
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
           pattern: "display_htpasswd_form = true"
-      # Regression guard: skip_provider_button must NOT be set. It skips the
-      # sign-in page and jumps to /oauth2/start, which fails against the
-      # dummy Google provider. See the NOTE in oauth2-proxy-config-map.yaml.
+      # Regression guard: setting skip_provider_button breaks the sign-in page.
       - notMatchRegex:
           path: data["oauth2-proxy.cfg"]
           pattern: "skip_provider_button = true"
@@ -100,10 +98,10 @@ tests:
           pattern: "cookie_secure = true"
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
-          pattern: 'upstreams = \["http://127.0.0.1:8080"\]'
+          pattern: 'upstreams = \["http://127.0.0.1:8181"\]'
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
-          pattern: 'http_address = "0.0.0.0:4180"'
+          pattern: 'http_address = "0.0.0.0:8080"'
 
   - it: Reflects cookieSecure=false in the oauth2-proxy config
     templates:
@@ -151,7 +149,10 @@ tests:
           value: quay.io/oauth2-proxy/oauth2-proxy:v7.15.0
       - equal:
           path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].ports[0].containerPort
-          value: 4180
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].ports[0].name
+          value: http
       - equal:
           path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].args
           value:
@@ -199,11 +200,9 @@ tests:
             configMap:
               name: thoras-dashboard-oauth2-proxy-config
 
-  # Regression guard for the reason we chose oauth2-proxy over nginx auth_basic
-  # in the first place: the dashboard container's probes must keep hitting the
-  # nginx port directly and bypass the sidecar, otherwise they 401 and the pod
-  # crash-loops. See the "Probes will 401" gotcha in issue #4980.
-  - it: Keeps dashboard container probes on the nginx port when auth is enabled
+  # Probes must not go through the sidecar (would 401) or the pod IP
+  # (nginx is loopback-only); exec against loopback is required.
+  - it: Uses loopback exec probes on the dashboard container when auth is enabled
     templates:
       - dashboard/deployment.yaml
     set:
@@ -211,14 +210,42 @@ tests:
         unittesting: true
     asserts:
       - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.exec.command
+          value: ["curl", "-sf", "http://127.0.0.1:8181/"]
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.exec.command
+          value: ["curl", "-sf", "http://127.0.0.1:8181/"]
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.httpGet
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].ports[0].containerPort
+          value: 8181
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].ports[0].name
+          value: nginx-int
+
+  # Auth-off: Service hits nginx directly, so httpGet probes must stay.
+  - it: Keeps dashboard container probes as httpGet when auth is disabled
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+        auth:
+          enabled: false
+    asserts:
+      - equal:
           path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.httpGet.port
           value: http
       - equal:
           path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.httpGet.port
           value: http
-      - equal:
-          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].ports[0].containerPort
-          value: 8080
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.exec
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.exec
 
   - it: Rolls the dashboard pod when auth Secret or oauth2-proxy config changes
     templates:
@@ -245,13 +272,13 @@ tests:
 
   # -------- Service --------
 
-  - it: Points the Service at the sidecar port by default when auth is enabled
+  - it: Points the Service at containerPort when auth is enabled
     templates:
       - dashboard/service.yaml
     asserts:
       - equal:
           path: spec.ports[0].targetPort
-          value: 4180
+          value: 8080
 
   - it: Points the Service at containerPort when auth is disabled
     templates:
@@ -265,7 +292,18 @@ tests:
           path: spec.ports[0].targetPort
           value: 8080
 
-  - it: Explicit service.targetPort still wins over the auth sidecar port
+  - it: Follows containerPort overrides in both auth modes
+    templates:
+      - dashboard/service.yaml
+    set:
+      thorasDashboard:
+        containerPort: 9090
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 9090
+
+  - it: Explicit service.targetPort still wins over containerPort
     templates:
       - dashboard/service.yaml
     set:
@@ -279,7 +317,7 @@ tests:
 
   # -------- NetworkPolicy --------
 
-  - it: Opens the sidecar port in the NetworkPolicy when auth is enabled
+  - it: Opens containerPort in the NetworkPolicy when auth is enabled
     templates:
       - dashboard/network-policy.yaml
     set:
@@ -289,10 +327,10 @@ tests:
       - contains:
           path: spec.ingress[1].toPorts[0].ports
           content:
-            port: "4180"
+            port: "8080"
             protocol: TCP
 
-  - it: Opens the nginx port in the NetworkPolicy when auth is disabled
+  - it: Opens containerPort in the NetworkPolicy when auth is disabled
     templates:
       - dashboard/network-policy.yaml
     set:

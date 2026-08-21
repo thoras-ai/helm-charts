@@ -269,7 +269,7 @@ must be pre-installed and managed externally.
 | thorasDashboard.rbac.create                      | Bool    | true             | Creates cluster role for Thoras Dashboard pod                            |
 | thorasDashboard.podAnnotations                   | Object  | {}               | Pod Annotations for Thoras Dashboard                                     |
 | thorasDashboard.labels                           | Object  | {}               | Pod/service labels for Thoras Dashboard                                  |
-| thorasDashboard.containerPort                    | Number  | 5173             | Thoras Dashboard port                                                    |
+| thorasDashboard.containerPort                    | Number  | 8080             | Public pod port for the Thoras Dashboard. Owned by the oauth2-proxy sidecar when `thorasDashboard.auth.enabled` (default), otherwise by nginx directly. |
 | thorasDashboard.port                             | Number  | 80               | Thoras Dashboard service port                                            |
 | thorasDashboard.resources                        | Object  | {}               | Specify the resources block. Takes precedence if set.                    |
 | thorasDashboard.limits.memory                    | String  | 2000Mi           | Legacy field for setting Thoras Dashboard memory limit                   |
@@ -354,13 +354,19 @@ thorasDashboard:
 
 - `thorasDashboard.auth.cookieSecure` defaults to `true`. Set it to `false`
   only if the dashboard is reached over plain HTTP (no TLS at the ingress).
-- **TODO:** the oauth2-proxy image is currently pulled from
-  `quay.io/oauth2-proxy/oauth2-proxy`. Air-gapped installs need to mirror it
-  and override `thorasDashboard.auth.image.repository`. Longer term we should
-  pin to a digest and mirror into `us-east4-docker.pkg.dev/thoras-registry/platform`.
-- **TODO:** the oauth2-proxy sign-in page still shows an SSO button next to
-  the htpasswd form. A follow-up will bundle a Thoras-themed
-  `--custom-templates-dir` template that shows only the login form.
+- With auth enabled, the oauth2-proxy sidecar owns
+  `thorasDashboard.containerPort` and proxies to nginx on `127.0.0.1:8181`
+  (loopback-only). To hit nginx directly for debugging:
+  ```
+  kubectl debug -n thoras <dashboard-pod> -it \
+    --image=<debug-image> --target=thoras-dashboard
+  # curl http://127.0.0.1:8181/
+  ```
+- **TODO:** pin the oauth2-proxy image by digest and mirror it into the
+  Thoras registry. Air-gapped installs must override
+  `thorasDashboard.auth.image.repository` today.
+- **TODO:** brand the sign-in page and drop the SSO button via
+  `--custom-templates-dir`.
 
 ## Example Thoras Dashboard Ingress Configuration
 
