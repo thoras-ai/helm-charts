@@ -141,6 +141,8 @@ spec:
           failureThreshold: 12
         readinessProbe:
           exec:
+            # TODO: this will cause the dashboard to go live and start serving traffic before it's actually ready
+#           #       I believe the purpose of this was to only be marked ready if the backing API server is also healthy?
             command: ["curl", "-sf", "http://thoras-api-server-v2/health"]
           periodSeconds: 5
           timeoutSeconds: 5
