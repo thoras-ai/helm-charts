@@ -190,6 +190,7 @@ thorasOperator:
   pprof:
     enabled: false
   # Set to true to apply global affinity rules to this component
+  # (also applies the global affinity to the chart's hook jobs)
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
   affinity: {}

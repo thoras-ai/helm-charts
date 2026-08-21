@@ -288,6 +288,24 @@ topologySpreadConstraints:
 {{- end }}
 
 {{/*
+Affinity for the chart's hook jobs (webhook cert-gen, pre-delete) - global
+affinity only, and only when the operator opts into it. The jobs are one-shot,
+so they carry neither a default nor a component-specific affinity.
+Usage:
+  {{- with (include "thoras.hookJobAffinity" . | trim) }}
+  {{- . | nindent 6 }}
+  {{- end }}
+*/}}
+{{- define "thoras.hookJobAffinity" -}}
+{{- if .Values.thorasOperator.useGlobalAffinity -}}
+{{- with .Values.affinity -}}
+affinity:
+{{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Nil-safe thorasOperator.webhookCertGen.certManager.enabled ("true" or "").
 Releases older than the certManager block (chart < 4.124.0) upgraded with
 --reuse-values have no certManager key, so a direct traversal panics.

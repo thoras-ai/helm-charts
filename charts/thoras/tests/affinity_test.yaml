@@ -508,3 +508,66 @@ tests:
       - equal:
           path: spec.template.spec.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
           value: timescaledb
+
+  # Hook jobs: global affinity only, gated on the operator opt-in
+  - it: hook jobs get global affinity
+    templates:
+      - operator/webhooks-certgen-create.yaml
+      - operator/webhooks-certgen-patch.yaml
+      - operator/pre-delete-hook.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-pool
+                operator: In
+                values:
+                - standard-pool
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-pool
+
+  - it: hook jobs have no affinity when the operator opts out
+    templates:
+      - operator/webhooks-certgen-create.yaml
+      - operator/webhooks-certgen-patch.yaml
+      - operator/pre-delete-hook.yaml
+    set:
+      thorasOperator:
+        useGlobalAffinity: false
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-pool
+                operator: In
+                values:
+                - standard-pool
+    asserts:
+      - isNull:
+          path: spec.template.spec.affinity
+
+  - it: hook jobs get neither the operator default nor its component affinity
+    templates:
+      - operator/webhooks-certgen-create.yaml
+      - operator/webhooks-certgen-patch.yaml
+      - operator/pre-delete-hook.yaml
+    set:
+      thorasOperator:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - co-locate-with
+              topologyKey: kubernetes.io/hostname
+    asserts:
+      - isNull:
+          path: spec.template.spec.affinity

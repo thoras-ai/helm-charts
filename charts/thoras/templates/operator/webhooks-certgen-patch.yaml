@@ -22,6 +22,9 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: thoras-tls-certsgen
+      {{- with (include "thoras.hookJobAffinity" . | trim) }}
+      {{- . | nindent 6 }}
+      {{- end }}
       {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
@@ -75,6 +78,9 @@ spec:
     spec:
       restartPolicy: OnFailure
       serviceAccountName: thoras-tls-certsgen
+      {{- with (include "thoras.hookJobAffinity" . | trim) }}
+      {{- . | nindent 6 }}
+      {{- end }}
       {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
