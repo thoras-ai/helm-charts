@@ -74,9 +74,14 @@ explicitly or use mode 2 / 3 below.
 
 ### 2. Operator-managed (top-level `existingSecret.secretName`)
 
-Pre-create a single `Opaque` Secret with the keys the chart needs
-(`timescale-password`, `timescale-dsn`, `api-client-secret`, plus optional
-`cloud-sync-cluster-key` / `slack-webhook-url`) and point the chart at it:
+Pre-create a single `Opaque` Secret with the keys the chart needs and point
+the chart at it. The required keys depend on the Timescale mode:
+
+- **In-cluster Timescale**: `timescale-password` (the DSN is built in-template).
+- **External Timescale**: `timescale-dsn` (the password is not used by the chart).
+
+Plus `api-client-secret` when simple auth is enabled, and optionally
+`cloud-sync-cluster-key` / `slack-webhook-url`.
 
 ```yaml
 existingSecret:
@@ -155,13 +160,16 @@ The chart never renders `thoras-credentials` and does not touch your Secret.
 
 Key-name mapping when you build the Secret manually:
 
-| Legacy Secret / key                  | New key on `thoras-credentials` |
-| ------------------------------------ | ------------------------------- |
-| `thoras-timescale-password.password` | `timescale-password`            |
-| `thoras-timescale-password.host`     | `timescale-dsn`                 |
-| `api-client-secret.secret`           | `api-client-secret`             |
-| `thoras-cloud-sync.clusterKey`       | `cloud-sync-cluster-key`        |
-| `thoras-slack.webhookUrl`            | `slack-webhook-url`             |
+| Legacy Secret / key                  | New key on `thoras-credentials`                     |
+| ------------------------------------ | --------------------------------------------------- |
+| `thoras-timescale-password.password` | `timescale-password` (in-cluster mode only)         |
+| `thoras-timescale-password.host`     | *n/a* — DSN is built in-template from the password  |
+| `api-client-secret.secret`           | `api-client-secret`                                 |
+| `thoras-cloud-sync.clusterKey`       | `cloud-sync-cluster-key`                            |
+| `thoras-slack.webhookUrl`            | `slack-webhook-url`                                 |
+
+In external Timescale mode, the chart reads `timescale-dsn` instead of
+`timescale-password`.
 
 **B. Values-file capture.** Copy the plaintext values out of the four legacy
 Secrets into your values file:
@@ -340,7 +348,20 @@ must be pre-installed and managed externally.
 | externalTimescale.dsn                          | String | ""                 | Full postgres DSN including database name, e.g. `postgres://user:pass@host:5432/tsdb?sslmode=require` |
 | externalTimescale.existingSecret.secretName    | String | ""                 | Pre-existing Secret holding the DSN. Empty → inherits top-level `existingSecret.secretName`.          |
 | externalTimescale.existingSecret.dsnKey        | String | "timescale-dsn"    | Key on the Secret that holds the DSN.                                                                 |
-| externalTimescale.existingSecret.passwordKey   | String | "timescale-password" | Key on the Secret that holds the in-cluster postgres password (in-cluster mode only).               |
+
+### In-cluster TimescaleDB credentials
+
+Use `metricsCollector.timescale.existingSecret` when the chart deploys
+Timescale in-cluster but you want to supply the password out-of-band. The
+DSN is built in-template from the password plus the in-cluster hostname/port,
+so only the password key needs to be supplied. Ignored when `externalTimescale`
+is enabled.
+
+| Key                                                        | Type   | Default             | Description                                                                                              |
+| ---------------------------------------------------------- | ------ | ------------------- | -------------------------------------------------------------------------------------------------------- |
+| metricsCollector.timescale.password                        | String | ""                  | Plaintext password. Chart-seeded into `thoras-credentials`. Generated when empty. Preserved via `lookup`. |
+| metricsCollector.timescale.existingSecret.secretName       | String | ""                  | Pre-existing Secret holding the password. Empty → inherits top-level `existingSecret.secretName`.        |
+| metricsCollector.timescale.existingSecret.passwordKey      | String | "timescale-password" | Key on the Secret that holds the Timescale postgres password.                                           |
 
 ## Thoras Metrics Collector
 

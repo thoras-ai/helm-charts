@@ -61,15 +61,23 @@ spec:
             drop: [ALL]
         command: ["/app/worker"]
         env:
+          {{- if include "thoras.externalTimescaleEnabled" . }}
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                name: {{ include "thoras.timescaleSecretName" . }}
+                name: {{ include "thoras.timescaleDsnSecretName" . }}
                 key: {{ include "thoras.timescaleDsnKey" . }}
           - name: SERVICE_POSTGRESQL_DSN
-          {{- if include "thoras.externalTimescaleEnabled" . }}
             value: "$(DATABASE_HOST)"
           {{- else }}
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "thoras.timescalePasswordSecretName" . }}
+                key: {{ include "thoras.timescalePasswordKey" . }}
+          - name: DATABASE_HOST
+            value: "postgres://postgres:$(POSTGRES_PASSWORD)@{{ .Values.metricsCollector.timescale.name }}:{{ .Values.metricsCollector.timescale.containerPort }}"
+          - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)/thoras"
           {{- end }}
           - name: SERVICE_POSTGRESQL_MAX_CONNS

@@ -13,7 +13,7 @@ Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on 
 {{ if include "thoras.credentialsSecretSeedEnabled" . -}}
 Credentials Secret: thoras-credentials (chart-seeded, Opaque).
 {{- if not (include "thoras.externalTimescaleEnabled" .) }}
-  keys: timescale-password, timescale-dsn{{ if .Values.featureFlags.enableSimpleAuthSecret }}, api-client-secret{{ end }}{{ if include "thoras.cloudSyncEnabled" . }}, {{ include "thoras.cloudSyncClusterKeyKey" . }}{{ end }}{{ if include "thoras.slackWebhookEnabled" . }}, {{ include "thoras.slackWebhookUrlKey" . }}{{ end }}
+  keys: timescale-password{{ if .Values.featureFlags.enableSimpleAuthSecret }}, api-client-secret{{ end }}{{ if include "thoras.cloudSyncEnabled" . }}, {{ include "thoras.cloudSyncClusterKeyKey" . }}{{ end }}{{ if include "thoras.slackWebhookEnabled" . }}, {{ include "thoras.slackWebhookUrlKey" . }}{{ end }}
 {{- else }}
   keys: timescale-dsn{{ if .Values.featureFlags.enableSimpleAuthSecret }}, api-client-secret{{ end }}{{ if include "thoras.cloudSyncEnabled" . }}, {{ include "thoras.cloudSyncClusterKeyKey" . }}{{ end }}{{ if include "thoras.slackWebhookEnabled" . }}, {{ include "thoras.slackWebhookUrlKey" . }}{{ end }}
 {{- end }}
@@ -30,7 +30,11 @@ Credentials Secret: thoras-credentials (chart-seeded, Opaque).
 {{- else -}}
 Credentials Secret: operator-managed via existingSecret.secretName={{ .Values.existingSecret.secretName | quote }}.
   The chart does not render thoras-credentials. Ensure the Secret contains:
-    - timescale-dsn{{ if not (include "thoras.externalTimescaleEnabled" .) }} (and timescale-password for the in-cluster deployment){{ end }}
+{{- if include "thoras.externalTimescaleEnabled" . }}
+    - timescale-dsn
+{{- else }}
+    - timescale-password (in-cluster mode — the DSN is built in-template from this)
+{{- end }}
 {{- if .Values.featureFlags.enableSimpleAuthSecret }}
     - api-client-secret
 {{- end }}

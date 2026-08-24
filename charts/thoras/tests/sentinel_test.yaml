@@ -116,6 +116,29 @@ tests:
       - failedTemplate:
           errorMessage: "Both `slackWebhook.url` and `slackWebhook.existingSecret.secretName` are set. Pick one."
 
+  - it: Fails render when both metricsCollector.timescale.password and existingSecret.secretName are set
+    set:
+      metricsCollector:
+        timescale:
+          password: "abc"
+          existingSecret:
+            secretName: "operator-provided"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Both `metricsCollector.timescale.password` and `metricsCollector.timescale.existingSecret.secretName` are set. Pick one."
+
+  - it: Fails render when external Timescale is set and metricsCollector.timescale.existingSecret.secretName is also set
+    set:
+      externalTimescale:
+        dsn: "postgres://x"
+      metricsCollector:
+        timescale:
+          existingSecret:
+            secretName: "in-cluster-provided"
+    asserts:
+      - failedTemplate:
+          errorMessage: "`metricsCollector.timescale.existingSecret.secretName` is set but external Timescale is also enabled (via `externalTimescale.dsn` or `externalTimescale.existingSecret.secretName`). The in-cluster Timescale credentials block is ignored in external mode — remove one."
+
   # Happy paths — the sentinel does not fire on well-formed 5.0 values.
 
   - it: Renders when only thorasLicenseKey is set

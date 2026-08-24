@@ -186,7 +186,7 @@ spec:
           - name: "POSTGRES_PASSWORD"
             valueFrom:
               secretKeyRef:
-                name: {{ include "thoras.timescaleSecretName" . }}
+                name: {{ include "thoras.timescalePasswordSecretName" . }}
                 key: {{ include "thoras.timescalePasswordKey" . }}
           - name: "PGDATA"
             value: /var/lib/share/postgresql
@@ -277,7 +277,7 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                name: {{ include "thoras.timescaleSecretName" . }}
+                name: {{ include "thoras.timescaleDsnSecretName" . }}
                 key: {{ include "thoras.timescaleDsnKey" . }}
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)"
@@ -285,7 +285,7 @@ spec:
           - name: "POSTGRES_PASSWORD"
             valueFrom:
               secretKeyRef:
-                name: {{ include "thoras.timescaleSecretName" . }}
+                name: {{ include "thoras.timescalePasswordSecretName" . }}
                 key: {{ include "thoras.timescalePasswordKey" . }}
         {{- end }}
           - name: SERVICE_CHART_VERSION

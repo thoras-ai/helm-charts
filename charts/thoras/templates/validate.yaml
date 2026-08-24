@@ -64,3 +64,11 @@ almost certainly made a mistake and we'd rather stop than silently pick one.
 {{- if and .Values.slackWebhook.url (.Values.slackWebhook.existingSecret).secretName -}}
 {{- fail "Both `slackWebhook.url` and `slackWebhook.existingSecret.secretName` are set. Pick one." -}}
 {{- end -}}
+
+{{- if and .Values.metricsCollector.timescale.password (.Values.metricsCollector.timescale.existingSecret).secretName -}}
+{{- fail "Both `metricsCollector.timescale.password` and `metricsCollector.timescale.existingSecret.secretName` are set. Pick one." -}}
+{{- end -}}
+
+{{- if and (include "thoras.externalTimescaleEnabled" .) (.Values.metricsCollector.timescale.existingSecret).secretName -}}
+{{- fail "`metricsCollector.timescale.existingSecret.secretName` is set but external Timescale is also enabled (via `externalTimescale.dsn` or `externalTimescale.existingSecret.secretName`). The in-cluster Timescale credentials block is ignored in external mode — remove one." -}}
+{{- end -}}

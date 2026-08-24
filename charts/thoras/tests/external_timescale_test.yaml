@@ -306,6 +306,8 @@ tests:
                 key: dsn
 
   - it: Top-level existingSecret.secretName suppresses the unified Secret and points workloads at the operator-provided Secret
+    # In in-cluster mode DATABASE_HOST is built in-template from POSTGRES_PASSWORD,
+    # so top-level delegation shows up on the password key rather than the DSN.
     templates:
       - api-server-v2/deployment.yaml
     set:
@@ -315,8 +317,59 @@ tests:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-api-server-v2')].env
           content:
-            name: DATABASE_HOST
+            name: POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: my-thoras
-                key: timescale-dsn
+                key: timescale-password
+
+  # --- In-cluster Timescale with metricsCollector.timescale.existingSecret ---
+
+  - it: Collector uses metricsCollector.timescale.existingSecret for POSTGRES_PASSWORD in in-cluster mode
+    templates:
+      - collector/deployment.yaml
+    set:
+      metricsCollector:
+        timescale:
+          existingSecret:
+            secretName: "my-in-cluster-ts"
+            passwordKey: "pgpass"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].env
+          content:
+            name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-in-cluster-ts
+                key: pgpass
+
+  - it: Operator reads POSTGRES_PASSWORD from metricsCollector.timescale.existingSecret in in-cluster mode
+    templates:
+      - operator/deployment.yaml
+    set:
+      metricsCollector:
+        timescale:
+          existingSecret:
+            secretName: "my-in-cluster-ts"
+            passwordKey: "pgpass"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].env
+          content:
+            name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-in-cluster-ts
+                key: pgpass
+      # In-cluster DSN is built in-template — no DATABASE_HOST secretKeyRef.
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].env
+          content:
+            name: DATABASE_HOST
+            value: "postgres://postgres:$(POSTGRES_PASSWORD)@timescale:5432"
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-operator')].env
+          content:
+            name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)/thoras"

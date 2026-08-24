@@ -159,13 +159,11 @@ externalTimescale:
 
   existingSecret:
     # Reference a pre-existing Secret containing the DSN. When set, the chart
-    # skips seeding both the DSN and the in-cluster timescale password.
+    # does not seed the DSN into thoras-credentials.
     # Empty → inherits top-level existingSecret.secretName.
     secretName: ""
-    # Key holding the full postgres DSN (external mode).
+    # Key on the referenced Secret that holds the full postgres DSN.
     dsnKey: "timescale-dsn"
-    # Key holding the in-cluster postgres password (in-cluster mode only).
-    passwordKey: "timescale-password"
 
 # Default PostgreSQL connection-pool settings for the api-server, operator,
 # and worker. Each component can override any of these under its own
@@ -339,6 +337,20 @@ metricsCollector:
     # value is preserved via `lookup`. Set explicitly when rendering without
     # cluster access (helm template, Argo CD) for deterministic renders.
     password: ""
+    # In-cluster Timescale credentials source. Ignored when externalTimescale
+    # is enabled — set externalTimescale.existingSecret instead.
+    #
+    # Workloads build the DSN in-template from the referenced password plus
+    # the in-cluster hostname/port, so the DSN is never stored in a Secret in
+    # in-cluster mode. Only the password key needs to be supplied.
+    existingSecret:
+      # Reference a pre-existing Secret holding the in-cluster Timescale
+      # password. When set, the chart does not seed timescale-password into
+      # thoras-credentials.
+      # Empty → inherits top-level existingSecret.secretName.
+      secretName: ""
+      # Key on the referenced Secret that holds the Timescale postgres password.
+      passwordKey: "timescale-password"
     # Specify the complete resources block (takes precedence if set)
     resources: {}
     # Legacy field for backward compatibility (used if resources is empty)

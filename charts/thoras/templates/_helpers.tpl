@@ -29,7 +29,12 @@ Precedence for keys:
 -}}
 {{- end -}}
 
-{{- define "thoras.timescaleSecretName" -}}
+{{/*
+Timescale DSN — external mode only. In in-cluster mode workloads build the
+DSN from the password + well-known hostname; the DSN is never stored in a
+Secret and these helpers are never called.
+*/}}
+{{- define "thoras.timescaleDsnSecretName" -}}
 {{- coalesce
      (.Values.externalTimescale.existingSecret).secretName
      .Values.existingSecret.secretName
@@ -44,9 +49,22 @@ Precedence for keys:
 -}}
 {{- end -}}
 
+{{/*
+Timescale password — in-cluster mode only. Reads from
+metricsCollector.timescale.existingSecret, falling back to the top-level
+existingSecret.secretName, then the chart-seeded thoras-credentials.
+*/}}
+{{- define "thoras.timescalePasswordSecretName" -}}
+{{- coalesce
+     (.Values.metricsCollector.timescale.existingSecret).secretName
+     .Values.existingSecret.secretName
+     "thoras-credentials"
+-}}
+{{- end -}}
+
 {{- define "thoras.timescalePasswordKey" -}}
 {{- coalesce
-     (.Values.externalTimescale.existingSecret).passwordKey
+     (.Values.metricsCollector.timescale.existingSecret).passwordKey
      "timescale-password"
 -}}
 {{- end -}}
