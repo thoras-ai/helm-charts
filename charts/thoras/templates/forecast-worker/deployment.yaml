@@ -38,9 +38,9 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasForecast.serviceAccount.name }}
-      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      {{- if .Values.imageCredentials.imagePullSecretInDeployment }}
       imagePullSecrets:
-      - name: {{ .Values.imageCredentials.secretRef }}
+      - name: {{ include "thoras.registrySecretName" . }}
       {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}

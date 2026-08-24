@@ -9,3 +9,35 @@ Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on 
   To enable, set metricsCollector.persistence.enabled=true, or configure a
   storageClassName / pvcStorageRequestSize and it will be enabled automatically.
 {{- end }}
+
+{{ if include "thoras.credentialsSecretSeedEnabled" . -}}
+Credentials Secret: thoras-credentials (chart-seeded, Opaque).
+{{- if not (include "thoras.externalTimescaleEnabled" .) }}
+  keys: timescale-password, timescale-dsn{{ if .Values.featureFlags.enableSimpleAuthSecret }}, api-client-secret{{ end }}{{ if include "thoras.cloudSyncEnabled" . }}, {{ include "thoras.cloudSyncClusterKeyKey" . }}{{ end }}{{ if include "thoras.slackWebhookEnabled" . }}, {{ include "thoras.slackWebhookUrlKey" . }}{{ end }}
+{{- else }}
+  keys: timescale-dsn{{ if .Values.featureFlags.enableSimpleAuthSecret }}, api-client-secret{{ end }}{{ if include "thoras.cloudSyncEnabled" . }}, {{ include "thoras.cloudSyncClusterKeyKey" . }}{{ end }}{{ if include "thoras.slackWebhookEnabled" . }}, {{ include "thoras.slackWebhookUrlKey" . }}{{ end }}
+{{- end }}
+
+  The Secret is annotated `helm.sh/resource-policy: keep` and
+  `argocd.argoproj.io/sync-options: Prune=false` so an accidental `helm
+  uninstall` / `argocd app delete` will not take the credentials with it.
+
+  Under Argo CD, the `data` field will drift on every sync (helm template
+  can't `lookup` the in-cluster value). Either set explicit plaintext values
+  (metricsCollector.timescale.password, apiClientSecret.secret) OR pre-create
+  a Secret and set `existingSecret.secretName` — see README "Managing
+  credentials".
+{{- else -}}
+Credentials Secret: operator-managed via existingSecret.secretName={{ .Values.existingSecret.secretName | quote }}.
+  The chart does not render thoras-credentials. Ensure the Secret contains:
+    - timescale-dsn{{ if not (include "thoras.externalTimescaleEnabled" .) }} (and timescale-password for the in-cluster deployment){{ end }}
+{{- if .Values.featureFlags.enableSimpleAuthSecret }}
+    - api-client-secret
+{{- end }}
+{{- if include "thoras.cloudSyncEnabled" . }}
+    - {{ include "thoras.cloudSyncClusterKeyKey" . }} (cloudSync)
+{{- end }}
+{{- if include "thoras.slackWebhookEnabled" . }}
+    - {{ include "thoras.slackWebhookUrlKey" . }} (Slack)
+{{- end }}
+{{- end }}

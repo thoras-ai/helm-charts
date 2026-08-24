@@ -111,4 +111,4 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 
 ## Registry and Images
 
-All container images are hosted at `us-east4-docker.pkg.dev/thoras-registry/platform` and require authentication via license key in the `imageCredentials.password` field.
+All container images are hosted at `us-east4-docker.pkg.dev/thoras-registry/platform` and require authentication via license key in the top-level `thorasLicenseKey` field (renamed from `imageCredentials.password` in chart 5.0).

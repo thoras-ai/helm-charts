@@ -3,8 +3,10 @@ templates:
   - "*/rbac.yaml"
 set:
   thorasVersion: TEST
+  thorasLicenseKey: "test-license"
   imageCredentials:
-    secretRef: test-secret-registry
+    existingSecret:
+      secretName: test-secret-registry
   thorasApiServerV2:
     rbac:
       create: true

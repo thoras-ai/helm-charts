@@ -35,8 +35,8 @@ tests:
             name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                name: thoras-timescale-password
-                key: host
+                name: thoras-credentials
+                key: timescale-dsn
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
           content:
@@ -98,13 +98,14 @@ tests:
           path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].args[0]
           pattern: "/var/lib/share/postgresql"
 
-  - it: Should use secretRef for blob-service DATABASE_HOST when secretRefName is set
+  - it: Should use existingSecret.secretName for blob-service DATABASE_HOST when set
     templates:
       - collector/deployment.yaml
     set:
       externalTimescale:
-        secretRefName: "my-db-secret"
-        secretRefKey: "dsn"
+        existingSecret:
+          secretName: "my-db-secret"
+          dsnKey: "dsn"
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
@@ -139,11 +140,11 @@ tests:
       - hasDocuments:
           count: 2
 
-  # --- Collector Secret ---
+  # --- Unified Credentials Secret ---
 
-  - it: Should store external host in secret when host is set
+  - it: Should store external DSN in the unified Secret when dsn is set
     templates:
-      - collector/secret.yaml
+      - credentials-secret.yaml
     set:
       externalTimescale:
         dsn: "postgres://user:pass@ext-db:5432/tsdb"
@@ -154,18 +155,36 @@ tests:
           of: Secret
       - equal:
           path: metadata.name
-          value: thoras-timescale-password
+          value: thoras-credentials
+      - equal:
+          path: data["timescale-dsn"]
+          value: "cG9zdGdyZXM6Ly91c2VyOnBhc3NAZXh0LWRiOjU0MzIvdHNkYg=="
+      - notExists:
+          path: data["timescale-password"]
 
-  - it: Should not create secret when secretRefName is set
+  - it: Should not create the unified Secret when top-level existingSecret.secretName is set
     templates:
-      - collector/secret.yaml
+      - credentials-secret.yaml
     set:
-      externalTimescale:
-        secretRefName: "my-db-secret"
-        secretRefKey: "dsn"
+      existingSecret:
+        secretName: "operator-provided"
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: Should still render the unified Secret when per-credential existingSecret.secretName is set (mixed mode)
+    templates:
+      - credentials-secret.yaml
+    set:
+      externalTimescale:
+        existingSecret:
+          secretName: "my-db-secret"
+          dsnKey: "dsn"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Secret
 
   # --- ConfigMap, PVC, StorageClass ---
 
@@ -230,15 +249,16 @@ tests:
       - hasDocuments:
           count: 0
 
-  # --- Consumer Deployments with secretRef ---
+  # --- Consumer Deployments with existingSecret ---
 
-  - it: Operator should use external secretRef for DATABASE_HOST
+  - it: Operator should use externalTimescale.existingSecret for DATABASE_HOST
     templates:
       - operator/deployment.yaml
     set:
       externalTimescale:
-        secretRefName: "my-db-secret"
-        secretRefKey: "dsn"
+        existingSecret:
+          secretName: "my-db-secret"
+          dsnKey: "dsn"
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-operator')].env
@@ -249,13 +269,14 @@ tests:
                 name: my-db-secret
                 key: dsn
 
-  - it: API server should use external secretRef for DATABASE_HOST
+  - it: API server should use externalTimescale.existingSecret for DATABASE_HOST
     templates:
       - api-server-v2/deployment.yaml
     set:
       externalTimescale:
-        secretRefName: "my-db-secret"
-        secretRefKey: "dsn"
+        existingSecret:
+          secretName: "my-db-secret"
+          dsnKey: "dsn"
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-api-server-v2')].env
@@ -266,13 +287,14 @@ tests:
                 name: my-db-secret
                 key: dsn
 
-  - it: Worker should use external secretRef for DATABASE_HOST
+  - it: Worker should use externalTimescale.existingSecret for DATABASE_HOST
     templates:
       - worker/deployment.yaml
     set:
       externalTimescale:
-        secretRefName: "my-db-secret"
-        secretRefKey: "dsn"
+        existingSecret:
+          secretName: "my-db-secret"
+          dsnKey: "dsn"
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-worker')].env
@@ -282,3 +304,19 @@ tests:
               secretKeyRef:
                 name: my-db-secret
                 key: dsn
+
+  - it: Top-level existingSecret.secretName suppresses the unified Secret and points workloads at the operator-provided Secret
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      existingSecret:
+        secretName: "my-thoras"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-api-server-v2')].env
+          content:
+            name: DATABASE_HOST
+            valueFrom:
+              secretKeyRef:
+                name: my-thoras
+                key: timescale-dsn

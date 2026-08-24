@@ -65,6 +65,9 @@ tests:
     set:
       cloudSync:
         clusterKeyID: "my-cluster-key-id"
+        clusterKey: "my-cluster-key"
+        existingSecret:
+          secretKey: "cloud-sync-cluster-key"
       thorasWorker:
         cloudSyncBaseUrl: "https://console.thoras.ai"
     asserts:

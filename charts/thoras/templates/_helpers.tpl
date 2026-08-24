@@ -1,6 +1,121 @@
 {{- define "imagePullSecret" }}
-{{- printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.imageCredentials.registry (printf "%s:%s" .Values.imageCredentials.username .Values.imageCredentials.password | b64enc) | b64enc }}
+{{- printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.imageCredentials.registry (printf "%s:%s" .Values.imageCredentials.username .Values.thorasLicenseKey | b64enc) | b64enc }}
 {{- end }}
+
+{{/*
+Resolver helpers for credential Secrets. Precedence for names:
+1. Per-credential existingSecret.secretName
+2. Top-level existingSecret.secretName (except registry, which uses its own type)
+3. Chart-seeded default (thoras-credentials for Opaque, thoras-secret-registry for dockerconfigjson)
+
+Precedence for keys:
+1. Per-credential existingSecret.<field>Key
+2. Static default (or empty for optional integrations, which disables them)
+*/}}
+
+{{/* Registry (dockerconfigjson) - never inherits top-level existingSecret.secretName. */}}
+{{- define "thoras.registrySecretName" -}}
+{{- coalesce
+     (.Values.imageCredentials.existingSecret).secretName
+     "thoras-secret-registry"
+-}}
+{{- end -}}
+
+{{/* Unified credentials Secret (Opaque) - all other credentials read from here by default. */}}
+{{- define "thoras.credentialsSecretName" -}}
+{{- coalesce
+     .Values.existingSecret.secretName
+     "thoras-credentials"
+-}}
+{{- end -}}
+
+{{- define "thoras.timescaleSecretName" -}}
+{{- coalesce
+     (.Values.externalTimescale.existingSecret).secretName
+     .Values.existingSecret.secretName
+     "thoras-credentials"
+-}}
+{{- end -}}
+
+{{- define "thoras.timescaleDsnKey" -}}
+{{- coalesce
+     (.Values.externalTimescale.existingSecret).dsnKey
+     "timescale-dsn"
+-}}
+{{- end -}}
+
+{{- define "thoras.timescalePasswordKey" -}}
+{{- coalesce
+     (.Values.externalTimescale.existingSecret).passwordKey
+     "timescale-password"
+-}}
+{{- end -}}
+
+{{- define "thoras.apiClientSecretName" -}}
+{{- coalesce
+     (.Values.apiClientSecret.existingSecret).secretName
+     .Values.existingSecret.secretName
+     "thoras-credentials"
+-}}
+{{- end -}}
+
+{{- define "thoras.apiClientSecretKey" -}}
+{{- coalesce
+     (.Values.apiClientSecret.existingSecret).secretKey
+     "api-client-secret"
+-}}
+{{- end -}}
+
+{{- define "thoras.cloudSyncSecretName" -}}
+{{- coalesce
+     (.Values.cloudSync.existingSecret).secretName
+     .Values.existingSecret.secretName
+     "thoras-credentials"
+-}}
+{{- end -}}
+
+{{/* cloudSync key defaults to empty; empty key disables the integration. */}}
+{{- define "thoras.cloudSyncClusterKeyKey" -}}
+{{- (.Values.cloudSync.existingSecret).secretKey | default "" -}}
+{{- end -}}
+
+{{- define "thoras.slackWebhookSecretName" -}}
+{{- coalesce
+     (.Values.slackWebhook.existingSecret).secretName
+     .Values.existingSecret.secretName
+     "thoras-credentials"
+-}}
+{{- end -}}
+
+{{/* Slack key defaults to empty; empty key disables the integration. */}}
+{{- define "thoras.slackWebhookUrlKey" -}}
+{{- (.Values.slackWebhook.existingSecret).secretKey | default "" -}}
+{{- end -}}
+
+{{/* Optional-integration gates. Empty resolver key => integration off end-to-end. */}}
+{{- define "thoras.cloudSyncEnabled" -}}
+{{- if and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID (include "thoras.cloudSyncClusterKeyKey" .) -}}true{{- end -}}
+{{- end -}}
+
+{{- define "thoras.slackWebhookEnabled" -}}
+{{- if include "thoras.slackWebhookUrlKey" . -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+True when the chart should render the unified `thoras-credentials` Secret.
+
+Suppressed only when the operator sets the top-level existingSecret.secretName
+(full delegation — every credential comes from operator-managed Secrets).
+
+Per-credential existingSecret.secretName overrides just that credential; the
+chart still seeds the unified Secret so the OTHER credentials (which fall back
+to the top-level default of `thoras-credentials`) have somewhere to read from.
+Under mixed mode the seeded Secret harmlessly contains unused keys for the
+overridden credentials, which is preferable to a broken workload.
+*/}}
+{{- define "thoras.credentialsSecretSeedEnabled" -}}
+{{- if not .Values.existingSecret.secretName -}}true{{- end -}}
+{{- end -}}
 
 {{/*
 Component labels - merges global + component labels (no Helm labels)
@@ -178,7 +293,10 @@ Indent the output at the call site: {{- include "thoras.globalEnv" . | indent 10
 True when the chart should use an external TimescaleDB instead of deploying one.
 */}}
 {{- define "thoras.externalTimescaleEnabled" -}}
-{{- if or .Values.externalTimescale.dsn .Values.externalTimescale.secretRefName -}}
+{{- if or
+     .Values.externalTimescale.dsn
+     (.Values.externalTimescale.existingSecret).secretName
+-}}
 true
 {{- end -}}
 {{- end -}}
@@ -237,8 +355,8 @@ Usage: {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | 
 - name: {{ .prefix }}SIMPLE_AUTH_SECRET
   valueFrom:
     secretKeyRef:
-      name: api-client-secret
-      key: secret
+      name: {{ include "thoras.apiClientSecretName" .root }}
+      key: {{ include "thoras.apiClientSecretKey" .root }}
 {{- end }}
 {{- end -}}
 

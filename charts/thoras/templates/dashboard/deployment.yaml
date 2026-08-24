@@ -32,9 +32,9 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasDashboard.serviceAccount.name }}
-      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      {{- if .Values.imageCredentials.imagePullSecretInDeployment }}
       imagePullSecrets:
-      - name: {{ .Values.imageCredentials.secretRef }}
+      - name: {{ include "thoras.registrySecretName" . }}
       {{- end }}
       volumes:
         - name: nginx-config
@@ -60,8 +60,8 @@ spec:
           - name: SIMPLE_AUTH_SECRET
             valueFrom:
               secretKeyRef:
-                name: api-client-secret
-                key: secret
+                name: {{ include "thoras.apiClientSecretName" . }}
+                key: {{ include "thoras.apiClientSecretKey" . }}
         {{- end }}
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}

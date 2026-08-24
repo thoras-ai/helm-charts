@@ -1,0 +1,74 @@
+suite: Optional Integrations
+set:
+  thorasLicenseKey: "test-license"
+tests:
+  # Slack is disabled by default and workloads skip the env var entirely.
+
+  - it: Slack env var is absent from every workload when disabled
+    templates:
+      - api-server-v2/deployment.yaml
+      - operator/deployment.yaml
+      - worker/deployment.yaml
+      - collector/deployment.yaml
+    asserts:
+      - notExists:
+          path: $..spec.containers[*].env[?(@.name == 'SERVICE_SLACK_WEBHOOK_URL')]
+      - notExists:
+          path: $..spec.containers[*].env[?(@.name == 'SLACK_WEBHOOK_URL')]
+
+  - it: Slack env vars appear once the secretKey is set
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      slackWebhook:
+        url: "https://slack.example.com/webhook"
+        existingSecret:
+          secretKey: "slack-webhook-url"
+    asserts:
+      - exists:
+          path: $..spec.containers[*].env[?(@.name == 'SERVICE_SLACK_WEBHOOK_URL')]
+
+  # Cloud-sync requires BOTH clusterKeyID AND a non-empty secretKey.
+
+  - it: Cloud sync is disabled when only clusterKeyID is set
+    templates:
+      - worker/deployment.yaml
+    set:
+      cloudSync:
+        clusterKeyID: "id123"
+    asserts:
+      - equal:
+          path: $..spec.containers[?(@.name == 'thoras-worker')].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "false"
+      - notExists:
+          path: $..spec.containers[?(@.name == 'thoras-worker')].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY')]
+
+  - it: Cloud sync is disabled when only the secretKey is set (no clusterKeyID)
+    templates:
+      - worker/deployment.yaml
+    set:
+      cloudSync:
+        clusterKey: "abc"
+        existingSecret:
+          secretKey: "cloud-sync-cluster-key"
+    asserts:
+      - equal:
+          path: $..spec.containers[?(@.name == 'thoras-worker')].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "false"
+
+  - it: Cloud sync is enabled when both clusterKeyID and secretKey are set
+    templates:
+      - worker/deployment.yaml
+    set:
+      cloudSync:
+        clusterKeyID: "id123"
+        clusterKey: "abc"
+        existingSecret:
+          secretKey: "cloud-sync-cluster-key"
+    asserts:
+      - equal:
+          path: $..spec.containers[?(@.name == 'thoras-worker')].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "true"
+      - equal:
+          path: $..spec.containers[?(@.name == 'thoras-worker')].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY')].valueFrom.secretKeyRef.key
+          value: "cloud-sync-cluster-key"

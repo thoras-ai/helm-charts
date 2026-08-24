@@ -29,10 +29,10 @@ spec:
       {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- if .Values.imageCredentials.secretRef }}
+      {{- if (.Values.imageCredentials.existingSecret).secretName }}
       imagePullSecrets:
-        - name: {{ .Values.imageCredentials.secretRef }}
-      {{- else if .Values.imageCredentials.password }}
+        - name: {{ (.Values.imageCredentials.existingSecret).secretName }}
+      {{- else if .Values.thorasLicenseKey }}
       imagePullSecrets:
         - name: thoras-secret-registry-certgen
       {{- end }}

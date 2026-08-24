@@ -18,21 +18,21 @@ tests:
           path: spec.template.spec.containers[0].args
           content: --host=thoras-webhooks,thoras-webhooks.NAMESPACE.svc
 
-  - it: Uses secretRef for imagePullSecrets when provided
+  - it: Uses existingSecret.secretName for imagePullSecrets when provided
     template: operator/webhooks-certgen-create.yaml
     set:
       imageCredentials:
-        secretRef: "custom-registry-secret"
+        existingSecret:
+          secretName: "custom-registry-secret"
     asserts:
       - equal:
           path: spec.template.spec.imagePullSecrets[0].name
           value: "custom-registry-secret"
 
-  - it: Creates thoras-secret-registry-certgen imagePullSecret when password is set
+  - it: Creates thoras-secret-registry-certgen imagePullSecret when the license key is set
     template: operator/webhooks-certgen-create.yaml
     set:
-      imageCredentials:
-        password: "test-password"
+      thorasLicenseKey: "test-password"
     asserts:
       - equal:
           path: spec.template.spec.imagePullSecrets[0].name
@@ -117,22 +117,22 @@ tests:
           path: spec.template.spec.containers[0].args
           content: --patch-mutating=false
 
-  - it: Patch jobs use secretRef for imagePullSecrets when provided
+  - it: Patch jobs use existingSecret.secretName for imagePullSecrets when provided
     template: operator/webhooks-certgen-patch.yaml
     set:
       imageCredentials:
-        secretRef: "custom-registry-secret"
+        existingSecret:
+          secretName: "custom-registry-secret"
     documentIndex: 0
     asserts:
       - equal:
           path: spec.template.spec.imagePullSecrets[0].name
           value: "custom-registry-secret"
 
-  - it: Patch jobs create thoras-secret-registry-certgen imagePullSecret when password is set
+  - it: Patch jobs create thoras-secret-registry-certgen imagePullSecret when the license key is set
     template: operator/webhooks-certgen-patch.yaml
     set:
-      imageCredentials:
-        password: "test-password"
+      thorasLicenseKey: "test-password"
     documentIndex: 1
     asserts:
       - equal:
@@ -227,7 +227,7 @@ tests:
     template: operator/webhooks-certgen-registry-secret.yaml
     set:
       thorasOperator.webhookCertGen.certManager.enabled: true
-      imageCredentials.password: "test-password"
+      thorasLicenseKey: "test-password"
     asserts:
       - hasDocuments:
           count: 0

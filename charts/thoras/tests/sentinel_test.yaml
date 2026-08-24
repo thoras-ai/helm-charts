@@ -1,0 +1,147 @@
+suite: 5.0 Migration Sentinels
+templates:
+  - validate.yaml
+tests:
+  # Sentinels — pre-5.0 values files must fail render cleanly with an
+  # actionable message. See charts/thoras/README.md#upgrading-to-chart-5x.
+
+  - it: Fails render when imageCredentials.password is set (pre-5.0 values)
+    set:
+      imageCredentials:
+        password: "legacy-license-key"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: `imageCredentials.password` has been replaced by top-level `thorasLicenseKey`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  - it: Fails render when imageCredentials.secretRef is set (pre-5.0 values)
+    set:
+      imageCredentials:
+        secretRef: "legacy-registry-ref"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: `imageCredentials.secretRef` has been renamed to `imageCredentials.existingSecret.secretName`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  - it: Fails render when externalTimescale.secretRefName is set (pre-5.0 values)
+    set:
+      externalTimescale:
+        secretRefName: "legacy-ts-ref"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: `externalTimescale.secretRefName` has been renamed to `externalTimescale.existingSecret.secretName`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  - it: Fails render when externalTimescale.secretRefKey is set (pre-5.0 values)
+    set:
+      externalTimescale:
+        secretRefKey: "legacy-key"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: `externalTimescale.secretRefKey` has been renamed to `externalTimescale.existingSecret.dsnKey`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  - it: Fails render when top-level slackWebhookUrl is set (pre-5.0 values)
+    set:
+      slackWebhookUrl: "https://legacy.example.com"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: top-level `slackWebhookUrl` has been moved to `slackWebhook.url`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  - it: Fails render when slackWebhookUrlSecretRefName is set (pre-5.0 values)
+    set:
+      slackWebhookUrlSecretRefName: "legacy-slack"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: `slackWebhookUrlSecretRefName` has been renamed to `slackWebhook.existingSecret.secretName`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  - it: Fails render when slackWebhookUrlSecretRefKey is set (pre-5.0 values)
+    set:
+      slackWebhookUrlSecretRefKey: "url"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: `slackWebhookUrlSecretRefKey` has been renamed to `slackWebhook.existingSecret.secretKey`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  - it: Fails render when cloudSync.clusterKeySecretRefName is set (pre-5.0 values)
+    set:
+      cloudSync:
+        clusterKeySecretRefName: "legacy-cs"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: `cloudSync.clusterKeySecretRefName` has been renamed to `cloudSync.existingSecret.secretName`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  - it: Fails render when cloudSync.clusterKeySecretRefKey is set (pre-5.0 values)
+    set:
+      cloudSync:
+        clusterKeySecretRefKey: "key"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Chart 5.0 breaking change: `cloudSync.clusterKeySecretRefKey` has been renamed to `cloudSync.existingSecret.secretKey`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render."
+
+  # Ambiguity checks — reject configs that specify a credential twice.
+
+  - it: Fails render when both externalTimescale.dsn and existingSecret.secretName are set
+    set:
+      externalTimescale:
+        dsn: "postgres://x"
+        existingSecret:
+          secretName: "operator-provided"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Both `externalTimescale.dsn` and `externalTimescale.existingSecret.secretName` are set. Pick one."
+
+  - it: Fails render when both apiClientSecret.secret and existingSecret.secretName are set
+    set:
+      apiClientSecret:
+        secret: "abc"
+        existingSecret:
+          secretName: "operator-provided"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Both `apiClientSecret.secret` and `apiClientSecret.existingSecret.secretName` are set. Pick one."
+
+  - it: Fails render when both cloudSync.clusterKey and existingSecret.secretName are set
+    set:
+      cloudSync:
+        clusterKey: "abc"
+        existingSecret:
+          secretName: "operator-provided"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Both `cloudSync.clusterKey` and `cloudSync.existingSecret.secretName` are set. Pick one."
+
+  - it: Fails render when both slackWebhook.url and existingSecret.secretName are set
+    set:
+      slackWebhook:
+        url: "https://slack.example.com"
+        existingSecret:
+          secretName: "operator-provided"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Both `slackWebhook.url` and `slackWebhook.existingSecret.secretName` are set. Pick one."
+
+  # Happy paths — the sentinel does not fire on well-formed 5.0 values.
+
+  - it: Renders when only thorasLicenseKey is set
+    set:
+      thorasLicenseKey: "abc"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders when only imageCredentials.existingSecret.secretName is set
+    set:
+      imageCredentials:
+        existingSecret:
+          secretName: "operator-provided"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders when both thorasLicenseKey and imageCredentials.existingSecret.secretName are set
+    # Both is a legitimate combination (license key holds the registry password,
+    # but the operator uses their own dockerconfigjson Secret so it goes unused).
+    set:
+      thorasLicenseKey: "abc"
+      imageCredentials:
+        existingSecret:
+          secretName: "operator-provided"
+    asserts:
+      - hasDocuments:
+          count: 0

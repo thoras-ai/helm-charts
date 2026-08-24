@@ -3,16 +3,33 @@ thorasVersion: "4.119.0"
 cluster:
   name: ""
 
+# Thoras license key. Set this to the value provided by Thoras during
+# onboarding. Renamed from imageCredentials.password in chart 5.0; upgrades
+# from 4.x will fail render with a migration message if the old key is set.
+thorasLicenseKey: ""
+
+# Top-level default for every credential Secret name. When set, every
+# per-credential `<credential>.existingSecret.secretName` inherits this value
+# unless overridden. Per-credential fields still take precedence.
+#
+# NOTE: `imageCredentials.existingSecret.secretName` does NOT inherit this
+# value — the registry Secret must be type: kubernetes.io/dockerconfigjson
+# while the shared credentials Secret is type: Opaque. See
+# `imageCredentials.existingSecret.secretName` below.
+existingSecret:
+  secretName: ""
+
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
   username: "_json_key_base64"
-
-  # Set the license key directly as a variable (or alternatively
-  # use imageCredentials.secretRef to reference an existing secret
-  password: ""
-
-  # Reference a pre-existing secret in the Thoras namespace
-  secretRef: ""
+  existingSecret:
+    # Reference a pre-existing dockerconfigjson Secret in the Thoras namespace.
+    # When set, the chart does not render `thoras-secret-registry`.
+    # Does NOT inherit the top-level existingSecret.secretName.
+    secretName: ""
+  # When true, PodSpec-level `imagePullSecrets` is emitted in addition to the
+  # ServiceAccount-level list. Required for admission controllers (e.g. OPA
+  # Gatekeeper) that validate `imagePullSecrets` on the pod directly.
   imagePullSecretInDeployment: false
 
 resourceQuota:
@@ -80,10 +97,16 @@ featureFlags:
 apiClientSecret:
   # Plaintext value; the chart base64-encodes it. Leave empty to generate one.
   # A value already present in the cluster takes precedence, so setting this
-  # after install has no effect until the api-client-secret Secret is deleted.
-  # Set it when rendering without cluster access (helm template, Argo CD),
-  # where a generated value would differ on every render.
+  # after install has no effect until the api-client-secret key is deleted from
+  # the thoras-credentials Secret. Set it when rendering without cluster access
+  # (helm template, Argo CD), where a generated value would differ on every render.
   secret: ""
+  existingSecret:
+    # Empty → inherits top-level existingSecret.secretName, then falls back to
+    # the chart-seeded `thoras-credentials`.
+    secretName: ""
+    # Key on the referenced Secret that holds the api-client secret value.
+    secretKey: "api-client-secret"
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:
@@ -94,29 +117,34 @@ costRefreshBatching:
 # Enable Slack errors
 slackErrorsEnabled: false
 
-# Set Slack notification Webhook URL directly (or alternatively use
-# use slackWebhookUrlSecretRef to reference an existing secret
-slackWebhookUrl: ""
-
-# If you'd like to reference an existing secret, use these two values
-# to indicate the secret name and data key
-slackWebhookUrlSecretRefName: ""
-slackWebhookUrlSecretRefKey: ""
+# Slack integration is disabled by default. Enable it by setting either
+# `slackWebhook.url` (plaintext, chart seeds into thoras-credentials) OR
+# `slackWebhook.existingSecret.secretName` + `secretKey` (pre-existing Secret).
+# Leaving `existingSecret.secretKey` empty disables the integration end-to-end;
+# the workloads skip the env var and Slack notifications no-op.
+slackWebhook:
+  url: ""
+  existingSecret:
+    # Empty → inherits top-level existingSecret.secretName.
+    secretName: ""
+    # Empty → Slack disabled. Set to a key name to enable.
+    secretKey: ""
 
 cloudSync:
   baseUrl: "https://console.thoras.ai"
 
   clusterKeyID: ""
 
-  # Set cluster key directly (or alternatively use use clusterKeySecretRef to
-  # reference an existing secret. Sync is disabled if no cluster key is
-  # provided.
+  # Set cluster key directly (chart seeds into thoras-credentials) OR reference
+  # a pre-existing Secret via existingSecret. Sync is disabled unless
+  # clusterKeyID is set AND existingSecret.secretKey is non-empty.
   clusterKey: ""
 
-  # If you'd like to reference an existing secret, use these two values to
-  # indicate the secret name and data key
-  clusterKeySecretRefName: ""
-  clusterKeySecretRefKey: ""
+  existingSecret:
+    # Empty → inherits top-level existingSecret.secretName.
+    secretName: ""
+    # Empty → cloudSync disabled. Set to a key name to enable.
+    secretKey: ""
 
 # External TimescaleDB configuration. When set, the chart skips deploying the
 # in-cluster TimescaleDB and configures all components to use the external
@@ -125,12 +153,19 @@ cloudSync:
 externalTimescale:
   # Full postgres DSN including the database name,
   # e.g. "postgres://user:password@host:5432/tsdb?sslmode=require"
+  # When set, the chart seeds the DSN into thoras-credentials under the
+  # `timescale-dsn` key.
   dsn: ""
 
-  # Or reference a pre-existing Secret containing the DSN.
-  # The secret key must contain the full postgres DSN including the database name.
-  secretRefName: ""
-  secretRefKey: ""
+  existingSecret:
+    # Reference a pre-existing Secret containing the DSN. When set, the chart
+    # skips seeding both the DSN and the in-cluster timescale password.
+    # Empty → inherits top-level existingSecret.secretName.
+    secretName: ""
+    # Key holding the full postgres DSN (external mode).
+    dsnKey: "timescale-dsn"
+    # Key holding the in-cluster postgres password (in-cluster mode only).
+    passwordKey: "timescale-password"
 
 # Default PostgreSQL connection-pool settings for the api-server, operator,
 # and worker. Each component can override any of these under its own
@@ -297,6 +332,13 @@ metricsCollector:
     extensionVersion: "2.28.2"
     name: timescale
     containerPort: 5432
+    # Plaintext password for the in-cluster TimescaleDB. Chart-seeded into the
+    # thoras-credentials Secret (key: timescale-password) and used to derive the
+    # DSN. Leave empty to generate one on first install. Values-provided input
+    # only takes effect on first render — on subsequent renders the in-cluster
+    # value is preserved via `lookup`. Set explicitly when rendering without
+    # cluster access (helm template, Argo CD) for deterministic renders.
+    password: ""
     # Specify the complete resources block (takes precedence if set)
     resources: {}
     # Legacy field for backward compatibility (used if resources is empty)

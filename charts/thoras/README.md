@@ -4,7 +4,9 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.144.0](https://img.shields.io/badge/Version-4.144.0-informational?style=flat-square) ![AppVersion: 4.119.0](https://img.shields.io/badge/AppVersion-4.119.0-informational?style=flat-square)
+![Version: 5.0.0](https://img.shields.io/badge/Version-5.0.0-informational?style=flat-square) ![AppVersion: 4.119.0](https://img.shields.io/badge/AppVersion-4.119.0-informational?style=flat-square)
+
+**Upgrading from 4.x?** See [Upgrading to chart 5.x](#upgrading-to-chart-5x). A single sentinel-guarded values-file rewrite is required; a helper script is provided.
 
 # Installs
 
@@ -23,10 +25,7 @@ helm repo update
 
 ```
 # values.yaml
-imageCredentials:
-  registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
-  username: "_json_key_base64"
-  password: "<thoras license key>"
+thorasLicenseKey: "<thoras license key>"
 
 metricsCollector:
   persistence:
@@ -46,27 +45,175 @@ helm install \
   -f ./values.yaml
 ```
 
+# Managing credentials
+
+Chart 5.0 collapses every credential into a single Kubernetes Secret:
+
+- `thoras-credentials` (`Opaque`) — Timescale password + DSN, api-client
+  secret, and any enabled Slack / cloud-sync keys.
+- `thoras-secret-registry` (`kubernetes.io/dockerconfigjson`) — image-pull
+  auth. Kept separate because Kubernetes requires
+  `type: kubernetes.io/dockerconfigjson` for `imagePullSecrets` references.
+
+Both Secrets are annotated `helm.sh/resource-policy: keep` and
+`argocd.argoproj.io/sync-options: Prune=false` so an accidental
+`helm uninstall` / `argocd app delete` never takes credentials with it.
+
+Three modes are supported:
+
+### 1. Chart-seeded (default)
+
+Set `thorasLicenseKey` and, optionally, plaintext credentials
+(`apiClientSecret.secret`, `metricsCollector.timescale.password`,
+`slackWebhook.url`, `cloudSync.clusterKey`). The chart generates any values
+you leave empty and preserves them across upgrades via `lookup`.
+
+Under Argo CD or `helm template`, `lookup` returns empty and the chart
+would re-generate secrets on every sync. Either set the plaintext values
+explicitly or use mode 2 / 3 below.
+
+### 2. Operator-managed (top-level `existingSecret.secretName`)
+
+Pre-create a single `Opaque` Secret with the keys the chart needs
+(`timescale-password`, `timescale-dsn`, `api-client-secret`, plus optional
+`cloud-sync-cluster-key` / `slack-webhook-url`) and point the chart at it:
+
+```yaml
+existingSecret:
+  secretName: thoras-credentials  # your Secret name
+```
+
+The chart renders no credentials Secret and every workload reads from your
+Secret. This is the recommended path under Argo CD.
+
+To bootstrap the Secret with generated values, use
+`hack/seed-credentials.sh` (which wraps `helm template --show-only`):
+
+```
+hack/seed-credentials.sh --license-key <key> --chart charts/thoras > seed.yaml
+# Pipe seed.yaml into your secret tooling (kubeseal, ExternalSecrets, ...).
+```
+
+### 3. Mixed mode
+
+Set `<credential>.existingSecret.secretName` per credential to override just
+that one. The chart still seeds `thoras-credentials` for the other
+credentials.
+
+# Upgrading to chart 5.x
+
+Chart 5.0 replaces the six per-credential Secrets that shipped in 4.x with a
+single unified Secret, and renames the credential values to a consistent
+`existingSecret: {secretName, ...Key}` shape.
+
+The chart refuses to render on any 4.x values file — a sentinel checks for the
+renamed fields and fails with a message pointing at this section. The chart
+will not silently upgrade over your live install and delete the six legacy
+Secrets before you have captured their contents.
+
+### Migration procedure
+
+Migrate your values file. `hack/migrate-values-to-5.x.sh` rewrites every
+renamed field. It is idempotent — running it twice is a no-op.
+
+```
+hack/migrate-values-to-5.x.sh values.yaml
+```
+
+The 4.x → 5.x renames:
+
+| 4.x                                        | 5.x                                             |
+| ------------------------------------------ | ----------------------------------------------- |
+| `imageCredentials.password`                | `thorasLicenseKey`                              |
+| `imageCredentials.secretRef`               | `imageCredentials.existingSecret.secretName`    |
+| `externalTimescale.secretRefName`          | `externalTimescale.existingSecret.secretName`   |
+| `externalTimescale.secretRefKey`           | `externalTimescale.existingSecret.dsnKey`       |
+| `slackWebhookUrl`                          | `slackWebhook.url`                              |
+| `slackWebhookUrlSecretRefName`             | `slackWebhook.existingSecret.secretName`        |
+| `slackWebhookUrlSecretRefKey`              | `slackWebhook.existingSecret.secretKey`         |
+| `cloudSync.clusterKeySecretRefName`        | `cloudSync.existingSecret.secretName`           |
+| `cloudSync.clusterKeySecretRefKey`         | `cloudSync.existingSecret.secretKey`            |
+
+Optional integrations (Slack, cloud-sync) are disabled unless their
+`existingSecret.secretKey` is non-empty. `hack/migrate-values-to-5.x.sh`
+preserves the old key name where it was set, so previously-enabled
+integrations stay enabled.
+
+### Preserving credentials across upgrade
+
+The chart no longer emits `thoras-timescale-password`, `api-client-secret`,
+`thoras-cloud-sync`, or `thoras-slack`. On upgrade, Helm/Argo CD will prune
+the four legacy Secrets when they are no longer templated. Before upgrading,
+capture the values you want to preserve into the new `thoras-credentials`
+Secret. Two strategies:
+
+**A. External capture (recommended for GitOps).** Extract the four legacy
+Secret values, create `thoras-credentials` under your normal secret tooling
+(ExternalSecrets, sealed-secrets, `kubectl create secret`), and set
+`existingSecret.secretName: thoras-credentials` in your values file. Upgrade.
+The chart never renders `thoras-credentials` and does not touch your Secret.
+
+Key-name mapping when you build the Secret manually:
+
+| Legacy Secret / key                  | New key on `thoras-credentials` |
+| ------------------------------------ | ------------------------------- |
+| `thoras-timescale-password.password` | `timescale-password`            |
+| `thoras-timescale-password.host`     | `timescale-dsn`                 |
+| `api-client-secret.secret`           | `api-client-secret`             |
+| `thoras-cloud-sync.clusterKey`       | `cloud-sync-cluster-key`        |
+| `thoras-slack.webhookUrl`            | `slack-webhook-url`             |
+
+**B. Values-file capture.** Copy the plaintext values out of the four legacy
+Secrets into your values file:
+
+```yaml
+thorasLicenseKey: "<from imageCredentials.password>"
+metricsCollector:
+  timescale:
+    password: "<from thoras-timescale-password data.password>"
+apiClientSecret:
+  secret: "<from api-client-secret data.secret>"
+cloudSync:
+  clusterKey: "<from thoras-cloud-sync data.clusterKey>"
+slackWebhook:
+  url: "<from thoras-slack data.webhookUrl>"
+```
+
+The chart seeds `thoras-credentials` with these values on the next render. The
+four legacy Secrets are pruned; workloads read from the new unified Secret.
+
+Under Argo CD, mode B carries the same drift risk it always did — either
+also set `apiClientSecret.existingSecret.secretName`-style overrides (mode 3
+above), or ignore `/data` on `thoras-credentials` in `spec.ignoreDifferences`.
+
 # Values
 
 ## Global
 
-| Key                                | Type    | Default                                          | Description                                                                                                            |
-| ---------------------------------- | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.119.0                                          | Thoras app version                                                                                                     |
-| imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                |
-| imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                            |
-| imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                         |
-| resourceQuota.enabled              | Bool    | false                                            | Enables resource quotas within Thoras                                                                                  |
+| Key                                          | Type    | Default                                          | Description                                                                                                            |
+| -------------------------------------------- | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| thorasVersion                                | String  | 4.119.0                                          | Thoras app version                                                                                                     |
+| thorasLicenseKey                             | String  | ""                                               | Thoras license key. Renamed from `imageCredentials.password` in chart 5.0.                                             |
+| existingSecret.secretName                    | String  | ""                                               | Top-level default for every credential Secret name (except `imageCredentials`). See "Managing credentials".            |
+| imageCredentials.registry                    | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                |
+| imageCredentials.username                    | String  | \_json_key_base64                                | Container registry username                                                                                            |
+| imageCredentials.existingSecret.secretName   | String  | ""                                               | Pre-existing dockerconfigjson Secret. Alternative to `thorasLicenseKey`. Does not inherit top-level `existingSecret`.  |
+| imageCredentials.imagePullSecretInDeployment | Bool    | false                                            | Emit `imagePullSecrets` on the PodSpec in addition to the ServiceAccount.                                              |
+| resourceQuota.enabled                        | Bool    | false                                            | Enables resource quotas within Thoras                                                                                  |
 | resourceQuota.pods                 | Number  | 200                                              | Maximum number of pods allowed                                                                                         |
 | resourceQuota.cronjobs             | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                     |
 | resourceQuota.jobs                 | Number  | 200                                              | Maximum number of jobs allowed                                                                                         |
 | logLevel                           | String  | info                                             | Default log level                                                                                                      |
 | env                                | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                        |
-| slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                       |
-| slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                           |
-| cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                                 |
-| cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                      |
-| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                                 |
+| slackWebhook.url                             | String  | ""                                               | Slack Webhook URL destination for notifications. Renamed from top-level `slackWebhookUrl` in 5.0.                       |
+| slackWebhook.existingSecret.secretName       | String  | ""                                               | Pre-existing Secret with the Slack webhook URL. Empty → inherits top-level `existingSecret.secretName`.                |
+| slackWebhook.existingSecret.secretKey        | String  | ""                                               | Key on the Secret that holds the webhook URL. Empty → Slack disabled end-to-end.                                       |
+| slackErrorsEnabled                           | Boolean | false                                            | Determines if error-level logs are sent to `slackWebhook.url`                                                          |
+| cloudSync.clusterKeyID                       | String  | ""                                               | Identity of cluster sync key. Cloud sync is disabled if not specified.                                                 |
+| cloudSync.clusterKey                         | String  | ""                                               | Unique key identifying this cluster to the cloud. Seeded into the unified credentials Secret.                          |
+| cloudSync.existingSecret.secretName          | String  | ""                                               | Pre-existing Secret with the cluster key. Empty → inherits top-level `existingSecret.secretName`.                      |
+| cloudSync.existingSecret.secretKey           | String  | ""                                               | Key on the Secret that holds the cluster key. Empty → cloudSync disabled end-to-end.                                   |
+| cloudSync.baseUrl                            | String  | "https://console.thoras.ai"                      | Thoras cloud base URL.                                                                                                 |
 | queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                               |
 | nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                     |
 | tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                       |
@@ -75,7 +222,9 @@ helm install \
 | costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                     |
 | costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                               |
 | costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                  |
-| apiClientSecret.secret             | String  | ""                                               | Shared secret components send to the API server when `featureFlags.enableSimpleAuthSecret` is true. Generated if empty |
+| apiClientSecret.secret                       | String  | ""                                               | Shared secret components send to the API server when `featureFlags.enableSimpleAuthSecret` is true. Generated if empty. |
+| apiClientSecret.existingSecret.secretName    | String  | ""                                               | Pre-existing Secret holding the shared secret. Empty → inherits top-level `existingSecret.secretName`.                 |
+| apiClientSecret.existingSecret.secretKey     | String  | "api-client-secret"                              | Key on the Secret that holds the shared secret.                                                                        |
 
 ## Feature Flags
 
@@ -186,11 +335,12 @@ When set, the chart skips deploying the in-cluster TimescaleDB and configures
 all components to use an external database instead. The TimescaleDB extension
 must be pre-installed and managed externally.
 
-| Key                             | Type   | Default | Description                                                                                           |
-| ------------------------------- | ------ | ------- | ----------------------------------------------------------------------------------------------------- |
-| externalTimescale.dsn           | String | ""      | Full postgres DSN including database name, e.g. `postgres://user:pass@host:5432/tsdb?sslmode=require` |
-| externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`)                               |
-| externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN                                                              |
+| Key                                            | Type   | Default            | Description                                                                                           |
+| ---------------------------------------------- | ------ | ------------------ | ----------------------------------------------------------------------------------------------------- |
+| externalTimescale.dsn                          | String | ""                 | Full postgres DSN including database name, e.g. `postgres://user:pass@host:5432/tsdb?sslmode=require` |
+| externalTimescale.existingSecret.secretName    | String | ""                 | Pre-existing Secret holding the DSN. Empty → inherits top-level `existingSecret.secretName`.          |
+| externalTimescale.existingSecret.dsnKey        | String | "timescale-dsn"    | Key on the Secret that holds the DSN.                                                                 |
+| externalTimescale.existingSecret.passwordKey   | String | "timescale-password" | Key on the Secret that holds the in-cluster postgres password (in-cluster mode only).               |
 
 ## Thoras Metrics Collector
 

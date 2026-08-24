@@ -1,0 +1,66 @@
+{{- /*
+Chart 5.0 credentials-migration sentinels. These fail render on any pre-5.0
+values file, so operators cannot silently upgrade over a live install and
+have Helm/Argo delete the six legacy Secrets before the operator has migrated
+their credentials to the unified thoras-credentials Secret.
+
+See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure.
+*/}}
+
+{{- if .Values.imageCredentials.password -}}
+{{- fail "Chart 5.0 breaking change: `imageCredentials.password` has been replaced by top-level `thorasLicenseKey`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- if .Values.imageCredentials.secretRef -}}
+{{- fail "Chart 5.0 breaking change: `imageCredentials.secretRef` has been renamed to `imageCredentials.existingSecret.secretName`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- if .Values.externalTimescale.secretRefName -}}
+{{- fail "Chart 5.0 breaking change: `externalTimescale.secretRefName` has been renamed to `externalTimescale.existingSecret.secretName`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- if .Values.externalTimescale.secretRefKey -}}
+{{- fail "Chart 5.0 breaking change: `externalTimescale.secretRefKey` has been renamed to `externalTimescale.existingSecret.dsnKey`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- if .Values.slackWebhookUrl -}}
+{{- fail "Chart 5.0 breaking change: top-level `slackWebhookUrl` has been moved to `slackWebhook.url`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- if .Values.slackWebhookUrlSecretRefName -}}
+{{- fail "Chart 5.0 breaking change: `slackWebhookUrlSecretRefName` has been renamed to `slackWebhook.existingSecret.secretName`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- if .Values.slackWebhookUrlSecretRefKey -}}
+{{- fail "Chart 5.0 breaking change: `slackWebhookUrlSecretRefKey` has been renamed to `slackWebhook.existingSecret.secretKey`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- if .Values.cloudSync.clusterKeySecretRefName -}}
+{{- fail "Chart 5.0 breaking change: `cloudSync.clusterKeySecretRefName` has been renamed to `cloudSync.existingSecret.secretName`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- if .Values.cloudSync.clusterKeySecretRefKey -}}
+{{- fail "Chart 5.0 breaking change: `cloudSync.clusterKeySecretRefKey` has been renamed to `cloudSync.existingSecret.secretKey`. See charts/thoras/README.md#upgrading-to-chart-5x for the migration procedure, or run `hack/migrate-values-to-5.x.sh <values-file>`. Refusing to render." -}}
+{{- end -}}
+
+{{- /*
+Plaintext + existingSecret.secretName ambiguity. Match the shape of the
+existing registry-secret.yaml fail — if the operator supplies both, they've
+almost certainly made a mistake and we'd rather stop than silently pick one.
+*/}}
+
+{{- if and .Values.externalTimescale.dsn (.Values.externalTimescale.existingSecret).secretName -}}
+{{- fail "Both `externalTimescale.dsn` and `externalTimescale.existingSecret.secretName` are set. Pick one." -}}
+{{- end -}}
+
+{{- if and .Values.apiClientSecret.secret (.Values.apiClientSecret.existingSecret).secretName -}}
+{{- fail "Both `apiClientSecret.secret` and `apiClientSecret.existingSecret.secretName` are set. Pick one." -}}
+{{- end -}}
+
+{{- if and .Values.cloudSync.clusterKey (.Values.cloudSync.existingSecret).secretName -}}
+{{- fail "Both `cloudSync.clusterKey` and `cloudSync.existingSecret.secretName` are set. Pick one." -}}
+{{- end -}}
+
+{{- if and .Values.slackWebhook.url (.Values.slackWebhook.existingSecret).secretName -}}
+{{- fail "Both `slackWebhook.url` and `slackWebhook.existingSecret.secretName` are set. Pick one." -}}
+{{- end -}}

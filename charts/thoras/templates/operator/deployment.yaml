@@ -37,9 +37,9 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
-      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      {{- if .Values.imageCredentials.imagePullSecretInDeployment }}
       imagePullSecrets:
-      - name: {{ .Values.imageCredentials.secretRef }}
+      - name: {{ include "thoras.registrySecretName" . }}
       {{- end }}
       volumes:
         - name: system-config
@@ -70,32 +70,26 @@ spec:
           capabilities:
             drop: [ALL]
         env:
+          {{- if include "thoras.slackWebhookEnabled" . }}
           - name: SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
-            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
-                name: {{ .Values.slackWebhookUrlSecretRefName }}
-                key: {{ .Values.slackWebhookUrlSecretRefKey }}
-            {{- else }}
-                name: thoras-slack
-                key: webhookUrl
-            {{- end }}
+                name: {{ include "thoras.slackWebhookSecretName" . }}
+                key: {{ include "thoras.slackWebhookUrlKey" . }}
+          {{- end }}
           - name: THORAS_NS
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
           - name: SERVICE_SLACK_ERRORS_ENABLED
             value: "{{ .Values.thorasOperator.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+          {{- if include "thoras.slackWebhookEnabled" . }}
           - name: SERVICE_SLACK_WEBHOOK_URL
             valueFrom:
               secretKeyRef:
-            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
-                name: {{ .Values.slackWebhookUrlSecretRefName }}
-                key: {{ .Values.slackWebhookUrlSecretRefKey }}
-            {{- else }}
-                name: thoras-slack
-                key: webhookUrl
-            {{- end }}
+                name: {{ include "thoras.slackWebhookSecretName" . }}
+                key: {{ include "thoras.slackWebhookUrlKey" . }}
+          {{- end }}
           - name: SERVICE_LOG_LEVEL
             value: {{ default .Values.logLevel .Values.thorasOperator.logLevel }}
           - name: SERVICE_CLUSTER_NAME
@@ -128,13 +122,8 @@ spec:
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-              {{- if .Values.externalTimescale.secretRefName }}
-                name: {{ .Values.externalTimescale.secretRefName }}
-                key: {{ .Values.externalTimescale.secretRefKey }}
-              {{- else }}
-                name: thoras-timescale-password
-                key: host
-              {{- end }}
+                name: {{ include "thoras.timescaleSecretName" . }}
+                key: {{ include "thoras.timescaleDsnKey" . }}
           - name: SERVICE_POSTGRESQL_DSN
           {{- if include "thoras.externalTimescaleEnabled" . }}
             value: "$(DATABASE_HOST)"
@@ -150,27 +139,20 @@ spec:
           - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
             value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC
-          {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
-            value: "true"
-          {{- else }}
-            value: "false"
-          {{- end }}
+            value: {{ if include "thoras.cloudSyncEnabled" . }}"true"{{ else }}"false"{{ end }}
           {{- if .Values.cloudSync.clusterKeyID }}
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
             value: {{ .Values.cloudSync.clusterKeyID | quote }}
           {{- end }}
           - name: SERVICE_CLOUD_SYNC_BASE_URL
             value: {{ .Values.cloudSync.baseUrl | quote }}
+          {{- if include "thoras.cloudSyncEnabled" . }}
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
             valueFrom:
               secretKeyRef:
-            {{- if and .Values.cloudSync.clusterKeySecretRefName .Values.cloudSync.clusterKeySecretRefKey }}
-                name: {{ .Values.cloudSync.clusterKeySecretRefName }}
-                key: {{ .Values.cloudSync.clusterKeySecretRefKey }}
-            {{- else }}
-                name: thoras-cloud-sync
-                key: clusterKey
-            {{- end }}
+                name: {{ include "thoras.cloudSyncSecretName" . }}
+                key: {{ include "thoras.cloudSyncClusterKeyKey" . }}
+          {{- end }}
           {{- if .Values.flux.enabled }}
           - name: SERVICE_FIELD_MANAGER
             value: {{ .Values.flux.fieldManager | quote }}
