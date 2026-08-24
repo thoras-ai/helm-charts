@@ -1,3 +1,6 @@
 .claude
-
 .vscode
+values.yaml
+
+# Custom opencode config
+.opencode/**
