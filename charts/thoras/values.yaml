@@ -470,6 +470,11 @@ thorasWorker:
   enableUnifiedAstUtilizationMonitor: true
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
+  # Times a stuck forecast may be fast-tracked to the head of the queue before it
+  # falls back to its normal schedule. Prevents one workload whose forecasts keep
+  # overrunning forecastJobTimeoutInterval from monopolising the forecast workers.
+  # Set to -1 to disable the cap.
+  forecastRescueMaxAttempts: 3
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)
