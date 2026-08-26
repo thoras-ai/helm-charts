@@ -88,7 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations                                     |
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations                          |
 | featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                               |
-| featureFlags.enableSimpleAuthSecret            | Boolean | false   | If true, generates the `api-client-secret` Secret and wires it into all components |
+| featureFlags.enableSimpleAuthSecret            | Boolean | true    | If true, generates the `api-client-secret` Secret and wires it into all components |
 | featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs    |
 
 ## Affinity Configuration
