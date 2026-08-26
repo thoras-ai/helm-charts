@@ -24,3 +24,9 @@ tests:
       featureFlags.enablePodLogStreaming: null
     asserts:
       - notFailedTemplate: {}
+
+  - it: All templates render when the postUpgradeHook block is missing from stored values
+    set:
+      thorasOperator.postUpgradeHook: null
+    asserts:
+      - notFailedTemplate: {}

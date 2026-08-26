@@ -148,6 +148,19 @@ rbac:
 
 thorasOperator:
   replicas: 2
+  postUpgradeHook:
+    # After each `helm upgrade`, runs a Job that executes the operator's
+    # post-upgrade steps: one-off migrations that bring cluster state written by
+    # an older version in line with the version being installed. Every step is
+    # idempotent, so a run that is skipped or fails is simply picked up by the
+    # next upgrade.
+    #
+    # The Job gates the upgrade: if a step fails, the upgrade fails. Disable only
+    # to unblock an upgrade that a step is failing.
+    #
+    # Requires thorasVersion 4.120.0 or newer; earlier images have no
+    # `post-upgrade` subcommand and the Job will fail.
+    enabled: true
   # Overrides for the global `postgresql` connection-pool settings. Any field
   # left unset falls back to the corresponding `postgresql` default.
   postgresql:

@@ -1,0 +1,60 @@
+suite: Post-upgrade hook
+templates:
+  - operator/post-upgrade-hook.yaml
+tests:
+  - it: renders by default as a post-upgrade hook
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.name
+          value: thoras-post-upgrade-hook
+      # post-upgrade only: a fresh install has no state from an older version to
+      # clean up, so post-install would be pure overhead.
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation,hook-succeeded
+
+  - it: runs the generic post-upgrade step runner
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/operator", "post-upgrade"]
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: thoras-operator
+
+  - it: bounds the job so a wedged step cannot block the upgrade forever
+    # This job gates `helm upgrade`, so without these bounds a wedged step hangs
+    # the upgrade instead of failing it.
+    asserts:
+      - equal:
+          path: spec.backoffLimit
+          value: 2
+      - equal:
+          path: spec.activeDeadlineSeconds
+          value: 900
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 300
+
+  - it: is not rendered when disabled
+    set:
+      thorasOperator:
+        postUpgradeHook:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is not rendered when the postUpgradeHook block is absent
+    # Stored values predating this block must fail closed: an image older than
+    # 4.120.0 has no post-upgrade subcommand, and this Job gates the upgrade.
+    set:
+      thorasOperator.postUpgradeHook: null
+    asserts:
+      - hasDocuments:
+          count: 0

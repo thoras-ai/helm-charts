@@ -164,21 +164,22 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 
 ## Thoras Operator
 
-| Key                                | Type    | Default         | Description                                                  |
-| ---------------------------------- | ------- | --------------- | ------------------------------------------------------------ |
-| thorasOperator.serviceAccount.name | String  | thoras-operator | Service account name for Thoras operator pod                 |
-| thorasOperator.podAnnotations      | Object  | {}              | Pod Annotations for Thoras Operator                          |
-| thorasOperator.labels              | Object  | {}              | Pod/service labels for Thoras Operator                       |
-| thorasOperator.resources           | Object  | {}              | Specify the resources block. Takes precedence if set.        |
-| thorasOperator.limits.memory       | String  | 2000Mi          | Legacy field for setting Thoras Operator memory limit        |
-| thorasOperator.requests.cpu        | String  | 1000m           | Legacy field for setting Thoras Operator CPU request         |
-| thorasOperator.requests.memory     | String  | 1000Mi          | Legacy field for setting Thoras Operator memory request      |
-| thorasOperator.slackErrorsEnabled  | Boolean | false           | Determines if error-level logs are sent to `slackWebHookUrl` |
-| thorasOperator.logLevel            | String  | Nil             | Logging level                                                |
-| thorasOperator.queriesPerSecond    | String  | "50"            | Sets a maximum threshold for K8s API qps                     |
-| thorasOperator.prometheus.enabled  | Boolean | true            | Enables a prometheus metric exporter                         |
-| thorasOperator.prometheus.port     | Number  | 9101            | Port for the prometheus metric exporter                      |
-| thorasOperator.pprof.enabled       | Boolean | false           | Enable pprof endpoint.                                       |
+| Key                                    | Type    | Default         | Description                                                                                                   |
+| -------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------------------------------------------- |
+| thorasOperator.postUpgradeHook.enabled | Boolean | true            | Runs the operator's post-upgrade migration steps as a Job after each upgrade; requires thorasVersion 4.120.0+ |
+| thorasOperator.serviceAccount.name     | String  | thoras-operator | Service account name for Thoras operator pod                                                                  |
+| thorasOperator.podAnnotations          | Object  | {}              | Pod Annotations for Thoras Operator                                                                           |
+| thorasOperator.labels                  | Object  | {}              | Pod/service labels for Thoras Operator                                                                        |
+| thorasOperator.resources               | Object  | {}              | Specify the resources block. Takes precedence if set.                                                         |
+| thorasOperator.limits.memory           | String  | 2000Mi          | Legacy field for setting Thoras Operator memory limit                                                         |
+| thorasOperator.requests.cpu            | String  | 1000m           | Legacy field for setting Thoras Operator CPU request                                                          |
+| thorasOperator.requests.memory         | String  | 1000Mi          | Legacy field for setting Thoras Operator memory request                                                       |
+| thorasOperator.slackErrorsEnabled      | Boolean | false           | Determines if error-level logs are sent to `slackWebHookUrl`                                                  |
+| thorasOperator.logLevel                | String  | Nil             | Logging level                                                                                                 |
+| thorasOperator.queriesPerSecond        | String  | "50"            | Sets a maximum threshold for K8s API qps                                                                      |
+| thorasOperator.prometheus.enabled      | Boolean | true            | Enables a prometheus metric exporter                                                                          |
+| thorasOperator.prometheus.port         | Number  | 9101            | Port for the prometheus metric exporter                                                                       |
+| thorasOperator.pprof.enabled           | Boolean | false           | Enable pprof endpoint.                                                                                        |
 
 ## External TimescaleDB
 

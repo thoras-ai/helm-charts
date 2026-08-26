@@ -1,0 +1,54 @@
+{{- if ((.Values.thorasOperator.postUpgradeHook).enabled) }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: thoras-post-upgrade-hook
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+  annotations:
+    # post-upgrade only: a fresh install has no state left by an older version.
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "0"
+    # before-hook-creation clears a previously failed job so the next upgrade can
+    # retry rather than colliding with it.
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  # This job gates `helm upgrade`, so bound it. Without these, a wedged cleanup
+  # step blocks the upgrade indefinitely rather than failing.
+  backoffLimit: 2
+  activeDeadlineSeconds: 900
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      name: thoras-post-upgrade-hook
+      labels: {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ .Values.thorasOperator.serviceAccount.name }}
+      {{- with (include "thoras.hookJobScheduling" . | trim) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      restartPolicy: OnFailure
+      containers:
+      - name: thoras-post-upgrade
+        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        command: ["/app/operator", "post-upgrade"]
+        env:
+          {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+        resources: {}
+{{- end }}
