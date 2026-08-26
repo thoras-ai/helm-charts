@@ -49,3 +49,12 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: is not rendered when the postUpgradeHook block is absent
+    # Stored values predating this block must fail closed: an image older than
+    # 4.120.0 has no post-upgrade subcommand, and this Job gates the upgrade.
+    set:
+      thorasOperator.postUpgradeHook: null
+    asserts:
+      - hasDocuments:
+          count: 0
