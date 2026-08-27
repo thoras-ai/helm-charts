@@ -29,3 +29,42 @@ tests:
           path: data["nginx.conf.template"]
       - notExists:
           path: data["nginx.conf"]
+
+  # Under auth, nginx must not bind containerPort - the sidecar owns it.
+  - it: Binds nginx to loopback on the internal port when auth is enabled
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'listen +127\.0\.0\.1:8181;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'listen +\[::1\]:8181 ipv6only=on;'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '(?m)^ *listen +8080;'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '(?m)^ *listen +\[::\]:8080 ipv6only=on;'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '127\.0\.0\.1:8080'
+
+  # Auth-off: nginx listens on the pod IP; the loopback port must not leak.
+  - it: Binds nginx to all interfaces on containerPort when auth is disabled
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '(?m)^ *listen +8080;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '(?m)^ *listen +\[::\]:8080 ipv6only=on;'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '127\.0\.0\.1'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '8181'

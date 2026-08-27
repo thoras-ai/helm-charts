@@ -18,17 +18,20 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasApiServerV2.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- if or .Values.podAnnotations .Values.thorasApiServerV2.podAnnotations .Values.thorasApiServerV2.prometheus.enabled (not .Values.thorasMonitor.unittesting) }}
+      {{- $userAnnotations := or .Values.podAnnotations .Values.thorasApiServerV2.podAnnotations }}
+      {{- $prometheus := .Values.thorasApiServerV2.prometheus.enabled }}
+      {{- $chartChecksum := not .Values.thorasMonitor.unittesting }}
+      {{- if or $userAnnotations $prometheus $chartChecksum }}
       annotations:
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasApiServerV2.podAnnotations) }}
           {{- . | trim | nindent 8 }}
         {{- end }}
-        {{- if .Values.thorasApiServerV2.prometheus.enabled }}
+        {{- if $prometheus }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
         {{- end }}
-        {{- if not .Values.thorasMonitor.unittesting }}
+        {{- if $chartChecksum }}
         checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
         {{- end }}
       {{- end }}

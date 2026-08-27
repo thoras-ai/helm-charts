@@ -1,0 +1,49 @@
+{{- if and .Values.thorasDashboard.enabled .Values.thorasDashboard.auth.enabled }}
+{{- $auth := .Values.thorasDashboard.auth }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thoras-dashboard-oauth2-proxy-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
+data:
+  {{- if eq $auth.mode "htpasswd" }}
+  oauth2-proxy.cfg: |
+    http_address = "0.0.0.0:{{ .Values.thorasDashboard.containerPort }}"
+    upstreams = ["http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}"]
+    # provider must be set; the dummy value below is unused by htpasswd auth.
+    provider = "google"
+    client_id = "thoras-dashboard"
+    client_secret = "unused"
+    email_domains = ["*"]
+    htpasswd_file = "/etc/oauth2-proxy/generated/htpasswd"
+    display_htpasswd_form = true
+    # Do NOT set skip_provider_button=true - it bypasses the sign-in page
+    # and calls the dummy provider, which 401s.
+    cookie_secret_file = "/etc/oauth2-proxy/secret/cookie-secret"
+    cookie_secure = {{ $auth.cookieSecure }}
+    reverse_proxy = true
+    silence_ping_logging = true
+    banner = "Sign in to the Thoras Dashboard"
+    custom_templates_dir = "/etc/oauth2-proxy/templates"
+  {{- else if eq $auth.mode "oidc" }}
+  oauth2-proxy.cfg: |
+    http_address = "0.0.0.0:{{ .Values.thorasDashboard.containerPort }}"
+    upstreams = ["http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}"]
+    provider = {{ $auth.oidc.provider | quote }}
+    oidc_issuer_url = {{ $auth.oidc.issuerURL | quote }}
+    redirect_url = {{ $auth.oidc.redirectURL | quote }}
+    client_secret_file = "/etc/oauth2-proxy/secret/client-secret"
+    cookie_secret_file = "/etc/oauth2-proxy/secret/cookie-secret"
+    email_domains = [{{ range $i, $d := $auth.oidc.emailDomains }}{{ if $i }}, {{ end }}{{ $d | quote }}{{ end }}]
+    cookie_secure = {{ $auth.cookieSecure }}
+    reverse_proxy = true
+    silence_ping_logging = true
+    skip_provider_button = {{ $auth.oidc.skipProviderButton }}
+    insecure_oidc_allow_unverified_email = {{ $auth.oidc.insecureAllowUnverifiedEmail }}
+    banner = "Sign in to the Thoras Dashboard"
+    custom_templates_dir = "/etc/oauth2-proxy/templates"
+  {{- end }}
+{{- end }}
