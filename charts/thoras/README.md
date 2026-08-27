@@ -62,6 +62,25 @@ minutes):
 kubectl get pods -n thoras
 ```
 
+### Load the dashboard
+
+Port-forward the dashboard Service to your workstation:
+
+```
+kubectl port-forward -n thoras svc/thoras-dashboard 8080:80
+```
+
+Then open <http://localhost:8080>. At chart defaults the dashboard is
+fronted by an oauth2-proxy sidecar in `htpasswd` mode. Sign in with:
+
+- **Username**: `thoras` (`thorasDashboard.auth.htpasswd.username`)
+- **Password**: read from the chart-managed `thoras-shared` Secret:
+
+  ```
+  kubectl get secret thoras-shared -n thoras \
+    -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
+  ```
+
 ## Secrets
 
 The chart seeds a shared `thoras-shared` Secret on first install with any
@@ -69,17 +88,19 @@ values it needs to generate (dashboard credentials, API client secret, ...).
 Generated values are stable across upgrades: the chart re-reads the existing
 Secret via `lookup` rather than regenerating them.
 
-- **Pin explicitly** by setting the values field (e.g.
-  `thorasDashboard.auth.htpasswd.password`,
-  `thorasDashboard.auth.htpasswd.cookieSecret`, `apiClientSecret.secret`).
-  A values pin always wins over the generated value.
+- **Pin explicitly** by setting the values field. A values pin always
+  wins over the generated value. See
+  [Pinning credentials](#pinning-credentials) for the full list.
 - **Provide an externally managed secret** (Sealed Secrets, External
-  Secrets, SOPS) via the corresponding `*.existingSecret.secretName` field.
-  The chart skips seeding those keys in `thoras-shared` and reads from the
-  external Secret instead.
+  Secrets, SOPS) via the corresponding `*.existingSecret.secretName`
+  field. The chart skips seeding those keys in `thoras-shared` and
+  reads from the external Secret instead. See
+  [Using external secret references](#using-external-secret-references)
+  for the full list.
 - **Argo CD**: add `Secret/thoras-shared` to your `Application`'s
-  `spec.ignoreDifferences` under `jsonPointers: [/data]` so Argo does not
-  overwrite chart-generated random values on every reconcile.
+  `spec.ignoreDifferences` under `jsonPointers: [/data]` so Argo does
+  not overwrite chart-generated random values on every reconcile. See
+  [ArgoCD](#argocd) for the full `ignoreDifferences` block.
 
 ### Rotating secrets
 
@@ -151,6 +172,8 @@ hasn't. To prevent this, either pin every chart-generated credential or point th
 pre-existing Secret you manage out-of-band (Sealed Secrets, External
 Secrets, SOPS, ...).
 
+### Pinning credentials
+
 Set the following values to pin:
 
 | Credential                  | Pin in values                                |
@@ -160,7 +183,10 @@ Set the following values to pin:
 | Dashboard htpasswd cookie   | `thorasDashboard.auth.htpasswd.cookieSecret` |
 | TimescaleDB DSN (external)  | `externalTimescale.dsn`                      |
 
-Or provide external secret references:
+### Using external secret references
+
+Or point the chart at Secrets you manage out-of-band via the following
+`existingSecret` / `secretRef` fields:
 
 | Credential                                | secretName field                                          | Key field(s)                                                                                                                                              |
 | ----------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
