@@ -583,6 +583,11 @@ thorasDashboard:
 thorasMonitor:
   unittesting: false
   labels: {}
+  # Raw monitor configuration YAML. Configures the named Slack alerts under
+  # `alerts` (enable/disable and per-alert notification_cooldown) and the
+  # `general` block: cluster name, monitor_cadence, and optional metadata
+  # key/value pairs surfaced on every alert (e.g. region: euw1, to disambiguate
+  # clusters that share a name across regions).
   config: |
 
 thorasForecast:
