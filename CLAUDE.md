@@ -103,6 +103,17 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
   - Subject ≤72 characters.
   - Optional body/footers follow a blank line.
 
+## Comments
+
+Keep comments concise and forward-looking. Write for the next reader of the
+chart, not for the review of the PR that added them.
+
+- Explain non-obvious constraints, footguns, and TODOs.
+- Skip history, reasoning narratives, issue numbers, and comparisons to
+  approaches not taken.
+- Do not restate what the code, values, or assertions already say.
+- One line is usually enough; multi-line blocks need to earn it.
+
 ## CI/CD Pipeline
 
 - **CI**: Runs Helm unit tests and pre-commit hooks on PRs
