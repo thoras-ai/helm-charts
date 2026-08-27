@@ -306,6 +306,38 @@ must be pre-installed and managed externally.
 | thorasMonitor.labels | Object | {}      | Pod labels for Thoras monitor     |
 | thorasMonitor.config | String | ""      | Thoras Monitor configuration yaml |
 
+## Example Thoras Monitor Configuration
+
+`thorasMonitor.config` is raw monitor YAML. `general.metadata` holds optional string key/value pairs that are surfaced on every named monitor Slack alert, one line per pair. This is useful to disambiguate clusters that share a name across regions (e.g. `prod-a` in `use1` and `euw1`):
+
+```yaml
+# values.yaml
+---
+thorasMonitor:
+  config: |
+    general:
+      name: 'prod-a'
+      monitor_cadence: 5m
+      metadata:
+        region: euw1
+    alerts:
+      - name: thoras_deployments
+        notification_cooldown: 15m
+        enabled: true
+      - name: no_suggestions
+        notification_cooldown: 15m
+        enabled: true
+```
+
+The alert is then prefixed with the metadata:
+
+```
+*Cluster:* prod-a
+*region:* euw1
+*Alert:* thoras_deployments
+...
+```
+
 ## Example Thoras Dashboard Ingress Configuration
 
 ```yaml
