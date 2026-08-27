@@ -274,7 +274,7 @@ must be pre-installed and managed externally.
 | thorasDashboard.rbac.create                      | Bool    | true             | Creates cluster role for Thoras Dashboard pod                            |
 | thorasDashboard.podAnnotations                   | Object  | {}               | Pod Annotations for Thoras Dashboard                                     |
 | thorasDashboard.labels                           | Object  | {}               | Pod/service labels for Thoras Dashboard                                  |
-| thorasDashboard.containerPort                    | Number  | 5173             | Thoras Dashboard port                                                    |
+| thorasDashboard.containerPort                    | Number  | 8080             | Container port for the Thoras Dashboard. Owned by the oauth2-proxy sidecar when `thorasDashboard.auth.enabled` (default), otherwise by nginx directly. |
 | thorasDashboard.port                             | Number  | 80               | Thoras Dashboard service port                                            |
 | thorasDashboard.resources                        | Object  | {}               | Specify the resources block. Takes precedence if set.                    |
 | thorasDashboard.limits.memory                    | String  | 2000Mi           | Legacy field for setting Thoras Dashboard memory limit                   |
@@ -286,6 +286,30 @@ must be pre-installed and managed externally.
 | thorasDashboard.service.loadBalancerIP           | String  | nil              | Service loadBalancerIP when type is LoadBalancer                         |
 | thorasDashboard.service.loadBalancerSourceRanges | List    | nil              | Service loadBalancerSourceRanges when type is LoadBalancer               |
 | thorasDashboard.service.externalIPs              | List    | nil              | Service externalIPs                                                      |
+| thorasDashboard.auth.enabled                                | Bool    | true                | Fronts the dashboard with an oauth2-proxy sidecar. Disable to run your own auth |
+| thorasDashboard.auth.mode                                   | String  | htpasswd            | `htpasswd` (chart-managed username+password) or `oidc` (OIDC via your IdP). Fields under the unused mode's block are silently ignored |
+| thorasDashboard.auth.cookieSecure                           | Bool    | false               | Marks session cookies as Secure. Recommended enabled in production. Requires TLS at the edge and breaks Safari via `kubectl port-forward`. Applies to both modes |
+| thorasDashboard.auth.imageTag                               | String  | v7.15.4-alpine      | oauth2-proxy sidecar image tag. Applies to both modes                    |
+| thorasDashboard.auth.resources                              | Object  | see values.yaml     | oauth2-proxy sidecar resources                                           |
+| thorasDashboard.auth.extraArgs                              | List    | []                  | Extra flags appended to the sidecar's `args` verbatim. Applies to both modes. Flags here override any equivalent directive in the chart-generated `oauth2-proxy.cfg` |
+| thorasDashboard.auth.htpasswd.username                      | String  | thoras              | Login username under `mode: htpasswd`                                    |
+| thorasDashboard.auth.htpasswd.password                      | String  | ""                  | Dashboard login password. Chart generates if empty. Setting a value overrides any existing value on the next `helm upgrade`; consumer workloads require a manual rollout (see [rotating secrets](#rotating-secrets)). `thorasDashboard.auth.htpasswd.existingSecret` takes precedent |
+| thorasDashboard.auth.htpasswd.cookieSecret                  | String  | ""                  | Session cookie secret; 16, 24, or 32 bytes (`openssl rand -base64 32`). Chart generates if empty. Setting a value overrides any existing value on the next `helm upgrade`; consumer workloads require a manual rollout, which invalidates all logged-in dashboard sessions (see [rotating secrets](#rotating-secrets)). `thorasDashboard.auth.htpasswd.existingSecret` takes precedent |
+| thorasDashboard.auth.htpasswd.existingSecret.secretName     | String  | ""                  | Read the htpasswd password + cookie secret from this pre-existing externally managed secret. Required keys documented below |
+| thorasDashboard.auth.htpasswd.existingSecret.passwordKey    | String  | dashboard-auth-password | Key inside `existingSecret.secretName` that holds the password         |
+| thorasDashboard.auth.htpasswd.existingSecret.cookieSecretKey | String | dashboard-auth-cookie-secret | Key inside `existingSecret.secretName` that holds the cookie secret  |
+| thorasDashboard.auth.htpasswd.initImage.imageTag            | String  | 2.4.68-alpine3.24   | httpd image tag for the init container that regenerates the htpasswd file at pod start |
+| thorasDashboard.auth.htpasswd.initImage.resources           | Object  | see values.yaml     | htpasswd init container resources                                        |
+| thorasDashboard.auth.oidc.provider                          | String  | oidc                | oauth2-proxy provider name (`oidc`, `okta`, `entra-id`, `google`, ...)   |
+| thorasDashboard.auth.oidc.issuerURL                         | String  | ""                  | OIDC issuer URL. Required under `mode: oidc`                             |
+| thorasDashboard.auth.oidc.redirectURL                       | String  | ""                  | External redirect URL registered on your IdP app. Required under `mode: oidc` |
+| thorasDashboard.auth.oidc.emailDomains                      | List    | ["*"]               | Allowed login email domains. Rendered as repeated oauth2-proxy `email_domains` entries |
+| thorasDashboard.auth.oidc.skipProviderButton                | Bool    | true                | Skip oauth2-proxy's provider-choice landing page (safe under OIDC)       |
+| thorasDashboard.auth.oidc.insecureAllowUnverifiedEmail      | Bool    | false               | Allow login for accounts with unverified email addresses                 |
+| thorasDashboard.auth.oidc.existingSecret.secretName         | String  | ""                  | Pre-existing externally managed secret with the IdP client credentials + cookie secret. Required under `mode: oidc`; the chart never generates these. Required keys documented below |
+| thorasDashboard.auth.oidc.existingSecret.clientIDKey        | String  | client-id           | Key inside `existingSecret.secretName` that holds the OIDC client ID     |
+| thorasDashboard.auth.oidc.existingSecret.clientSecretKey    | String  | client-secret       | Key inside `existingSecret.secretName` that holds the OIDC client secret |
+| thorasDashboard.auth.oidc.existingSecret.cookieSecretKey    | String  | cookie-secret       | Key inside `existingSecret.secretName` that holds the session cookie secret |
 | thorasDashboard.ingress.enabled                  | Bool    | false            | Enables Ingress for the Dashboard                                        |
 | thorasDashboard.ingress.ingressClassName         | String  | ""               | IngressClass to use for the Dashboard Ingress                            |
 | thorasDashboard.ingress.annotations              | Object  | {}               | Annotations for the Dashboard Ingress                                    |
@@ -339,6 +363,187 @@ The alert is then prefixed with the metadata:
 *Alert:* thoras_deployments
 ...
 ```
+
+## Thoras Dashboard Authentication
+
+The dashboard ships with HTTP authentication enabled by default, terminated by
+an [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) sidecar. Two
+modes are supported via `thorasDashboard.auth.mode`: `htpasswd` (default,
+chart-managed username + password) and `oidc` (full OIDC login flow against
+your identity provider). Fields under the unused mode's block are silently
+ignored, so switching between modes is just flipping `auth.mode`. Credentials
+and session cookies are only meaningful behind TLS — terminate TLS at the edge.
+
+### Bring your own auth
+
+Set `thorasDashboard.auth.enabled: false` to disable the built-in sidecar and
+front the dashboard with your own auth — for example a custom SSO sidecar
+wired through `extraContainers` and `service.targetPort`, an edge-level auth
+plugin, or a service-mesh policy.
+
+```yaml
+thorasDashboard:
+  auth:
+    enabled: false
+```
+
+### htpasswd mode
+
+A random password and cookie secret are generated on first install. Retrieve
+the password:
+
+```bash
+kubectl get secret thoras-shared -n <namespace> \
+  -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
+```
+
+Pin the password and cookie secret explicitly in GitOps installs (Argo CD,
+`helm template`) — `lookup` is not available there, so unpinned values are
+regenerated on every render and invalidate existing sessions:
+
+```yaml
+thorasDashboard:
+  auth:
+    htpasswd:
+      username: thoras
+      password: <your-password>
+      cookieSecret: <your-32-char-cookie-secret>
+```
+
+### OIDC mode
+
+Register the dashboard as an OIDC application with your identity provider,
+create a Kubernetes Secret with the resulting credentials, and switch the
+chart into OIDC mode:
+
+```yaml
+thorasDashboard:
+  auth:
+    mode: oidc
+    oidc:
+      provider: oidc  # or okta, entra-id, google, ...
+      issuerURL: https://<your-okta-domain>/oauth2/default
+      redirectURL: https://thoras.example.com/oauth2/callback
+      emailDomains: [example.com]
+      existingSecret:
+        secretName: oauth2-proxy-secrets
+```
+
+The Secret must contain three keys (names configurable via
+`auth.oidc.existingSecret.{clientIDKey,clientSecretKey,cookieSecretKey}`):
+
+```bash
+kubectl create secret generic oauth2-proxy-secrets -n <namespace> \
+  --from-literal=client-id="<idp-client-id>" \
+  --from-literal=client-secret="<idp-client-secret>" \
+  --from-literal=cookie-secret="$(openssl rand -base64 32 | head -c 32 | base64)"
+```
+
+The `redirectURL` must exactly match the redirect URI registered on the IdP
+application.
+
+#### NetworkPolicy egress
+
+When `networkPolicy.enabled: true`, OIDC mode opens broad egress on the
+dashboard's `CiliumNetworkPolicy` to `world:443` so oauth2-proxy can reach
+the IdP's discovery, token, and userinfo endpoints. Okta / Entra / other
+IdPs resolve to broad, drifting CIDR ranges, so a scoped rule would be
+brittle. Tighten by layering an additional `CiliumNetworkPolicy` that
+restricts egress to specific IdP hostnames (`toFQDNs`), or manage
+egress out-of-band.
+
+#### Migrating from the standalone oauth2-proxy sidecar
+
+Customers who previously ran their own oauth2-proxy as
+`thorasDashboard.extraContainers` and retargeted the Service at port `4180`
+can migrate onto the chart-shipped sidecar without touching the IdP app
+registration or the existing `oauth2-proxy-secrets` Secret:
+
+**Delete** from `values.yaml`:
+
+```yaml
+thorasDashboard:
+  service:
+    targetPort: 4180        # remove
+  extraContainers:          # remove the entire oauth2-proxy container
+    - name: oauth2-proxy
+      # ...
+```
+
+**Add**:
+
+```yaml
+thorasDashboard:
+  auth:
+    mode: oidc
+    oidc:
+      issuerURL: https://<your-okta-domain>/oauth2/default
+      redirectURL: https://thoras.example.com/oauth2/callback
+      emailDomains: [example.com]
+      existingSecret:
+        secretName: oauth2-proxy-secrets
+```
+
+The chart reuses the existing `oauth2-proxy-secrets` Secret as-is (default
+key names: `client-id`, `client-secret`, `cookie-secret`). The Service goes
+back to targeting `containerPort` (now owned by the chart's sidecar), so
+drop any `service.targetPort` override.
+
+### Notes
+
+- `thorasDashboard.auth.cookieSecure` defaults to `false` so `kubectl
+  port-forward` works (Safari drops Secure cookies over plain HTTP).
+  Set it to `true` in production; it requires TLS at the edge.
+- The sign-in page is chart-branded (Thoras wordmark, dashboard-sidebar
+  primary button) in both auth modes. Under `mode: htpasswd` only the
+  username/password form is shown; under `mode: oidc` the provider
+  button is retained as the entry point.
+- With auth enabled, the oauth2-proxy sidecar owns
+  `thorasDashboard.containerPort` and proxies to nginx on `127.0.0.1:8181`
+  (loopback-only). To hit nginx directly for debugging:
+  ```
+  kubectl debug -n thoras <dashboard-pod> -it \
+    --image=<debug-image> --target=thoras-dashboard
+  # curl http://127.0.0.1:8181/
+  ```
+
+## Secrets
+
+The chart seeds a shared `thoras-shared` Secret on first install with any
+values it needs to generate (dashboard credentials, API client secret, ...).
+Generated values are stable across upgrades: the chart re-reads the existing
+Secret via `lookup` rather than regenerating them.
+
+- **Pin explicitly** by setting the values field (e.g.
+  `thorasDashboard.auth.htpasswd.password`,
+  `thorasDashboard.auth.htpasswd.cookieSecret`, `apiClientSecret.secret`).
+  A values pin always wins over the generated value.
+- **Provide an externally managed secret** (Sealed Secrets, External
+  Secrets, SOPS) via the corresponding `*.existingSecret.secretName` field.
+  The chart skips seeding those keys in `thoras-shared` and reads from the
+  external Secret instead.
+- **Argo CD**: add `Secret/thoras-shared` to your `Application`'s
+  `spec.ignoreDifferences` under `jsonPointers: [/data]` so Argo does not
+  overwrite chart-generated random values on every reconcile.
+
+### Rotating secrets
+
+Rotation is a two-step manual process. The chart does not add a
+`checksum/shared-secret` pod annotation, so consumers do not roll
+automatically when `thoras-shared` changes.
+
+1. Change the credential. Either edit the value in `values.yaml` and
+   `helm upgrade`, or `kubectl delete` the key from the `thoras-shared`
+   Secret and re-run `helm upgrade` to let the chart regenerate it.
+2. Roll every consumer:
+
+   ```bash
+   kubectl rollout restart deployment -n <namespace> \
+     -l app.kubernetes.io/name=thoras
+   ```
+
+Rotating the dashboard cookie secret bounces every logged-in dashboard user
+once step 2 completes.
 
 ## Example Thoras Dashboard Ingress Configuration
 

@@ -16,6 +16,9 @@ set:
     unittesting: true
   thorasDashboard:
     unittesting: true
+    # Pin to pre-auth shape; auth-on lives in dashboard_auth_test.yaml.
+    auth:
+      enabled: false
   thorasSlmAgent:
     enabled: true
   labels:

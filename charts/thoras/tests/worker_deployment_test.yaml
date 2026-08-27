@@ -24,6 +24,8 @@ tests:
           path: spec.template.spec.tolerations
   - it: Should not have annotations section when all conditions are false
     set:
+      thorasMonitor:
+        unittesting: true
       thorasWorker:
         prometheus:
           enabled: false
