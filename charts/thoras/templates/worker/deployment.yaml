@@ -22,15 +22,12 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasWorker.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- $userAnnotations := or .Values.podAnnotations .Values.thorasWorker.podAnnotations }}
-      {{- $prometheus := .Values.thorasWorker.prometheus.enabled }}
-      {{- $chartChecksum := not .Values.thorasMonitor.unittesting }}
-      {{- if or $userAnnotations $prometheus $chartChecksum }}
+      {{- if or .Values.podAnnotations .Values.thorasWorker.prometheus.enabled .Values.thorasWorker.podAnnotations }}
       annotations:
-        {{- if $chartChecksum }}
+        {{- if not .Values.thorasMonitor.unittesting }}
         checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
         {{- end }}
-        {{- if $prometheus }}
+        {{- if .Values.thorasWorker.prometheus.enabled }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasWorker.prometheus.port | quote }}

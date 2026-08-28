@@ -123,8 +123,8 @@ Default matches snapshot:
                 - name: SERVICE_SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: api-client-secret
-                      name: thoras-shared
+                      key: secret
+                      name: api-client-secret
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -602,8 +602,8 @@ Default matches snapshot:
                 - name: SERVICE_SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: api-client-secret
-                      name: thoras-shared
+                      key: secret
+                      name: api-client-secret
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -813,6 +813,7 @@ Default matches snapshot:
           app: thoras-dashboard
       template:
         metadata:
+          annotations: null
           labels:
             app: thoras-dashboard
             app.kubernetes.io/name: thoras
@@ -831,8 +832,8 @@ Default matches snapshot:
                 - name: SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: api-client-secret
-                      name: thoras-shared
+                      key: secret
+                      name: api-client-secret
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -992,8 +993,8 @@ Default matches snapshot:
                 - name: SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: api-client-secret
-                      name: thoras-shared
+                      key: secret
+                      name: api-client-secret
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1204,8 +1205,8 @@ Default matches snapshot:
                 - name: SERVICE_SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: api-client-secret
-                      name: thoras-shared
+                      key: secret
+                      name: api-client-secret
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1720,8 +1721,8 @@ Default matches snapshot:
                 - name: SERVICE_SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: api-client-secret
-                      name: thoras-shared
+                      key: secret
+                      name: api-client-secret
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:

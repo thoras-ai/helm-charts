@@ -20,14 +20,12 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasForecast.worker.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- $userAnnotations := or .Values.podAnnotations .Values.thorasForecast.worker.podAnnotations }}
-      {{- $prometheus := .Values.thorasForecast.prometheus.enabled }}
-      {{- if or $userAnnotations $prometheus }}
+      {{- if or .Values.podAnnotations .Values.thorasForecast.worker.podAnnotations .Values.thorasForecast.prometheus.enabled }}
       annotations:
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasForecast.worker.podAnnotations) }}
           {{- . | trim | nindent 8 }}
         {{- end }}
-        {{- if $prometheus }}
+        {{- if .Values.thorasForecast.prometheus.enabled }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasForecast.prometheus.port | quote }}

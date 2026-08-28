@@ -9,26 +9,3 @@ Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on 
   To enable, set metricsCollector.persistence.enabled=true, or configure a
   storageClassName / pvcStorageRequestSize and it will be enabled automatically.
 {{- end }}
-
-{{ if and .Values.thorasDashboard.enabled .Values.thorasDashboard.auth.enabled (eq .Values.thorasDashboard.auth.mode "htpasswd") -}}
-Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
-  Username: {{ .Values.thorasDashboard.auth.htpasswd.username }}
-  Password:
-{{- if .Values.thorasDashboard.auth.htpasswd.existingSecret.secretName }}
-    kubectl get secret {{ .Values.thorasDashboard.auth.htpasswd.existingSecret.secretName }} -n {{ .Release.Namespace }} \
-      -o jsonpath='{.data.{{ .Values.thorasDashboard.auth.htpasswd.existingSecret.passwordKey }}}' | base64 -d
-{{- else }}
-    kubectl get secret thoras-shared -n {{ .Release.Namespace }} \
-      -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
-{{- end }}
-{{- if .Values.thorasDashboard.auth.cookieSecure }}
-  cookieSecure is enabled: the edge must terminate TLS or login will
-  silently fail.
-{{- end }}
-{{- end }}
-
-{{ if hasKey .Values.featureFlags "enableSimpleAuthSecret" -}}
-DEPRECATED: featureFlags.enableSimpleAuthSecret
-  Rename this field to apiClientSecret.enabled in your values file. The
-  legacy field still works but will be removed in a future chart release.
-{{- end }}
