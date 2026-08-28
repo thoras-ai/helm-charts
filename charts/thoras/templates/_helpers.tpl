@@ -237,33 +237,6 @@ key: api-client-secret
 {{- end -}}
 
 {{/*
-Secret+key for the dashboard basic-auth password (htpasswd mode). Same shape
-as thoras.apiClientSecretRef.
-*/}}
-{{- define "thoras.dashboardAuthPasswordRef" -}}
-{{- if .Values.thorasDashboard.auth.htpasswd.existingSecret.secretName -}}
-name: {{ .Values.thorasDashboard.auth.htpasswd.existingSecret.secretName }}
-key: {{ .Values.thorasDashboard.auth.htpasswd.existingSecret.passwordKey }}
-{{- else -}}
-name: thoras-shared
-key: dashboard-auth-password
-{{- end -}}
-{{- end -}}
-
-{{/*
-Secret+key for the oauth2-proxy cookie secret (htpasswd mode).
-*/}}
-{{- define "thoras.dashboardAuthCookieSecretRef" -}}
-{{- if .Values.thorasDashboard.auth.htpasswd.existingSecret.secretName -}}
-name: {{ .Values.thorasDashboard.auth.htpasswd.existingSecret.secretName }}
-key: {{ .Values.thorasDashboard.auth.htpasswd.existingSecret.cookieSecretKey }}
-{{- else -}}
-name: thoras-shared
-key: dashboard-auth-cookie-secret
-{{- end -}}
-{{- end -}}
-
-{{/*
 Body of the centralized `thoras-shared` Secret. Rotating a value pinned in
 this Secret requires a manual `kubectl rollout restart` of dependent
 workloads - the chart does not add a rotation checksum. See README >
@@ -355,27 +328,6 @@ data:
   {{- end }}
 {{- end }}
 {{- end }}
-
-{{/*
-Secret+key refs for OIDC mode. Always read from the customer-managed Secret
-(chart never generates these). Consumers should include only when
-auth.mode == oidc; the secretName is required and gated by fail-guards in
-thoras-secret.yaml.
-*/}}
-{{- define "thoras.dashboardOidcClientIDRef" -}}
-name: {{ .Values.thorasDashboard.auth.oidc.existingSecret.secretName }}
-key: {{ .Values.thorasDashboard.auth.oidc.existingSecret.clientIDKey }}
-{{- end -}}
-
-{{- define "thoras.dashboardOidcClientSecretRef" -}}
-name: {{ .Values.thorasDashboard.auth.oidc.existingSecret.secretName }}
-key: {{ .Values.thorasDashboard.auth.oidc.existingSecret.clientSecretKey }}
-{{- end -}}
-
-{{- define "thoras.dashboardOidcCookieSecretRef" -}}
-name: {{ .Values.thorasDashboard.auth.oidc.existingSecret.secretName }}
-key: {{ .Values.thorasDashboard.auth.oidc.existingSecret.cookieSecretKey }}
-{{- end -}}
 
 {{/*
 Resolve the api-client-secret enable flag with deprecation-aware alias.
@@ -507,6 +459,3 @@ Releases older than the certManager block (chart < 4.124.0) upgraded with
 {{- define "thoras.webhookCertManagerEnabled" -}}
 {{- if ((.Values.thorasOperator.webhookCertGen).certManager).enabled -}}true{{- end -}}
 {{- end -}}
-
-{{/* Loopback port for nginx behind the oauth2-proxy sidecar. */}}
-{{- define "thoras.dashboard.internalNginxPort" -}}8181{{- end -}}

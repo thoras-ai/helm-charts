@@ -71,9 +71,8 @@ Should default to v2 port:
         }
 
         server {
-          # Loopback-only; oauth2-proxy sidecar fronts containerPort.
-          listen       127.0.0.1:8181;
-          listen       [::1]:8181 ipv6only=on;
+          listen       8080;
+          listen       [::]:8080 ipv6only=on;
           server_name  localhost;
 
           root   /usr/share/nginx/html;
@@ -185,9 +184,8 @@ should set extras in config.json:
         }
 
         server {
-          # Loopback-only; oauth2-proxy sidecar fronts containerPort.
-          listen       127.0.0.1:8181;
-          listen       [::1]:8181 ipv6only=on;
+          listen       8080;
+          listen       [::]:8080 ipv6only=on;
           server_name  localhost;
 
           root   /usr/share/nginx/html;

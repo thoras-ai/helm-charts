@@ -170,8 +170,6 @@ tests:
           path: spec.template.spec.tolerations
   - it: Should not have annotations section when podAnnotations are not set
     set:
-      thorasMonitor:
-        unittesting: true
       metricsCollector:
         podAnnotations: {}
     template: collector/deployment.yaml
