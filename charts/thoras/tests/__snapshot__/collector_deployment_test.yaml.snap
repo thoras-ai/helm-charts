@@ -128,8 +128,8 @@ Default containers should match snapshots:
       - name: SERVICE_SIMPLE_AUTH_SECRET
         valueFrom:
           secretKeyRef:
-            key: api-client-secret
-            name: thoras-shared
+            key: secret
+            name: api-client-secret
     image: us-east4-docker.pkg.dev/thoras-registry/platform/services:dev
     imagePullPolicy: IfNotPresent
     livenessProbe:

@@ -9,9 +9,3 @@ Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on 
   To enable, set metricsCollector.persistence.enabled=true, or configure a
   storageClassName / pvcStorageRequestSize and it will be enabled automatically.
 {{- end }}
-
-{{ if hasKey .Values.featureFlags "enableSimpleAuthSecret" -}}
-DEPRECATED: featureFlags.enableSimpleAuthSecret
-  Rename this field to apiClientSecret.enabled in your values file. The
-  legacy field still works but will be removed in a future chart release.
-{{- end }}

@@ -75,10 +75,7 @@ helm install \
 | costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                     |
 | costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                               |
 | costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                  |
-| apiClientSecret.enabled                         | Boolean | true                                             | If true, components authenticate to the API server with a shared bearer token |
-| apiClientSecret.secret                          | String  | ""                                               | Shared secret components send to the API server when `apiClientSecret.enabled` is true. Chart generates if empty. Setting a value overrides any existing value on the next `helm upgrade`; consumer workloads require a manual rollout (see [rotating secrets](#rotating-secrets)). `apiClientSecret.existingSecret` takes precedent. |
-| apiClientSecret.existingSecret.secretName       | String  | ""                                               | Read the API-client secret from this pre-existing externally managed secret. Required key documented below |
-| apiClientSecret.existingSecret.secretKey        | String  | api-client-secret                                | Key in `apiClientSecret.existingSecret.secretName` that holds the value.                                                                                                            |
+| apiClientSecret.secret             | String  | ""                                               | Shared secret components send to the API server when `featureFlags.enableSimpleAuthSecret` is true. Generated if empty |
 
 ## Feature Flags
 
@@ -91,6 +88,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations                                     |
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations                          |
 | featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                               |
+| featureFlags.enableSimpleAuthSecret            | Boolean | true    | If true, generates the `api-client-secret` Secret and wires it into all components |
 | featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs    |
 
 ## Affinity Configuration
