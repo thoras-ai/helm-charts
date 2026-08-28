@@ -6,43 +6,6 @@ This doc provides detailed upgrade and migration instructions.
 
 ## To 5.0.0
 
-Users who manage Thoras via `helm install` and `helm upgrade` with a
-simple values file, and whose deployment matches all of the following,
-only need to read the [Dashboard Auth Enabled by Default](#dashboard-auth-enabled-by-default)
-section below:
-
-- `thorasDashboard.extraContainers` is unset (no hand-rolled
-  oauth2-proxy sidecar)
-- `thorasDashboard.service.targetPort` is unset (Service targets the
-  chart's containerPort)
-- `featureFlags.enableSimpleAuthSecret` is unset (only added between
-  4.141.0 and 5.0.0)
-- Not deploying via ArgoCD from a release already at chart 4.141.0 or
-  later
-
-Any deployment that deviates from one or more of the above must also
-work through the matching section below.
-
-### Dashboard Auth Enabled by Default
-
-Chart 5.0.0 fronts the dashboard with an oauth2-proxy sidecar in
-`htpasswd` mode by default. Sign in with:
-
-- **Username**: `thoras` (`thorasDashboard.auth.htpasswd.username`)
-- **Password**: read from the chart-managed `thoras-shared` Secret
-  (substitute your release namespace for `thoras` if you installed
-  elsewhere):
-
-  ```
-  kubectl get secret thoras-shared -n thoras \
-    -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
-  ```
-
-The password is generated on first install and preserved across
-upgrades. To pin a known value, set `thorasDashboard.auth.htpasswd.password`.
-To front the dashboard with your own auth instead, see
-[Externally Managed Auth](#externally-managed-auth).
-
 ### ArgoCD ignoreDifferences:
 
 5.0.0 introduces `Secret/thoras-shared` as the centralized store for
