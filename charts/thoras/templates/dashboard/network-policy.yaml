@@ -1,4 +1,51 @@
 {{- if and .Values.networkPolicy.enabled .Values.thorasDashboard.enabled }}
+{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-dashboard
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all ingress from pods within the same namespace
+  - from:
+    - podSelector: {}
+  # Allow ingress from users and ingress controllers on the dashboard port
+  - ports:
+    - port: 8080
+      protocol: TCP
+  {{- with .Values.thorasDashboard.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  # Allow all egress to pods within the same namespace
+  - to:
+    - podSelector: {}
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  {{- with .Values.thorasDashboard.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- else if eq .Values.networkPolicy.flavor "cilium" }}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -43,4 +90,5 @@ spec:
   {{- with .Values.thorasDashboard.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
+{{- end }}
 {{- end }}

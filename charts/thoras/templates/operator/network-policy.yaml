@@ -1,4 +1,55 @@
 {{- if .Values.networkPolicy.enabled }}
+{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-operator
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-operator
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all ingress from pods within the same namespace
+  - from:
+    - podSelector: {}
+  # Allow webhook callbacks from the Kubernetes API server.
+  # Note: standard NetworkPolicy cannot target the API server by label, so this permits
+  # ingress from any source on this port. Use the cilium flavor for precise scoping.
+  - ports:
+    - port: 9443
+      protocol: TCP
+  {{- with .Values.thorasOperator.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  # Allow all egress to pods within the same namespace
+  - to:
+    - podSelector: {}
+  # Allow access to the Kubernetes API server (metrics-server API is proxied through here)
+  {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  {{- with .Values.thorasOperator.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- else if eq .Values.networkPolicy.flavor "cilium" }}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -42,4 +93,5 @@ spec:
   {{- with .Values.thorasOperator.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
+{{- end }}
 {{- end }}
