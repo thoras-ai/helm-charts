@@ -2,6 +2,7 @@ suite: Network Policy
 set:
   networkPolicy:
     enabled: true
+    flavor: kubernetes
 tests:
   # --- Rendering guards ---
 
@@ -37,9 +38,9 @@ tests:
       - hasDocuments:
           count: 0
 
-  # --- Policy shape ---
+  # --- Kubernetes flavor ---
 
-  - it: Renders CiliumNetworkPolicy kind
+  - it: Renders NetworkPolicy kind for kubernetes flavor
     templates:
       - api-server-v2/network-policy.yaml
       - collector/network-policy.yaml
@@ -47,33 +48,99 @@ tests:
       - operator/network-policy.yaml
     asserts:
       - isKind:
-          of: CiliumNetworkPolicy
+          of: NetworkPolicy
       - equal:
           path: apiVersion
-          value: cilium.io/v2
+          value: networking.k8s.io/v1
 
-  - it: Operator policy targets the correct endpoint selector
+  - it: Operator kubernetes policy targets the correct pod selector
     template: operator/network-policy.yaml
     asserts:
       - equal:
-          path: spec.endpointSelector.matchLabels.app
+          path: spec.podSelector.matchLabels.app
           value: thoras-operator
 
-  - it: Operator policy allows kube-apiserver ingress for webhook callbacks
+  - it: Operator kubernetes policy allows webhook ingress on port 9443
     template: operator/network-policy.yaml
     asserts:
       - contains:
           path: spec.ingress
           content:
-            fromEntities:
-            - kube-apiserver
+            ports:
+            - port: 9443
+              protocol: TCP
 
-  - it: Policies that talk to the API server target the kube-apiserver entity
+  - it: Operator kubernetes policy allows API server egress on ports 443 and 6443
+    template: operator/network-policy.yaml
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+
+  - it: All kubernetes policies allow API server egress on custom ports
     templates:
       - api-server-v2/network-policy.yaml
       - operator/network-policy.yaml
       - operator/webhooks-certgen-network-policy.yaml
       - worker/network-policy.yaml
+    set:
+      networkPolicy:
+        apiServerPorts:
+        - 443
+        - 6443
+        - 8443
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+            - port: 8443
+              protocol: TCP
+
+  # An empty list must drop the rule entirely. Rendering a rule with no ports
+  # would allow egress to every port instead of none.
+  - it: Empty apiServerPorts omits the API server egress rule
+    templates:
+      - api-server-v2/network-policy.yaml
+      - operator/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      networkPolicy:
+        apiServerPorts: []
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+      - notContains:
+          path: spec.egress
+          content:
+            ports: null
+
+  - it: Cilium policies target the API server entity regardless of apiServerPorts
+    templates:
+      - api-server-v2/network-policy.yaml
+      - operator/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+        apiServerPorts: []
     asserts:
       - contains:
           path: spec.egress
@@ -81,25 +148,90 @@ tests:
             toEntities:
             - kube-apiserver
 
-  - it: Dashboard policy allows external ingress on port 8080
+  - it: Dashboard kubernetes policy allows external ingress on port 8080
     template: dashboard/network-policy.yaml
     asserts:
       - contains:
           path: spec.ingress
           content:
-            fromEntities:
-            - all
-            toPorts:
-            - ports:
-              - port: "8080"
-                protocol: TCP
+            ports:
+            - port: 8080
+              protocol: TCP
 
-  - it: All policies allow DNS egress via kube-dns endpoint
+  - it: All kubernetes policies allow DNS egress via kube-dns
     templates:
       - api-server-v2/network-policy.yaml
       - collector/network-policy.yaml
       - forecast-worker/network-policy.yaml
       - operator/network-policy.yaml
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+            ports:
+            - port: 53
+              protocol: UDP
+            - port: 53
+              protocol: TCP
+
+  # --- Cilium flavor ---
+
+  - it: Renders CiliumNetworkPolicy kind for cilium flavor
+    templates:
+      - api-server-v2/network-policy.yaml
+      - collector/network-policy.yaml
+      - forecast-worker/network-policy.yaml
+      - operator/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+    asserts:
+      - isKind:
+          of: CiliumNetworkPolicy
+      - equal:
+          path: apiVersion
+          value: cilium.io/v2
+
+  - it: Operator cilium policy allows kube-apiserver ingress for webhook callbacks
+    template: operator/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+            - kube-apiserver
+
+  - it: Operator cilium policy allows kube-apiserver egress
+    template: operator/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+            - kube-apiserver
+
+  - it: All cilium policies allow DNS egress via kube-dns endpoint
+    templates:
+      - api-server-v2/network-policy.yaml
+      - collector/network-policy.yaml
+      - forecast-worker/network-policy.yaml
+      - operator/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
     asserts:
       - contains:
           path: spec.egress
@@ -118,9 +250,27 @@ tests:
 
   # --- extraEgressRules ---
 
-  - it: Injects extraEgressRules into the egress list
+  - it: Injects extraEgressRules into the kubernetes egress list
+    template: api-server-v2/network-policy.yaml
+    set:
+      thorasApiServerV2:
+        extraEgressRules:
+          - ports:
+            - port: 9200
+              protocol: TCP
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 9200
+              protocol: TCP
+
+  - it: Injects extraEgressRules into the cilium egress list
     template: collector/network-policy.yaml
     set:
+      networkPolicy:
+        flavor: cilium
       metricsCollector:
         extraEgressRules:
           - toFQDNs:
@@ -134,9 +284,27 @@ tests:
 
   # --- extraIngressRules ---
 
-  - it: Injects extraIngressRules into the ingress list
+  - it: Injects extraIngressRules into the kubernetes ingress list
+    template: api-server-v2/network-policy.yaml
+    set:
+      thorasApiServerV2:
+        extraIngressRules:
+          - ports:
+            - port: 8443
+              protocol: TCP
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            ports:
+            - port: 8443
+              protocol: TCP
+
+  - it: Injects extraIngressRules into the cilium ingress list
     template: collector/network-policy.yaml
     set:
+      networkPolicy:
+        flavor: cilium
       metricsCollector:
         extraIngressRules:
           - fromEndpoints:
@@ -152,8 +320,51 @@ tests:
 
   # --- Certgen network policy ---
 
-  - it: Certgen policy targets the webhook-certgen component selector
+  - it: Certgen kubernetes policy targets the webhook-certgen component selector
     template: operator/webhooks-certgen-network-policy.yaml
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
+          value: webhook-certgen
+
+  - it: Certgen kubernetes policy allows API server egress on ports 443 and 6443
+    template: operator/webhooks-certgen-network-policy.yaml
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+
+  - it: Certgen kubernetes policy allows DNS egress via kube-dns
+    template: operator/webhooks-certgen-network-policy.yaml
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+            ports:
+            - port: 53
+              protocol: UDP
+            - port: 53
+              protocol: TCP
+
+  - it: Certgen cilium policy targets the webhook-certgen component selector
+    template: operator/webhooks-certgen-network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
     asserts:
       - isKind:
           of: CiliumNetworkPolicy
@@ -161,8 +372,23 @@ tests:
           path: spec.endpointSelector.matchLabels["app.kubernetes.io/component"]
           value: webhook-certgen
 
-  - it: Certgen policy allows DNS egress via kube-dns endpoint
+  - it: Certgen cilium policy allows kube-apiserver egress
     template: operator/webhooks-certgen-network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+            - kube-apiserver
+
+  - it: Certgen cilium policy allows DNS egress via kube-dns endpoint
+    template: operator/webhooks-certgen-network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
     asserts:
       - contains:
           path: spec.egress

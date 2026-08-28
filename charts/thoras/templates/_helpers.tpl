@@ -184,6 +184,29 @@ true
 {{- end -}}
 
 {{/*
+Egress rule allowing components to reach the Kubernetes API server, for the
+"kubernetes" NetworkPolicy flavor.
+
+Standard NetworkPolicy cannot target the API server by label, so this permits
+egress to any destination on the configured ports. Policy is enforced after
+kube-proxy DNATs the service address to the real endpoint, so the ports must
+match what the API server actually listens on rather than the service port.
+Use the cilium flavor for precise scoping.
+
+Emits nothing when the port list is empty, leaving the rule out entirely
+instead of rendering a rule that would allow egress on every port.
+*/}}
+{{- define "thoras.apiServerEgressRule" -}}
+{{- with .Values.networkPolicy.apiServerPorts -}}
+- ports:
+  {{- range . }}
+  - port: {{ . }}
+    protocol: TCP
+  {{- end }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 True when the metrics collector should use a persistent volume.
 Tri-state: an explicit metricsCollector.persistence.enabled (true/false) is
 always honored. When it is unset, infer "on" if the customer configured any

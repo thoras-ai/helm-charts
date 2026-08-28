@@ -21,9 +21,24 @@ resourceQuota:
   cronjobs: 200
   jobs: 200
 
-# Renders CiliumNetworkPolicy (cilium.io/v2). Requires Cilium in the cluster.
 networkPolicy:
   enabled: false
+  # flavor: "kubernetes" uses standard NetworkPolicy (networking.k8s.io/v1)
+  # flavor: "cilium" uses CiliumNetworkPolicy (cilium.io/v2)
+  flavor: kubernetes
+  # -- Ports the Kubernetes API server is reachable on, used by the "kubernetes"
+  # flavor to allow egress from components that talk to the API.
+  # NetworkPolicy is evaluated after kube-proxy translates the service address
+  # (10.96.0.1:443) to the real endpoint, so this must list the port the API
+  # server actually listens on -- not the service port. Check with:
+  #   kubectl get endpoints kubernetes -n default
+  # Clusters that front the API on a non-standard port (minikube uses 8443)
+  # must add it here or components will fail to reach the API.
+  # Ignored by the "cilium" flavor, which resolves the API server via
+  # `toEntities: [kube-apiserver]` and needs no port list.
+  apiServerPorts:
+  - 443
+  - 6443
 
 imagePullPolicy: "IfNotPresent"
 
