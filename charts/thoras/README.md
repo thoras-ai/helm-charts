@@ -19,47 +19,44 @@ Detailed upgrade procedures found [here](./UPGRADE.md)
 
 ### [To 5.0.0](./UPGRADE.md#to-500)
 
-- **Dashboard now requires authentication.** Fronted by an oauth2-proxy
-  sidecar (`htpasswd` default, `oidc` optional).
-    * If you currently ship an oauth2-proxy sidecar, see [migration docs](./UPGRADE.md#migrating-from-the-standalone-oauth2-proxy-sidecar)
-    * If you provide external auth via ingress or gateway, see [externally-managed auth notes](./UPGRADE.md#externally-managed-auth)
-- **ArgoCD `ignoreDifferences` needs updating.** See [UPGRADE.md](./UPGRADE.md#argocd-ignoredifferences) for the diff.
-- **`api-client-secret` Secret removed.** The value moved into `thoras-shared`. `helm upgrade` will handle this migration if using default chart seeded pattern.
-
-See [UPGRADE.md](./UPGRADE.md#to-500) for step-by-step migration.
-
 ## Installing the Chart
 
-### Use the Thoras Helm repo
+Using [Helm](https://helm.sh), you can easily install and test Thoras in a Kubernetes cluster by running the following:
 
-Install the Thoras Helm repo, which will give you access to all of the
-Thoras Helm charts.
+### Add Helm repo
+
+First, add the repo if you haven't already done so:
 
 ```
 helm repo add thoras https://thoras-ai.github.io/helm-charts
-helm repo update thoras
+helm repo update
 ```
 
-### Install Thoras
-
-1. Note the name of your license key file. We'll use `thoras_license.txt`
-   in the example below.
-2. Install Thoras via Helm:
+### Minimum Config
 
 ```
-helm install thoras thoras/thoras \
-  --namespace thoras \
+# values.yaml
+imageCredentials:
+  registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
+  username: "_json_key_base64"
+  password: "<thoras license key>"
+
+metricsCollector:
+  persistence:
+    enabled: false
+```
+
+### Install Chart
+
+Now let’s install Thoras with Helm! We recommend installing Thoras into the thoras namespace:
+
+```
+helm install \
+  my-thoras-release \
+  thoras/thoras \
+  -n thoras \
   --create-namespace \
-  --set imageCredentials.password="$(cat ./thoras_license.txt)"
-```
-
-### Verify installation
-
-Confirm all Thoras pods reach `Running` status (usually takes 1-2
-minutes):
-
-```
-kubectl get pods -n thoras
+  -f ./values.yaml
 ```
 
 ## Secrets
@@ -99,93 +96,6 @@ automatically when `thoras-shared` changes.
 
 Rotating the dashboard cookie secret bounces every logged-in dashboard user
 once step 2 completes.
-
-## ArgoCD
-
-Argo CD renders manifests without `lookup`, so chart-generated random
-values (dashboard password/cookie secret, API client secret, TimescaleDB
-password) regenerate on every reconcile. The webhook configs' `caBundle`
-is also injected in-cluster after apply (either by cert-manager's CA
-injector when `thorasOperator.webhookCertGen.certManager.enabled: true`,
-or by the certgen patch Job otherwise). The `thoras-forecast-worker`
-replica count is managed by Thoras at runtime.
-
-Tell Argo to ignore these fields in your `Application`'s
-`spec.ignoreDifferences`:
-
-```yaml
-ignoreDifferences:
-  - jsonPointers:
-      - /data
-    kind: Secret
-    name: thoras-shared
-  - jsonPointers:
-      - /data
-    kind: Secret
-    name: thoras-timescale-password
-  - group: admissionregistration.k8s.io
-    kind: MutatingWebhookConfiguration
-    jqPathExpressions:
-      - ".webhooks[]?.clientConfig.caBundle"
-  - group: admissionregistration.k8s.io
-    kind: ValidatingWebhookConfiguration
-    jqPathExpressions:
-      - ".webhooks[]?.clientConfig.caBundle"
-  - jsonPointers:
-      - /spec/replicas
-    kind: Deployment
-    name: thoras-forecast-worker
-```
-
-The full `Application` example plus the ArgoCD HPA custom health
-assessment (needed when Argo watches a Thoras-horizontally-controlled
-workload) live at
-[docs.thoras.ai/guides/argo-cd](https://docs.thoras.ai/guides/argo-cd).
-
-## helm template
-
-When using `helm template`, the `lookup` features of this chart return
-nothing and every chart-generated random value is regenerated on every render. Without stable inputs,
-Secret manifests change on every reconcile even when your `values.yaml`
-hasn't. To prevent this, either pin every chart-generated credential or point the chart at a
-pre-existing Secret you manage out-of-band (Sealed Secrets, External
-Secrets, SOPS, ...).
-
-Set the following values to pin:
-
-| Credential                  | Pin in values                                |
-| --------------------------- | -------------------------------------------- |
-| API client bearer token     | `apiClientSecret.secret`                     |
-| Dashboard htpasswd password | `thorasDashboard.auth.htpasswd.password`     |
-| Dashboard htpasswd cookie   | `thorasDashboard.auth.htpasswd.cookieSecret` |
-| TimescaleDB DSN (external)  | `externalTimescale.dsn`                      |
-
-Or provide external secret references:
-
-| Credential                                | secretName field                                          | Key field(s)                                                                                                                                              |
-| ----------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API client bearer token                   | `apiClientSecret.existingSecret.secretName`               | `apiClientSecret.existingSecret.secretKey`                                                                                                                |
-| Dashboard htpasswd password + cookie      | `thorasDashboard.auth.htpasswd.existingSecret.secretName` | `thorasDashboard.auth.htpasswd.existingSecret.passwordKey`, `.cookieSecretKey`                                                                             |
-| Dashboard OIDC client credentials + cookie | `thorasDashboard.auth.oidc.existingSecret.secretName`     | `thorasDashboard.auth.oidc.existingSecret.clientIDKey`, `.clientSecretKey`, `.cookieSecretKey`                                                             |
-| TimescaleDB DSN (external)                | `externalTimescale.secretRefName`                         | `externalTimescale.secretRefKey`                                                                                                                          |
-
-**Notes:**
-- Pinning the in-cluster TimescaleDB password
-  (`metricsCollector.timescale.password`) for the chart-managed
-  TimescaleDB is not yet supported; use `externalTimescale` or accept
-  drift on `Secret/thoras-timescale-password` for now.
-- Under `thorasDashboard.auth.mode: oidc`, dashboard credentials come
-  from your IdP via `thorasDashboard.auth.oidc.existingSecret.secretName`
-  and are never chart-generated, so no dashboard pinning is needed.
-
-### Webhook certificates
-
-Set `thorasOperator.webhookCertGen.certManager.enabled: true` when
-rendering offline. The default certgen path emits a set of imperative
-`Job`/`ClusterRole`/`ServiceAccount` resources gated on Helm lifecycle
-hooks (`pre-install`, `pre-upgrade`), which GitOps tools handle poorly.
-cert-manager mode replaces them with declarative `Issuer` and
-`Certificate` CRs. Requires cert-manager installed in the cluster.
 
 ## Configuration
 
@@ -435,21 +345,10 @@ hostnames:
   - thoras.local
 ```
 
-### NetworkPolicy
+### NetworkPolicy egress
 
-Set `networkPolicy.enabled: true` to have the chart render a
-`CiliumNetworkPolicy` (`cilium.io/v2`) per component. Requires
-[Cilium](https://cilium.io/) in the cluster; policies are no-ops with
-any other CNI.
-
-Each policy allows all ingress from same-namespace endpoints, permits
-DNS to `kube-system/kube-dns`, and opens the component's public port to
-its expected callers (`entities: all` for the dashboard, in-namespace
-callers for API/collector/worker/forecast).
-
-**NOTE:** when Thoras Dashboard auth is enabled in OIDC mode, the chart
-opens broad egress on the dashboard's `CiliumNetworkPolicy` to `world:443`
-so oauth2-proxy can reach
+When `networkPolicy.enabled: true`, OIDC mode opens broad egress on the
+dashboard's `CiliumNetworkPolicy` to `world:443` so oauth2-proxy can reach
 the IdP's discovery, token, and userinfo endpoints. Okta / Entra / other
 IdPs resolve to broad, drifting CIDR ranges, so a scoped rule would be
 brittle. Tighten by layering an additional `CiliumNetworkPolicy` that
