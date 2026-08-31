@@ -1,6 +1,7 @@
 suite: Dashboard
 templates:
   - dashboard/deployment.yaml
+# Auth-off; auth-on cases live in dashboard_auth_test.yaml.
 tests:
   - it: Deployment name and image should be correct
     set:
@@ -71,6 +72,8 @@ tests:
     set:
       thorasDashboard:
         unittesting: true
+        auth:
+          enabled: false
     asserts:
       - lengthEqual:
           path: spec.template.spec.containers

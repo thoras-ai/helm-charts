@@ -1,0 +1,945 @@
+suite: DashboardAuth
+tests:
+  # -------- thoras Secret (dashboard keys) --------
+
+  - it: Does not include dashboard keys in the thoras Secret when auth is disabled
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      apiClientSecret:
+        enabled: false
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders dashboard-auth keys with generated values by default
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      apiClientSecret:
+        enabled: false
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: thoras-shared
+      - notExists:
+          # username is values-only, not stored in the Secret
+          path: data.username
+      - matchRegex:
+          # base64 of a 24-character randAlphaNum (24 bytes -> 32 chars, no padding)
+          path: data["dashboard-auth-password"]
+          pattern: "^[A-Za-z0-9+/]{32}$"
+      - matchRegex:
+          path: data["dashboard-auth-cookie-secret"]
+          pattern: "^[A-Za-z0-9+/]+=*$"
+
+  # Precedence: values pin wins over lookup + generated. Values-vs-lookup
+  # can't be exercised here (helm-unittest can't seed cluster state); verify
+  # manually with `helm upgrade` against a cluster where the thoras-shared
+  # Secret already exists with a different value.
+  - it: Uses an explicitly configured password
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      apiClientSecret:
+        enabled: false
+      thorasDashboard:
+        auth:
+          htpasswd:
+            password: hunter2
+    asserts:
+      - equal:
+          path: data["dashboard-auth-password"]
+          # base64 of "hunter2"
+          value: aHVudGVyMg==
+
+  - it: Uses an explicitly configured cookieSecret
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      apiClientSecret:
+        enabled: false
+      thorasDashboard:
+        auth:
+          htpasswd:
+            cookieSecret: remembermepassw1
+    asserts:
+      - equal:
+          path: data["dashboard-auth-cookie-secret"]
+          # base64 of "remembermepassw1"
+          value: cmVtZW1iZXJtZXBhc3N3MQ==
+
+  - it: Omits dashboard keys when htpasswd.existingSecret is set
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      apiClientSecret:
+        enabled: false
+      thorasDashboard:
+        auth:
+          htpasswd:
+            existingSecret:
+              secretName: my-dash
+    asserts:
+      # api-client also off => nothing renders
+      - hasDocuments:
+          count: 0
+
+  - it: Omits dashboard keys under mode oidc
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      apiClientSecret:
+        enabled: false
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Silently ignores htpasswd fields under mode oidc (warn-only)
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          htpasswd:
+            password: hunter2
+            cookieSecret: rememberme
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      # api-client Secret still rendered; dashboard keys not present
+      - isKind:
+          of: Secret
+      - notExists:
+          path: data["dashboard-auth-password"]
+      - notExists:
+          path: data["dashboard-auth-cookie-secret"]
+      - exists:
+          path: data["api-client-secret"]
+
+  - it: Fails when password and htpasswd.existingSecret.secretName are both set
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          htpasswd:
+            password: hunter2
+            existingSecret:
+              secretName: my-dash
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.htpasswd.password and thorasDashboard.auth.htpasswd.existingSecret.secretName are mutually exclusive"
+
+  - it: Fails when cookieSecret and htpasswd.existingSecret.secretName are both set
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          htpasswd:
+            cookieSecret: rememberme
+            existingSecret:
+              secretName: my-dash
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.htpasswd.cookieSecret and thorasDashboard.auth.htpasswd.existingSecret.secretName are mutually exclusive"
+
+  - it: Fails when cookieSecret is not a valid length
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      apiClientSecret:
+        enabled: false
+      thorasDashboard:
+        auth:
+          htpasswd:
+            # 10 chars, not a valid raw length and not a valid base64 shape.
+            cookieSecret: rememberme
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.htpasswd.cookieSecret must be 16, 24, or 32 bytes (raw) or a base64 string that decodes to that length; got 10 bytes (raw), 0 bytes (base64-decoded)"
+
+  - it: Accepts a base64-encoded cookieSecret that decodes to 32 bytes
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      apiClientSecret:
+        enabled: false
+      thorasDashboard:
+        auth:
+          htpasswd:
+            # 44 chars of standard base64, decodes to 32 raw bytes.
+            cookieSecret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    asserts:
+      - equal:
+          path: data["dashboard-auth-cookie-secret"]
+          # base64 of "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          value: QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQT0=
+
+  - it: Fails on an unknown auth.mode
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: basic
+    asserts:
+      - failedTemplate:
+          errorMessage: 'thorasDashboard.auth.mode must be either "htpasswd" or "oidc", got "basic"'
+
+  - it: Fails under mode oidc without oidc.issuerURL
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.oidc mode requires: issuerURL"
+
+  - it: Fails under mode oidc without oidc.redirectURL
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.oidc mode requires: redirectURL"
+
+  - it: Fails under mode oidc without oidc.existingSecret.secretName
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.oidc mode requires: existingSecret.secretName"
+
+  - it: Fails under mode oidc with an empty clientIDKey
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+              clientIDKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.oidc mode requires: existingSecret.clientIDKey"
+
+  - it: Aggregates every missing required field into a single failure under mode oidc
+    templates:
+      - thoras-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            existingSecret:
+              secretName: ""
+              clientIDKey: ""
+              clientSecretKey: ""
+              cookieSecretKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.oidc mode requires: issuerURL, redirectURL, existingSecret.secretName, existingSecret.clientIDKey, existingSecret.clientSecretKey, existingSecret.cookieSecretKey"
+
+  # -------- oauth2-proxy ConfigMap --------
+
+  - it: Does not render the oauth2-proxy ConfigMap when auth is disabled
+    templates:
+      - dashboard/oauth2-proxy-config-map.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders an oauth2-proxy config that prefers the htpasswd form
+    templates:
+      - dashboard/oauth2-proxy-config-map.yaml
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: thoras-dashboard-oauth2-proxy-config
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'htpasswd_file = "/etc/oauth2-proxy/generated/htpasswd"'
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "display_htpasswd_form = true"
+      # Regression guard: setting skip_provider_button breaks the sign-in page.
+      - notMatchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "skip_provider_button = true"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "cookie_secure = false"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'upstreams = \["http://127.0.0.1:8181"\]'
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'http_address = "0.0.0.0:8080"'
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'custom_templates_dir = "/etc/oauth2-proxy/templates"'
+      # Suppresses oauth2-proxy's auto-generated "Authenticate using ..." message.
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'banner = "Sign in to the Thoras Dashboard"'
+
+  - it: Reflects cookieSecure=true in the oauth2-proxy config
+    templates:
+      - dashboard/oauth2-proxy-config-map.yaml
+    set:
+      thorasDashboard:
+        auth:
+          cookieSecure: true
+    asserts:
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "cookie_secure = true"
+
+  - it: Renders an OIDC config under mode oidc
+    templates:
+      - dashboard/oauth2-proxy-config-map.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            provider: okta
+            issuerURL: https://acme.okta.com/oauth2/default
+            redirectURL: https://thoras.acme.com/oauth2/callback
+            emailDomains: [acme.com]
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'provider = "okta"'
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'oidc_issuer_url = "https://acme.okta.com/oauth2/default"'
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'redirect_url = "https://thoras.acme.com/oauth2/callback"'
+      # client_id_file is not a valid legacy-config key; regression guard.
+      - notMatchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "client_id_file"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'client_secret_file = "/etc/oauth2-proxy/secret/client-secret"'
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'cookie_secret_file = "/etc/oauth2-proxy/secret/cookie-secret"'
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'email_domains = \["acme.com"\]'
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "skip_provider_button = true"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "reverse_proxy = true"
+      # Under OIDC, no htpasswd surface should leak into the config.
+      - notMatchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "htpasswd_file"
+      - notMatchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "display_htpasswd_form"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'custom_templates_dir = "/etc/oauth2-proxy/templates"'
+      # Suppresses oauth2-proxy's auto-generated "Authenticate using ..." message.
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'banner = "Sign in to the Thoras Dashboard"'
+
+  - it: Renders multiple email_domains entries in OIDC config
+    templates:
+      - dashboard/oauth2-proxy-config-map.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            emailDomains: [acme.com, subsidiary.com]
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'email_domains = \["acme.com", "subsidiary.com"\]'
+
+  # -------- oauth2-proxy templates ConfigMap --------
+
+  - it: Does not render the oauth2-proxy templates ConfigMap when auth is disabled
+    templates:
+      - dashboard/oauth2-proxy-templates-config-map.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders the branded sign-in template under htpasswd auth
+    templates:
+      - dashboard/oauth2-proxy-templates-config-map.yaml
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: thoras-dashboard-oauth2-proxy-templates
+      - matchRegex:
+          path: data["sign_in.html"]
+          pattern: '\{\{define "sign_in.html"\}\}'
+      # Thoras logo is inlined; the dashboard SVG uses fill #EEECE8.
+      - matchRegex:
+          path: data["sign_in.html"]
+          pattern: 'fill="#EEECE8"'
+      # Primary button matches the dashboard sidebar (bg-neutral = #0c0a09).
+      - matchRegex:
+          path: data["sign_in.html"]
+          pattern: 'background-color: #0c0a09'
+      # Provider button is gated on OIDC mode, htpasswd form on CustomLogin.
+      - matchRegex:
+          path: data["sign_in.html"]
+          pattern: '\{\{ if not \.CustomLogin \}\}'
+      - matchRegex:
+          path: data["sign_in.html"]
+          pattern: '\{\{ if \.CustomLogin \}\}'
+
+  - it: Renders the branded sign-in template under OIDC auth
+    templates:
+      - dashboard/oauth2-proxy-templates-config-map.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["sign_in.html"]
+          pattern: 'fill="#EEECE8"'
+
+  # -------- Dashboard Deployment --------
+
+  - it: Does not add an oauth2-proxy sidecar when auth is disabled
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+        auth:
+          enabled: false
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - notExists:
+          path: spec.template.spec.initContainers
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-config')]
+
+  - it: Adds the oauth2-proxy sidecar, init container, and volumes when enabled
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 2
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/oauth2-proxy:v7.15.4-alpine
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].ports[0].containerPort
+          value: 8080
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].ports[0].name
+          value: http
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].args
+          value:
+            - --config=/etc/oauth2-proxy/config/oauth2-proxy.cfg
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].livenessProbe.httpGet.path
+          value: /ping
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].readinessProbe.httpGet.path
+          value: /ready
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].volumeMounts
+          content:
+            name: oauth2-proxy-config
+            mountPath: /etc/oauth2-proxy/config
+            readOnly: true
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].volumeMounts
+          content:
+            name: oauth2-proxy-templates
+            mountPath: /etc/oauth2-proxy/templates
+            readOnly: true
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].volumeMounts
+          content:
+            name: oauth2-proxy-secret
+            mountPath: /etc/oauth2-proxy/secret
+            readOnly: true
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].volumeMounts
+          content:
+            name: oauth2-proxy-generated
+            mountPath: /etc/oauth2-proxy/generated
+            readOnly: true
+      # OAUTH2_PROXY_CLIENT_ID only belongs in OIDC mode.
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].env[?(@.name == 'OAUTH2_PROXY_CLIENT_ID')]
+      - lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 1
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == 'htpasswd-init')].env[?(@.name == 'AUTH_USERNAME')].value
+          value: thoras
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == 'htpasswd-init')].env[?(@.name == 'AUTH_PASSWORD')].valueFrom.secretKeyRef.name
+          value: thoras-shared
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == 'htpasswd-init')].env[?(@.name == 'AUTH_PASSWORD')].valueFrom.secretKeyRef.key
+          value: dashboard-auth-password
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.items
+          content:
+            key: dashboard-auth-cookie-secret
+            path: cookie-secret
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.secretName
+          value: thoras-shared
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: oauth2-proxy-config
+            configMap:
+              name: thoras-dashboard-oauth2-proxy-config
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: oauth2-proxy-templates
+            configMap:
+              name: thoras-dashboard-oauth2-proxy-templates
+
+  - it: Skips htpasswd-init and points oauth2-proxy-secret at the OIDC Secret under mode oidc
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://acme.okta.com/oauth2/default
+            redirectURL: https://thoras.acme.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 2
+      - notExists:
+          path: spec.template.spec.initContainers
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-generated')]
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.secretName
+          value: oauth2-proxy-secrets
+      # client-id is sourced via env; only client-secret and cookie-secret
+      # need to be projected as files.
+      - notContains:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.items
+          content:
+            key: client-id
+            path: client-id
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.items
+          content:
+            key: client-secret
+            path: client-secret
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.items
+          content:
+            key: cookie-secret
+            path: cookie-secret
+      # client-id is loaded via env because oauth2-proxy's legacy config
+      # has no client_id_file key.
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].env
+          content:
+            name: OAUTH2_PROXY_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: oauth2-proxy-secrets
+                key: client-id
+      # oauth2-proxy sidecar must not try to mount the (nonexistent)
+      # generated htpasswd volume under OIDC.
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].volumeMounts
+          content:
+            name: oauth2-proxy-generated
+            mountPath: /etc/oauth2-proxy/generated
+            readOnly: true
+      # Custom sign-in template ships in both auth modes.
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: oauth2-proxy-templates
+            configMap:
+              name: thoras-dashboard-oauth2-proxy-templates
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].volumeMounts
+          content:
+            name: oauth2-proxy-templates
+            mountPath: /etc/oauth2-proxy/templates
+            readOnly: true
+
+  - it: Honors custom OIDC existingSecret key names
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: my-idp-secret
+              clientIDKey: idp-client-id
+              clientSecretKey: idp-client-secret
+              cookieSecretKey: idp-cookie
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.items
+          content:
+            key: idp-client-id
+            path: client-id
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.items
+          content:
+            key: idp-client-secret
+            path: client-secret
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.items
+          content:
+            key: idp-cookie
+            path: cookie-secret
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].env
+          content:
+            name: OAUTH2_PROXY_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: my-idp-secret
+                key: idp-client-id
+
+  # Probes must not go through the sidecar (would 401) or the pod IP
+  # (nginx is loopback-only); exec against loopback is required.
+  - it: Uses loopback exec probes on the dashboard container when auth is enabled
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.exec.command
+          value: ["curl", "-sf", "http://127.0.0.1:8181/"]
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.exec.command
+          value: ["curl", "-sf", "http://127.0.0.1:8181/"]
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.httpGet
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.httpGet
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].ports[0].containerPort
+          value: 8181
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].ports[0].name
+          value: nginx-int
+
+  # Auth-off: Service hits nginx directly, so httpGet probes must stay.
+  - it: Keeps dashboard container probes as httpGet when auth is disabled
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+        auth:
+          enabled: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.httpGet.port
+          value: http
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.httpGet.port
+          value: http
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.exec
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.exec
+
+  - it: Rolls the dashboard pod when the oauth2-proxy config or templates change
+    templates:
+      - dashboard/deployment.yaml
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/oauth2-proxy-config"]
+      - exists:
+          path: spec.template.metadata.annotations["checksum/oauth2-proxy-templates"]
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/shared-secret"]
+
+  - it: Never emits a shared-secret checksum (rotation is a manual rollout)
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/shared-secret"]
+
+  - it: Routes htpasswd-init and the oauth2-proxy volume at existingSecret when set
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+        auth:
+          htpasswd:
+            existingSecret:
+              secretName: my-dash
+              passwordKey: pw
+              cookieSecretKey: cookie
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == 'htpasswd-init')].env[?(@.name == 'AUTH_PASSWORD')].valueFrom.secretKeyRef.name
+          value: my-dash
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == 'htpasswd-init')].env[?(@.name == 'AUTH_PASSWORD')].valueFrom.secretKeyRef.key
+          value: pw
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.secretName
+          value: my-dash
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.items
+          content:
+            key: cookie
+            path: cookie-secret
+
+  - it: Applies extraArgs to the sidecar
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        unittesting: true
+        auth:
+          extraArgs:
+            - --skip-jwt-bearer-tokens=true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].args
+          content: --skip-jwt-bearer-tokens=true
+
+  # -------- Service --------
+
+  - it: Points the Service at containerPort when auth is enabled
+    templates:
+      - dashboard/service.yaml
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 8080
+
+  - it: Points the Service at containerPort when auth is disabled
+    templates:
+      - dashboard/service.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 8080
+
+  - it: Follows containerPort overrides in both auth modes
+    templates:
+      - dashboard/service.yaml
+    set:
+      thorasDashboard:
+        containerPort: 9090
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 9090
+
+  - it: Explicit service.targetPort still wins over containerPort
+    templates:
+      - dashboard/service.yaml
+    set:
+      thorasDashboard:
+        service:
+          targetPort: 9999
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 9999
+
+  # -------- NetworkPolicy --------
+
+  # NetworkPolicy assertions target the cilium flavor because oauth2-proxy
+  # behavior (containerPort ownership, IdP egress) only shows up in the
+  # CiliumNetworkPolicy shape. Kubernetes-flavor coverage lives in
+  # network_policy_test.yaml.
+  - it: Opens containerPort in the NetworkPolicy when auth is enabled
+    templates:
+      - dashboard/network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        flavor: cilium
+    asserts:
+      - contains:
+          path: spec.ingress[1].toPorts[0].ports
+          content:
+            port: "8080"
+            protocol: TCP
+
+  - it: Opens containerPort in the NetworkPolicy when auth is disabled
+    templates:
+      - dashboard/network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        flavor: cilium
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - contains:
+          path: spec.ingress[1].toPorts[0].ports
+          content:
+            port: "8080"
+            protocol: TCP
+
+  - it: Does not open external HTTPS egress under mode htpasswd
+    templates:
+      - dashboard/network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        flavor: cilium
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            toEntities:
+              - world
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+
+  - it: Opens external HTTPS egress under mode oidc for IdP reachability
+    templates:
+      - dashboard/network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        flavor: cilium
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - world
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP

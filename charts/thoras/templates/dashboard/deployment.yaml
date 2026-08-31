@@ -19,12 +19,20 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasDashboard.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
+      {{- $userAnnotations := or .Values.podAnnotations .Values.thorasDashboard.podAnnotations }}
+      {{- $chartChecksum := not .Values.thorasDashboard.unittesting }}
+      {{- if or $userAnnotations $chartChecksum }}
       annotations:
-        {{- if not .Values.thorasDashboard.unittesting }}
+        {{- if $chartChecksum }}
         checksum/configmap: {{ include (print $.Template.BasePath "/dashboard/nginx-config-map.yaml") . | sha256sum }}
+        {{- if .Values.thorasDashboard.auth.enabled }}
+        checksum/oauth2-proxy-config: {{ include (print $.Template.BasePath "/dashboard/oauth2-proxy-config-map.yaml") . | sha256sum }}
+        checksum/oauth2-proxy-templates: {{ include (print $.Template.BasePath "/dashboard/oauth2-proxy-templates-config-map.yaml") . | sha256sum }}
         {{- end }}
-      {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasDashboard.podAnnotations) }}
-        {{- . | trim | nindent 8 }}
+        {{- end }}
+        {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasDashboard.podAnnotations) }}
+          {{- . | trim | nindent 8 }}
+        {{- end }}
       {{- end }}
     spec:
       securityContext:
@@ -40,6 +48,71 @@ spec:
         - name: nginx-config
           configMap:
             name: thoras-dashboard-nginx-config
+        {{- if .Values.thorasDashboard.auth.enabled }}
+        - name: oauth2-proxy-config
+          configMap:
+            name: thoras-dashboard-oauth2-proxy-config
+        - name: oauth2-proxy-templates
+          configMap:
+            name: thoras-dashboard-oauth2-proxy-templates
+        # Do not set defaultMode < 0444: files are uid 0 and the sidecar
+        # runs as uid 2000; readOnly already prevents writes.
+        {{- if eq .Values.thorasDashboard.auth.mode "htpasswd" }}
+        {{- $cookieRef := include "thoras.dashboardAuthCookieSecretRef" . | fromYaml }}
+        - name: oauth2-proxy-secret
+          secret:
+            secretName: {{ $cookieRef.name }}
+            items:
+              - key: {{ $cookieRef.key }}
+                path: cookie-secret
+        - name: oauth2-proxy-generated
+          emptyDir: {}
+        {{- else if eq .Values.thorasDashboard.auth.mode "oidc" }}
+        {{- $oidcSecret := .Values.thorasDashboard.auth.oidc.existingSecret }}
+        # client-id is read via OAUTH2_PROXY_CLIENT_ID env; the file-based
+        # client_id_file key does not exist in oauth2-proxy legacy config.
+        - name: oauth2-proxy-secret
+          secret:
+            secretName: {{ $oidcSecret.secretName }}
+            items:
+              - key: {{ $oidcSecret.clientSecretKey }}
+                path: client-secret
+              - key: {{ $oidcSecret.cookieSecretKey }}
+                path: cookie-secret
+        {{- end }}
+        {{- end }}
+      {{- if and .Values.thorasDashboard.auth.enabled (eq .Values.thorasDashboard.auth.mode "htpasswd") }}
+      initContainers:
+      - name: htpasswd-init
+        image: {{ .Values.imageCredentials.registry }}/httpd:{{ .Values.thorasDashboard.auth.htpasswd.initImage.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 1000
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        command:
+          - sh
+          - -c
+          - |
+            set -eu
+            htpasswd -B -bn "$AUTH_USERNAME" "$AUTH_PASSWORD" > /generated/htpasswd
+        env:
+          - name: AUTH_USERNAME
+            value: {{ .Values.thorasDashboard.auth.htpasswd.username | quote }}
+          {{- $passwordRef := include "thoras.dashboardAuthPasswordRef" . | fromYaml }}
+          - name: AUTH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ $passwordRef.name }}
+                key: {{ $passwordRef.key }}
+        resources: {{ toYaml .Values.thorasDashboard.auth.htpasswd.initImage.resources | nindent 10 }}
+        volumeMounts:
+          - name: oauth2-proxy-generated
+            mountPath: /generated
+      {{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
         name: thoras-dashboard
@@ -65,8 +138,13 @@ spec:
                 key: {{ $apiClientRef.key }}
         {{- end }}
         ports:
+        {{- if .Values.thorasDashboard.auth.enabled }}
+        - containerPort: {{ include "thoras.dashboard.internalNginxPort" . | int }}
+          name: nginx-int
+        {{- else }}
         - containerPort: {{ .Values.thorasDashboard.containerPort }}
           name: http
+        {{- end }}
         {{- if .Values.thorasDashboard.resources }}
         resources: {{ .Values.thorasDashboard.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -74,10 +152,16 @@ spec:
           limits: {{ .Values.thorasDashboard.limits | toYaml | nindent 12 }}
           requests: {{ .Values.thorasDashboard.requests | toYaml | nindent 12 }}
         {{- end }}
+        {{- /* exec probes under auth because nginx is loopback-only. */}}
         startupProbe:
+          {{- if .Values.thorasDashboard.auth.enabled }}
+          exec:
+            command: ["curl", "-sf", "http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}/"]
+          {{- else }}
           httpGet:
             path: /
             port: http
+          {{- end }}
           periodSeconds: 5
           failureThreshold: 12
         readinessProbe:
@@ -87,15 +171,78 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 2
         livenessProbe:
+          {{- if .Values.thorasDashboard.auth.enabled }}
+          exec:
+            command: ["curl", "-sf", "http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}/"]
+          {{- else }}
           httpGet:
             path: /
             port: http
+          {{- end }}
           periodSeconds: 5
           failureThreshold: 48
         volumeMounts:
           - name: nginx-config
             mountPath: /etc/nginx/templates/nginx.conf.template
             subPath: nginx.conf.template
+      {{- if .Values.thorasDashboard.auth.enabled }}
+      - name: oauth2-proxy
+        image: {{ .Values.imageCredentials.registry }}/oauth2-proxy:{{ .Values.thorasDashboard.auth.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 2000
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        args:
+          - --config=/etc/oauth2-proxy/config/oauth2-proxy.cfg
+          {{- with .Values.thorasDashboard.auth.extraArgs }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+        {{- if eq .Values.thorasDashboard.auth.mode "oidc" }}
+        {{- $oidcSecret := .Values.thorasDashboard.auth.oidc.existingSecret }}
+        env:
+          # oauth2-proxy legacy config has no client_id_file key; source via env.
+          - name: OAUTH2_PROXY_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ $oidcSecret.secretName }}
+                key: {{ $oidcSecret.clientIDKey }}
+        {{- end }}
+        ports:
+        - containerPort: {{ .Values.thorasDashboard.containerPort }}
+          name: http
+        resources: {{ toYaml .Values.thorasDashboard.auth.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          periodSeconds: 5
+          failureThreshold: 2
+        volumeMounts:
+          - name: oauth2-proxy-config
+            mountPath: /etc/oauth2-proxy/config
+            readOnly: true
+          - name: oauth2-proxy-templates
+            mountPath: /etc/oauth2-proxy/templates
+            readOnly: true
+          - name: oauth2-proxy-secret
+            mountPath: /etc/oauth2-proxy/secret
+            readOnly: true
+          {{- if eq .Values.thorasDashboard.auth.mode "htpasswd" }}
+          - name: oauth2-proxy-generated
+            mountPath: /etc/oauth2-proxy/generated
+            readOnly: true
+          {{- end }}
+      {{- end }}
       {{- if .Values.thorasDashboard.extraContainers }}
       {{- toYaml .Values.thorasDashboard.extraContainers | nindent 6 }}
       {{- end }}

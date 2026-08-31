@@ -30,6 +30,8 @@ tests:
   - it: Should not have annotations section when all conditions are false
     set:
       podAnnotations: {}
+      thorasMonitor:
+        unittesting: true
       thorasApiServerV2:
         prometheus:
           enabled: false

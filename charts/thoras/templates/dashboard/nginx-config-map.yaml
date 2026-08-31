@@ -78,8 +78,15 @@ data:
       }
 
       server {
+        {{- if .Values.thorasDashboard.auth.enabled }}
+        {{- $internalPort := include "thoras.dashboard.internalNginxPort" . }}
+        # Loopback-only; oauth2-proxy sidecar fronts containerPort.
+        listen       127.0.0.1:{{ $internalPort }};
+        listen       [::1]:{{ $internalPort }} ipv6only=on;
+        {{- else }}
         listen       {{ .Values.thorasDashboard.containerPort }};
         listen       [::]:{{ .Values.thorasDashboard.containerPort }} ipv6only=on;
+        {{- end }}
         server_name  localhost;
 
         root   /usr/share/nginx/html;

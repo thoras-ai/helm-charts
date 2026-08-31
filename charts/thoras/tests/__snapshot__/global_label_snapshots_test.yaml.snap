@@ -918,7 +918,6 @@ Default matches snapshot:
           app: thoras-dashboard
       template:
         metadata:
-          annotations: null
           labels:
             app: thoras-dashboard
             app.kubernetes.io/name: thoras

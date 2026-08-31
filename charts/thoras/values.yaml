@@ -544,6 +544,9 @@ thorasDashboard:
     enabled: false
     maxUnavailable: 1
     # minAvailable:
+  # Container port for the Thoras Dashboard. Owned by the oauth2-proxy
+  # sidecar when thorasDashboard.auth.enabled (default), otherwise by nginx
+  # directly. Target this port from the Service or Ingress.
   containerPort: 8080
   # Specify the complete resources block (takes precedence if set)
   resources: {}
@@ -559,9 +562,95 @@ thorasDashboard:
   service:
     type: ClusterIP
     annotations: {}
-    # Overrides the Service target port. Defaults to containerPort. Set to the
-    # oauth2-proxy sidecar port (e.g. 4180) to force traffic through auth.
+    # Overrides Service targetPort; defaults to thorasDashboard.containerPort.
     targetPort: ""
+  # HTTP auth via an oauth2-proxy sidecar. Enabled by default; disable to
+  # front the dashboard with your own auth. Credentials are only meaningful
+  # behind TLS - terminate TLS at your ingress.
+  auth:
+    enabled: true
+    # htpasswd: chart-managed username + password (default, self-contained).
+    # oidc:     OIDC/OAuth2 via your identity provider (Okta, Entra, ...);
+    #           reads client-id/client-secret/cookie-secret from a Secret
+    #           you already manage.
+    # Fields under the unused mode's block are silently ignored.
+    mode: htpasswd
+    imageTag: v7.15.4-alpine
+    # Marks session cookies as Secure. Enabling requires TLS at the edge and
+    # breaks Safari when reaching the dashboard through kubectl port-forward.
+    # Recommended in production: enable this and terminate TLS at the edge.
+    cookieSecure: false
+    # oauth2-proxy sidecar resources.
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 10m
+        memory: 32Mi
+    # Appended to the sidecar's args verbatim. Applies to both modes.
+    # Flags here override any equivalent directive in the chart-generated
+    # oauth2-proxy.cfg (oauth2-proxy resolves CLI flags after config-file
+    # directives).
+    extraArgs: []
+    # Consulted when thorasDashboard.auth.mode: htpasswd.
+    htpasswd:
+      username: thoras
+      # Generated if empty. Setting a value will override existing value and
+      # rotates the secret on the next upgrade.
+      # thorasDashboard.auth.htpasswd.existingSecret takes precedent.
+      # Rotation requires a manual rollout of dependent workloads; see
+      # README > "Rotating chart-managed credentials".
+      password: ""
+      # Generated if empty. Setting a value will override existing value and
+      # rotates the secret on the next upgrade, invalidating all logged-in
+      # dashboard sessions. thorasDashboard.auth.htpasswd.existingSecret
+      # takes precedent. Rotation requires a manual rollout of dependent
+      # workloads; see README > "Rotating chart-managed credentials".
+      # Must be 16, 24, or 32 bytes raw, or a base64 string that decodes to
+      # that length.
+      cookieSecret: ""
+      # Point at a pre-existing Secret you manage. Mutually exclusive with
+      # thorasDashboard.auth.htpasswd.password /
+      # thorasDashboard.auth.htpasswd.cookieSecret above.
+      existingSecret:
+        secretName: ""
+        passwordKey: dashboard-auth-password
+        cookieSecretKey: dashboard-auth-cookie-secret
+      # Init container that regenerates the htpasswd file at pod start
+      # (keeps the Secret deterministic - it only holds the plaintext).
+      initImage:
+        imageTag: "2.4.68-alpine3.24"
+        resources:
+          limits:
+            memory: 32Mi
+          requests:
+            cpu: 10m
+            memory: 16Mi
+    # Consulted when thorasDashboard.auth.mode: oidc. The chart never
+    # generates client credentials;
+    # thorasDashboard.auth.oidc.existingSecret.secretName is required and
+    # points at a Secret you manage. Opens broad egress (0.0.0.0/0:443) on
+    # the dashboard NetworkPolicy so the sidecar can reach the IdP. Tighten
+    # via a separate NetworkPolicy.
+    oidc:
+      # oauth2-proxy provider name (oidc | okta | entra-id | google | ...).
+      provider: oidc
+      # e.g. https://<okta-domain>/oauth2/default or
+      # https://login.microsoftonline.com/<tenant-id>/v2.0
+      issuerURL: ""
+      # e.g. https://thoras.example.com/oauth2/callback; must match the URI
+      # registered on the IdP app.
+      redirectURL: ""
+      # Rendered as repeated oauth2-proxy email_domains entries.
+      emailDomains: ["*"]
+      skipProviderButton: true
+      insecureAllowUnverifiedEmail: false
+      existingSecret:
+        # Required. e.g. oauth2-proxy-secrets.
+        secretName: ""
+        clientIDKey: client-id
+        clientSecretKey: client-secret
+        cookieSecretKey: cookie-secret
   ingress:
     enabled: false
     ingressClassName: "nginx"
