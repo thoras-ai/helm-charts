@@ -1716,6 +1716,10 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
+                - name: SERVICE_ENABLE_ANALYSIS_ENQUEUER
+                  value: "false"
+                - name: SERVICE_ANALYSIS_ENQUEUE_INTERVAL
+                  value: 1h
                 - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
                   value: "true"
                 - name: SERVICE_SIMPLE_AUTH_SECRET
