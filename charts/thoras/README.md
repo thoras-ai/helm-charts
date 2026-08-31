@@ -338,6 +338,27 @@ The alert is then prefixed with the metadata:
 ...
 ```
 
+### Deployment health alerting (`thoras_deployments`)
+
+By default the `thoras_deployments` alert fires only when a Thoras deployment has zero available replicas (nothing serving). It does not alert on partial degradation or on individual failed pods while healthy replicas remain, and it stays quiet for deployments intentionally scaled to zero.
+
+To be warned before a deployment is fully down, set an availability `threshold` (a ratio between 0 and 1) on the alert. It then fires while `availableReplicas / desiredReplicas` is below that fraction:
+
+```yaml
+# values.yaml
+---
+thorasMonitor:
+  config: |
+    general:
+      name: 'prod-a'
+    alerts:
+      - name: thoras_deployments
+        enabled: true
+        options:
+          # alert when fewer than half the desired replicas are available
+          threshold: 0.5
+```
+
 ## Example Thoras Dashboard Ingress Configuration
 
 ```yaml
