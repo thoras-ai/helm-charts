@@ -285,6 +285,10 @@ spec:
             value: {{ .Values.featureFlags.enableDisruptionSchedulerWorker | ternary "true" "false" | quote }}
           - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
             value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_ANALYSIS_ENQUEUER
+            value: {{ .Values.thorasWorker.enableAnalysisEnqueuer | ternary "true" "false" | quote }}
+          - name: SERVICE_ANALYSIS_ENQUEUE_INTERVAL
+            value: {{ .Values.thorasWorker.analysisEnqueueInterval | quote }}
           {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:

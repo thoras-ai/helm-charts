@@ -496,6 +496,8 @@ thorasWorker:
   enableMetricIntegrityWorker: true
   enableDeploymentMonitorWorker: true
   enableUnifiedAstUtilizationMonitor: true
+  enableAnalysisEnqueuer: false
+  analysisEnqueueInterval: "1h"
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it
