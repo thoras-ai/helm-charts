@@ -86,19 +86,21 @@ featureFlags:
   enableAstRecordMirroring: true
   enableForecastCollectorAntiAffinity: false
   enableMultiDimensional: false
-  # Generates a shared api-client-secret Secret and enables simple auth on all
-  # components.
-  enableSimpleAuthSecret: true
 
-# Shared secret Thoras components send to the API server. Only used when
-# featureFlags.enableSimpleAuthSecret is true.
+# Shared secret Thoras components send to the API server. Toggled with
+# apiClientSecret.enabled (default true; components authenticate to the API
+# server with a shared bearer token).
 apiClientSecret:
-  # Plaintext value; the chart base64-encodes it. Leave empty to generate one.
-  # A value already present in the cluster takes precedence, so setting this
-  # after install has no effect until the api-client-secret Secret is deleted.
-  # Set it when rendering without cluster access (helm template, Argo CD),
-  # where a generated value would differ on every render.
+  # Generated if empty. Setting a value will override existing value and
+  # rotates the secret on the next upgrade. apiClientSecret.existingSecret
+  # takes precedent. Rotation requires a manual rollout of dependent
+  # workloads; see README > "Rotating chart-managed credentials".
   secret: ""
+  # Point at a pre-existing Secret you manage. Mutually exclusive with
+  # apiClientSecret.secret.
+  existingSecret:
+    secretName: ""
+    secretKey: "api-client-secret"
 
 # Cost refresh batching configuration (shared by thorasApiServerV2 and thorasWorker)
 costRefreshBatching:

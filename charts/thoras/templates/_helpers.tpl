@@ -370,6 +370,141 @@ true
 {{- end }}
 
 {{/*
+Secret+key that carries the shared api-client secret. Returns the user's
+existingSecret when configured, else the centralized `thoras-shared` Secret.
+Usage: {{- $ref := include "thoras.apiClientSecretRef" . | fromYaml }}
+*/}}
+{{- define "thoras.apiClientSecretRef" -}}
+{{- if .Values.apiClientSecret.existingSecret.secretName -}}
+name: {{ .Values.apiClientSecret.existingSecret.secretName }}
+key: {{ .Values.apiClientSecret.existingSecret.secretKey }}
+{{- else -}}
+name: thoras-shared
+key: api-client-secret
+{{- end -}}
+{{- end -}}
+
+{{/*
+Body of the centralized `thoras-shared` Secret. Rotating a value pinned in
+this Secret requires a manual `kubectl rollout restart` of dependent
+workloads - the chart does not add a rotation checksum. See README >
+"Rotating chart-managed credentials".
+*/}}
+{{- define "thoras.sharedSecret" -}}
+{{- $auth := .Values.thorasDashboard.auth -}}
+{{- $htpasswdMode := eq $auth.mode "htpasswd" -}}
+{{- $apiClientEnabled := and (eq (include "thoras.apiClientEnabled" .) "true") (not .Values.apiClientSecret.existingSecret.secretName) -}}
+{{- $dashboardAuthEnabled := and .Values.thorasDashboard.enabled $auth.enabled $htpasswdMode (not $auth.htpasswd.existingSecret.secretName) -}}
+{{- if or $apiClientEnabled $dashboardAuthEnabled }}
+{{- $sharedSecret := (lookup "v1" "Secret" .Release.Namespace "thoras-shared") }}
+{{- $sharedData := (get $sharedSecret "data") | default dict }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thoras-shared
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" dict) | nindent 4 }}
+data:
+  {{- if $apiClientEnabled }}
+  {{- $legacyApiClient := (lookup "v1" "Secret" .Release.Namespace "api-client-secret") }}
+  {{- $legacyApiClientData := (get $legacyApiClient "data") | default dict }}
+  {{- $apiClient := "" }}
+
+  {{- /* pinned in values */}}
+  {{- if .Values.apiClientSecret.secret }}
+  {{- $apiClient = .Values.apiClientSecret.secret | b64enc }}
+
+  {{- /* preserve existing thoras-shared value */}}
+  {{- else if hasKey $sharedData "api-client-secret" }}
+  {{- $apiClient = index $sharedData "api-client-secret" }}
+
+  {{- /* legacy per-key Secret (pre thoras-shared) */}}
+  {{- else if hasKey $legacyApiClientData "secret" }}
+  {{- $apiClient = index $legacyApiClientData "secret" }}
+
+  {{- /* first install: generate */}}
+  {{- else }}
+  {{- $apiClient = randAlphaNum 32 | b64enc }}
+  {{- end }}
+  api-client-secret: {{ $apiClient | quote }}
+  {{- end }}
+
+  {{- if $dashboardAuthEnabled }}
+  {{- $legacyDash := (lookup "v1" "Secret" .Release.Namespace "thoras-dashboard-auth") }}
+  {{- $legacyDashData := (get $legacyDash "data") | default dict }}
+  {{- $password := "" }}
+
+  {{- /* pinned in values */}}
+  {{- if $auth.htpasswd.password }}
+  {{- $password = $auth.htpasswd.password | b64enc }}
+
+  {{- /* preserve existing thoras-shared value */}}
+  {{- else if hasKey $sharedData "dashboard-auth-password" }}
+  {{- $password = index $sharedData "dashboard-auth-password" }}
+
+  {{- /* legacy per-key Secret (pre thoras-shared) */}}
+  {{- else if hasKey $legacyDashData "password" }}
+  {{- $password = index $legacyDashData "password" }}
+
+  {{- /* first install: generate */}}
+  {{- else }}
+  {{- $password = randAlphaNum 24 | b64enc }}
+  {{- end }}
+
+  {{- $cookieSecret := "" }}
+
+  {{- /* pinned in values */}}
+  {{- if $auth.htpasswd.cookieSecret }}
+  {{- $cookieSecret = $auth.htpasswd.cookieSecret | b64enc }}
+
+  {{- /* preserve existing thoras-shared value */}}
+  {{- else if hasKey $sharedData "dashboard-auth-cookie-secret" }}
+  {{- $cookieSecret = index $sharedData "dashboard-auth-cookie-secret" }}
+
+  {{- /* legacy per-key Secret (pre thoras-shared) */}}
+  {{- else if hasKey $legacyDashData "cookie-secret" }}
+  {{- $cookieSecret = index $legacyDashData "cookie-secret" }}
+
+  {{- /* first install: generate */}}
+  {{- else }}
+  {{- $cookieSecret = randAlphaNum 32 | b64enc }}
+  {{- end }}
+  dashboard-auth-password: {{ $password | quote }}
+  dashboard-auth-cookie-secret: {{ $cookieSecret | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Resolve the api-client-secret enable flag with deprecation-aware alias.
+Precedence: legacy featureFlags.enableSimpleAuthSecret wins if set;
+otherwise apiClientSecret.enabled is used; defaults to true when unset.
+Explicit values that conflict hard-fail. Returns the string "true" or
+"false"; consumers should compare via `eq "true"`.
+
+apiClientSecret.enabled is intentionally not defaulted in values.yaml so
+that hasKey can distinguish user intent from the chart default.
+*/}}
+{{- define "thoras.apiClientEnabled" -}}
+{{- $ff := .Values.featureFlags -}}
+{{- $ac := .Values.apiClientSecret -}}
+{{- $ffSet := hasKey $ff "enableSimpleAuthSecret" -}}
+{{- $acSet := hasKey $ac "enabled" -}}
+{{- if and $ffSet $acSet (ne (toString (index $ff "enableSimpleAuthSecret")) (toString $ac.enabled)) -}}
+{{- fail "apiClientSecret.enabled conflicts with the deprecated featureFlags.enableSimpleAuthSecret; set only one" -}}
+{{- end -}}
+{{- if $ffSet -}}
+{{- index $ff "enableSimpleAuthSecret" | ternary "true" "false" -}}
+{{- else if $acSet -}}
+{{- $ac.enabled | ternary "true" "false" -}}
+{{- else -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
 Simple auth env vars injected into every Thoras component. The enable flag is
 always emitted so the components have an explicit "false"; the secret itself is
 only bound when the flag is on. "prefix" is required and must be passed
@@ -378,15 +513,16 @@ services read SERVICE_-prefixed vars, the forecaster reads them unprefixed.
 Usage: {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
 */}}
 {{- define "thoras.simpleAuthEnv" -}}
-{{- $enabled := .root.Values.featureFlags.enableSimpleAuthSecret -}}
+{{- $enabled := eq (include "thoras.apiClientEnabled" .root) "true" -}}
 - name: {{ .prefix }}ENABLE_SIMPLE_AUTH_SECRET
   value: {{ $enabled | ternary "true" "false" | quote }}
 {{- if $enabled }}
+{{- $ref := include "thoras.apiClientSecretRef" .root | fromYaml }}
 - name: {{ .prefix }}SIMPLE_AUTH_SECRET
   valueFrom:
     secretKeyRef:
-      name: api-client-secret
-      key: secret
+      name: {{ $ref.name }}
+      key: {{ $ref.key }}
 {{- end }}
 {{- end -}}
 
