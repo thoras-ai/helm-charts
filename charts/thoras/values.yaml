@@ -91,10 +91,10 @@ featureFlags:
 # apiClientSecret.enabled (default true; components authenticate to the API
 # server with a shared bearer token).
 apiClientSecret:
-  # Generated if empty. Setting a value will override existing value and
-  # rotates the secret on the next upgrade. apiClientSecret.existingSecret
-  # takes precedent. Rotation requires a manual rollout of dependent
-  # workloads; see README > "Rotating chart-managed credentials".
+  # Seeded by config-controller when empty. Set a value to pin it in
+  # `thoras-helm-shared` instead; apiClientSecret.existingSecret takes
+  # precedence over both. Changing a pinned value requires a manual rollout of
+  # dependent workloads; see README > "Rotating secrets".
   secret: ""
   # Point at a pre-existing Secret you manage. Mutually exclusive with
   # apiClientSecret.secret.
@@ -505,6 +505,87 @@ thorasWorker:
   # overrunning forecastJobTimeoutInterval from monopolising the forecast workers.
   # Set to -1 to disable the cap.
   forecastRescueMaxAttempts: 3
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
+  topologySpreadConstraints: []
+  extraEgressRules: []
+  extraIngressRules: []
+
+# Leader-elected controller that seeds the credentials you did not supply into
+# the `thoras-config-controller` Secret, migrates pre-5.0 chart-generated
+# values into it, and rolls dependent workloads when watched config changes.
+# See README > Thoras Config Controller.
+thorasConfigController:
+  # Disabling is only valid when every credential is pinned in values or points
+  # at an existing Secret; otherwise the chart fails, since nothing else
+  # creates the seeded Secret.
+  enabled: true
+  serviceAccount:
+    name: thoras-config-controller
+  podAnnotations: {}
+  labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+    # minAvailable:
+  service:
+    annotations: {}
+  # Must stay 1: only the leader reconciles, and non-leader replicas never pass
+  # their readiness probe.
+  replicas: 1
+  # Specify the complete resources block (takes precedence if set)
+  resources: {}
+  # Legacy field for backward compatibility (used if resources is empty)
+  limits:
+    memory: 256Mi
+  # Legacy field for backward compatibility (used if resources is empty)
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  logLevel: "info"
+  prometheus:
+    enabled: true
+    port: 9103
+  pprof:
+    enabled: false
+  # Write seeded and migrated values to the managed Secret. With this off the
+  # controller only drives rollouts, and any unseeded credential stays missing.
+  enableSeeding: true
+  # Watch the ConfigMaps below and roll their consumers on change.
+  enableConfigMapMonitoring: true
+  # Safety switch: with this off the controller logs the checksum diffs it
+  # would apply but never touches a pod template.
+  enableRestartRollouts: true
+  pollInterval: "30s"
+  # Coalescing window after a change is first seen, before a rollout starts.
+  rolloutDebounce: "10s"
+  # Per-workload readiness deadline. A tier that overruns aborts the sequence.
+  rolloutTimeout: "5m"
+  # Strict sequential restart tiers: every workload in a tier must go Ready
+  # before the next tier is touched. Workloads not listed here are restarted
+  # last, together.
+  restartOrder:
+    - metrics-collector
+    - thoras-operator
+    - thoras-worker
+    - thoras-api-server-v2
+    - thoras-forecast-worker
+    - thoras-dashboard
+  # Never restarted. The controller must exclude itself; the chart rolls it via
+  # a config checksum instead.
+  restartExclude:
+    - thoras-config-controller
+  # ConfigMaps to watch in addition to the ones this chart owns. Needed only
+  # when a workload of yours in this namespace consumes a ConfigMap you want
+  # rolled automatically.
+  extraWatchConfigMaps: []
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)

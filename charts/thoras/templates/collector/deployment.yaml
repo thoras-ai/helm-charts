@@ -185,11 +185,12 @@ spec:
         ports:
         - containerPort: {{ .Values.metricsCollector.timescale.containerPort }}
         env:
+          {{- $password := include "thoras.timescalePasswordRef" . | fromYaml }}
           - name: "POSTGRES_PASSWORD"
             valueFrom:
               secretKeyRef:
-                name: thoras-timescale-password
-                key: password
+                name: {{ $password.name }}
+                key: {{ $password.key }}
           - name: "PGDATA"
             value: /var/lib/share/postgresql
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
@@ -276,24 +277,23 @@ spec:
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
         {{- if include "thoras.externalTimescaleEnabled" . }}
+          {{- $dsn := include "thoras.timescaleDsnRef" . | fromYaml }}
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-              {{- if .Values.externalTimescale.secretRefName }}
-                name: {{ .Values.externalTimescale.secretRefName }}
-                key: {{ .Values.externalTimescale.secretRefKey }}
-              {{- else }}
-                name: thoras-timescale-password
-                key: host
-              {{- end }}
+                name: {{ $dsn.name }}
+                key: {{ $dsn.key }}
           - name: SERVICE_POSTGRESQL_DSN
             value: "$(DATABASE_HOST)"
         {{- else }}
+          {{- /* Consumed by the ALTER USER above, which reconciles the running
+                 database with the seeded password on every start. */}}
+          {{- $password := include "thoras.timescalePasswordRef" . | fromYaml }}
           - name: "POSTGRES_PASSWORD"
             valueFrom:
               secretKeyRef:
-                name: thoras-timescale-password
-                key: password
+                name: {{ $password.name }}
+                key: {{ $password.key }}
         {{- end }}
           - name: SERVICE_CHART_VERSION
             value: {{ .Chart.Version | quote }}
@@ -301,16 +301,7 @@ spec:
             value: {{ .Values.thorasVersion | quote }}
           - name: SERVICE_PORT
             value: {{ .Values.metricsCollector.blobService.containerPort | quote }}
-          - name: SERVICE_SLACK_WEBHOOK_URL
-            valueFrom:
-              secretKeyRef:
-            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
-                name: {{ .Values.slackWebhookUrlSecretRefName }}
-                key: {{ .Values.slackWebhookUrlSecretRefKey }}
-            {{- else }}
-                name: thoras-slack
-                key: webhookUrl
-            {{- end }}
+          {{- with include "thoras.slackEnv" (dict "root" . "prefix" "SERVICE_") }}{{- . | nindent 10 }}{{- end }}
           - name: SERVICE_SLACK_ERRORS_ENABLED
             value: "{{ .Values.metricsCollector.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: SERVICE_LOG_LEVEL
