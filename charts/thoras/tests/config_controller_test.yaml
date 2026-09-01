@@ -481,3 +481,148 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "thorasConfigController.enabled is false but these values would have to be seeded by it: api-client-secret, dashboard-auth-password, dashboard-auth-cookie-secret, timescale-password, timescale-dsn. Pin them in values, point them at existing Secrets, or re-enable the controller."
+
+  # -------- consumedFrom is required for provided values --------
+  # config-controller refuses to load a config whose provided value has an
+  # incomplete consumedFrom, so an empty ref must never reach the ConfigMap.
+
+  - it: Records consumedFrom for every provided value
+    templates:
+      - config-controller/configmap.yaml
+    set:
+      apiClientSecret:
+        existingSecret:
+          secretName: cust-api
+          secretKey: token
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://issuer
+            redirectURL: https://cb
+            existingSecret:
+              secretName: cust-oidc
+              clientIDKey: cid
+              clientSecretKey: csec
+              cookieSecretKey: ck
+      externalTimescale:
+        enabled: true
+        secretRefName: cust-ts
+        secretRefKey: dsn
+      slackWebhookUrlSecretRefName: cust-slack
+      slackWebhookUrlSecretRefKey: url
+      cloudSync:
+        clusterKeySecretRefName: cust-cs
+        clusterKeySecretRefKey: clusterKey
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: api-client-secret\n    source: provided\n    path: /etc/thoras/provided/api-client-secret\n    consumedFrom:\n      secret: cust-api\n      key: token"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: dashboard-oidc-client-id\n    source: provided\n    path: /etc/thoras/provided/dashboard-oidc-client-id\n    consumedFrom:\n      secret: cust-oidc\n      key: cid"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: dashboard-oidc-client-secret\n    source: provided\n    path: /etc/thoras/provided/dashboard-oidc-client-secret\n    consumedFrom:\n      secret: cust-oidc\n      key: csec"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: dashboard-oidc-cookie-secret\n    source: provided\n    path: /etc/thoras/provided/dashboard-oidc-cookie-secret\n    consumedFrom:\n      secret: cust-oidc\n      key: ck"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: timescale-dsn\n    source: provided\n    path: /etc/thoras/provided/timescale-dsn\n    consumedFrom:\n      secret: cust-ts\n      key: dsn"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: slack-webhook-url\n    source: provided\n    path: /etc/thoras/provided/slack-webhook-url\n    consumedFrom:\n      secret: cust-slack\n      key: url"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cloud-sync-cluster-key\n    source: provided\n    path: /etc/thoras/provided/cloud-sync-cluster-key\n    consumedFrom:\n      secret: cust-cs\n      key: clusterKey"
+
+  # Each input that can reach a provided entry must be rejected when only half
+  # of the ref is set, rather than rendering an empty consumedFrom field.
+
+  - it: Fails when the api client secret name is set without its key
+    templates:
+      - thoras-helm-shared-secret.yaml
+    set:
+      apiClientSecret:
+        existingSecret:
+          secretName: cust-api
+          secretKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "apiClientSecret.existingSecret.secretKey is required when secretName is set"
+
+  - it: Fails when the dashboard htpasswd secret is missing its keys
+    templates:
+      - thoras-helm-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          htpasswd:
+            existingSecret:
+              secretName: cust-dash
+              passwordKey: ""
+              cookieSecretKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.htpasswd.existingSecret requires: passwordKey, cookieSecretKey"
+
+  - it: Fails when an oidc secret key is empty
+    templates:
+      - thoras-helm-shared-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://issuer
+            redirectURL: https://cb
+            existingSecret:
+              secretName: cust-oidc
+              clientIDKey: ""
+              clientSecretKey: csec
+              cookieSecretKey: ck
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.oidc mode requires: existingSecret.clientIDKey"
+
+  - it: Fails when the external timescale secret name is set without its key
+    templates:
+      - thoras-helm-shared-secret.yaml
+    set:
+      externalTimescale:
+        enabled: true
+        secretRefName: cust-ts
+        secretRefKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "externalTimescale.secretRefKey is required when secretRefName is set"
+
+  - it: Fails when the external timescale secret key is set without its name
+    templates:
+      - thoras-helm-shared-secret.yaml
+    set:
+      externalTimescale:
+        enabled: true
+        secretRefKey: dsn
+    asserts:
+      - failedTemplate:
+          errorMessage: "externalTimescale.secretRefName is required when secretRefKey is set"
+
+  # Slack and cloud-sync take the opposite route: both fields are required to
+  # enter provided mode, so a half-set ref silently omits the value instead of
+  # emitting an empty consumedFrom. Guarding it would be a behaviour change.
+  - it: Omits slack and cloud-sync when only half of the ref is set
+    templates:
+      - config-controller/configmap.yaml
+    set:
+      slackWebhookUrlSecretRefName: cust-slack
+      cloudSync:
+        clusterKeySecretRefName: cust-cs
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: slack-webhook-url"
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: cloud-sync-cluster-key"

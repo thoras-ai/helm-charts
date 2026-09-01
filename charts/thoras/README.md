@@ -196,8 +196,8 @@ must be pre-installed and managed externally.
 | Key                             | Type   | Default | Description                                                                                           |
 | ------------------------------- | ------ | ------- | ----------------------------------------------------------------------------------------------------- |
 | externalTimescale.dsn           | String | ""      | Full postgres DSN including database name, e.g. `postgres://user:pass@host:5432/tsdb?sslmode=require` |
-| externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`)                               |
-| externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN                                                              |
+| externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`). Requires `secretRefKey`      |
+| externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN. Requires `secretRefName`                                    |
 
 ## Thoras Metrics Collector
 

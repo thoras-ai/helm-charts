@@ -153,7 +153,8 @@ externalTimescale:
   # e.g. "postgres://user:password@host:5432/tsdb?sslmode=require"
   dsn: ""
 
-  # Or reference a pre-existing Secret containing the DSN.
+  # Or reference a pre-existing Secret containing the DSN. Set both fields or
+  # neither; a half-set ref is rejected at render time.
   # The secret key must contain the full postgres DSN including the database name.
   secretRefName: ""
   secretRefKey: ""
