@@ -168,10 +168,10 @@ subjects:
 {{- end -}}
 
 {{/*
-Explicit get/list/watch rules for the workload types Thoras discovers and
-sizes. Replaces a blanket `apiGroups: ['*'] resources: ['*']` rule so that
-Secrets (and any other resource the product has no need to read) are never
-granted. Shared by the api-server, operator, and worker ClusterRoles/Roles.
+Explicit get/list/watch rules for the resources Thoras discovers and sizes,
+in place of a blanket `apiGroups: ['*'] resources: ['*']` rule that would
+also grant read access to Secrets. Shared by the api-server, operator, and
+worker ClusterRoles/Roles.
 Usage: {{ include "thoras.workloadReadRules" . }}
 */}}
 {{- define "thoras.workloadReadRules" -}}
