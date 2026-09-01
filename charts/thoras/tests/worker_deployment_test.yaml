@@ -1,9 +1,6 @@
 suite: Worker Deployment
 templates:
   - worker/deployment.yaml
-set:
-  thorasMonitor:
-    unittesting: true
 tests:
   - it: Should set tolerations if specified
     set:
@@ -24,8 +21,6 @@ tests:
           path: spec.template.spec.tolerations
   - it: Should not have annotations section when all conditions are false
     set:
-      thorasMonitor:
-        unittesting: true
       thorasWorker:
         prometheus:
           enabled: false

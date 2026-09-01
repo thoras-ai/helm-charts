@@ -6,9 +6,6 @@ suite: PodLogStreaming
 templates:
   - api-server-v2/deployment.yaml
   - dashboard/nginx-config-map.yaml
-set:
-  thorasMonitor:
-    unittesting: true
 tests:
   - it: api-server has pod log streaming off by default
     template: api-server-v2/deployment.yaml

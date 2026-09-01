@@ -1,9 +1,6 @@
 suite: API Service Layer Deployment
 templates:
   - api-server-v2/deployment.yaml
-set:
-  thorasMonitor:
-    unittesting: true
 tests:
   - it: Should set tolerations if specified
     set:
@@ -30,8 +27,6 @@ tests:
   - it: Should not have annotations section when all conditions are false
     set:
       podAnnotations: {}
-      thorasMonitor:
-        unittesting: true
       thorasApiServerV2:
         prometheus:
           enabled: false

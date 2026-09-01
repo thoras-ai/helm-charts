@@ -6,13 +6,10 @@ templates:
   - worker/deployment.yaml
 set:
   thorasVersion: 1.0.0-alpha
-  thorasMonitor:
-    unittesting: true
   thorasOperator:
     replicas: 12
   thorasDashboard:
     replicas: 12
-    unittesting: true
   thorasApiServerV2:
     replicas: 12
   thorasWorker:

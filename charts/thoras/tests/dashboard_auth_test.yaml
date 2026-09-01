@@ -487,7 +487,6 @@ tests:
       - dashboard/deployment.yaml
     set:
       thorasDashboard:
-        unittesting: true
         auth:
           enabled: false
     asserts:
@@ -502,9 +501,6 @@ tests:
   - it: Adds the oauth2-proxy sidecar, init container, and volumes when enabled
     templates:
       - dashboard/deployment.yaml
-    set:
-      thorasDashboard:
-        unittesting: true
     asserts:
       - lengthEqual:
           path: spec.template.spec.containers
@@ -593,7 +589,6 @@ tests:
       - dashboard/deployment.yaml
     set:
       thorasDashboard:
-        unittesting: true
         auth:
           mode: oidc
           oidc:
@@ -666,7 +661,6 @@ tests:
       - dashboard/deployment.yaml
     set:
       thorasDashboard:
-        unittesting: true
         auth:
           mode: oidc
           oidc:
@@ -707,9 +701,6 @@ tests:
   - it: Uses loopback exec probes on the dashboard container when auth is enabled
     templates:
       - dashboard/deployment.yaml
-    set:
-      thorasDashboard:
-        unittesting: true
     asserts:
       - equal:
           path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].startupProbe.exec.command
@@ -734,7 +725,6 @@ tests:
       - dashboard/deployment.yaml
     set:
       thorasDashboard:
-        unittesting: true
         auth:
           enabled: false
     asserts:
@@ -781,7 +771,6 @@ tests:
       - dashboard/deployment.yaml
     set:
       thorasDashboard:
-        unittesting: true
         auth:
           htpasswd:
             existingSecret:
@@ -809,7 +798,6 @@ tests:
       - dashboard/deployment.yaml
     set:
       thorasDashboard:
-        unittesting: true
         auth:
           extraArgs:
             - --skip-jwt-bearer-tokens=true

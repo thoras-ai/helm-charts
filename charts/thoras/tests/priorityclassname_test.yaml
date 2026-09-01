@@ -1,9 +1,5 @@
 suite: PriorityClassName Configuration
 set:
-  thorasMonitor:
-    unittesting: true
-  thorasDashboard:
-    unittesting: true
   thorasForecast:
     worker:
       enabled: true

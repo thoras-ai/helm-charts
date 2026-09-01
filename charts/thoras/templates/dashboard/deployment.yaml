@@ -20,16 +20,8 @@ spec:
         {{- . | trim | nindent 8 }}
         {{- end }}
       {{- $userAnnotations := or .Values.podAnnotations .Values.thorasDashboard.podAnnotations }}
-      {{- $chartChecksum := not .Values.thorasDashboard.unittesting }}
-      {{- if or $userAnnotations $chartChecksum }}
+      {{- if $userAnnotations }}
       annotations:
-        {{- if $chartChecksum }}
-        checksum/configmap: {{ include (print $.Template.BasePath "/dashboard/nginx-config-map.yaml") . | sha256sum }}
-        {{- if .Values.thorasDashboard.auth.enabled }}
-        checksum/oauth2-proxy-config: {{ include (print $.Template.BasePath "/dashboard/oauth2-proxy-config-map.yaml") . | sha256sum }}
-        checksum/oauth2-proxy-templates: {{ include (print $.Template.BasePath "/dashboard/oauth2-proxy-templates-config-map.yaml") . | sha256sum }}
-        {{- end }}
-        {{- end }}
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasDashboard.podAnnotations) }}
           {{- . | trim | nindent 8 }}
         {{- end }}

@@ -1,9 +1,5 @@
 suite: Affinity Configuration
 set:
-  thorasMonitor:
-    unittesting: true
-  thorasDashboard:
-    unittesting: true
   thorasSlmAgent:
     enabled: true
   thorasForecast:

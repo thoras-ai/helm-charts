@@ -781,7 +781,6 @@ thorasDashboard:
   extraContainers: []
 
 thorasMonitor:
-  unittesting: false
   labels: {}
   # Raw monitor configuration YAML. Configures the named Slack alerts under
   # `alerts` (enable/disable and per-alert notification_cooldown) and the
