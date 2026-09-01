@@ -1,0 +1,100 @@
+{{- if .Values.thorasConfigController.enabled }}
+{{- /* Namespaced Role only, unlike every other component: the controller
+       reconciles the release namespace exclusively, and the Deployment pins
+       SERVICE_WATCH_NAMESPACES to it so the informer cache matches this
+       grant. rbac.namespaces deliberately does not apply. */}}
+{{- $readable := list "thoras-config-controller" }}
+{{- range include "thoras.secretPlan" . | fromYamlArray }}
+{{- range .migrateFrom }}
+{{- $readable = append $readable .secret }}
+{{- end }}
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: thoras-config-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasConfigController.labels) | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+{{- /* resourceNames cannot restrict create: the object name is unknown at
+       authorization time. Reads and writes below are name-scoped instead. */}}
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  resourceNames:
+    {{- range $readable | uniq | sortAlpha }}
+  - {{ . }}
+    {{- end }}
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  resourceNames:
+  - thoras-config-controller
+  verbs:
+  - update
+{{- /* update, not patch: the rollout engine writes the checksum annotation
+       with a full Update under a conflict retry. */}}
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+{{- /* Leader election records an event on every acquisition. */}}
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - create
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: thoras-config-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasConfigController.labels) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: thoras-config-controller
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasConfigController.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

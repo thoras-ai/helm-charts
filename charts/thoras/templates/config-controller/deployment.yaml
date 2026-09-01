@@ -1,0 +1,186 @@
+{{- if .Values.thorasConfigController.enabled }}
+{{- $cc := .Values.thorasConfigController }}
+{{- $provided := include "thoras.providedSecretSources" . }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-config-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" $cc.labels) | nindent 4 }}
+spec:
+  replicas: {{ $cc.replicas }}
+  selector:
+    matchLabels:
+      app: thoras-config-controller
+  template:
+    metadata:
+      labels:
+        app: thoras-config-controller
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" $cc.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- /* The one checksum the chart still owns: the controller never
+               restarts itself, and it does not re-read its config at
+               runtime. Covers the provided-secret refs too, since they decide
+               which files it watches. */}}
+        checksum/config: {{ printf "%s\n%s" (include "thoras.configControllerConfig" .) $provided | sha256sum }}
+        {{- if $cc.prometheus.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: {{ $cc.prometheus.port | quote }}
+        {{- end }}
+        {{- with include "thoras.podAnnotations" (dict "root" $ "component" $cc.podAnnotations) }}
+          {{- . | trim | nindent 8 }}
+        {{- end }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ $cc.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: thoras-config-controller-config
+      {{- with $provided }}
+      {{- /* Customer-managed Secrets are read as files so the controller needs
+             no API read access to them. A projected source naming a Secret
+             that does not exist wedges the pod, hence optional: true. */}}
+      - name: provided
+        projected:
+          sources:
+            {{- . | nindent 12 }}
+      {{- end }}
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion $cc.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        name: thoras-config-controller
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        command: ["/app/config-controller"]
+        env:
+          - name: SERVICE_CONFIG_PATH
+            value: /app/config-controller.yaml
+          - name: SERVICE_THORAS_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          {{- /* Required, and deliberately not driven by rbac.namespaces: left
+                 unset the manager caches cluster-wide, which a namespaced Role
+                 cannot satisfy and which would leave the pod unready. */}}
+          - name: SERVICE_WATCH_NAMESPACES
+            value: {{ .Release.Namespace | quote }}
+          - name: SERVICE_ENABLE_SEEDING
+            value: {{ $cc.enableSeeding | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_CONFIG_MAP_MONITORING
+            value: {{ $cc.enableConfigMapMonitoring | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_RESTART_ROLLOUTS
+            value: {{ $cc.enableRestartRollouts | ternary "true" "false" | quote }}
+          - name: SERVICE_POLL_INTERVAL
+            value: {{ $cc.pollInterval | quote }}
+          - name: SERVICE_ROLLOUT_DEBOUNCE
+            value: {{ $cc.rolloutDebounce | quote }}
+          - name: SERVICE_ROLLOUT_TIMEOUT
+            value: {{ $cc.rolloutTimeout | quote }}
+          - name: SERVICE_PORT
+            value: {{ $cc.prometheus.port | quote }}
+          - name: SERVICE_ENABLE_PPROF
+            value: {{ $cc.pprof.enabled | quote }}
+          - name: SERVICE_LOG_LEVEL
+            value: {{ default .Values.logLevel $cc.logLevel }}
+          - name: SERVICE_CLUSTER_NAME
+            value: "{{ .Values.cluster.name }}"
+          - name: SERVICE_CHART_VERSION
+            value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
+          - name: SERVICE_SLACK_ERRORS_ENABLED
+            value: "{{ $cc.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
+          {{- with include "thoras.slackEnv" (dict "root" . "prefix" "SERVICE_") }}{{- . | nindent 10 }}{{- end }}
+          {{- /* No thoras.simpleAuthEnv: the controller talks to the
+                 Kubernetes API, never to the Thoras API server. */}}
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+        ports:
+          - name: http-metrics
+            containerPort: {{ $cc.prometheus.port }}
+          {{- /* Fixed in the binary; not configurable. */}}
+          - name: http-health
+            containerPort: 8081
+        {{- /* /readyz also reports seeding health: an ownership-guard failure
+               keeps the pod unready while the controller retries. Only the
+               leader ever passes it, so replicas must stay at 1. */}}
+        startupProbe:
+          httpGet:
+            path: /readyz
+            port: http-health
+          periodSeconds: 10
+          failureThreshold: 30
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http-health
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http-health
+          periodSeconds: 30
+          failureThreshold: 3
+          timeoutSeconds: 2
+        {{- if $cc.resources }}
+        resources: {{ $cc.resources | toYaml | nindent 10 }}
+        {{- else }}
+        resources:
+          limits: {{ $cc.limits | toYaml | nindent 12 }}
+          requests: {{ $cc.requests | toYaml | nindent 12 }}
+        {{- end }}
+        volumeMounts:
+        - name: config
+          mountPath: /app/config-controller.yaml
+          subPath: config-controller.yaml
+          readOnly: true
+        {{- if $provided }}
+        - name: provided
+          mountPath: /etc/thoras/provided
+          readOnly: true
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $cc.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := $cc.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with $cc.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with $cc.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- include "thoras.topologySpreadConstraints" (dict "root" . "component" $cc.topologySpreadConstraints) | nindent 6 }}
+{{- end }}
