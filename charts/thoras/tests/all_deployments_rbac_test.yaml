@@ -17,3 +17,19 @@ tests:
       version: "4.7.0"
     asserts:
       - matchSnapshot: {}
+  - it: Read rules never combine a wildcard apiGroup with a wildcard resource
+    chart:
+      version: "4.7.0"
+    asserts:
+      - not: true
+        documentSelector: {path: kind, value: ClusterRole, matchMany: true}
+        contains:
+          path: rules
+          any: true
+          content: {apiGroups: ["*"], resources: ["*"]}
+      - not: true
+        documentSelector: {path: kind, value: Role, matchMany: true}
+        contains:
+          path: rules
+          any: true
+          content: {apiGroups: ["*"], resources: ["*"]}

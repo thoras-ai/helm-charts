@@ -205,9 +205,35 @@ Default matches snapshot:
       name: thoras-api
     rules:
       - apiGroups:
-          - '*'
+          - ""
         resources:
-          - '*'
+          - pods
+          - nodes
+          - namespaces
+          - services
+          - events
+          - persistentvolumes
+          - persistentvolumeclaims
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+          - statefulsets
+          - daemonsets
+          - replicasets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - batch
+        resources:
+          - jobs
+          - cronjobs
         verbs:
           - get
           - list
@@ -216,6 +242,79 @@ Default matches snapshot:
           - autoscaling
         resources:
           - horizontalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling.k8s.io
+        resources:
+          - verticalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - policy
+        resources:
+          - poddisruptionbudgets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - argoproj.io
+        resources:
+          - rollouts
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - metrics.k8s.io
+        resources:
+          - pods
+          - nodes
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - external.metrics.k8s.io
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - storage.k8s.io
+        resources:
+          - storageclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
         verbs:
           - get
           - list
@@ -245,6 +344,12 @@ Default matches snapshot:
           - pods/eviction
         verbs:
           - create
+      - apiGroups:
+          - ""
+        resources:
+          - pods/log
+        verbs:
+          - get
   3: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
@@ -1397,9 +1502,116 @@ Default matches snapshot:
       name: thoras-operator
     rules:
       - apiGroups:
-          - '*'
+          - ""
+        resources:
+          - pods
+          - nodes
+          - namespaces
+          - services
+          - events
+          - persistentvolumes
+          - persistentvolumeclaims
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+          - statefulsets
+          - daemonsets
+          - replicasets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - batch
+        resources:
+          - jobs
+          - cronjobs
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling
+        resources:
+          - horizontalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling.k8s.io
+        resources:
+          - verticalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - policy
+        resources:
+          - poddisruptionbudgets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - argoproj.io
+        resources:
+          - rollouts
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - metrics.k8s.io
+        resources:
+          - pods
+          - nodes
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - external.metrics.k8s.io
         resources:
           - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - storage.k8s.io
+        resources:
+          - storageclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
         verbs:
           - get
           - list
@@ -1789,9 +2001,116 @@ Default matches snapshot:
       name: thoras-worker
     rules:
       - apiGroups:
-          - '*'
+          - ""
+        resources:
+          - pods
+          - nodes
+          - namespaces
+          - services
+          - events
+          - persistentvolumes
+          - persistentvolumeclaims
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+          - statefulsets
+          - daemonsets
+          - replicasets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - batch
+        resources:
+          - jobs
+          - cronjobs
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling
+        resources:
+          - horizontalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - autoscaling.k8s.io
+        resources:
+          - verticalpodautoscalers
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - policy
+        resources:
+          - poddisruptionbudgets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - argoproj.io
+        resources:
+          - rollouts
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - metrics.k8s.io
+        resources:
+          - pods
+          - nodes
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - external.metrics.k8s.io
         resources:
           - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - storage.k8s.io
+        resources:
+          - storageclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - thoras.ai
+        resources:
+          - '*'
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
         verbs:
           - get
           - list
@@ -1941,6 +2260,47 @@ Default matches snapshot:
         app.kubernetes.io/name: thoras
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-config
+      namespace: foo
+    rules:
+      - apiGroups:
+          - ""
+        resourceNames:
+          - thoras-operator-system-config
+        resources:
+          - configmaps
+        verbs:
+          - get
+  39: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-config
+      namespace: foo
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-worker-config
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: foo
+  40: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
       name: thoras-worker-forecast-scaler
       namespace: foo
     rules:
@@ -1954,7 +2314,7 @@ Default matches snapshot:
           - get
           - update
           - patch
-  39: |
+  41: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -1974,7 +2334,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  40: |
+  42: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1988,7 +2348,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: foo
-  41: |
+  43: |
     apiVersion: v1
     kind: Service
     metadata:

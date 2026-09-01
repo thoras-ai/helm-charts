@@ -13,14 +13,7 @@ metadata:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
   name: thoras-operator
 rules:
-- apiGroups:
-  - '*'
-  resources:
-  - '*'
-  verbs:
-  - get
-  - list
-  - watch
+{{- include "thoras.workloadReadRules" . | nindent 0 }}
 - apiGroups:
   - '*'
   resources:
