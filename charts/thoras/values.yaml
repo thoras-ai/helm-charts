@@ -685,17 +685,16 @@ thorasDashboard:
     # Consulted when thorasDashboard.auth.mode: htpasswd.
     htpasswd:
       username: thoras
-      # Generated if empty. Setting a value will override existing value and
-      # rotates the secret on the next upgrade.
-      # thorasDashboard.auth.htpasswd.existingSecret takes precedent.
-      # Rotation requires a manual rollout of dependent workloads; see
-      # README > "Rotating chart-managed credentials".
+      # Seeded by config-controller when empty. Set a value to pin it in
+      # `thoras-helm-shared` instead; thorasDashboard.auth.htpasswd.existingSecret
+      # takes precedence over both. Changing a pinned value requires a manual
+      # rollout of the dashboard; see README > "Rotating secrets".
       password: ""
-      # Generated if empty. Setting a value will override existing value and
-      # rotates the secret on the next upgrade, invalidating all logged-in
-      # dashboard sessions. thorasDashboard.auth.htpasswd.existingSecret
-      # takes precedent. Rotation requires a manual rollout of dependent
-      # workloads; see README > "Rotating chart-managed credentials".
+      # Seeded by config-controller when empty. Set a value to pin it in
+      # `thoras-helm-shared` instead; thorasDashboard.auth.htpasswd.existingSecret
+      # takes precedence over both. Changing a pinned value invalidates every
+      # logged-in dashboard session and requires a manual rollout of the
+      # dashboard; see README > "Rotating secrets".
       # Must be 16, 24, or 32 bytes raw, or a base64 string that decodes to
       # that length.
       cookieSecret: ""

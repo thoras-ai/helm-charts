@@ -31,6 +31,10 @@ imageCredentials:
 metricsCollector:
   persistence:
     enabled: false
+
+# New installs only. Upgrades from 4.x must leave this true for one release;
+# see "Migrating to 5.x".
+legacySecretSeeding: false
 ```
 
 #### Install Chart
@@ -264,6 +268,42 @@ must be pre-installed and managed externally.
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                                                                                              |
 | thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                               |
 
+## Thoras Config Controller
+
+Seeds the credentials you did not supply into the `thoras-config-controller`
+Secret, migrates pre-5.0 chart-generated values into it, and rolls dependent
+workloads in dependency order when a watched ConfigMap or Secret changes. See
+[Secrets](#secrets).
+
+Unlike the other components it is granted a namespaced `Role` only, never a
+`ClusterRole`, and `rbac.namespaces` does not apply to it — it reconciles the
+release namespace exclusively.
+
+| Key                                                | Type    | Default                                                                                                        | Description                                                                                            |
+| -------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| thorasConfigController.enabled                     | Boolean | true                                                                                                           | Deploy the controller. Disabling requires every credential to be pinned or point at an existing Secret |
+| thorasConfigController.serviceAccount.name         | String  | thoras-config-controller                                                                                       | Service account name for the controller pod                                                            |
+| thorasConfigController.podAnnotations              | Object  | {}                                                                                                             | Pod annotations for the controller                                                                     |
+| thorasConfigController.labels                      | Object  | {}                                                                                                             | Pod/service labels for the controller                                                                  |
+| thorasConfigController.replicas                    | Number  | 1                                                                                                              | Must stay 1; only the leader reconciles and non-leaders never become ready                             |
+| thorasConfigController.resources                   | Object  | {}                                                                                                             | Specify the resources block. Takes precedence if set.                                                  |
+| thorasConfigController.limits.memory               | String  | 256Mi                                                                                                          | Legacy field for setting the controller memory limit                                                   |
+| thorasConfigController.requests.cpu                | String  | 10m                                                                                                            | Legacy field for setting the controller CPU request                                                    |
+| thorasConfigController.requests.memory             | String  | 64Mi                                                                                                           | Legacy field for setting the controller memory request                                                 |
+| thorasConfigController.logLevel                    | String  | info                                                                                                           | Logging level                                                                                          |
+| thorasConfigController.prometheus.enabled          | Boolean | true                                                                                                           | Enables a prometheus metric exporter                                                                   |
+| thorasConfigController.prometheus.port             | Number  | 9103                                                                                                           | Port for the prometheus metric exporter                                                                |
+| thorasConfigController.pprof.enabled               | Boolean | false                                                                                                          | Enable pprof endpoint.                                                                                 |
+| thorasConfigController.enableSeeding               | Boolean | true                                                                                                           | Write seeded and migrated values into the managed Secret                                               |
+| thorasConfigController.enableConfigMapMonitoring   | Boolean | true                                                                                                           | Watch the chart's ConfigMaps and roll their consumers on change                                        |
+| thorasConfigController.enableRestartRollouts       | Boolean | true                                                                                                           | Apply rollouts. With this off the controller logs the diffs it would apply but touches nothing         |
+| thorasConfigController.pollInterval                | String  | 30s                                                                                                            | Interval between reconcile ticks                                                                       |
+| thorasConfigController.rolloutDebounce             | String  | 10s                                                                                                            | Coalescing window after a change before a rollout starts                                               |
+| thorasConfigController.rolloutTimeout              | String  | 5m                                                                                                             | Per-workload readiness deadline. A tier that overruns aborts the sequence                              |
+| thorasConfigController.restartOrder                | Array   | metrics-collector, thoras-operator, thoras-worker, thoras-api-server-v2, thoras-forecast-worker, thoras-dashboard | Strict sequential restart tiers. Unlisted workloads are restarted last, together                       |
+| thorasConfigController.restartExclude              | Array   | [thoras-config-controller]                                                                                     | Workloads never restarted. Must keep the controller itself                                             |
+| thorasConfigController.extraWatchConfigMaps        | Array   | []                                                                                                             | Additional ConfigMaps to watch beyond the ones this chart owns                                         |
+
 ## Thoras Dashboard
 
 | Key                                              | Type    | Default          | Description                                                              |
@@ -389,17 +429,18 @@ thorasDashboard:
 
 ### htpasswd mode
 
-A random password and cookie secret are generated on first install. Retrieve
-the password:
+config-controller seeds a random password and cookie secret on first install
+and never rotates them. Retrieve the password:
 
 ```bash
-kubectl get secret thoras-shared -n <namespace> \
+kubectl get secret thoras-config-controller -n <namespace> \
   -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
 ```
 
-Pin the password and cookie secret explicitly in GitOps installs (Argo CD,
-`helm template`) — `lookup` is not available there, so unpinned values are
-regenerated on every render and invalidate existing sessions:
+Pin them instead if you would rather manage them in values, in which case they
+live in `thoras-helm-shared`. Changing a pinned value invalidates every
+logged-in session and needs a manual `kubectl rollout restart` of the
+dashboard:
 
 ```yaml
 thorasDashboard:
@@ -409,6 +450,9 @@ thorasDashboard:
       password: <your-password>
       cookieSecret: <your-32-char-cookie-secret>
 ```
+
+Both approaches are GitOps-safe: seeded values live outside Helm's control and
+pinned values render deterministically.
 
 ### OIDC mode
 
@@ -509,41 +553,132 @@ drop any `service.targetPort` override.
 
 ## Secrets
 
-The chart seeds a shared `thoras-shared` Secret on first install with any
-values it needs to generate (dashboard credentials, API client secret, ...).
-Generated values are stable across upgrades: the chart re-reads the existing
-Secret via `lookup` rather than regenerating them.
+Every credential resolves to exactly one of three places, in this order:
 
-- **Pin explicitly** by setting the values field (e.g.
-  `thorasDashboard.auth.htpasswd.password`,
-  `thorasDashboard.auth.htpasswd.cookieSecret`, `apiClientSecret.secret`).
-  A values pin always wins over the generated value.
-- **Provide an externally managed secret** (Sealed Secrets, External
-  Secrets, SOPS) via the corresponding `*.existingSecret.secretName` field.
-  The chart skips seeding those keys in `thoras-shared` and reads from the
-  external Secret instead.
-- **Argo CD**: add `Secret/thoras-shared` to your `Application`'s
-  `spec.ignoreDifferences` under `jsonPointers: [/data]` so Argo does not
-  overwrite chart-generated random values on every reconcile.
+| # | Where you configure it | Where it is stored | Who writes it |
+|---|---|---|---|
+| 1 | `*.existingSecret.secretName` / `*SecretRefName` | your own Secret | you |
+| 2 | the plain values field | `thoras-helm-shared` | Helm |
+| 3 | nothing — leave it empty | `thoras-config-controller` | config-controller |
+
+| Credential | Existing Secret | Values field |
+|---|---|---|
+| API client token | `apiClientSecret.existingSecret.{secretName,secretKey}` | `apiClientSecret.secret` |
+| Dashboard password | `thorasDashboard.auth.htpasswd.existingSecret.{secretName,passwordKey}` | `thorasDashboard.auth.htpasswd.password` |
+| Dashboard cookie secret | `thorasDashboard.auth.htpasswd.existingSecret.{secretName,cookieSecretKey}` | `thorasDashboard.auth.htpasswd.cookieSecret` |
+| TimescaleDB DSN | `externalTimescale.{secretRefName,secretRefKey}` | `externalTimescale.dsn` |
+| TimescaleDB password | — (bundled database only) | — (not configurable) |
+| Slack webhook | `slackWebhookUrlSecretRef{Name,Key}` | `slackWebhookUrl` |
+| Cloud-sync cluster key | `cloudSync.clusterKeySecretRef{Name,Key}` | `cloudSync.clusterKey` |
+| Dashboard OIDC credentials | `thorasDashboard.auth.oidc.existingSecret.*` | — (never chart-managed) |
+
+Notes:
+
+- `thoras-helm-shared` holds only what you pinned in values. It is fully
+  deterministic — no `lookup`, no random generation — so `helm template` and
+  Argo CD render exactly what an apply produces. **Argo CD users no longer
+  need `ignoreDifferences` on the chart's shared Secret.**
+- `thoras-config-controller` is created and owned by config-controller, never
+  by Helm, so Argo CD does not track or prune it. Values are seeded once and
+  never rotated.
+- The bundled TimescaleDB password cannot be pinned. There is no rotation
+  path for a database that is already initialised, so the chart fails if
+  `metricsCollector.timescale.password` is set.
+- Slack and cloud-sync are never seeded. Leave them unset and the consuming
+  environment variable is omitted entirely.
+- On a fresh install the workload pods briefly report
+  `CreateContainerConfigError` until config-controller creates
+  `thoras-config-controller`. This resolves itself; no action is needed.
 
 ### Rotating secrets
 
-Rotation is a two-step manual process. The chart does not add a
-`checksum/shared-secret` pod annotation, so consumers do not roll
-automatically when `thoras-shared` changes.
+**Seeded values are never rotated.** config-controller writes a key once and
+then leaves it alone. To change one, delete the key from
+`thoras-config-controller` and let the controller re-seed it:
 
-1. Change the credential. Either edit the value in `values.yaml` and
-   `helm upgrade`, or `kubectl delete` the key from the `thoras-shared`
-   Secret and re-run `helm upgrade` to let the chart regenerate it.
-2. Roll every consumer:
+```bash
+kubectl patch secret thoras-config-controller -n <namespace> \
+  --type=json -p='[{"op":"remove","path":"/data/dashboard-auth-password"}]'
+```
+
+The controller notices the change, re-seeds, and rolls the affected workloads
+in dependency order on its own.
+
+**Pinned and customer-managed values** change when you change them, but the
+chart no longer stamps a checksum for `thoras-helm-shared`, and
+config-controller cannot yet see inside Secrets you manage. Roll the consumers
+by hand:
+
+```bash
+kubectl rollout restart deployment -n <namespace> \
+  -l app.kubernetes.io/name=thoras
+```
+
+Rotating the dashboard cookie secret bounces every logged-in dashboard user.
+
+## Migrating to 5.x
+
+5.x moves secret seeding out of the chart and into config-controller. Your
+existing API client token and TimescaleDB password are migrated for you, but
+only if you go through 5.x. The supported path is **4.x → 5.x → 6.x**; jumping
+straight from 4.x to 6.x loses both values.
+
+Helm refreshes an object from the cluster before it checks
+`helm.sh/resource-policy: keep`, so a single release cannot both stop
+rendering a Secret and protect it. That is why the retention spans two
+releases.
+
+### Upgrading from 4.x
+
+1. Upgrade to 5.x with `legacySecretSeeding: true` (the default). The chart
+   keeps rendering `api-client-secret` and `thoras-timescale-password` purely
+   as migration sources; nothing consumes them. config-controller copies their
+   values into `thoras-config-controller` on its first reconcile.
+2. Confirm the migration landed:
 
    ```bash
-   kubectl rollout restart deployment -n <namespace> \
-     -l app.kubernetes.io/name=thoras
+   kubectl get secret thoras-config-controller -n <namespace> \
+     -o jsonpath='{.metadata.annotations.thoras\.ai/migrated-keys}'
    ```
 
-Rotating the dashboard cookie secret bounces every logged-in dashboard user
-once step 2 completes.
+3. Set `legacySecretSeeding: false` and upgrade again. The two legacy Secrets
+   stay in the cluster, orphaned, and you can delete them at your leisure.
+
+Do not skip step 1. Upgrading from 4.x straight to `legacySecretSeeding:
+false` prunes both Secrets before anything has read them, which rotates the
+API client token and desynchronises the chart from the running database.
+
+### New installs
+
+Set `legacySecretSeeding: false`. There is nothing to migrate.
+
+### Argo CD
+
+Nothing the chart renders needs `ignoreDifferences` any more. `thoras-helm-shared`
+contains only what you pinned in values, and `thoras-config-controller` is
+created by the controller rather than by Helm, so Argo CD neither tracks nor
+prunes it. If you carry an `ignoreDifferences` entry for a chart Secret today,
+you can drop it once the migration below is complete.
+
+The two legacy Secrets are the exception, for the duration of 5.x only.
+`lookup` returns nothing under Argo CD, so the chart regenerates their values
+on every render; without this, Argo would apply a fresh random password that
+does not match the running database.
+
+```yaml
+spec:
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: api-client-secret
+      jsonPointers: [/data]
+    - group: ""
+      kind: Secret
+      name: thoras-timescale-password
+      jsonPointers: [/data]
+```
+
+Drop both entries once you set `legacySecretSeeding: false`.
 
 ## Example Thoras Dashboard Ingress Configuration
 

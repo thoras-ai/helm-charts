@@ -14,12 +14,11 @@ Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on 
 Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
   Username: {{ .Values.thorasDashboard.auth.htpasswd.username }}
   Password:
-{{- if .Values.thorasDashboard.auth.htpasswd.existingSecret.secretName }}
-    kubectl get secret {{ .Values.thorasDashboard.auth.htpasswd.existingSecret.secretName }} -n {{ .Release.Namespace }} \
-      -o jsonpath='{.data.{{ .Values.thorasDashboard.auth.htpasswd.existingSecret.passwordKey }}}' | base64 -d
-{{- else }}
-    kubectl get secret thoras-shared -n {{ .Release.Namespace }} \
-      -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
+{{- $passwordRef := include "thoras.dashboardAuthPasswordRef" . | fromYaml }}
+    kubectl get secret {{ $passwordRef.name }} -n {{ .Release.Namespace }} \
+      -o jsonpath='{.data.{{ $passwordRef.key }}}' | base64 -d
+{{- if eq $passwordRef.name "thoras-config-controller" }}
+    The Secret appears once config-controller has seeded it.
 {{- end }}
 {{- if .Values.thorasDashboard.auth.cookieSecure }}
   cookieSecure is enabled: the edge must terminate TLS or login will
@@ -27,8 +26,22 @@ Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
 {{- end }}
 {{- end }}
 
+{{ if and .Values.thorasConfigController.enabled .Release.IsInstall -}}
+Config controller: seeding any credential you did not supply.
+  Workload pods report CreateContainerConfigError until the
+  thoras-config-controller Secret exists. This clears on its own.
+{{- end }}
+
 {{ if hasKey .Values.featureFlags "enableSimpleAuthSecret" -}}
 DEPRECATED: featureFlags.enableSimpleAuthSecret
   Rename this field to apiClientSecret.enabled in your values file. The
   legacy field still works but will be removed in a future chart release.
+{{- end }}
+
+{{ if .Values.legacySecretSeeding -}}
+DEPRECATED: legacySecretSeeding
+  The api-client-secret and thoras-timescale-password Secrets are rendered
+  only so config-controller can migrate them. Set legacySecretSeeding to
+  false once thoras-config-controller carries your values; the flag and the
+  Secrets are removed in chart 6.0. See README > Migrating to 5.x.
 {{- end }}
