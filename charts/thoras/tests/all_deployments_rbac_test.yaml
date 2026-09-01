@@ -22,13 +22,14 @@ tests:
       version: "4.7.0"
     asserts:
       - not: true
-        documentSelector:
-          path: rules
-          matchMany: true
-          skipEmptyTemplates: true
+        documentSelector: {path: kind, value: ClusterRole, matchMany: true}
         contains:
           path: rules
           any: true
-          content:
-            apiGroups: ["*"]
-            resources: ["*"]
+          content: {apiGroups: ["*"], resources: ["*"]}
+      - not: true
+        documentSelector: {path: kind, value: Role, matchMany: true}
+        contains:
+          path: rules
+          any: true
+          content: {apiGroups: ["*"], resources: ["*"]}
