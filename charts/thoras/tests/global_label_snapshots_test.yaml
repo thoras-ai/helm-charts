@@ -12,6 +12,8 @@ set:
   thorasForecast:
     worker:
       enabled: true
+  thorasConfigController:
+    enabled: true
   thorasDashboard:
     # Pin to pre-auth shape; auth-on lives in dashboard_auth_test.yaml.
     auth:

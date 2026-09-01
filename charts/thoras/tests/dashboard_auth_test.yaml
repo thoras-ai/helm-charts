@@ -4,7 +4,7 @@ tests:
 
   - it: Does not include dashboard keys in the thoras Secret when auth is disabled
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       apiClientSecret:
         enabled: false
@@ -15,36 +15,42 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: Renders dashboard-auth keys with generated values by default
+  - it: Renders nothing when both dashboard keys are left to config-controller
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       apiClientSecret:
         enabled: false
     asserts:
-      - isKind:
-          of: Secret
-      - equal:
-          path: metadata.name
-          value: thoras-shared
-      - notExists:
-          # username is values-only, not stored in the Secret
-          path: data.username
-      - matchRegex:
-          # base64 of a 24-character randAlphaNum (24 bytes -> 32 chars, no padding)
-          path: data["dashboard-auth-password"]
-          pattern: "^[A-Za-z0-9+/]{32}$"
-      - matchRegex:
-          path: data["dashboard-auth-cookie-secret"]
-          pattern: "^[A-Za-z0-9+/]+=*$"
+      - hasDocuments:
+          count: 0
 
-  # Precedence: values pin wins over lookup + generated. Values-vs-lookup
-  # can't be exercised here (helm-unittest can't seed cluster state); verify
-  # manually with `helm upgrade` against a cluster where the thoras-shared
-  # Secret already exists with a different value.
+  - it: Seeds both dashboard keys through config-controller by default
+    templates:
+      - config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: dashboard-auth-password\n    source: seed\n    generate:\n      length: 24\n      type: alphanumeric"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: dashboard-auth-cookie-secret\n    source: seed\n    generate:\n      length: 32\n      type: alphanumeric"
+      # oauth2-proxy rejects any other length, so the controller re-checks it
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "validate:\n      byteLengths:\n      - 16\n      - 24\n      - 32"
+      - notMatchRegex:
+          # username is values-only; the controller never sees it
+          path: data["config-controller.yaml"]
+          pattern: "username"
+
+  # Precedence: existingSecret beats a values pin beats seeding. The seeded
+  # branch cannot be exercised here (helm-unittest cannot seed cluster state);
+  # verify manually with `helm upgrade` against a cluster where the
+  # thoras-config-controller Secret already exists with a different value.
   - it: Uses an explicitly configured password
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       apiClientSecret:
         enabled: false
@@ -60,7 +66,7 @@ tests:
 
   - it: Uses an explicitly configured cookieSecret
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       apiClientSecret:
         enabled: false
@@ -76,7 +82,7 @@ tests:
 
   - it: Omits dashboard keys when htpasswd.existingSecret is set
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       apiClientSecret:
         enabled: false
@@ -92,7 +98,7 @@ tests:
 
   - it: Omits dashboard keys under mode oidc
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       apiClientSecret:
         enabled: false
@@ -110,8 +116,10 @@ tests:
 
   - it: Silently ignores htpasswd fields under mode oidc (warn-only)
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
+      apiClientSecret:
+        secret: hunter2
       thorasDashboard:
         auth:
           mode: oidc
@@ -124,7 +132,7 @@ tests:
             existingSecret:
               secretName: oauth2-proxy-secrets
     asserts:
-      # api-client Secret still rendered; dashboard keys not present
+      # the pinned api-client key still renders; dashboard keys do not
       - isKind:
           of: Secret
       - notExists:
@@ -136,7 +144,7 @@ tests:
 
   - it: Fails when password and htpasswd.existingSecret.secretName are both set
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -150,7 +158,7 @@ tests:
 
   - it: Fails when cookieSecret and htpasswd.existingSecret.secretName are both set
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -164,7 +172,7 @@ tests:
 
   - it: Fails when cookieSecret is not a valid length
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       apiClientSecret:
         enabled: false
@@ -179,7 +187,7 @@ tests:
 
   - it: Accepts a base64-encoded cookieSecret that decodes to 32 bytes
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       apiClientSecret:
         enabled: false
@@ -196,7 +204,7 @@ tests:
 
   - it: Fails on an unknown auth.mode
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -207,7 +215,7 @@ tests:
 
   - it: Fails under mode oidc without oidc.issuerURL
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -222,7 +230,7 @@ tests:
 
   - it: Fails under mode oidc without oidc.redirectURL
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -237,7 +245,7 @@ tests:
 
   - it: Fails under mode oidc without oidc.existingSecret.secretName
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -251,7 +259,7 @@ tests:
 
   - it: Fails under mode oidc with an empty clientIDKey
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -268,7 +276,7 @@ tests:
 
   - it: Aggregates every missing required field into a single failure under mode oidc
     templates:
-      - thoras-shared-secret.yaml
+      - thoras-helm-shared-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -559,7 +567,7 @@ tests:
           value: thoras
       - equal:
           path: spec.template.spec.initContainers[?(@.name == 'htpasswd-init')].env[?(@.name == 'AUTH_PASSWORD')].valueFrom.secretKeyRef.name
-          value: thoras-shared
+          value: thoras-config-controller
       - equal:
           path: spec.template.spec.initContainers[?(@.name == 'htpasswd-init')].env[?(@.name == 'AUTH_PASSWORD')].valueFrom.secretKeyRef.key
           value: dashboard-auth-password
@@ -570,7 +578,7 @@ tests:
             path: cookie-secret
       - equal:
           path: spec.template.spec.volumes[?(@.name == 'oauth2-proxy-secret')].secret.secretName
-          value: thoras-shared
+          value: thoras-config-controller
       - contains:
           path: spec.template.spec.volumes
           content:
@@ -739,18 +747,33 @@ tests:
       - notExists:
           path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.exec
 
-  - it: Rolls the dashboard pod when the oauth2-proxy config or templates change
+  # config-controller owns the rollout: it stamps thoras.ai/config-checksum
+  # after observing the ConfigMaps, so the chart must not compute its own.
+  - it: Emits no config checksums of its own
     templates:
       - dashboard/deployment.yaml
     asserts:
-      - exists:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/configmap"]
+      - notExists:
           path: spec.template.metadata.annotations["checksum/oauth2-proxy-config"]
-      - exists:
+      - notExists:
           path: spec.template.metadata.annotations["checksum/oauth2-proxy-templates"]
       - notExists:
           path: spec.template.metadata.annotations["checksum/shared-secret"]
 
-  - it: Never emits a shared-secret checksum (rotation is a manual rollout)
+  - it: Lists both oauth2-proxy ConfigMaps for config-controller to watch
+    templates:
+      - config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- thoras-dashboard-oauth2-proxy-config"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- thoras-dashboard-oauth2-proxy-templates"
+
+  - it: Emits no config checksums of its own under mode oidc
     templates:
       - dashboard/deployment.yaml
     set:
@@ -765,6 +788,8 @@ tests:
     asserts:
       - notExists:
           path: spec.template.metadata.annotations["checksum/shared-secret"]
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/oauth2-proxy-config"]
 
   - it: Routes htpasswd-init and the oauth2-proxy volume at existingSecret when set
     templates:
