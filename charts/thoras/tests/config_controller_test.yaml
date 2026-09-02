@@ -81,7 +81,6 @@ tests:
     set:
       thorasConfigController:
         enableSeeding: false
-        enableConfigMapMonitoring: false
         enableRestartRollouts: false
         pollInterval: 45s
         rolloutDebounce: 5s
@@ -89,10 +88,6 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_SEEDING')].value
-          value: "false"
-      # note CONFIG_MAP, not CONFIGMAP
-      - equal:
-          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CONFIG_MAP_MONITORING')].value
           value: "false"
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_RESTART_ROLLOUTS')].value
@@ -328,27 +323,18 @@ tests:
           path: data["config-controller.yaml"]
           pattern: "- name: cloud-sync-cluster-key\n    source: provided\n    path: /etc/thoras/provided/cloud-sync-cluster-key\n    consumedFrom:\n      secret: my-cs\n      key: clusterKey"
 
-  # An empty list would make the controller observe every ConfigMap in the
-  # namespace and treat unrelated workloads as restart candidates.
-  - it: Watches an explicit list of ConfigMaps
+  # The controller tracks Secrets only. A watch block here would be silently
+  # ignored by the binary, so it must not be rendered at all.
+  - it: Does not emit a ConfigMap watch list
     templates:
       - config-controller/configmap.yaml
     asserts:
-      - matchRegex:
+      - notMatchRegex:
           path: data["config-controller.yaml"]
-          pattern: "watch:\n  configMaps:\n    - thoras-monitor-config\n    - thoras-operator-system-config\n    - thoras-timescale-config\n    - thoras-dashboard-nginx-config\n    - thoras-dashboard-oauth2-proxy-config\n    - thoras-dashboard-oauth2-proxy-templates"
-
-  - it: Appends extra ConfigMaps to the watch list
-    templates:
-      - config-controller/configmap.yaml
-    set:
-      thorasConfigController:
-        extraWatchConfigMaps:
-          - my-config
-    asserts:
-      - matchRegex:
+          pattern: "watch:"
+      - notMatchRegex:
           path: data["config-controller.yaml"]
-          pattern: "- thoras-dashboard-oauth2-proxy-templates\n    - my-config"
+          pattern: "configMaps:"
 
   - it: Orders restarts and excludes itself
     templates:
@@ -405,8 +391,10 @@ tests:
             resourceNames: [thoras-config-controller]
             verbs: [update]
 
-  # The rollout engine writes the checksum annotation with a full Update.
-  - it: Can update workload pod templates
+  # Restarts evict pods instead of writing the pod template, so a write verb
+  # on workloads would be unused privilege. It would also make the controller
+  # fight GitOps controllers that own those specs.
+  - it: Reads workloads but cannot write them
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
@@ -416,7 +404,44 @@ tests:
           content:
             apiGroups: [apps]
             resources: [deployments, statefulsets, daemonsets]
+            verbs: [get, list, watch]
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [apps]
+            resources: [deployments, statefulsets, daemonsets]
             verbs: [get, list, watch, update]
+
+  - it: Can list and evict pods
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [pods]
+            verbs: [get, list, watch]
+      # Eviction, not delete: PodDisruptionBudgets are honoured.
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [pods/eviction]
+            verbs: [create]
+
+  - it: No longer grants ConfigMap access
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [configmaps]
+            verbs: [get, list, watch]
 
   - it: Can record leader-election leases and events
     templates:
@@ -436,15 +461,19 @@ tests:
             resources: [events]
             verbs: [create, patch]
 
-  # Readiness is read from workload status, never from pods.
-  - it: Requests no access to pods
+  # Pods are the restart mechanism, but they are only ever listed and evicted.
+  # A delete grant would let the controller bypass PodDisruptionBudgets.
+  - it: Cannot delete pods directly
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
     asserts:
-      - notMatchRegex:
-          path: rules[*].resources[*]
-          pattern: "^pods$"
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [pods]
+            verbs: [get, list, watch, delete]
 
   # -------- enabled: false --------
 

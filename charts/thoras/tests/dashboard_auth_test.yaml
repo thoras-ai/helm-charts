@@ -747,8 +747,9 @@ tests:
       - notExists:
           path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].livenessProbe.exec
 
-  # config-controller owns the rollout: it stamps thoras.ai/config-checksum
-  # after observing the ConfigMaps, so the chart must not compute its own.
+  # No consumer of these ConfigMaps is rolled automatically: config-controller
+  # tracks Secrets only, and the chart computes no checksum of its own. Editing
+  # the oauth2-proxy ConfigMaps therefore requires a manual dashboard restart.
   - it: Emits no config checksums of its own
     templates:
       - dashboard/deployment.yaml
@@ -761,17 +762,6 @@ tests:
           path: spec.template.metadata.annotations["checksum/oauth2-proxy-templates"]
       - notExists:
           path: spec.template.metadata.annotations["checksum/shared-secret"]
-
-  - it: Lists both oauth2-proxy ConfigMaps for config-controller to watch
-    templates:
-      - config-controller/configmap.yaml
-    asserts:
-      - matchRegex:
-          path: data["config-controller.yaml"]
-          pattern: "- thoras-dashboard-oauth2-proxy-config"
-      - matchRegex:
-          path: data["config-controller.yaml"]
-          pattern: "- thoras-dashboard-oauth2-proxy-templates"
 
   - it: Emits no config checksums of its own under mode oidc
     templates:

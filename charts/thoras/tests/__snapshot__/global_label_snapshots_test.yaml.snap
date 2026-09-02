@@ -799,7 +799,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
-            checksum/config: 7762532700b5ed6098b793df50544f1d09b7fb9f03c1e7173b3aff01d944461d
+            checksum/config: 339c541150aa99daaea3e88d1cdb918f1e04642f0ff823b3b0d0744d7398fe61
             prometheus.io/path: /metrics
             prometheus.io/port: "9103"
             prometheus.io/scrape: "true"
@@ -821,8 +821,6 @@ Default matches snapshot:
                 - name: SERVICE_WATCH_NAMESPACES
                   value: foo
                 - name: SERVICE_ENABLE_SEEDING
-                  value: "true"
-                - name: SERVICE_ENABLE_CONFIG_MAP_MONITORING
                   value: "true"
                 - name: SERVICE_ENABLE_RESTART_ROLLOUTS
                   value: "true"
@@ -917,14 +915,6 @@ Default matches snapshot:
       - apiGroups:
           - ""
         resources:
-          - configmaps
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - ""
-        resources:
           - secrets
         verbs:
           - create
@@ -956,7 +946,20 @@ Default matches snapshot:
           - get
           - list
           - watch
-          - update
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
       - apiGroups:
           - ""
         resources:

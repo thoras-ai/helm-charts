@@ -333,14 +333,6 @@ Default matches snapshot:
       - apiGroups:
           - ""
         resources:
-          - configmaps
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - ""
-        resources:
           - secrets
         verbs:
           - create
@@ -372,7 +364,20 @@ Default matches snapshot:
           - get
           - list
           - watch
-          - update
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
       - apiGroups:
           - ""
         resources:

@@ -82,8 +82,6 @@ spec:
             value: {{ .Release.Namespace | quote }}
           - name: SERVICE_ENABLE_SEEDING
             value: {{ $cc.enableSeeding | ternary "true" "false" | quote }}
-          - name: SERVICE_ENABLE_CONFIG_MAP_MONITORING
-            value: {{ $cc.enableConfigMapMonitoring | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_RESTART_ROLLOUTS
             value: {{ $cc.enableRestartRollouts | ternary "true" "false" | quote }}
           - name: SERVICE_POLL_INTERVAL

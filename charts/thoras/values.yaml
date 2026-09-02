@@ -568,15 +568,15 @@ thorasConfigController:
   # Write seeded and migrated values to the managed Secret. With this off the
   # controller only drives rollouts, and any unseeded credential stays missing.
   enableSeeding: true
-  # Watch the ConfigMaps below and roll their consumers on change.
-  enableConfigMapMonitoring: true
-  # Safety switch: with this off the controller logs the checksum diffs it
-  # would apply but never touches a pod template.
+  # Safety switch: with this off the controller logs the config diffs it would
+  # act on but never evicts a pod.
   enableRestartRollouts: true
   pollInterval: "30s"
   # Coalescing window after a change is first seen, before a rollout starts.
   rolloutDebounce: "10s"
-  # Per-workload readiness deadline. A tier that overruns aborts the sequence.
+  # Per-workload deadline covering eviction and replacement readiness. A tier
+  # that overruns aborts the sequence. Raise it if PodDisruptionBudgets make
+  # evictions slow to admit.
   rolloutTimeout: "5m"
   # Strict sequential restart tiers: every workload in a tier must go Ready
   # before the next tier is touched. Workloads not listed here are restarted
@@ -592,10 +592,6 @@ thorasConfigController:
   # a config checksum instead.
   restartExclude:
     - thoras-config-controller
-  # ConfigMaps to watch in addition to the ones this chart owns. Needed only
-  # when a workload of yours in this namespace consumes a ConfigMap you want
-  # rolled automatically.
-  extraWatchConfigMaps: []
   # Set to true to apply global affinity rules to this component
   useGlobalAffinity: true
   # Component-specific affinity (merged with global if useGlobalAffinity is true)

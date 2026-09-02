@@ -272,7 +272,7 @@ must be pre-installed and managed externally.
 
 Seeds the credentials you did not supply into the `thoras-config-controller`
 Secret, migrates pre-5.0 chart-generated values into it, and rolls dependent
-workloads in dependency order when a watched ConfigMap or Secret changes. See
+workloads in dependency order when a Secret they consume changes. See
 [Secrets](#secrets).
 
 Unlike the other components it is granted a namespaced `Role` only, never a
@@ -295,14 +295,12 @@ release namespace exclusively.
 | thorasConfigController.prometheus.port             | Number  | 9103                                                                                                           | Port for the prometheus metric exporter                                                                |
 | thorasConfigController.pprof.enabled               | Boolean | false                                                                                                          | Enable pprof endpoint.                                                                                 |
 | thorasConfigController.enableSeeding               | Boolean | true                                                                                                           | Write seeded and migrated values into the managed Secret                                               |
-| thorasConfigController.enableConfigMapMonitoring   | Boolean | true                                                                                                           | Watch the chart's ConfigMaps and roll their consumers on change                                        |
 | thorasConfigController.enableRestartRollouts       | Boolean | true                                                                                                           | Apply rollouts. With this off the controller logs the diffs it would apply but touches nothing         |
 | thorasConfigController.pollInterval                | String  | 30s                                                                                                            | Interval between reconcile ticks                                                                       |
 | thorasConfigController.rolloutDebounce             | String  | 10s                                                                                                            | Coalescing window after a change before a rollout starts                                               |
-| thorasConfigController.rolloutTimeout              | String  | 5m                                                                                                             | Per-workload readiness deadline. A tier that overruns aborts the sequence                              |
+| thorasConfigController.rolloutTimeout              | String  | 5m                                                                                                             | Per-workload deadline for eviction plus replacement readiness. A tier that overruns aborts the sequence                              |
 | thorasConfigController.restartOrder                | Array   | metrics-collector, thoras-operator, thoras-worker, thoras-api-server-v2, thoras-forecast-worker, thoras-dashboard | Strict sequential restart tiers. Unlisted workloads are restarted last, together                       |
 | thorasConfigController.restartExclude              | Array   | [thoras-config-controller]                                                                                     | Workloads never restarted. Must keep the controller itself                                             |
-| thorasConfigController.extraWatchConfigMaps        | Array   | []                                                                                                             | Additional ConfigMaps to watch beyond the ones this chart owns                                         |
 
 ## Thoras Dashboard
 

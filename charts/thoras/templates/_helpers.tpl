@@ -646,14 +646,6 @@ values:
       key: {{ .key }}
   {{- end }}
 {{- end }}
-watch:
-  configMaps:
-    {{- /* Explicit list bounds the blast radius: an empty list would make the
-           controller observe every ConfigMap in the namespace and treat
-           unrelated workloads as restart candidates. */}}
-    {{- range concat (include "thoras.chartConfigMaps" . | fromYamlArray) $cc.extraWatchConfigMaps }}
-    - {{ . }}
-    {{- end }}
 restart:
   order:
     {{- range $cc.restartOrder }}
@@ -665,20 +657,6 @@ restart:
     {{- range $cc.restartExclude }}
     - {{ . }}
     {{- end }}
-{{- end -}}
-
-{{/*
-ConfigMaps this chart owns whose contents reach a pod. Rendered
-unconditionally: naming a ConfigMap that does not exist is harmless, and
-gating each one would duplicate five separate render conditions.
-*/}}
-{{- define "thoras.chartConfigMaps" -}}
-- thoras-monitor-config
-- thoras-operator-system-config
-- thoras-timescale-config
-- thoras-dashboard-nginx-config
-- thoras-dashboard-oauth2-proxy-config
-- thoras-dashboard-oauth2-proxy-templates
 {{- end -}}
 
 {{/*

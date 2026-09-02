@@ -18,14 +18,6 @@ metadata:
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasConfigController.labels) | nindent 4 }}
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
 {{- /* resourceNames cannot restrict create: the object name is unknown at
        authorization time. Reads and writes below are name-scoped instead. */}}
 - apiGroups:
@@ -52,8 +44,9 @@ rules:
   - thoras-config-controller
   verbs:
   - update
-{{- /* update, not patch: the rollout engine writes the checksum annotation
-       with a full Update under a conflict retry. */}}
+{{- /* Read-only: restarts evict pods rather than writing the pod template, so
+       the controller never needs to mutate a workload. Writing one would also
+       register as drift to GitOps controllers such as Argo CD. */}}
 - apiGroups:
   - apps
   resources:
@@ -64,7 +57,22 @@ rules:
   - get
   - list
   - watch
-  - update
+{{- /* Restarts: list the pods a workload owns, then evict them. The eviction
+       subresource is used over delete so PodDisruptionBudgets are honoured. */}}
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/eviction
+  verbs:
+  - create
 {{- /* Leader election records an event on every acquisition. */}}
 - apiGroups:
   - ""
