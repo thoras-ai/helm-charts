@@ -1528,13 +1528,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
-                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
-                  value: "true"
-                - name: SERVICE_SIMPLE_AUTH_SECRET
-                  valueFrom:
-                    secretKeyRef:
-                      key: api-client-secret
-                      name: thoras-config-controller
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2141,13 +2134,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
-                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
-                  value: "true"
-                - name: SERVICE_SIMPLE_AUTH_SECRET
-                  valueFrom:
-                    secretKeyRef:
-                      key: api-client-secret
-                      name: thoras-config-controller
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
