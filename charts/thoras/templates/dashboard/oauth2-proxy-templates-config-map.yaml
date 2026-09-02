@@ -7,7 +7,5 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
-data:
-  sign_in.html: |
-{{ .Files.Get "files/oauth2-proxy-sign-in.html" | indent 4 }}
+data:{{ include "thoras.dashboardOauth2ProxyTemplatesData" . }}
 {{- end }}

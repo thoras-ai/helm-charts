@@ -22,10 +22,10 @@ spec:
         {{- . | trim | nindent 8 }}
         {{- end }}
       annotations:
-        {{- /* The one checksum the chart still owns: the controller never
-               restarts itself, and it does not re-read its config at
-               runtime. Covers the provided-secret refs too, since they decide
-               which files it watches. */}}
+        {{- /* The controller never restarts itself and does not re-read its
+               config at runtime, so this checksum is the only thing that
+               rolls it. Covers the provided-secret refs too, since they
+               decide which files it watches. */}}
         checksum/config: {{ printf "%s\n%s" (include "thoras.configControllerConfig" .) $provided | sha256sum }}
         {{- if $cc.prometheus.enabled }}
         prometheus.io/scrape: "true"

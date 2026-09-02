@@ -1,0 +1,155 @@
+suite: Config Checksum Annotations
+# The chart hashes the ConfigMaps each workload mounts so a config edit rolls
+# its consumers. config-controller cannot do this for chart-owned ConfigMaps:
+# stamping the workload spec is what GitOps tools revert as drift.
+templates:
+  - api-server-v2/deployment.yaml
+  - worker/deployment.yaml
+  - collector/deployment.yaml
+  - dashboard/deployment.yaml
+  - config-controller/deployment.yaml
+  - operator/deployment.yaml
+tests:
+  - it: Every workload that mounts a chart ConfigMap carries one hex checksum
+    templates:
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+      - collector/deployment.yaml
+      - dashboard/deployment.yaml
+      - config-controller/deployment.yaml
+    set:
+      thorasConfigController:
+        enabled: true
+      metricsCollector:
+        timescale:
+          config:
+            enabled: true
+            content: "shared_buffers=1GB"
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations['checksum/config']
+          pattern: ^[0-9a-f]{64}$
+
+  - it: api-server-v2 and worker hash the same monitor ConfigMap
+    templates:
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+    set:
+      thorasMonitor:
+        config: |
+          shared: value
+    asserts:
+      # Both mount thoras-monitor-config, so both must land on this hash.
+      # Drift here means one of them stopped tracking the ConfigMap.
+      - equal:
+          path: spec.template.metadata.annotations['checksum/config']
+          value: 37957d928926c5a508e039eabdba2503d3d3fbfdb27cbea0eac69cbf4ba75386
+
+  - it: Editing the monitor ConfigMap rolls its consumers
+    templates:
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+    set:
+      thorasMonitor:
+        config: |
+          edited: true
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations['checksum/config']
+          value: 49da7dece238aa6c9bfd82ed138e5e82671bd1664a5e4e50265150043e036ac9
+
+  - it: Chart labels do not feed the checksum
+    # The hash covers ConfigMap data only. Were it over the rendered object,
+    # every chart version bump would roll every workload.
+    templates:
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+    set:
+      labels:
+        someLabel: someValue
+      thorasMonitor:
+        config: |
+          shared: value
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations['checksum/config']
+          value: 37957d928926c5a508e039eabdba2503d3d3fbfdb27cbea0eac69cbf4ba75386
+
+  - it: Collector has no checksum when it mounts no timescale ConfigMap
+    template: collector/deployment.yaml
+    set:
+      metricsCollector:
+        podAnnotations: {}
+        timescale:
+          config:
+            enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations
+
+  - it: Collector has no checksum when timescale is external
+    template: collector/deployment.yaml
+    set:
+      metricsCollector:
+        podAnnotations: {}
+        timescale:
+          config:
+            enabled: true
+            content: "shared_buffers=1GB"
+      externalTimescale:
+        dsn: postgres://example
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations['checksum/config']
+
+  - it: Editing the timescale ConfigMap rolls the collector
+    template: collector/deployment.yaml
+    set:
+      metricsCollector:
+        timescale:
+          config:
+            enabled: true
+            content: "shared_buffers=2GB"
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations['checksum/config']
+          value: d50bce19c8fe8e981d9a26eda5fa053a0b29ac870a7073ee5ea3df17659b7864
+
+  - it: Dashboard hashes nginx plus the oauth2-proxy pair when auth is on
+    template: dashboard/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations['checksum/config']
+          value: 7e739dcc4781007c0933ca352af85d7de0c7cdc8faaaeeaa294dfef801c0bfcc
+
+  - it: Turning auth off drops the oauth2-proxy ConfigMaps from the hash
+    template: dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations['checksum/config']
+          value: 8f8b82e630307a2379209328c6d25309e164b326a15f8a91df2ab64fdc71a878
+
+  - it: Operator has no checksum despite mounting a chart ConfigMap
+    # thoras-operator-system-config is deliberately exempt. Its chart content is
+    # static, so a hash over it would be a constant that never rolls anything.
+    # The value is written at runtime by the api-server, which restarts the
+    # operator itself rather than relying on a template annotation.
+    templates:
+      - operator/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations['checksum/config']
+
+  - it: A value that only reaches nginx.conf still rolls the dashboard
+    template: dashboard/deployment.yaml
+    set:
+      cluster:
+        name: prod-east
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations['checksum/config']
+          value: 06cc0ecaa5d5bad0172262aa51168c889accaa9d27637eb9384b3dc3d378984e

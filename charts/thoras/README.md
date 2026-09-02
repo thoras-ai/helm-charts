@@ -614,6 +614,19 @@ kubectl rollout restart deployment -n <namespace> \
 
 Rotating the dashboard cookie secret bounces every logged-in dashboard user.
 
+### Changing ConfigMap-backed settings
+
+Values that land in a chart ConfigMap — `thorasMonitor.config`,
+`metricsCollector.timescale.config.content`, the dashboard's nginx and
+oauth2-proxy settings — roll their consumers on the next `helm upgrade`. The
+chart puts a `checksum/config` annotation over the ConfigMap's data on each
+consumer's pod template, so no manual restart is needed. These ConfigMaps are
+mounted with `subPath`, which Kubernetes never updates in place, so the
+restart is what makes the change take effect.
+
+The annotation is computed at template time, so Argo CD renders the same value
+an apply produces and reports no drift.
+
 ## Migrating to 5.x
 
 5.x moves secret seeding out of the chart and into config-controller. Your

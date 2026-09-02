@@ -18,10 +18,10 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasApiServerV2.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- $userAnnotations := or .Values.podAnnotations .Values.thorasApiServerV2.podAnnotations }}
       {{- $prometheus := .Values.thorasApiServerV2.prometheus.enabled }}
-      {{- if or $userAnnotations $prometheus }}
       annotations:
+        {{- /* subPath mount: only a restart picks up an edit. See _config-data.tpl. */}}
+        checksum/config: {{ include "thoras.monitorConfigData" . | sha256sum }}
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasApiServerV2.podAnnotations) }}
           {{- . | trim | nindent 8 }}
         {{- end }}
@@ -30,7 +30,6 @@ spec:
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
         {{- end }}
-      {{- end }}
     spec:
       securityContext:
         runAsNonRoot: true

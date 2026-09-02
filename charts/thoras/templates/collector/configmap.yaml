@@ -5,7 +5,5 @@ kind: ConfigMap
 metadata:
   name: thoras-timescale-config
   namespace: {{ .Release.Namespace }}
-data:
-  custom.conf: |
-{{ .Values.metricsCollector.timescale.config.content | indent 4 }}
+data:{{ include "thoras.timescaleConfigData" . }}
 {{- end }}

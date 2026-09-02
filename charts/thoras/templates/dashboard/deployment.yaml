@@ -19,13 +19,19 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasDashboard.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- $userAnnotations := or .Values.podAnnotations .Values.thorasDashboard.podAnnotations }}
-      {{- if $userAnnotations }}
+      {{- /* Covers every ConfigMap this pod mounts, gated like the volumes above
+             so the hash only moves when something the pod reads moves. */}}
+      {{- $config := include "thoras.dashboardNginxConfigData" . }}
+      {{- if .Values.thorasDashboard.auth.enabled }}
+      {{- $config = printf "%s%s%s" $config
+            (include "thoras.dashboardOauth2ProxyConfigData" .)
+            (include "thoras.dashboardOauth2ProxyTemplatesData" .) }}
+      {{- end }}
       annotations:
+        checksum/config: {{ $config | sha256sum }}
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasDashboard.podAnnotations) }}
           {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- end }}
     spec:
       securityContext:
         runAsNonRoot: true

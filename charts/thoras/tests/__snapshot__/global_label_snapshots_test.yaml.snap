@@ -19,6 +19,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
+            checksum/config: 9b9f3bfc516cdd4faa1fdeb451b6adc86f818c4c8bc8de293eb0fce3cb8cba49
             prometheus.io/path: /metrics
             prometheus.io/port: "8080"
             prometheus.io/scrape: "true"
@@ -1049,6 +1050,8 @@ Default matches snapshot:
           app: thoras-dashboard
       template:
         metadata:
+          annotations:
+            checksum/config: 7c06c25e759855bb091e963154ab461bc61c44960eaa6a21496b2aa5436bcdf7
           labels:
             app: thoras-dashboard
             app.kubernetes.io/name: thoras
@@ -1754,6 +1757,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
+            checksum/config: 9b9f3bfc516cdd4faa1fdeb451b6adc86f818c4c8bc8de293eb0fce3cb8cba49
             prometheus.io/path: /metrics
             prometheus.io/port: "9102"
             prometheus.io/scrape: "true"

@@ -19,15 +19,17 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
-  - it: Should not have annotations section when all conditions are false
+  - it: Should carry only the config checksum when all other conditions are false
     set:
       thorasWorker:
         prometheus:
           enabled: false
         podAnnotations: {}
     asserts:
+      - exists:
+          path: spec.template.metadata.annotations['checksum/config']
       - notExists:
-          path: spec.template.metadata.annotations
+          path: spec.template.metadata.annotations['prometheus.io/scrape']
   - it: Should have annotations section when prometheus is enabled
     set:
       thorasWorker:
