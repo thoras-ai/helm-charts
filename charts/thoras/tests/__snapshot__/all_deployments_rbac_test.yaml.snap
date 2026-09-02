@@ -983,7 +983,7 @@ Default matches snapshot:
           - configmaps
         verbs:
           - get
-  22: |
+  24: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -1002,7 +1002,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  23: |
+  25: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -1024,7 +1024,7 @@ Default matches snapshot:
           - get
           - update
           - patch
-  24: |
+  26: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
