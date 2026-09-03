@@ -6,98 +6,275 @@ This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
 ![Version: 4.144.2](https://img.shields.io/badge/Version-4.144.2-informational?style=flat-square) ![AppVersion: 4.119.0](https://img.shields.io/badge/AppVersion-4.119.0-informational?style=flat-square)
 
-# Installs
+## Requirements
 
-Using [Helm](https://helm.sh), you can easily install and test Thoras in a Kubernetes cluster by running the following:
+* Thoras license key (email support@thoras.ai if you don’t have one)
+* Recommended Kubernetes Minimum: 1.24+
 
-#### Add Helm repo
+## Upgrading
 
-First, add the repo if you haven't already done so:
+A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an incompatible breaking change needing manual actions.
+
+Detailed upgrade procedures found [here](./UPGRADE.md).
+
+### [To 5.0.0](./UPGRADE.md#to-500)
+
+- **Dashboard now requires authentication.** Fronted by an oauth2-proxy
+  sidecar (`htpasswd` default, `oidc` optional).
+    * If you currently ship an oauth2-proxy sidecar, see [migration docs](./UPGRADE.md#migrating-from-the-standalone-oauth2-proxy-sidecar).
+    * If you provide external auth via ingress or gateway, see [externally-managed auth notes](./UPGRADE.md#externally-managed-auth).
+- **Chart no longer seeds Secrets.** A new `thoras-config-controller`
+  component owns seeding and rotation. Upgrades from 4.x must go through
+  5.x with `legacySecretSeeding: true` before flipping it off; see
+  [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
+- **`featureFlags.enableSimpleAuthSecret` renamed** to
+  `apiClientSecret.enabled`. Legacy field still works as an alias; see
+  [Feature flag deprecation](./UPGRADE.md#feature-flag-deprecation).
+
+See [UPGRADE.md](./UPGRADE.md#to-500) for step-by-step migration.
+
+## Installing the Chart
+
+### Use the Thoras Helm repo
+
+Install the Thoras Helm repo, which will give you access to all of the
+Thoras Helm charts.
 
 ```
 helm repo add thoras https://thoras-ai.github.io/helm-charts
-helm repo update
+helm repo update thoras
 ```
 
-#### Minimum Config
+### Install Thoras
+
+1. Note the name of your license key file. We'll use `thoras_license.txt`
+   in the example below.
+2. Install Thoras via Helm:
 
 ```
-# values.yaml
-imageCredentials:
-  registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
-  username: "_json_key_base64"
-  password: "<thoras license key>"
-
-metricsCollector:
-  persistence:
-    enabled: false
-
-# New installs only. Upgrades from 4.x must leave this true for one release;
-# see "Migrating to 5.x".
-legacySecretSeeding: false
-```
-
-#### Install Chart
-
-Now let’s install Thoras with Helm! We recommend installing Thoras into the thoras namespace:
-
-```
-helm install \
-  my-thoras-release \
-  thoras/thoras \
-  -n thoras \
+helm install thoras thoras/thoras \
+  --namespace thoras \
   --create-namespace \
-  -f ./values.yaml
+  --set imageCredentials.password="$(cat ./thoras_license.txt)"
 ```
 
-# Values
+New installs should also set `legacySecretSeeding: false` in a values
+file — the flag only exists as a migration source for existing 4.x
+deployments. See [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
 
-## Global
+### Verify installation
 
-| Key                                | Type    | Default                                          | Description                                                                                                            |
-| ---------------------------------- | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.119.0                                          | Thoras app version                                                                                                     |
-| imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                |
-| imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                            |
-| imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                         |
-| resourceQuota.enabled              | Bool    | false                                            | Enables resource quotas within Thoras                                                                                  |
-| resourceQuota.pods                 | Number  | 200                                              | Maximum number of pods allowed                                                                                         |
-| resourceQuota.cronjobs             | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                     |
-| resourceQuota.jobs                 | Number  | 200                                              | Maximum number of jobs allowed                                                                                         |
-| logLevel                           | String  | info                                             | Default log level                                                                                                      |
-| env                                | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                        |
-| slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                       |
-| slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                           |
-| cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                                 |
-| cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                      |
-| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                                 |
-| queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                               |
-| nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                     |
-| tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                       |
-| affinity                           | Object  | {}                                               | Global affinity rules applied to all components (components opt-in by default via useGlobalAffinity)                   |
-| rbac.namespaces                    | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead   |
-| costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                     |
-| costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                               |
-| costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                  |
-| apiClientSecret.enabled                         | Boolean | true                                             | If true, components authenticate to the API server with a shared bearer token |
-| apiClientSecret.secret                          | String  | ""                                               | Shared secret components send to the API server when `apiClientSecret.enabled` is true. Chart generates if empty. Setting a value overrides any existing value on the next `helm upgrade`; consumer workloads require a manual rollout (see [rotating secrets](#rotating-secrets)). `apiClientSecret.existingSecret` takes precedent. |
-| apiClientSecret.existingSecret.secretName       | String  | ""                                               | Read the API-client secret from this pre-existing externally managed secret. Required key documented below |
-| apiClientSecret.existingSecret.secretKey        | String  | api-client-secret                                | Key in `apiClientSecret.existingSecret.secretName` that holds the value.                                                                                                            |
+Confirm all Thoras pods reach `Running` status (usually takes 1-2
+minutes):
 
-## Feature Flags
+```
+kubectl get pods -n thoras
+```
 
-The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
+On a fresh install the workload pods briefly report
+`CreateContainerConfigError` while they wait for config-controller to
+seed `thoras-config-controller`. This resolves itself; no action is
+needed.
 
-| Key                                            | Type    | Default | Description                                                                        |
-| ---------------------------------------------- | ------- | ------- | ---------------------------------------------------------------------------------- |
-| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                                                |
-| featureFlags.enablePgLargeObjectStorage        | Boolean | true    | If true, enables storing blobs as postgres large objects                           |
-| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations                                     |
-| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations                          |
-| featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                               |
-| featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs    |
+### Load the dashboard
 
-## Affinity Configuration
+Port-forward the dashboard Service to your workstation:
+
+```
+kubectl port-forward -n thoras svc/thoras-dashboard 8080:80
+```
+
+Then open <http://localhost:8080>. At chart defaults the dashboard is
+fronted by an oauth2-proxy sidecar in `htpasswd` mode. Sign in with:
+
+- **Username**: `thoras` (`thorasDashboard.auth.htpasswd.username`)
+- **Password**: seeded by config-controller into the
+  `thoras-config-controller` Secret:
+
+  ```
+  kubectl get secret thoras-config-controller -n thoras \
+    -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
+  ```
+
+If you pinned the password in values or point at your own Secret via
+`thorasDashboard.auth.htpasswd.existingSecret`, use that instead; the
+lookup above only applies to the default seeded-by-controller path. See
+[Secrets](#secrets) for the full resolution model.
+
+## Secrets
+
+Every credential resolves to exactly one of three places, in this order:
+
+| # | Where you configure it | Where it is stored | Who writes it |
+|---|---|---|---|
+| 1 | `*.existingSecret.secretName` / `*SecretRefName` | your own Secret | you |
+| 2 | the plain values field | `thoras-helm-values` | Helm |
+| 3 | nothing — leave it empty | `thoras-config-controller` | config-controller |
+
+| Credential | Existing Secret | Values field |
+|---|---|---|
+| API client token | `apiClientSecret.existingSecret.{secretName,secretKey}` | `apiClientSecret.secret` |
+| Dashboard password | `thorasDashboard.auth.htpasswd.existingSecret.{secretName,passwordKey}` | `thorasDashboard.auth.htpasswd.password` |
+| Dashboard cookie secret | `thorasDashboard.auth.htpasswd.existingSecret.{secretName,cookieSecretKey}` | `thorasDashboard.auth.htpasswd.cookieSecret` |
+| TimescaleDB DSN | `externalTimescale.{secretRefName,secretRefKey}` | `externalTimescale.dsn` |
+| TimescaleDB password | — (bundled database only) | — (not configurable) |
+| Slack webhook | `slackWebhookUrlSecretRef{Name,Key}` | `slackWebhookUrl` |
+| Cloud-sync cluster key | `cloudSync.clusterKeySecretRef{Name,Key}` | `cloudSync.clusterKey` |
+| Dashboard OIDC credentials | `thorasDashboard.auth.oidc.existingSecret.*` | — (never chart-managed) |
+
+Notes:
+
+- `thoras-helm-values` holds only what you pinned in values. It is fully
+  deterministic — no `lookup`, no random generation — so `helm template` and
+  Argo CD render exactly what an apply produces. **Argo CD users no longer
+  need `ignoreDifferences` on this Secret.**
+- `thoras-config-controller` is created and owned by config-controller, never
+  by Helm, so Argo CD does not track or prune it. Values are seeded once and
+  never rotated.
+- The bundled TimescaleDB password cannot be pinned. There is no rotation
+  path for a database that is already initialised, so the chart fails if
+  `metricsCollector.timescale.password` is set.
+- Slack and cloud-sync are never seeded. Leave them unset and the consuming
+  environment variable is omitted entirely.
+
+### Rotating secrets
+
+**Seeded values are never rotated.** config-controller writes a key once and
+then leaves it alone. To change one, delete the key from
+`thoras-config-controller` and let the controller re-seed it:
+
+```bash
+kubectl patch secret thoras-config-controller -n <namespace> \
+  --type=json -p='[{"op":"remove","path":"/data/dashboard-auth-password"}]'
+```
+
+The controller notices the change, re-seeds, and rolls the affected workloads
+in dependency order on its own.
+
+**Pinned and customer-managed values** change when you change them, but the
+chart no longer stamps a checksum for `thoras-helm-values`, and
+config-controller cannot yet see inside Secrets you manage. Roll the consumers
+by hand:
+
+```bash
+kubectl rollout restart deployment -n <namespace> \
+  -l app.kubernetes.io/name=thoras
+```
+
+Rotating the dashboard cookie secret bounces every logged-in dashboard user.
+
+### Changing ConfigMap-backed settings
+
+Values that land in a chart ConfigMap — `thorasMonitor.config`,
+`metricsCollector.timescale.config.content`, the dashboard's nginx and
+oauth2-proxy settings — roll their consumers on the next `helm upgrade`. The
+chart puts a `checksum/config` annotation over the ConfigMap's data on each
+consumer's pod template, so no manual restart is needed. These ConfigMaps are
+mounted with `subPath`, which Kubernetes never updates in place, so the
+restart is what makes the change take effect.
+
+The annotation is computed at template time, so Argo CD renders the same value
+an apply produces and reports no drift.
+
+## ArgoCD
+
+Argo CD renders manifests without `lookup`, so a small set of chart
+outputs still drifts on every reconcile even after the 5.x
+config-controller migration:
+
+- The webhook configs' `caBundle` is injected in-cluster after apply
+  (either by cert-manager's CA injector when
+  `thorasOperator.webhookCertGen.certManager.enabled: true`, or by the
+  certgen patch Job otherwise).
+- The `thoras-forecast-worker` replica count is managed by Thoras at
+  runtime.
+
+Tell Argo to ignore these fields in your `Application`'s
+`spec.ignoreDifferences`:
+
+```yaml
+ignoreDifferences:
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    jqPathExpressions:
+      - ".webhooks[]?.clientConfig.caBundle"
+  - group: admissionregistration.k8s.io
+    kind: ValidatingWebhookConfiguration
+    jqPathExpressions:
+      - ".webhooks[]?.clientConfig.caBundle"
+  - jsonPointers:
+      - /spec/replicas
+    kind: Deployment
+    name: thoras-forecast-worker
+```
+
+`thoras-helm-values` is deterministic and needs no `ignoreDifferences`;
+`thoras-config-controller` is owned by the controller and is not tracked
+by Argo CD at all. The one exception is the pair of legacy Secrets
+(`api-client-secret`, `thoras-timescale-password`) rendered under
+`legacySecretSeeding: true` during the 4.x -> 5.x migration; see
+[Migrating from 4.x](./UPGRADE.md#migrating-from-4x) for the extra
+entries and when to drop them.
+
+The full `Application` example plus the ArgoCD HPA custom health
+assessment (needed when Argo watches a Thoras-horizontally-controlled
+workload) live at
+[docs.thoras.ai/guides/argo-cd](https://docs.thoras.ai/guides/argo-cd).
+
+## helm template
+
+Under `helm template` there is no cluster for config-controller to seed
+into, so any credential not already pinned or pointed at an existing
+Secret renders empty — and even randomly-generated placeholders would
+churn on every render. Either pin every chart-generated credential or
+point the chart at a pre-existing Secret you manage out-of-band
+(Sealed Secrets, External Secrets, SOPS, ...).
+
+### Pinning credentials
+
+Set the following values to pin:
+
+| Credential                  | Pin in values                                |
+| --------------------------- | -------------------------------------------- |
+| API client bearer token     | `apiClientSecret.secret`                     |
+| Dashboard htpasswd password | `thorasDashboard.auth.htpasswd.password`     |
+| Dashboard htpasswd cookie   | `thorasDashboard.auth.htpasswd.cookieSecret` |
+| TimescaleDB DSN (external)  | `externalTimescale.dsn`                      |
+
+### Using external secret references
+
+Or point the chart at Secrets you manage out-of-band via the following
+`existingSecret` / `secretRef` fields:
+
+| Credential                                 | secretName field                                          | Key field(s)                                                                                    |
+| ------------------------------------------ | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| API client bearer token                    | `apiClientSecret.existingSecret.secretName`               | `apiClientSecret.existingSecret.secretKey`                                                      |
+| Dashboard htpasswd password + cookie       | `thorasDashboard.auth.htpasswd.existingSecret.secretName` | `thorasDashboard.auth.htpasswd.existingSecret.passwordKey`, `.cookieSecretKey`                  |
+| Dashboard OIDC client credentials + cookie | `thorasDashboard.auth.oidc.existingSecret.secretName`     | `thorasDashboard.auth.oidc.existingSecret.clientIDKey`, `.clientSecretKey`, `.cookieSecretKey`  |
+| TimescaleDB DSN (external)                 | `externalTimescale.secretRefName`                         | `externalTimescale.secretRefKey`                                                                |
+
+**Notes:**
+- Pinning the in-cluster TimescaleDB password
+  (`metricsCollector.timescale.password`) for the chart-managed
+  TimescaleDB is not supported; use `externalTimescale`, or run under a
+  live cluster and let config-controller seed
+  `thoras-config-controller`.
+- Under `thorasDashboard.auth.mode: oidc`, dashboard credentials come
+  from your IdP via `thorasDashboard.auth.oidc.existingSecret.secretName`
+  and are never chart-generated, so no dashboard pinning is needed.
+
+### Webhook certificates
+
+Set `thorasOperator.webhookCertGen.certManager.enabled: true` when
+rendering offline. The default certgen path emits a set of imperative
+`Job`/`ClusterRole`/`ServiceAccount` resources gated on Helm lifecycle
+hooks (`pre-install`, `pre-upgrade`), which GitOps tools handle poorly.
+cert-manager mode replaces them with declarative `Issuer` and
+`Certificate` CRs. Requires cert-manager installed in the cluster.
+
+## Configuration
+
+### Affinity Configuration
 
 Define affinity rules globally or per-component. Components opt into global affinity by default and can add component-specific rules that merge with global settings.
 
@@ -146,7 +323,278 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 
 **Note:** `metricsCollector` and `thorasForecast` include built-in anti-affinity rules to avoid co-location. These always apply and merge with global/component settings.
 
-## Thoras Forecast
+### Example Thoras Monitor Configuration
+
+`thorasMonitor.config` is raw monitor YAML. `general.metadata` holds optional string key/value pairs that are surfaced on every named monitor Slack alert, one line per pair. This is useful to disambiguate clusters that share a name across regions (e.g. `prod-a` in `use1` and `euw1`):
+
+```yaml
+# values.yaml
+---
+thorasMonitor:
+  config: |
+    general:
+      name: 'prod-a'
+      monitor_cadence: 5m
+      metadata:
+        region: euw1
+    alerts:
+      - name: thoras_deployments
+        notification_cooldown: 15m
+        enabled: true
+      - name: no_suggestions
+        notification_cooldown: 15m
+        enabled: true
+```
+
+The alert is then prefixed with the metadata:
+
+```
+*Cluster:* prod-a
+*region:* euw1
+*Alert:* thoras_deployments
+...
+```
+
+### Thoras Dashboard
+
+#### Thoras Dashboard Authentication
+
+The dashboard ships with HTTP authentication enabled by default, terminated by
+an [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) sidecar. Two
+modes are supported via `thorasDashboard.auth.mode`: `htpasswd` (default,
+chart-managed username + password) and `oidc` (full OIDC login flow against
+your identity provider). Fields under the unused mode's block are silently
+ignored, so switching between modes is just flipping `auth.mode`. Credentials
+and session cookies are only meaningful behind TLS — terminate TLS at the edge.
+
+##### Bring your own auth
+
+Set `thorasDashboard.auth.enabled: false` to disable the built-in sidecar and
+front the dashboard with your own auth — for example a custom SSO sidecar
+wired through `extraContainers` and `service.targetPort`, an edge-level auth
+plugin, or a service-mesh policy.
+
+```yaml
+thorasDashboard:
+  auth:
+    enabled: false
+```
+
+This leaves the dashboard reachable in-cluster with no auth in front of it,
+which exposes part of the API it proxies to and subverts `apiClientSecret`.
+Only safe if something external gates every request.
+
+##### htpasswd mode
+
+config-controller seeds a random password and cookie secret on first install
+and never rotates them. Retrieve the password:
+
+```bash
+kubectl get secret thoras-config-controller -n <namespace> \
+  -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
+```
+
+Pin them instead if you would rather manage them in values, in which case they
+live in `thoras-helm-values`. Changing a pinned value invalidates every
+logged-in session.
+
+```yaml
+thorasDashboard:
+  auth:
+    htpasswd:
+      username: thoras
+      password: <your-password>
+      cookieSecret: <your-32-char-cookie-secret>
+```
+
+Both approaches are GitOps-safe: seeded values live outside Helm's control and
+pinned values render deterministically.
+
+##### OIDC mode
+
+Register the dashboard as an OIDC application with your identity provider,
+create a Kubernetes Secret with the resulting credentials, and switch the
+chart into OIDC mode:
+
+```yaml
+thorasDashboard:
+  auth:
+    mode: oidc
+    oidc:
+      provider: oidc  # or okta, entra-id, google, ...
+      issuerURL: https://<your-okta-domain>/oauth2/default
+      redirectURL: https://thoras.example.com/oauth2/callback
+      emailDomains: [example.com]
+      existingSecret:
+        secretName: oauth2-proxy-secrets
+```
+
+The Secret must contain three keys (names configurable via
+`auth.oidc.existingSecret.{clientIDKey,clientSecretKey,cookieSecretKey}`):
+
+```bash
+kubectl create secret generic oauth2-proxy-secrets -n <namespace> \
+  --from-literal=client-id="<idp-client-id>" \
+  --from-literal=client-secret="<idp-client-secret>" \
+  --from-literal=cookie-secret="$(openssl rand -base64 32 | head -c 32 | base64)"
+```
+
+The `redirectURL` must exactly match the redirect URI registered on the IdP
+application.
+
+##### Notes
+
+- `thorasDashboard.auth.cookieSecure` defaults to `false` so `kubectl
+  port-forward` works (Safari drops Secure cookies over plain HTTP).
+  Set it to `true` in production; it requires TLS at the edge.
+- The sign-in page is chart-branded (Thoras wordmark, dashboard-sidebar
+  primary button) in both auth modes. Under `mode: htpasswd` only the
+  username/password form is shown; under `mode: oidc` the provider
+  button is retained as the entry point.
+- With auth enabled, the oauth2-proxy sidecar owns
+  `thorasDashboard.containerPort` and proxies to nginx on `127.0.0.1:8181`
+  (loopback-only). To hit nginx directly for debugging:
+  ```
+  kubectl debug -n thoras <dashboard-pod> -it \
+    --image=<debug-image> --target=thoras-dashboard
+  # curl http://127.0.0.1:8181/
+  ```
+
+#### Example Thoras Dashboard Ingress Configuration
+
+```yaml
+# values.yaml
+---
+thorasDashboard:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    hosts:
+      - host: thoras.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: thoras-tls
+        hosts:
+          - thoras.example.com
+```
+
+Default `thorasDashboard.ingress.hosts` value:
+
+```yaml
+hosts:
+  - host: thoras.local
+    paths:
+      - path: /
+        pathType: Prefix
+```
+
+#### Example Thoras Dashboard Gateway API Configuration
+
+```yaml
+# values.yaml
+---
+thorasDashboard:
+  gatewayAPI:
+    enabled: true
+    annotations:
+      example.com/annotation: value
+    parentRefs:
+      - name: my-gateway
+        namespace: gateway-system
+    hostnames:
+      - thoras.example.com
+    path: /
+    pathType: PathPrefix
+```
+
+Default `thorasDashboard.gatewayAPI.parentRefs` value:
+
+```yaml
+parentRefs:
+  - name: gateway
+    namespace: default
+```
+
+Default `thorasDashboard.gatewayAPI.hostnames` value:
+
+```yaml
+hostnames:
+  - thoras.local
+```
+
+### NetworkPolicy
+
+Set `networkPolicy.enabled: true` to have the chart render a
+`CiliumNetworkPolicy` (`cilium.io/v2`) per component. Requires
+[Cilium](https://cilium.io/) in the cluster; policies are no-ops with
+any other CNI.
+
+Each policy allows all ingress from same-namespace endpoints, permits
+DNS to `kube-system/kube-dns`, and opens the component's public port to
+its expected callers (`entities: all` for the dashboard, in-namespace
+callers for API/collector/worker/forecast).
+
+**NOTE:** when Thoras Dashboard auth is enabled in OIDC mode, the chart
+opens broad egress on the dashboard's `CiliumNetworkPolicy` to
+`world:443` so oauth2-proxy can reach the IdP's discovery, token, and
+userinfo endpoints. Okta / Entra / other IdPs resolve to broad, drifting
+CIDR ranges, so a scoped rule would be brittle. Tighten by layering an
+additional `CiliumNetworkPolicy` that restricts egress to specific IdP
+hostnames (`toFQDNs`), or manage egress out-of-band.
+
+## Values
+
+### Global
+
+| Key                                | Type    | Default                                          | Description                                                                                                            |
+| ---------------------------------- | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| thorasVersion                      | String  | 4.119.0                                          | Thoras app version                                                                                                     |
+| imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                |
+| imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                            |
+| imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                         |
+| resourceQuota.enabled              | Bool    | false                                            | Enables resource quotas within Thoras                                                                                  |
+| resourceQuota.pods                 | Number  | 200                                              | Maximum number of pods allowed                                                                                         |
+| resourceQuota.cronjobs             | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                     |
+| resourceQuota.jobs                 | Number  | 200                                              | Maximum number of jobs allowed                                                                                         |
+| logLevel                           | String  | info                                             | Default log level                                                                                                      |
+| env                                | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                        |
+| slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                       |
+| slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                           |
+| cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                                 |
+| cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                      |
+| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                                 |
+| queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                               |
+| nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                     |
+| tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                       |
+| affinity                           | Object  | {}                                               | Global affinity rules applied to all components (components opt-in by default via useGlobalAffinity)                   |
+| rbac.namespaces                    | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead   |
+| costRefreshBatching.enabled        | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                     |
+| costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                               |
+| costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                  |
+| apiClientSecret.enabled                         | Boolean | true                                             | If true, components authenticate to the API server with a shared bearer token |
+| apiClientSecret.secret                          | String  | ""                                               | Shared secret components send to the API server when `apiClientSecret.enabled` is true. Chart generates if empty. Setting a value overrides any existing value on the next `helm upgrade`; consumer workloads require a manual rollout (see [rotating secrets](#rotating-secrets)). `apiClientSecret.existingSecret` takes precedent. |
+| apiClientSecret.existingSecret.secretName       | String  | ""                                               | Read the API-client secret from this pre-existing externally managed secret. Required key documented below |
+| apiClientSecret.existingSecret.secretKey        | String  | api-client-secret                                | Key in `apiClientSecret.existingSecret.secretName` that holds the value.                                                                                                            |
+
+### Feature Flags
+
+The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
+
+| Key                                            | Type    | Default | Description                                                                        |
+| ---------------------------------------------- | ------- | ------- | ---------------------------------------------------------------------------------- |
+| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                                                |
+| featureFlags.enablePgLargeObjectStorage        | Boolean | true    | If true, enables storing blobs as postgres large objects                           |
+| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations                                     |
+| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations                          |
+| featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                               |
+| featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs    |
+
+### Thoras Forecast
 
 | Key                                          | Type     | Default                | Description                                                                                    |
 | -------------------------------------------- | -------- | ---------------------- | ---------------------------------------------------------------------------------------------- |
@@ -168,7 +616,7 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasWorker.prometheus.enabled              | Boolean  | true                   | Enables a prometheus metric exporter                                                           |
 | thorasWorker.prometheus.port                 | Number   | 9101                   | Port for the prometheus metric exporter                                                        |
 
-## Thoras Operator
+### Thoras Operator
 
 | Key                                    | Type    | Default         | Description                                                                                                   |
 | -------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -187,7 +635,7 @@ All components support `<component>.useGlobalAffinity` (default: `true`) and `<c
 | thorasOperator.prometheus.port         | Number  | 9101            | Port for the prometheus metric exporter                                                                       |
 | thorasOperator.pprof.enabled           | Boolean | false           | Enable pprof endpoint.                                                                                        |
 
-## External TimescaleDB
+### External TimescaleDB
 
 When set, the chart skips deploying the in-cluster TimescaleDB and configures
 all components to use an external database instead. The TimescaleDB extension
@@ -199,7 +647,7 @@ must be pre-installed and managed externally.
 | externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`). Requires `secretRefKey`      |
 | externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN. Requires `secretRefName`                                    |
 
-## Thoras Metrics Collector
+### Thoras Metrics Collector
 
 | Key                                                             | Type    | Default          | Description                                                  |
 | --------------------------------------------------------------- | ------- | ---------------- | ------------------------------------------------------------ |
@@ -224,7 +672,7 @@ must be pre-installed and managed externally.
 | metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl` |
 | metricsCollector.init.imageTag                                  | String  | latest           | Image tag for metrics collector init container               |
 
-## Thoras API Server
+### Thoras API Server
 
 | Key                                            | Type    | Default    | Description                                                             |
 | ---------------------------------------------- | ------- | ---------- | ----------------------------------------------------------------------- |
@@ -244,7 +692,7 @@ must be pre-installed and managed externally.
 | thorasApiServerV2.pprof.enabled                | Boolean | false      | Enable pprof endpoint.                                                  |
 | thorasApiServerV2.enableViewCacheQueryLiveJoin | Boolean | true       | Enables AST view queries joining view cache results with live k8s state |
 
-## Thoras Worker
+### Thoras Worker
 
 | Key                                                  | Type    | Default       | Description                                                                                                                          |
 | ---------------------------------------------------- | ------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -268,7 +716,7 @@ must be pre-installed and managed externally.
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                                                                                              |
 | thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                               |
 
-## Thoras Config Controller
+### Thoras Config Controller
 
 | Key                                                | Type    | Default                                                                                                        | Description                                                                                            |
 | -------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
@@ -293,7 +741,7 @@ must be pre-installed and managed externally.
 | thorasConfigController.restartOrder                | Array   | metrics-collector, thoras-operator, thoras-worker, thoras-api-server-v2, thoras-forecast-worker, thoras-dashboard | Strict sequential restart tiers. Unlisted workloads are restarted last, together                       |
 | thorasConfigController.restartExclude              | Array   | [thoras-config-controller]                                                                                     | Workloads never restarted. Must keep the controller itself                                             |
 
-## Thoras Dashboard
+### Thoras Dashboard
 
 | Key                                              | Type    | Default          | Description                                                              |
 | ------------------------------------------------ | ------- | ---------------- | ------------------------------------------------------------------------ |
@@ -354,400 +802,9 @@ must be pre-installed and managed externally.
 | thorasDashboard.logLevel                         | String  | Nil              | Logging level                                                            |
 | thorasDashboard.extras                           | Object  | {}               | Additional values to be injected into the Thoras Dashboard config        |
 
-## Thoras Monitor
+### Thoras Monitor
 
 | Key                  | Type   | Default | Description                       |
 | -------------------- | ------ | ------- | --------------------------------- |
 | thorasMonitor.labels | Object | {}      | Pod labels for Thoras monitor     |
 | thorasMonitor.config | String | ""      | Thoras Monitor configuration yaml |
-
-## Example Thoras Monitor Configuration
-
-`thorasMonitor.config` is raw monitor YAML. `general.metadata` holds optional string key/value pairs that are surfaced on every named monitor Slack alert, one line per pair. This is useful to disambiguate clusters that share a name across regions (e.g. `prod-a` in `use1` and `euw1`):
-
-```yaml
-# values.yaml
----
-thorasMonitor:
-  config: |
-    general:
-      name: 'prod-a'
-      monitor_cadence: 5m
-      metadata:
-        region: euw1
-    alerts:
-      - name: thoras_deployments
-        notification_cooldown: 15m
-        enabled: true
-      - name: no_suggestions
-        notification_cooldown: 15m
-        enabled: true
-```
-
-The alert is then prefixed with the metadata:
-
-```
-*Cluster:* prod-a
-*region:* euw1
-*Alert:* thoras_deployments
-...
-```
-
-## Thoras Dashboard Authentication
-
-The dashboard ships with HTTP authentication enabled by default, terminated by
-an [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) sidecar. Two
-modes are supported via `thorasDashboard.auth.mode`: `htpasswd` (default,
-chart-managed username + password) and `oidc` (full OIDC login flow against
-your identity provider). Fields under the unused mode's block are silently
-ignored, so switching between modes is just flipping `auth.mode`. Credentials
-and session cookies are only meaningful behind TLS — terminate TLS at the edge.
-
-### Bring your own auth
-
-Set `thorasDashboard.auth.enabled: false` to disable the built-in sidecar and
-front the dashboard with your own auth — for example a custom SSO sidecar
-wired through `extraContainers` and `service.targetPort`, an edge-level auth
-plugin, or a service-mesh policy.
-
-```yaml
-thorasDashboard:
-  auth:
-    enabled: false
-```
-
-This leaves the dashboard reachable in-cluster with no auth in front of it,
-which exposes part of the API it proxies to and subverts `apiClientSecret`.
-Only safe if something external gates every request.
-
-### htpasswd mode
-
-config-controller seeds a random password and cookie secret on first install
-and never rotates them. Retrieve the password:
-
-```bash
-kubectl get secret thoras-config-controller -n <namespace> \
-  -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
-```
-
-Pin them instead if you would rather manage them in values, in which case they
-live in `thoras-helm-values`. Changing a pinned value invalidates every
-logged-in session.
-
-```yaml
-thorasDashboard:
-  auth:
-    htpasswd:
-      username: thoras
-      password: <your-password>
-      cookieSecret: <your-32-char-cookie-secret>
-```
-
-Both approaches are GitOps-safe: seeded values live outside Helm's control and
-pinned values render deterministically.
-
-### OIDC mode
-
-Register the dashboard as an OIDC application with your identity provider,
-create a Kubernetes Secret with the resulting credentials, and switch the
-chart into OIDC mode:
-
-```yaml
-thorasDashboard:
-  auth:
-    mode: oidc
-    oidc:
-      provider: oidc  # or okta, entra-id, google, ...
-      issuerURL: https://<your-okta-domain>/oauth2/default
-      redirectURL: https://thoras.example.com/oauth2/callback
-      emailDomains: [example.com]
-      existingSecret:
-        secretName: oauth2-proxy-secrets
-```
-
-The Secret must contain three keys (names configurable via
-`auth.oidc.existingSecret.{clientIDKey,clientSecretKey,cookieSecretKey}`):
-
-```bash
-kubectl create secret generic oauth2-proxy-secrets -n <namespace> \
-  --from-literal=client-id="<idp-client-id>" \
-  --from-literal=client-secret="<idp-client-secret>" \
-  --from-literal=cookie-secret="$(openssl rand -base64 32 | head -c 32 | base64)"
-```
-
-The `redirectURL` must exactly match the redirect URI registered on the IdP
-application.
-
-#### NetworkPolicy egress
-
-When `networkPolicy.enabled: true`, OIDC mode opens broad egress on the
-dashboard's `CiliumNetworkPolicy` to `world:443` so oauth2-proxy can reach
-the IdP's discovery, token, and userinfo endpoints. Okta / Entra / other
-IdPs resolve to broad, drifting CIDR ranges, so a scoped rule would be
-brittle. Tighten by layering an additional `CiliumNetworkPolicy` that
-restricts egress to specific IdP hostnames (`toFQDNs`), or manage
-egress out-of-band.
-
-#### Migrating from the standalone oauth2-proxy sidecar
-
-Customers who previously ran their own oauth2-proxy as
-`thorasDashboard.extraContainers` and retargeted the Service at port `4180`
-can migrate onto the chart-shipped sidecar without touching the IdP app
-registration or the existing `oauth2-proxy-secrets` Secret:
-
-**Delete** from `values.yaml`:
-
-```yaml
-thorasDashboard:
-  service:
-    targetPort: 4180        # remove
-  extraContainers:          # remove the entire oauth2-proxy container
-    - name: oauth2-proxy
-      # ...
-```
-
-**Add**:
-
-```yaml
-thorasDashboard:
-  auth:
-    mode: oidc
-    oidc:
-      issuerURL: https://<your-okta-domain>/oauth2/default
-      redirectURL: https://thoras.example.com/oauth2/callback
-      emailDomains: [example.com]
-      existingSecret:
-        secretName: oauth2-proxy-secrets
-```
-
-The chart reuses the existing `oauth2-proxy-secrets` Secret as-is (default
-key names: `client-id`, `client-secret`, `cookie-secret`). The Service goes
-back to targeting `containerPort` (now owned by the chart's sidecar), so
-drop any `service.targetPort` override.
-
-### Notes
-
-- `thorasDashboard.auth.cookieSecure` defaults to `false` so `kubectl
-  port-forward` works (Safari drops Secure cookies over plain HTTP).
-  Set it to `true` in production; it requires TLS at the edge.
-- The sign-in page is chart-branded (Thoras wordmark, dashboard-sidebar
-  primary button) in both auth modes. Under `mode: htpasswd` only the
-  username/password form is shown; under `mode: oidc` the provider
-  button is retained as the entry point.
-- With auth enabled, the oauth2-proxy sidecar owns
-  `thorasDashboard.containerPort` and proxies to nginx on `127.0.0.1:8181`
-  (loopback-only). To hit nginx directly for debugging:
-  ```
-  kubectl debug -n thoras <dashboard-pod> -it \
-    --image=<debug-image> --target=thoras-dashboard
-  # curl http://127.0.0.1:8181/
-  ```
-
-## Secrets
-
-Every credential resolves to exactly one of three places, in this order:
-
-| # | Where you configure it | Where it is stored | Who writes it |
-|---|---|---|---|
-| 1 | `*.existingSecret.secretName` / `*SecretRefName` | your own Secret | you |
-| 2 | the plain values field | `thoras-helm-values` | Helm |
-| 3 | nothing — leave it empty | `thoras-config-controller` | config-controller |
-
-| Credential | Existing Secret | Values field |
-|---|---|---|
-| API client token | `apiClientSecret.existingSecret.{secretName,secretKey}` | `apiClientSecret.secret` |
-| Dashboard password | `thorasDashboard.auth.htpasswd.existingSecret.{secretName,passwordKey}` | `thorasDashboard.auth.htpasswd.password` |
-| Dashboard cookie secret | `thorasDashboard.auth.htpasswd.existingSecret.{secretName,cookieSecretKey}` | `thorasDashboard.auth.htpasswd.cookieSecret` |
-| TimescaleDB DSN | `externalTimescale.{secretRefName,secretRefKey}` | `externalTimescale.dsn` |
-| TimescaleDB password | — (bundled database only) | — (not configurable) |
-| Slack webhook | `slackWebhookUrlSecretRef{Name,Key}` | `slackWebhookUrl` |
-| Cloud-sync cluster key | `cloudSync.clusterKeySecretRef{Name,Key}` | `cloudSync.clusterKey` |
-| Dashboard OIDC credentials | `thorasDashboard.auth.oidc.existingSecret.*` | — (never chart-managed) |
-
-Notes:
-
-- `thoras-helm-values` holds only what you pinned in values. It is fully
-  deterministic — no `lookup`, no random generation — so `helm template` and
-  Argo CD render exactly what an apply produces. **Argo CD users no longer
-  need `ignoreDifferences` on this Secret.**
-- `thoras-config-controller` is created and owned by config-controller, never
-  by Helm, so Argo CD does not track or prune it. Values are seeded once and
-  never rotated.
-- The bundled TimescaleDB password cannot be pinned. There is no rotation
-  path for a database that is already initialised, so the chart fails if
-  `metricsCollector.timescale.password` is set.
-- Slack and cloud-sync are never seeded. Leave them unset and the consuming
-  environment variable is omitted entirely.
-- On a fresh install the workload pods briefly report
-  `CreateContainerConfigError` until config-controller creates
-  `thoras-config-controller`. This resolves itself; no action is needed.
-
-### Rotating secrets
-
-**Seeded values are never rotated.** config-controller writes a key once and
-then leaves it alone. To change one, delete the key from
-`thoras-config-controller` and let the controller re-seed it:
-
-```bash
-kubectl patch secret thoras-config-controller -n <namespace> \
-  --type=json -p='[{"op":"remove","path":"/data/dashboard-auth-password"}]'
-```
-
-The controller notices the change, re-seeds, and rolls the affected workloads
-in dependency order on its own.
-
-**Pinned and customer-managed values** change when you change them, but the
-chart no longer stamps a checksum for `thoras-helm-values`, and
-config-controller cannot yet see inside Secrets you manage. Roll the consumers
-by hand:
-
-```bash
-kubectl rollout restart deployment -n <namespace> \
-  -l app.kubernetes.io/name=thoras
-```
-
-Rotating the dashboard cookie secret bounces every logged-in dashboard user.
-
-### Changing ConfigMap-backed settings
-
-Values that land in a chart ConfigMap — `thorasMonitor.config`,
-`metricsCollector.timescale.config.content`, the dashboard's nginx and
-oauth2-proxy settings — roll their consumers on the next `helm upgrade`. The
-chart puts a `checksum/config` annotation over the ConfigMap's data on each
-consumer's pod template, so no manual restart is needed. These ConfigMaps are
-mounted with `subPath`, which Kubernetes never updates in place, so the
-restart is what makes the change take effect.
-
-The annotation is computed at template time, so Argo CD renders the same value
-an apply produces and reports no drift.
-
-## Migrating to 5.x
-
-5.x moves secret seeding out of the chart and into config-controller. Your
-existing API client token and TimescaleDB password are migrated for you, but
-only if you go through 5.x. The supported path is **4.x → 5.x → 6.x**; jumping
-straight from 4.x to 6.x loses both values.
-
-Helm refreshes an object from the cluster before it checks
-`helm.sh/resource-policy: keep`, so a single release cannot both stop
-rendering a Secret and protect it. That is why the retention spans two
-releases.
-
-### Upgrading from 4.x
-
-1. Upgrade to 5.x with `legacySecretSeeding: true` (the default). The chart
-   keeps rendering `api-client-secret` and `thoras-timescale-password` purely
-   as migration sources; nothing consumes them. config-controller copies their
-   values into `thoras-config-controller` on its first reconcile.
-2. Confirm the migration landed:
-
-   ```bash
-   kubectl get secret thoras-config-controller -n <namespace> \
-     -o jsonpath='{.metadata.annotations.thoras\.ai/migrated-keys}'
-   ```
-
-3. Set `legacySecretSeeding: false` and upgrade again. The two legacy Secrets
-   stay in the cluster, orphaned, and you can delete them at your leisure.
-
-Do not skip step 1. Upgrading from 4.x straight to `legacySecretSeeding:
-false` prunes both Secrets before anything has read them, which rotates the
-API client token and desynchronises the chart from the running database.
-
-### New installs
-
-Set `legacySecretSeeding: false`. There is nothing to migrate.
-
-### Argo CD
-
-Nothing the chart renders needs `ignoreDifferences` any more. `thoras-helm-values`
-contains only what you pinned in values, and `thoras-config-controller` is
-created by the controller rather than by Helm, so Argo CD neither tracks nor
-prunes it. If you carry an `ignoreDifferences` entry for a chart Secret today,
-you can drop it once the migration below is complete.
-
-The two legacy Secrets are the exception, for the duration of 5.x only.
-`lookup` returns nothing under Argo CD, so the chart regenerates their values
-on every render; without this, Argo would apply a fresh random password that
-does not match the running database.
-
-```yaml
-spec:
-  ignoreDifferences:
-    - group: ""
-      kind: Secret
-      name: api-client-secret
-      jsonPointers: [/data]
-    - group: ""
-      kind: Secret
-      name: thoras-timescale-password
-      jsonPointers: [/data]
-```
-
-Drop both entries once you set `legacySecretSeeding: false`.
-
-## Example Thoras Dashboard Ingress Configuration
-
-```yaml
-# values.yaml
----
-thorasDashboard:
-  ingress:
-    enabled: true
-    ingressClassName: nginx
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    hosts:
-      - host: thoras.example.com
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: thoras-tls
-        hosts:
-          - thoras.example.com
-```
-
-Default `thorasDashboard.ingress.hosts` value:
-
-```yaml
-hosts:
-  - host: thoras.local
-    paths:
-      - path: /
-        pathType: Prefix
-```
-
-## Example Thoras Dashboard Gateway API Configuration
-
-```yaml
-# values.yaml
----
-thorasDashboard:
-  gatewayAPI:
-    enabled: true
-    annotations:
-      example.com/annotation: value
-    parentRefs:
-      - name: my-gateway
-        namespace: gateway-system
-    hostnames:
-      - thoras.example.com
-    path: /
-    pathType: PathPrefix
-```
-
-Default `thorasDashboard.gatewayAPI.parentRefs` value:
-
-```yaml
-parentRefs:
-  - name: gateway
-    namespace: default
-```
-
-Default `thorasDashboard.gatewayAPI.hostnames` value:
-
-```yaml
-hostnames:
-  - thoras.local
-```

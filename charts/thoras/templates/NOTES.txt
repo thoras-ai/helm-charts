@@ -43,5 +43,5 @@ DEPRECATED: legacySecretSeeding
   The api-client-secret and thoras-timescale-password Secrets are rendered
   only so config-controller can migrate them. Set legacySecretSeeding to
   false once thoras-config-controller carries your values; the flag and the
-  Secrets are removed in chart 6.0. See README > Migrating to 5.x.
+  Secrets are removed in chart 6.0. See UPGRADE.md > Migrating from 4.x.
 {{- end }}
