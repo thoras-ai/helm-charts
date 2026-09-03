@@ -38,10 +38,11 @@ DEPRECATED: featureFlags.enableSimpleAuthSecret
   legacy field still works but will be removed in a future chart release.
 {{- end }}
 
-{{ if .Values.legacySecretSeeding -}}
-DEPRECATED: legacySecretSeeding
+{{ if .Values.featureFlags.enableLegacySecretSeeding -}}
+DEPRECATED: featureFlags.enableLegacySecretSeeding
   The api-client-secret and thoras-timescale-password Secrets are rendered
-  only so config-controller can migrate them. Set legacySecretSeeding to
-  false once thoras-config-controller carries your values; the flag and the
-  Secrets are removed in chart 6.0. See UPGRADE.md > Migrating from 4.x.
+  only so config-controller can migrate them. Set
+  featureFlags.enableLegacySecretSeeding to false once
+  thoras-config-controller carries your values; the flag and the Secrets are
+  removed in chart 6.0. See UPGRADE.md > Migrating from 4.x.
 {{- end }}

@@ -127,10 +127,11 @@ releases.
 
 #### Upgrading from 4.x
 
-1. Upgrade to 5.x with `legacySecretSeeding: true` (the default). The chart
-   keeps rendering `api-client-secret` and `thoras-timescale-password` purely
-   as migration sources; nothing consumes them. config-controller copies their
-   values into `thoras-config-controller` on its first reconcile.
+1. Upgrade to 5.x with `featureFlags.enableLegacySecretSeeding: true` (the
+   default). The chart keeps rendering `api-client-secret` and
+   `thoras-timescale-password` purely as migration sources; nothing consumes
+   them. config-controller copies their values into `thoras-config-controller`
+   on its first reconcile.
 2. Confirm the migration landed:
 
    ```bash
@@ -138,16 +139,19 @@ releases.
      -o jsonpath='{.metadata.annotations.thoras\.ai/migrated-keys}'
    ```
 
-3. Set `legacySecretSeeding: false` and upgrade again. The two legacy Secrets
-   stay in the cluster, orphaned, and you can delete them at your leisure.
+3. Set `featureFlags.enableLegacySecretSeeding: false` and upgrade again. The
+   two legacy Secrets stay in the cluster, orphaned, and you can delete them
+   at your leisure.
 
-Do not skip step 1. Upgrading from 4.x straight to `legacySecretSeeding:
-false` prunes both Secrets before anything has read them, which rotates the
-API client token and desynchronises the chart from the running database.
+Do not skip step 1. Upgrading from 4.x straight to
+`featureFlags.enableLegacySecretSeeding: false` prunes both Secrets before
+anything has read them, which rotates the API client token and desynchronises
+the chart from the running database.
 
 #### New installs
 
-Set `legacySecretSeeding: false`. There is nothing to migrate.
+Set `featureFlags.enableLegacySecretSeeding: false`. There is nothing to
+migrate.
 
 #### Argo CD
 
@@ -176,7 +180,7 @@ spec:
       jsonPointers: [/data]
 ```
 
-Drop both entries once you set `legacySecretSeeding: false`. See the
+Drop both entries once you set `featureFlags.enableLegacySecretSeeding: false`. See the
 chart README's [ArgoCD](./README.md#argocd) section for the wider
 Argo CD `ignoreDifferences` set (webhook `caBundle`, forecast worker
 replicas).

@@ -405,7 +405,8 @@ tests:
       - config-controller/rbac.yaml
     documentIndex: 0
     set:
-      legacySecretSeeding: false
+      featureFlags:
+        enableLegacySecretSeeding: false
       apiClientSecret:
         secret: supplied-api-client-secret
       externalTimescale:

@@ -78,7 +78,7 @@ charts/thoras/
 │   ├── NOTES.txt                       # Post-install notes rendered by `helm install`
 │   ├── _config-data.tpl                # Shared ConfigMap data payloads (hashed for checksum/config annotations)
 │   ├── _helpers.tpl                    # Chart-wide template helpers, incl. thoras.secretPlan
-│   ├── api-client-secret.yaml          # Legacy migration source, gated by legacySecretSeeding
+│   ├── api-client-secret.yaml          # Legacy migration source, gated by featureFlags.enableLegacySecretSeeding
 │   ├── registry-secret.yaml            # Image-pull Secret
 │   ├── resource-quota.yaml             # Optional namespace ResourceQuota
 │   ├── thoras-helm-values-secret.yaml  # Deterministic Secret holding pinned values

@@ -25,8 +25,8 @@ Detailed upgrade procedures found [here](./UPGRADE.md).
     * If you provide external auth via ingress or gateway, see [externally-managed auth notes](./UPGRADE.md#externally-managed-auth).
 - **Chart no longer seeds Secrets.** A new `thoras-config-controller`
   component owns seeding and rotation. Upgrades from 4.x must go through
-  5.x with `legacySecretSeeding: true` before flipping it off; see
-  [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
+  5.x with `featureFlags.enableLegacySecretSeeding: true` before flipping
+  it off; see [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
 - **`featureFlags.enableSimpleAuthSecret` renamed** to
   `apiClientSecret.enabled`. Legacy field still works as an alias; see
   [Feature flag deprecation](./UPGRADE.md#feature-flag-deprecation).
@@ -58,9 +58,9 @@ helm install thoras thoras/thoras \
   --set imageCredentials.password="$(cat ./thoras_license.txt)"
 ```
 
-New installs should also set `legacySecretSeeding: false` in a values
-file — the flag only exists as a migration source for existing 4.x
-deployments. See [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
+New installs should also set `featureFlags.enableLegacySecretSeeding: false`
+in a values file — the flag only exists as a migration source for existing
+4.x deployments. See [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
 
 ### Verify installation
 
@@ -215,7 +215,7 @@ ignoreDifferences:
 `thoras-config-controller` is owned by the controller and is not tracked
 by Argo CD at all. The one exception is the pair of legacy Secrets
 (`api-client-secret`, `thoras-timescale-password`) rendered under
-`legacySecretSeeding: true` during the 4.x -> 5.x migration; see
+`featureFlags.enableLegacySecretSeeding: true` during the 4.x -> 5.x migration; see
 [Migrating from 4.x](./UPGRADE.md#migrating-from-4x) for the extra
 entries and when to drop them.
 
