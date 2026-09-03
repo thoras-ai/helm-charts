@@ -101,7 +101,7 @@ legacySecretSeeding: true
 # server with a shared bearer token).
 apiClientSecret:
   # Seeded by config-controller when empty. Set a value to pin it in
-  # `thoras-helm-shared` instead; apiClientSecret.existingSecret takes
+  # `thoras-helm-values` instead; apiClientSecret.existingSecret takes
   # precedence over both. Changing a pinned value requires a manual rollout of
   # dependent workloads; see README > "Rotating secrets".
   secret: ""
@@ -683,12 +683,12 @@ thorasDashboard:
     htpasswd:
       username: thoras
       # Seeded by config-controller when empty. Set a value to pin it in
-      # `thoras-helm-shared` instead; thorasDashboard.auth.htpasswd.existingSecret
+      # `thoras-helm-values` instead; thorasDashboard.auth.htpasswd.existingSecret
       # takes precedence over both. Changing a pinned value requires a manual
       # rollout of the dashboard; see README > "Rotating secrets".
       password: ""
       # Seeded by config-controller when empty. Set a value to pin it in
-      # `thoras-helm-shared` instead; thorasDashboard.auth.htpasswd.existingSecret
+      # `thoras-helm-values` instead; thorasDashboard.auth.htpasswd.existingSecret
       # takes precedence over both. Changing a pinned value invalidates every
       # logged-in dashboard session and requires a manual rollout of the
       # dashboard; see README > "Rotating secrets".

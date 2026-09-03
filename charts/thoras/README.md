@@ -436,7 +436,7 @@ kubectl get secret thoras-config-controller -n <namespace> \
 ```
 
 Pin them instead if you would rather manage them in values, in which case they
-live in `thoras-helm-shared`. Changing a pinned value invalidates every
+live in `thoras-helm-values`. Changing a pinned value invalidates every
 logged-in session and needs a manual `kubectl rollout restart` of the
 dashboard:
 
@@ -556,7 +556,7 @@ Every credential resolves to exactly one of three places, in this order:
 | # | Where you configure it | Where it is stored | Who writes it |
 |---|---|---|---|
 | 1 | `*.existingSecret.secretName` / `*SecretRefName` | your own Secret | you |
-| 2 | the plain values field | `thoras-helm-shared` | Helm |
+| 2 | the plain values field | `thoras-helm-values` | Helm |
 | 3 | nothing — leave it empty | `thoras-config-controller` | config-controller |
 
 | Credential | Existing Secret | Values field |
@@ -572,10 +572,10 @@ Every credential resolves to exactly one of three places, in this order:
 
 Notes:
 
-- `thoras-helm-shared` holds only what you pinned in values. It is fully
+- `thoras-helm-values` holds only what you pinned in values. It is fully
   deterministic — no `lookup`, no random generation — so `helm template` and
   Argo CD render exactly what an apply produces. **Argo CD users no longer
-  need `ignoreDifferences` on the chart's shared Secret.**
+  need `ignoreDifferences` on this Secret.**
 - `thoras-config-controller` is created and owned by config-controller, never
   by Helm, so Argo CD does not track or prune it. Values are seeded once and
   never rotated.
@@ -603,7 +603,7 @@ The controller notices the change, re-seeds, and rolls the affected workloads
 in dependency order on its own.
 
 **Pinned and customer-managed values** change when you change them, but the
-chart no longer stamps a checksum for `thoras-helm-shared`, and
+chart no longer stamps a checksum for `thoras-helm-values`, and
 config-controller cannot yet see inside Secrets you manage. Roll the consumers
 by hand:
 
@@ -665,7 +665,7 @@ Set `legacySecretSeeding: false`. There is nothing to migrate.
 
 ### Argo CD
 
-Nothing the chart renders needs `ignoreDifferences` any more. `thoras-helm-shared`
+Nothing the chart renders needs `ignoreDifferences` any more. `thoras-helm-values`
 contains only what you pinned in values, and `thoras-config-controller` is
 created by the controller rather than by Helm, so Argo CD neither tracks nor
 prunes it. If you carry an `ignoreDifferences` entry for a chart Secret today,

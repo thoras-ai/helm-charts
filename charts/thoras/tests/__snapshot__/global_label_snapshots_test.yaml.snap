@@ -905,7 +905,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
-            checksum/config: 339c541150aa99daaea3e88d1cdb918f1e04642f0ff823b3b0d0744d7398fe61
+            checksum/config: bd250c0069393c80399566a679b1f9c58bff60c9f665bf6eccf6e46dc3028f83
             prometheus.io/path: /metrics
             prometheus.io/port: "9103"
             prometheus.io/scrape: "true"

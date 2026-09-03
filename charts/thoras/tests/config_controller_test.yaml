@@ -233,7 +233,7 @@ tests:
                 - key: cookie-secret
                   path: dashboard-oidc-cookie-secret
 
-  - it: Projects thoras-helm-shared when values are pinned
+  - it: Projects thoras-helm-values when values are pinned
     templates:
       - config-controller/deployment.yaml
     set:
@@ -244,7 +244,7 @@ tests:
           path: spec.template.spec.volumes[?(@.name == 'provided')].projected.sources
           content:
             secret:
-              name: thoras-helm-shared
+              name: thoras-helm-values
               optional: true
               items:
                 - key: api-client-secret
@@ -503,7 +503,7 @@ tests:
 
   - it: Fails when disabled while a value still needs seeding
     templates:
-      - thoras-helm-shared-secret.yaml
+      - thoras-helm-values-secret.yaml
     set:
       thorasConfigController:
         enabled: false
@@ -571,7 +571,7 @@ tests:
 
   - it: Fails when the api client secret name is set without its key
     templates:
-      - thoras-helm-shared-secret.yaml
+      - thoras-helm-values-secret.yaml
     set:
       apiClientSecret:
         existingSecret:
@@ -583,7 +583,7 @@ tests:
 
   - it: Fails when the dashboard htpasswd secret is missing its keys
     templates:
-      - thoras-helm-shared-secret.yaml
+      - thoras-helm-values-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -598,7 +598,7 @@ tests:
 
   - it: Fails when an oidc secret key is empty
     templates:
-      - thoras-helm-shared-secret.yaml
+      - thoras-helm-values-secret.yaml
     set:
       thorasDashboard:
         auth:
@@ -617,7 +617,7 @@ tests:
 
   - it: Fails when the external timescale secret name is set without its key
     templates:
-      - thoras-helm-shared-secret.yaml
+      - thoras-helm-values-secret.yaml
     set:
       externalTimescale:
         enabled: true
@@ -629,7 +629,7 @@ tests:
 
   - it: Fails when the external timescale secret key is set without its name
     templates:
-      - thoras-helm-shared-secret.yaml
+      - thoras-helm-values-secret.yaml
     set:
       externalTimescale:
         enabled: true
