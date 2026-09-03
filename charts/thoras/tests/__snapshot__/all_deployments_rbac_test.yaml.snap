@@ -353,7 +353,16 @@ Default matches snapshot:
         resources:
           - secrets
         verbs:
-          - update
+          - '*'
+      - apiGroups:
+          - ""
+        resourceNames:
+          - api-client-secret
+          - thoras-timescale-password
+        resources:
+          - secrets
+        verbs:
+          - patch
       - apiGroups:
           - apps
         resources:

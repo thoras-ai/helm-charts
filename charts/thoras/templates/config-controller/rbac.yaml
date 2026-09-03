@@ -4,9 +4,11 @@
        SERVICE_WATCH_NAMESPACES to it so the informer cache matches this
        grant. rbac.namespaces deliberately does not apply. */}}
 {{- $readable := list "thoras-config-controller" }}
+{{- $patchable := list }}
 {{- range include "thoras.secretPlan" . | fromYamlArray }}
 {{- range .migrateFrom }}
 {{- $readable = append $readable .secret }}
+{{- $patchable = append $patchable .secret }}
 {{- end }}
 {{- end }}
 ---
@@ -36,6 +38,7 @@ rules:
     {{- end }}
   verbs:
   - get
+{{- /* Controller owns the managed Secret end to end. */}}
 - apiGroups:
   - ""
   resources:
@@ -43,7 +46,22 @@ rules:
   resourceNames:
   - thoras-config-controller
   verbs:
-  - update
+  - "*"
+{{- if $patchable }}
+{{- /* Legacy migration sources: patch only, used to stamp the
+       thoras.ai/migrated-to and thoras.ai/migrated-at annotations after a
+       successful migration. */}}
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  resourceNames:
+    {{- range $patchable | uniq | sortAlpha }}
+  - {{ . }}
+    {{- end }}
+  verbs:
+  - patch
+{{- end }}
 {{- /* Read-only: restarts evict pods rather than writing the pod template, so
        the controller never needs to mutate a workload. Writing one would also
        register as drift to GitOps controllers such as Argo CD. */}}

@@ -371,7 +371,7 @@ tests:
       - hasDocuments:
           count: 2
 
-  - it: Can create the managed Secret but only update that one
+  - it: Owns the managed Secret and can annotate legacy migration sources
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
@@ -389,7 +389,49 @@ tests:
             apiGroups: [""]
             resources: [secrets]
             resourceNames: [thoras-config-controller]
-            verbs: [update]
+            verbs: ["*"]
+      # Legacy migrateFrom Secrets get patch only, used for the migrated-to
+      # and migrated-at annotations after a successful migration.
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            resourceNames: [api-client-secret, thoras-timescale-password]
+            verbs: [patch]
+
+  - it: Omits the legacy-secret patch rule when no migration sources exist
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    set:
+      legacySecretSeeding: false
+      apiClientSecret:
+        secret: supplied-api-client-secret
+      externalTimescale:
+        dsn: postgres://user:pass@db.example.com:5432/thoras
+    asserts:
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            verbs: [patch]
+
+  - it: Never grants unbounded patch on secrets
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      # Any secret patch rule must be name-scoped; guards against a future
+      # refactor accidentally dropping resourceNames.
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            verbs: [patch]
+            resourceNames: null
 
   # Restarts evict pods instead of writing the pod template, so a write verb
   # on workloads would be unused privilege. It would also make the controller
