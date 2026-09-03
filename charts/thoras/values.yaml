@@ -582,12 +582,12 @@ thorasConfigController:
   # before the next tier is touched. Workloads not listed here are restarted
   # last, together.
   restartOrder:
-    - metrics-collector
-    - thoras-operator
-    - thoras-worker
-    - thoras-api-server-v2
-    - thoras-forecast-worker
-    - thoras-dashboard
+    - metrics-collector      # tier 1: blob-service (server for api-server -> blob)
+    - thoras-api-server-v2   # tier 2: api-server (client of blob, server for FE/FW)
+    - thoras-operator        # tier 3: NOTE: reserved for future secret dependencies, none now
+    - thoras-worker          # tier 4: NOTE: reserved for future secret dependencies, none now
+    - thoras-forecast-worker # tier 5: client of api-server
+    - thoras-dashboard       # tier 6: client of api-server
   # Never restarted. The controller must exclude itself; the chart rolls it via
   # a config checksum instead.
   restartExclude:
