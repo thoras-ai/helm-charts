@@ -403,7 +403,15 @@ migrated and generated values are indistinguishable.
 {{- else if $ac.secret -}}
 {{- $plan = append $plan (dict "name" "api-client-secret" "mode" "values" "secret" "thoras-helm-values" "key" "api-client-secret" "value" $ac.secret) -}}
 {{- else -}}
-{{- $plan = append $plan (dict "name" "api-client-secret" "mode" "seed" "secret" "thoras-config-controller" "key" "api-client-secret" "generate" (dict "type" "alphanumeric" "length" 32) "migrateFrom" (list (dict "secret" "api-client-secret" "key" "secret"))) -}}
+{{- /* migrateFrom is gated on featureFlags.enableLegacySecretSeeding; when off,
+       config-controller seeds a fresh value instead of adopting the legacy Secret. */ -}}
+{{- $mf := list -}}
+{{- if .Values.featureFlags.enableLegacySecretSeeding -}}
+{{- $mf = append $mf (dict "secret" "api-client-secret" "key" "secret") -}}
+{{- end -}}
+{{- $entry := dict "name" "api-client-secret" "mode" "seed" "secret" "thoras-config-controller" "key" "api-client-secret" "generate" (dict "type" "alphanumeric" "length" 32) -}}
+{{- if $mf -}}{{- $_ := set $entry "migrateFrom" $mf -}}{{- end -}}
+{{- $plan = append $plan $entry -}}
 {{- end -}}
 {{- end -}}
 
@@ -434,9 +442,9 @@ migrated and generated values are indistinguishable.
 {{- end -}}
 
 {{- /* DSN and password are coupled: bundled seeds both, external has no
-       password at all. The seeded DSN embeds the seeded password, which
-       config-controller cross-checks when migrating both from the legacy
-       Secret. */ -}}
+       password at all. The seeded DSN embeds the seeded password; when
+       featureFlags.enableLegacySecretSeeding is on, config-controller
+       cross-checks the pair while migrating both from the legacy Secret. */ -}}
 {{- if $external -}}
 {{- if .Values.externalTimescale.secretRefName -}}
 {{- $plan = append $plan (dict "name" "timescale-dsn" "mode" "existing" "secret" .Values.externalTimescale.secretRefName "key" .Values.externalTimescale.secretRefKey) -}}
@@ -444,9 +452,19 @@ migrated and generated values are indistinguishable.
 {{- $plan = append $plan (dict "name" "timescale-dsn" "mode" "values" "secret" "thoras-helm-values" "key" "timescale-dsn" "value" .Values.externalTimescale.dsn) -}}
 {{- end -}}
 {{- else -}}
-{{- $plan = append $plan (dict "name" "timescale-password" "mode" "seed" "secret" "thoras-config-controller" "key" "timescale-password" "generate" (dict "type" "alphanumeric" "length" 16) "migrateFrom" (list (dict "secret" "thoras-timescale-password" "key" "password"))) -}}
+{{- $tsPwMf := list -}}
+{{- $tsDsnMf := list -}}
+{{- if .Values.featureFlags.enableLegacySecretSeeding -}}
+{{- $tsPwMf = append $tsPwMf (dict "secret" "thoras-timescale-password" "key" "password") -}}
+{{- $tsDsnMf = append $tsDsnMf (dict "secret" "thoras-timescale-password" "key" "host") -}}
+{{- end -}}
+{{- $tsPw := dict "name" "timescale-password" "mode" "seed" "secret" "thoras-config-controller" "key" "timescale-password" "generate" (dict "type" "alphanumeric" "length" 16) -}}
+{{- if $tsPwMf -}}{{- $_ := set $tsPw "migrateFrom" $tsPwMf -}}{{- end -}}
+{{- $plan = append $plan $tsPw -}}
 {{- $format := printf "postgres://postgres:%%s@%s:%d" $timescale.name ($timescale.containerPort | int) -}}
-{{- $plan = append $plan (dict "name" "timescale-dsn" "mode" "seed" "secret" "thoras-config-controller" "key" "timescale-dsn" "generate" (dict "type" "format" "format" $format "args" (list "timescale-password")) "migrateFrom" (list (dict "secret" "thoras-timescale-password" "key" "host"))) -}}
+{{- $tsDsn := dict "name" "timescale-dsn" "mode" "seed" "secret" "thoras-config-controller" "key" "timescale-dsn" "generate" (dict "type" "format" "format" $format "args" (list "timescale-password")) -}}
+{{- if $tsDsnMf -}}{{- $_ := set $tsDsn "migrateFrom" $tsDsnMf -}}{{- end -}}
+{{- $plan = append $plan $tsDsn -}}
 {{- end -}}
 
 {{- /* Slack and cloud-sync are never seeded; unset means the consuming env

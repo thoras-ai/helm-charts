@@ -148,6 +148,13 @@ Do not skip step 1. Upgrading from 4.x straight to
 anything has read them, which rotates the API client token and desynchronises
 the chart from the running database.
 
+Flipping the flag off is a one-way door. It also stops config-controller from
+adopting the legacy Secrets: once off, the migration entries are removed from
+the controller's config and RBAC. Confirm step 2 first. Turning the flag off
+before the migration has landed makes config-controller seed fresh values on
+its next reconcile, with the same rotation and desynchronisation effect as
+skipping step 1.
+
 #### New installs
 
 Set `featureFlags.enableLegacySecretSeeding: false`. There is nothing to

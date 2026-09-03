@@ -400,17 +400,13 @@ tests:
             resourceNames: [api-client-secret, thoras-timescale-password]
             verbs: [patch]
 
-  - it: Omits the legacy-secret patch rule when no migration sources exist
+  - it: Omits the legacy-secret patch rule when legacy seeding is disabled
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
     set:
       featureFlags:
         enableLegacySecretSeeding: false
-      apiClientSecret:
-        secret: supplied-api-client-secret
-      externalTimescale:
-        dsn: postgres://user:pass@db.example.com:5432/thoras
     asserts:
       - notContains:
           path: rules
