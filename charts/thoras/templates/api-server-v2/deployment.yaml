@@ -20,7 +20,6 @@ spec:
         {{- end }}
       {{- $prometheus := .Values.thorasApiServerV2.prometheus.enabled }}
       annotations:
-        {{- /* subPath mount: only a restart picks up an edit. See _config-data.tpl. */}}
         checksum/config: {{ include "thoras.monitorConfigData" . | sha256sum }}
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasApiServerV2.podAnnotations) }}
           {{- . | trim | nindent 8 }}

@@ -70,8 +70,6 @@ spec:
           capabilities:
             drop: [ALL]
         env:
-          {{- /* The operator shells out to the forecaster, which reads the
-                 unprefixed name. */}}
           {{- with include "thoras.slackEnv" (dict "root" . "prefix" "") }}{{- . | nindent 10 }}{{- end }}
           - name: THORAS_NS
             valueFrom:
@@ -170,8 +168,6 @@ spec:
             value: {{ .Values.featureFlags.enableAstRecordMirroring | ternary "true" "false" | quote }}
           - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
             value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
-          {{- /* No thoras.simpleAuthEnv: the operator talks to the Kubernetes API
-                 and TimescaleDB directly, never to the Thoras API server. */}}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: [
           "/app/operator"

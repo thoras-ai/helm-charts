@@ -22,10 +22,6 @@ spec:
         {{- . | trim | nindent 8 }}
         {{- end }}
       annotations:
-        {{- /* The controller never restarts itself and does not re-read its
-               config at runtime, so this checksum is the only thing that
-               rolls it. Covers the provided-secret refs too, since they
-               decide which files it watches. */}}
         checksum/config: {{ printf "%s\n%s" (include "thoras.configControllerConfig" .) $provided | sha256sum }}
         {{- if $cc.prometheus.enabled }}
         prometheus.io/scrape: "true"
@@ -51,9 +47,6 @@ spec:
         configMap:
           name: thoras-config-controller-config
       {{- with $provided }}
-      {{- /* Customer-managed Secrets are read as files so the controller needs
-             no API read access to them. A projected source naming a Secret
-             that does not exist wedges the pod, hence optional: true. */}}
       - name: provided
         projected:
           sources:
@@ -105,8 +98,6 @@ spec:
           - name: SERVICE_SLACK_ERRORS_ENABLED
             value: "{{ $cc.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           {{- with include "thoras.slackEnv" (dict "root" . "prefix" "SERVICE_") }}{{- . | nindent 10 }}{{- end }}
-          {{- /* No thoras.simpleAuthEnv: the controller talks to the
-                 Kubernetes API, never to the Thoras API server. */}}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics
@@ -114,9 +105,6 @@ spec:
           {{- /* Fixed in the binary; not configurable. */}}
           - name: http-health
             containerPort: 8081
-        {{- /* /readyz also reports seeding health: an ownership-guard failure
-               keeps the pod unready while the controller retries. Only the
-               leader ever passes it, so replicas must stay at 1. */}}
         startupProbe:
           httpGet:
             path: /readyz

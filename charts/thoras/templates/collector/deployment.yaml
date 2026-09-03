@@ -22,8 +22,6 @@ spec:
         {{- . | trim | nindent 8 }}
         {{- end }}
       {{- $userAnnotations := or .Values.podAnnotations .Values.metricsCollector.podAnnotations }}
-      {{- /* Gated with the timescale-config volume: no mount, nothing to hash.
-             subPath mount, so only a restart picks up an edit. */}}
       {{- $chartTimescale := and .Values.metricsCollector.timescale.config.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
       {{- if or $userAnnotations $chartTimescale }}
       annotations:

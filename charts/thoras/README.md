@@ -270,22 +270,13 @@ must be pre-installed and managed externally.
 
 ## Thoras Config Controller
 
-Seeds the credentials you did not supply into the `thoras-config-controller`
-Secret, migrates pre-5.0 chart-generated values into it, and rolls dependent
-workloads in dependency order when a Secret they consume changes. See
-[Secrets](#secrets).
-
-Unlike the other components it is granted a namespaced `Role` only, never a
-`ClusterRole`, and `rbac.namespaces` does not apply to it — it reconciles the
-release namespace exclusively.
-
 | Key                                                | Type    | Default                                                                                                        | Description                                                                                            |
 | -------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | thorasConfigController.enabled                     | Boolean | true                                                                                                           | Deploy the controller. Disabling requires every credential to be pinned or point at an existing Secret |
 | thorasConfigController.serviceAccount.name         | String  | thoras-config-controller                                                                                       | Service account name for the controller pod                                                            |
 | thorasConfigController.podAnnotations              | Object  | {}                                                                                                             | Pod annotations for the controller                                                                     |
 | thorasConfigController.labels                      | Object  | {}                                                                                                             | Pod/service labels for the controller                                                                  |
-| thorasConfigController.replicas                    | Number  | 1                                                                                                              | Must stay 1; only the leader reconciles and non-leaders never become ready                             |
+| thorasConfigController.replicas                    | Number  | 1                                                                                                              | Number of `thoras-config-controller` replicas to use                                                   |
 | thorasConfigController.resources                   | Object  | {}                                                                                                             | Specify the resources block. Takes precedence if set.                                                  |
 | thorasConfigController.limits.memory               | String  | 256Mi                                                                                                          | Legacy field for setting the controller memory limit                                                   |
 | thorasConfigController.requests.cpu                | String  | 10m                                                                                                            | Legacy field for setting the controller CPU request                                                    |
@@ -425,6 +416,10 @@ thorasDashboard:
     enabled: false
 ```
 
+This leaves the dashboard reachable in-cluster with no auth in front of it,
+which exposes part of the API it proxies to and subverts `apiClientSecret`.
+Only safe if something external gates every request.
+
 ### htpasswd mode
 
 config-controller seeds a random password and cookie secret on first install
@@ -437,8 +432,7 @@ kubectl get secret thoras-config-controller -n <namespace> \
 
 Pin them instead if you would rather manage them in values, in which case they
 live in `thoras-helm-values`. Changing a pinned value invalidates every
-logged-in session and needs a manual `kubectl rollout restart` of the
-dashboard:
+logged-in session.
 
 ```yaml
 thorasDashboard:

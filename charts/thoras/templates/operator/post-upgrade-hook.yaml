@@ -48,8 +48,6 @@ spec:
             drop: [ALL]
         command: ["/app/operator", "post-upgrade"]
         env:
-          {{- /* No thoras.simpleAuthEnv: the operator talks to the Kubernetes API
-                 and TimescaleDB directly, never to the Thoras API server. */}}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         resources: {}
 {{- end }}

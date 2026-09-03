@@ -20,7 +20,6 @@ spec:
         {{- end }}
       {{- $prometheus := .Values.thorasWorker.prometheus.enabled }}
       annotations:
-        {{- /* subPath mount: only a restart picks up an edit. See _config-data.tpl. */}}
         checksum/config: {{ include "thoras.monitorConfigData" . | sha256sum }}
         {{- if $prometheus }}
         prometheus.io/scrape: "true"
@@ -257,8 +256,6 @@ spec:
             value: {{ .Values.featureFlags.enableDisruptionSchedulerWorker | ternary "true" "false" | quote }}
           - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
             value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
-          {{- /* No thoras.simpleAuthEnv: the worker talks to TimescaleDB and the
-                 Kubernetes API directly, never to the Thoras API server. */}}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics

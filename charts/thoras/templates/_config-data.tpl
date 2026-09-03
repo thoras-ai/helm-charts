@@ -3,12 +3,6 @@ ConfigMap data payloads, kept here rather than inline in each ConfigMap so the
 workloads that mount them can hash the same bytes for their checksum/config
 annotation.
 
-Why those annotations exist at all: every consumer mounts these with subPath,
-and Kubernetes never updates a subPath mount in place, so the file is frozen
-for the pod's lifetime and a restart is the only way an edit takes effect.
-config-controller cannot do this job either -- stamping the workload spec is
-what GitOps tools revert as drift -- so the chart owns it.
-
 Hash the data alone, never the rendered object, or chart-label churn rolls
 every workload on every upgrade.
 
