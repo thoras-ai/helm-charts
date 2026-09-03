@@ -342,7 +342,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config-controller.yaml"]
-          pattern: "restart:\n  order:\n    - metrics-collector\n    - thoras-operator\n    - thoras-worker\n    - thoras-api-server-v2\n    - thoras-forecast-worker\n    - thoras-dashboard\n  exclude:\n    - thoras-config-controller"
+          pattern: "restart:\n  order:\n    - metrics-collector\n    - thoras-api-server-v2\n    - thoras-operator\n    - thoras-worker\n    - thoras-forecast-worker\n    - thoras-dashboard\n  exclude:\n    - thoras-config-controller"
 
   # -------- RBAC --------
 

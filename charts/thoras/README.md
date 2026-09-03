@@ -139,8 +139,15 @@ Notes:
 
 ### Rotating secrets
 
-**Seeded values are never rotated.** config-controller writes a key once and
-then leaves it alone. To change one, delete the key from
+config-controller drives every rotation. It observes changes to the managed
+Secret, to `thoras-helm-values`, and to any customer-managed Secret referenced
+via a `existingSecret` field (all three are projected into the controller pod
+as files), then rolls affected workloads in dependency order on its own.
+Rotation propagates within `pollInterval + rolloutDebounce` (defaults: 30s +
+10s) plus the time to evict and replace each tier.
+
+**Seeded values are never rotated automatically.** config-controller writes a
+key once and then leaves it alone. To change one, delete the key from
 `thoras-config-controller` and let the controller re-seed it:
 
 ```bash
@@ -148,20 +155,16 @@ kubectl patch secret thoras-config-controller -n <namespace> \
   --type=json -p='[{"op":"remove","path":"/data/dashboard-auth-password"}]'
 ```
 
-The controller notices the change, re-seeds, and rolls the affected workloads
-in dependency order on its own.
+**Values you pinned in `values.yaml`** rotate on the next `helm upgrade`:
+change the field, apply, and the controller picks the new value up from the
+re-rendered `thoras-helm-values` Secret.
 
-**Pinned and customer-managed values** change when you change them, but the
-chart no longer stamps a checksum for `thoras-helm-values`, and
-config-controller cannot yet see inside Secrets you manage. Roll the consumers
-by hand:
+**Values in Secrets you manage** rotate whenever you update the Secret. No
+`helm upgrade` needed; the controller sees the file change and rolls the
+consumers.
 
-```bash
-kubectl rollout restart deployment -n <namespace> \
-  -l app.kubernetes.io/name=thoras
-```
-
-Rotating the dashboard cookie secret bounces every logged-in dashboard user.
+Rotating the dashboard cookie secret invalidates every logged-in dashboard
+session.
 
 ### Changing ConfigMap-backed settings
 
@@ -321,7 +324,7 @@ thorasApiServerV2:
 
 All components support `<component>.useGlobalAffinity` (default: `true`) and `<component>.affinity` fields.
 
-**Note:** `metricsCollector` and `thorasForecast` include built-in anti-affinity rules to avoid co-location. These always apply and merge with global/component settings.
+**Note:** `metricsCollector` and `thorasForecast` ship optional built-in anti-affinity rules to avoid co-location. These are opt-in: `featureFlags.enableForecastCollectorAntiAffinity` (default `false`) keeps the collector and forecast worker on separate nodes; `thorasForecast.enableSelfAntiAffinity` (default `false`) spreads forecast-worker replicas. When enabled they merge with global/component settings.
 
 ### Example Thoras Monitor Configuration
 
@@ -565,9 +568,9 @@ hostnames (`toFQDNs`), or manage egress out-of-band.
 | env                                | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                        |
 | slackWebhookUrl                    | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                       |
 | slackErrorsEnabled                 | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                           |
-| cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key . Cloud sync is disabled if not specified                                                 |
+| cloudSync.clusterKeyID             | String  | ""                                               | Identity of cluster sync key. Cloud sync is disabled if not specified                                                  |
 | cloudSync.clusterKey               | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                      |
-| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Throas cloud base url.                                                                                                 |
+| cloudSync.baseUrl                  | String  | "https://console.thoras.ai"                      | Thoras cloud base url.                                                                                                 |
 | queriesPerSecond                   | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                               |
 | nodeSelector                       | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                     |
 | tolerations                        | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                       |
@@ -603,18 +606,16 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasForecast.skipCache                     | Boolean  | false                  | Directs the forecaster to skip to model cache                                                  |
 | thorasForecast.ignoreNewPods                 | Boolean  | true                   | Directs forecaster to adjust CPU and memory metrics temporarily for new pods                   |
 | thorasForecast.enableDecoupledTraining       | Boolean  | true                   | Enables async training mode where forecasts report "needs_training" instead of training inline |
-| thorasForecast.useAstMetricsSeries           | Boolean  | false                  | Enables catalog-free training data fetching via the AST metrics series endpoint                |
+| thorasForecast.useAstMetricsSeries           | Boolean  | true                   | Enables catalog-free training data fetching via the AST metrics series endpoint                |
 | thorasForecast.useForecasterComputedMetricId | Boolean  | true                   | Computes legacy metric IDs locally in Python instead of fetching from the catalog              |
 | thorasForecast.worker.podAnnotations         | Object   | {}                     | Pod Annotations for Thoras Forecast                                                            |
 | thorasForecast.worker.labels                 | Object   | {}                     | Pod labels for Thoras Forecast                                                                 |
-| thorasForecast.worker.replicas               | Number   | 1                      | Number of `thoras-forecast-worker` replicas to use                                             |
+| thorasForecast.worker.replicas               | Number   | unset                  | Number of `thoras-forecast-worker` replicas. Left unset by default so the forecast worker scaler manages replicas; setting a value disables the scaler |
 | thorasForecast.worker.pollingInterval        | Number   | 15                     | Polling interval to check for work for `thoras-forecast-workers`                               |
 | thorasForecast.worker.forecastTimeout        | Number   | 600                    | Maximum time (in seconds) spent on a single forecast by the `thoras-forecast-worker`           |
 | thorasForecast.trainingJitterMinutes         | Number   | 0                      | Random jitter (in minutes, 0-120) added to training threshold to desynchronize training jobs   |
-| thorasForecast.minLookbackToScale            | Duration | 3h                     | Minimum lookback window before autonomous scaling (minimum: 3h). Supports 3h, 180m, 1h30m      |
+| thorasForecast.minLookbackToScale            | Duration | 24h                    | Minimum lookback window before autonomous scaling (minimum: 3h). Supports 3h, 180m, 1h30m      |
 | thorasForecast.prometheus.host               | String   | ::                     | Address the metrics server binds to (dual-stack by default)                                    |
-| thorasWorker.prometheus.enabled              | Boolean  | true                   | Enables a prometheus metric exporter                                                           |
-| thorasWorker.prometheus.port                 | Number   | 9101                   | Port for the prometheus metric exporter                                                        |
 
 ### Thoras Operator
 
@@ -625,9 +626,9 @@ The following flags are considered temporary and gate access to specific behavio
 | thorasOperator.podAnnotations          | Object  | {}              | Pod Annotations for Thoras Operator                                                                           |
 | thorasOperator.labels                  | Object  | {}              | Pod/service labels for Thoras Operator                                                                        |
 | thorasOperator.resources               | Object  | {}              | Specify the resources block. Takes precedence if set.                                                         |
-| thorasOperator.limits.memory           | String  | 2000Mi          | Legacy field for setting Thoras Operator memory limit                                                         |
-| thorasOperator.requests.cpu            | String  | 1000m           | Legacy field for setting Thoras Operator CPU request                                                          |
-| thorasOperator.requests.memory         | String  | 1000Mi          | Legacy field for setting Thoras Operator memory request                                                       |
+| thorasOperator.limits.memory           | String  | 4Gi             | Legacy field for setting Thoras Operator memory limit                                                         |
+| thorasOperator.requests.cpu            | String  | 100m            | Legacy field for setting Thoras Operator CPU request                                                          |
+| thorasOperator.requests.memory         | String  | 1Gi             | Legacy field for setting Thoras Operator memory request                                                       |
 | thorasOperator.slackErrorsEnabled      | Boolean | false           | Determines if error-level logs are sent to `slackWebHookUrl`                                                  |
 | thorasOperator.logLevel                | String  | Nil             | Logging level                                                                                                 |
 | thorasOperator.queriesPerSecond        | String  | "50"            | Sets a maximum threshold for K8s API qps                                                                      |
@@ -661,12 +662,12 @@ must be pre-installed and managed externally.
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                 |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector              |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                              |
-| metricsCollector.timescale.imageTag                             | String  | 2.27.0-pg16      | Timescale image tag                                          |
-| metricsCollector.timescale.extensionVersion                     | String  | 2.27.0           | Timescale extension version - should match imageTag          |
+| metricsCollector.timescale.imageTag                             | String  | 2.28.2-pg16      | Timescale image tag                                          |
+| metricsCollector.timescale.extensionVersion                     | String  | 2.28.2           | Timescale extension version - should match imageTag          |
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                     |
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                               |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                   |
-| metricsCollector.blobService.logLevel                           | String  | Nil              | Logging level                                                |
+| metricsCollector.blobService.logLevel                           | String  | info             | Logging level                                                |
 | metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                   |
 | metricsCollector.blobService.pprof.enabled                      | Boolean | false            | Enable pprof endpoint.                                       |
 | metricsCollector.slackErrorsEnabled                             | Boolean | false            | Determines if error-level logs are sent to `slackWebHookUrl` |
@@ -679,12 +680,12 @@ must be pre-installed and managed externally.
 | thorasApiServerV2.serviceAccount.name          | String  | thoras-api | Service account name for Thoras api service pod                         |
 | thorasApiServerV2.podAnnotations               | Object  | {}         | Pod Annotations for Thoras API                                          |
 | thorasApiServerV2.labels                       | Object  | {}         | Pod/service labels for Thoras API                                       |
-| thorasApiServerV2.containerPort                | Number  | 8443       | Thoras API port                                                         |
-| thorasApiServerV2.port                         | Number  | 443        | Thoras API service port                                                 |
+| thorasApiServerV2.containerPort                | Number  | 8080       | Thoras API port                                                         |
+| thorasApiServerV2.port                         | Number  | 80         | Thoras API service port                                                 |
 | thorasApiServerV2.resources                    | Object  | {}         | Specify the resources block. Takes precedence if set.                   |
-| thorasApiServerV2.limits.memory                | String  | 2000Mi     | Legacy field for setting Thoras API memory limit                        |
-| thorasApiServerV2.requests.cpu                 | String  | 1000Mi     | Legacy field for settingThoras API CPU request                          |
-| thorasApiServerV2.requests.memory              | String  | 1000Mi     | Legacy field for settingThoras API memory request                       |
+| thorasApiServerV2.limits.memory                | String  | 4Gi        | Legacy field for setting Thoras API memory limit                        |
+| thorasApiServerV2.requests.cpu                 | String  | 128m       | Legacy field for setting Thoras API CPU request                         |
+| thorasApiServerV2.requests.memory              | String  | 1Gi        | Legacy field for setting Thoras API memory request                      |
 | thorasApiServerV2.slackErrorsEnabled           | Boolean | false      | Determines if error-level logs are sent to `slackWebHookUrl`            |
 | thorasApiServerV2.logLevel                     | String  | Nil        | Logging level                                                           |
 | thorasApiServerV2.queriesPerSecond             | String  | "50"       | Sets a maximum threshold for K8s API qps                                |
@@ -700,9 +701,9 @@ must be pre-installed and managed externally.
 | thorasWorker.podAnnotations                          | Object  | {}            | Pod Annotations for Thoras worker                                                                                                    |
 | thorasWorker.labels                                  | Object  | {}            | Pod/service labels for Thoras worker                                                                                                 |
 | thorasWorker.resources                               | Object  | {}            | Specify the resources block. Takes precedence if set.                                                                                |
-| thorasWorker.limits.memory                           | String  | 2000Mi        | Legacy field for setting Thoras API memory limit                                                                                     |
-| thorasWorker.requests.cpu                            | String  | 1000Mi        | Legacy field for setting Thoras API CPU request                                                                                      |
-| thorasWorker.requests.memory                         | String  | 1000Mi        | Legacy field for setting Thoras API memory request                                                                                   |
+| thorasWorker.limits.memory                           | String  | 4Gi           | Legacy field for setting Thoras Worker memory limit                                                                                  |
+| thorasWorker.requests.cpu                            | String  | 128m          | Legacy field for setting Thoras Worker CPU request                                                                                   |
+| thorasWorker.requests.memory                         | String  | 1Gi           | Legacy field for setting Thoras Worker memory request                                                                                |
 | thorasWorker.slackErrorsEnabled                      | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl`                                                                         |
 | thorasWorker.forecastRescueMaxAttempts               | Number  | 3             | Times a stuck forecast may be fast-tracked to the head of the queue before it falls back to its normal schedule; -1 disables the cap |
 | thorasWorker.logLevel                                | String  | Nil           | Logging level                                                                                                                        |
@@ -712,7 +713,7 @@ must be pre-installed and managed externally.
 | thorasWorker.enableMetricIntegrityWorker             | Boolean | true          | Enable metric integrity worker                                                                                                       |
 | thorasWorker.enableDeploymentMonitorWorker           | Boolean | true          | Enable deployment monitor worker                                                                                                     |
 | thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction                                                                                      |
-| thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | false         | Enable the unified AST utilization monitor                                                                                           |
+| thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | true          | Enable the unified AST utilization monitor                                                                                           |
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                                                                                              |
 | thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                               |
 
@@ -738,7 +739,7 @@ must be pre-installed and managed externally.
 | thorasConfigController.pollInterval                | String  | 30s                                                                                                            | Interval between reconcile ticks                                                                       |
 | thorasConfigController.rolloutDebounce             | String  | 10s                                                                                                            | Coalescing window after a change before a rollout starts                                               |
 | thorasConfigController.rolloutTimeout              | String  | 5m                                                                                                             | Per-workload deadline for eviction plus replacement readiness. A tier that overruns aborts the sequence                              |
-| thorasConfigController.restartOrder                | Array   | metrics-collector, thoras-operator, thoras-worker, thoras-api-server-v2, thoras-forecast-worker, thoras-dashboard | Strict sequential restart tiers. Unlisted workloads are restarted last, together                       |
+| thorasConfigController.restartOrder                | Array   | metrics-collector, thoras-api-server-v2, thoras-operator, thoras-worker, thoras-forecast-worker, thoras-dashboard | Strict sequential restart tiers. Unlisted workloads are restarted last, together                       |
 | thorasConfigController.restartExclude              | Array   | [thoras-config-controller]                                                                                     | Workloads never restarted. Must keep the controller itself                                             |
 
 ### Thoras Dashboard
@@ -754,9 +755,9 @@ must be pre-installed and managed externally.
 | thorasDashboard.containerPort                    | Number  | 8080             | Container port for the Thoras Dashboard. Owned by the oauth2-proxy sidecar when `thorasDashboard.auth.enabled` (default), otherwise by nginx directly. |
 | thorasDashboard.port                             | Number  | 80               | Thoras Dashboard service port                                            |
 | thorasDashboard.resources                        | Object  | {}               | Specify the resources block. Takes precedence if set.                    |
-| thorasDashboard.limits.memory                    | String  | 2000Mi           | Legacy field for setting Thoras Dashboard memory limit                   |
-| thorasDashboard.requests.cpu                     | String  | 1000Mi           | Legacy field for setting Thoras Dashboard CPU request                    |
-| thorasDashboard.requests.memory                  | String  | 1000Mi           | Legacy field for setting Thoras Dashboard memory request                 |
+| thorasDashboard.limits.memory                    | String  | 2Gi              | Legacy field for setting Thoras Dashboard memory limit                   |
+| thorasDashboard.requests.cpu                     | String  | 100m             | Legacy field for setting Thoras Dashboard CPU request                    |
+| thorasDashboard.requests.memory                  | String  | 128Mi            | Legacy field for setting Thoras Dashboard memory request                 |
 | thorasDashboard.service.type                     | String  | ClusterIP        | Type of Service to use                                                   |
 | thorasDashboard.service.annotations              | Object  | {}               | Service annotations                                                      |
 | thorasDashboard.service.clusterIP                | String  | nil              | Service clusterIP when type is ClusterIP                                 |
