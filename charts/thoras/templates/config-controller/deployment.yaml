@@ -68,9 +68,12 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          {{- /* Required, and deliberately not driven by rbac.namespaces: left
-                 unset the manager caches cluster-wide, which a namespaced Role
-                 cannot satisfy and which would leave the pod unready. */}}
+          {{- /* Pinned explicitly to the release namespace, deliberately not
+                 driven by rbac.namespaces. The binary already defaults to
+                 SERVICE_THORAS_NAMESPACE when this is empty (main.go), but
+                 pinning makes the intended scope visible in `kubectl describe`
+                 and keeps it in sync with the namespaced Role in rbac.yaml,
+                 which a cluster-wide informer cache could not satisfy. */}}
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ .Release.Namespace | quote }}
           - name: SERVICE_ENABLE_SEEDING
