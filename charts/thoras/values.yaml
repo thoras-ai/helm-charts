@@ -547,8 +547,6 @@ thorasConfigController:
     # minAvailable:
   service:
     annotations: {}
-  # Must stay 1: only the leader reconciles, and non-leader replicas never pass
-  # their readiness probe.
   replicas: 1
   # Specify the complete resources block (takes precedence if set)
   resources: {}
