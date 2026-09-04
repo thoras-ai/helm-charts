@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 5.0.0](https://img.shields.io/badge/Version-5.0.0-informational?style=flat-square) ![AppVersion: 4.121.0](https://img.shields.io/badge/AppVersion-4.121.0-informational?style=flat-square)
+![Version: 5.0.1](https://img.shields.io/badge/Version-5.0.1-informational?style=flat-square) ![AppVersion: 4.121.0](https://img.shields.io/badge/AppVersion-4.121.0-informational?style=flat-square)
 
 ## Requirements
 
@@ -17,7 +17,7 @@ A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an 
 
 Detailed upgrade procedures found [here](./UPGRADE.md).
 
-### [To 5.0.0](./UPGRADE.md#to-500)
+### [To 5.x](./UPGRADE.md#to-5x)
 
 - **Dashboard now requires authentication.** Fronted by an oauth2-proxy
   sidecar (`htpasswd` default, `oidc` optional).
@@ -31,7 +31,7 @@ Detailed upgrade procedures found [here](./UPGRADE.md).
   `apiClientSecret.enabled`. Legacy field still works as an alias; see
   [Feature flag deprecation](./UPGRADE.md#feature-flag-deprecation).
 
-See [UPGRADE.md](./UPGRADE.md#to-500) for step-by-step migration.
+See [UPGRADE.md](./UPGRADE.md#to-5x) for step-by-step migration.
 
 ## Installing the Chart
 
