@@ -31,7 +31,8 @@ and their consumers.
 {{- $auth := .Values.thorasDashboard.auth -}}
   {{- if eq $auth.mode "htpasswd" }}
   oauth2-proxy.cfg: |
-    http_address = "0.0.0.0:{{ .Values.thorasDashboard.containerPort }}"
+    # [::] binds dual-stack; Linux default bindv6only=0 also accepts IPv4 clients as ::ffff:v4.
+    http_address = "[::]:{{ .Values.thorasDashboard.containerPort }}"
     upstreams = ["http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}"]
     # provider must be set; the dummy value below is unused by htpasswd auth.
     provider = "google"
@@ -50,7 +51,8 @@ and their consumers.
     custom_templates_dir = "/etc/oauth2-proxy/templates"
   {{- else if eq $auth.mode "oidc" }}
   oauth2-proxy.cfg: |
-    http_address = "0.0.0.0:{{ .Values.thorasDashboard.containerPort }}"
+    # [::] binds dual-stack; Linux default bindv6only=0 also accepts IPv4 clients as ::ffff:v4.
+    http_address = "[::]:{{ .Values.thorasDashboard.containerPort }}"
     upstreams = ["http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}"]
     provider = {{ $auth.oidc.provider | quote }}
     oidc_issuer_url = {{ $auth.oidc.issuerURL | quote }}
