@@ -135,11 +135,28 @@ Notes:
 ### Rotating secrets
 
 config-controller drives every rotation. It observes changes to the managed
-Secret, to `thoras-helm-values`, and to any customer-managed Secret referenced
-via a `existingSecret` field (all three are projected into the controller pod
-as files), then rolls affected workloads in dependency order on its own.
-Rotation propagates within `pollInterval + rolloutDebounce` (defaults: 30s +
-10s) plus the time to evict and replace each tier.
+Secret (read directly via the API, since it owns that Secret), to
+`thoras-helm-values`, and to any customer-managed Secret referenced via an
+`existingSecret` field (the latter two are projected into the controller pod
+as files), then rolls affected workloads in dependency order on its own. Only
+Thoras workloads (label `app.kubernetes.io/name=thoras`) are ever restarted.
+Rotation propagates within roughly 60s (kubelet's projected-volume refresh) +
+`pollInterval` + `rolloutDebounce` (defaults: 30s + 10s) plus the time to
+evict and replace each tier.
+
+Workloads that are unhealthy or mid-rollout are **not** skipped: a workload
+is often unhealthy precisely because it holds the value being rotated, so the
+controller evicts it anyway. Two consequences:
+
+- `rolloutTimeout` (default 5m) must exceed the slowest consumer's startup
+  time. On timeout the tier fails and the workload is evicted again on the
+  next tick.
+- If you define PodDisruptionBudgets on Thoras workloads, set
+  `unhealthyPodEvictionPolicy: AlwaysAllow` (Kubernetes 1.27+). With the
+  default `IfHealthyBudget`, unready pods cannot be evicted once the budget
+  is exhausted, and a workload broken by a bad value can never be restarted
+  to pick up the fix. A rising
+  `thoras_config_rollout_eviction_blocked_total` is the symptom.
 
 **Seeded values are never rotated automatically.** config-controller writes a
 key once and then leaves it alone. To change one, delete the key from
@@ -149,6 +166,11 @@ key once and then leaves it alone. To change one, delete the key from
 kubectl patch secret thoras-config-controller -n <namespace> \
   --type=json -p='[{"op":"remove","path":"/data/dashboard-auth-password"}]'
 ```
+
+Do **not** do this for `timescale-password` or `timescale-dsn`. They are a
+pair — the DSN embeds the password — and re-seeding either one alone produces
+a DSN that no longer matches the initialised database. The bundled Timescale
+password has no supported rotation path.
 
 **Values you pinned in `values.yaml`** rotate on the next `helm upgrade`:
 change the field, apply, and the controller picks the new value up from the
@@ -735,7 +757,7 @@ must be pre-installed and managed externally.
 | thorasConfigController.rolloutDebounce             | String  | 10s                                                                                                            | Coalescing window after a change before a rollout starts                                               |
 | thorasConfigController.rolloutTimeout              | String  | 5m                                                                                                             | Per-workload deadline for eviction plus replacement readiness. A tier that overruns aborts the sequence                              |
 | thorasConfigController.restartOrder                | Array   | metrics-collector, thoras-api-server-v2, thoras-operator, thoras-worker, thoras-forecast-worker, thoras-dashboard | Strict sequential restart tiers. Unlisted workloads are restarted last, together                       |
-| thorasConfigController.restartExclude              | Array   | [thoras-config-controller]                                                                                     | Workloads never restarted. Must keep the controller itself                                             |
+| thorasConfigController.restartExclude              | Array   | [thoras-config-controller]                                                                                     | Workloads never restarted. The controller always excludes itself, listed or not                        |
 
 ### Thoras Dashboard
 

@@ -585,8 +585,9 @@ thorasConfigController:
     - thoras-worker          # tier 4: NOTE: reserved for future secret dependencies, none now
     - thoras-forecast-worker # tier 5: client of api-server
     - thoras-dashboard       # tier 6: client of api-server
-  # Never restarted. The controller must exclude itself; the chart rolls it via
-  # a config checksum instead.
+  # Never restarted. The controller always excludes itself regardless of this
+  # list (the chart rolls it via a config checksum instead); add any other
+  # Thoras workload you want left alone.
   restartExclude:
     - thoras-config-controller
   # Set to true to apply global affinity rules to this component
