@@ -18,9 +18,11 @@ spec:
   # Allow all ingress from pods within the same namespace
   - from:
     - podSelector: {}
-  # Allow ingress from users and ingress controllers on the dashboard port
+  # Public dashboard port (thorasDashboard.containerPort). Owned by nginx or
+  # the oauth2-proxy sidecar depending on thorasDashboard.auth.enabled; the
+  # policy is the same either way.
   - ports:
-    - port: 8080
+    - port: {{ .Values.thorasDashboard.containerPort }}
       protocol: TCP
   {{- with .Values.thorasDashboard.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
