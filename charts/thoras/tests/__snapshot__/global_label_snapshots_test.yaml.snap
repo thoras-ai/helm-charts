@@ -19,6 +19,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
+            checksum/config: 9b9f3bfc516cdd4faa1fdeb451b6adc86f818c4c8bc8de293eb0fce3cb8cba49
             prometheus.io/path: /metrics
             prometheus.io/port: "8080"
             prometheus.io/scrape: "true"
@@ -34,8 +35,8 @@ Default matches snapshot:
                 - name: DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
-                      key: host
-                      name: thoras-timescale-password
+                      key: timescale-dsn
+                      name: thoras-config-controller
                 - name: SERVICE_PORT
                   value: "8080"
                 - name: SERVICE_POSTGRESQL_DSN
@@ -46,11 +47,6 @@ Default matches snapshot:
                   value: 5m
                 - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
                   value: 1h
-                - name: SERVICE_SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef:
-                      key: webhookUrl
-                      name: thoras-slack
                 - name: SERVICE_SLACK_ERRORS_ENABLED
                   value: "false"
                 - name: SERVICE_LOG_LEVEL
@@ -93,11 +89,6 @@ Default matches snapshot:
                   value: ""
                 - name: SERVICE_CLOUD_SYNC_BASE_URL
                   value: https://console.thoras.ai
-                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      key: clusterKey
-                      name: thoras-cloud-sync
                 - name: SERVICE_ENABLE_PG_LARGE_OBJECT_STORAGE
                   value: "true"
                 - name: SERVICE_ENABLE_UPDATE_SCALE_MODE_API
@@ -123,8 +114,8 @@ Default matches snapshot:
                 - name: SERVICE_SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: secret
-                      name: api-client-secret
+                      key: api-client-secret
+                      name: thoras-config-controller
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -584,8 +575,8 @@ Default matches snapshot:
                 - name: POSTGRES_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      key: password
-                      name: thoras-timescale-password
+                      key: timescale-password
+                      name: thoras-config-controller
                 - name: PGDATA
                   value: /var/lib/share/postgresql
               image: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.28.2-pg16
@@ -681,19 +672,14 @@ Default matches snapshot:
                 - name: POSTGRES_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      key: password
-                      name: thoras-timescale-password
+                      key: timescale-password
+                      name: thoras-config-controller
                 - name: SERVICE_CHART_VERSION
                   value: 4.7.0
                 - name: SERVICE_PLATFORM_VERSION
                   value: TEST
                 - name: SERVICE_PORT
                   value: "8080"
-                - name: SERVICE_SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef:
-                      key: webhookUrl
-                      name: thoras-slack
                 - name: SERVICE_SLACK_ERRORS_ENABLED
                   value: "false"
                 - name: SERVICE_LOG_LEVEL
@@ -707,8 +693,8 @@ Default matches snapshot:
                 - name: SERVICE_SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: secret
-                      name: api-client-secret
+                      key: api-client-secret
+                      name: thoras-config-controller
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -909,6 +895,249 @@ Default matches snapshot:
         app.kubernetes.io/name: thoras
         globalLabel: globalValue
         helm.sh/chart: thoras-4.7.0
+      name: thoras-config-controller
+      namespace: foo
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: thoras-config-controller
+      template:
+        metadata:
+          annotations:
+            checksum/config: bd250c0069393c80399566a679b1f9c58bff60c9f665bf6eccf6e46dc3028f83
+            prometheus.io/path: /metrics
+            prometheus.io/port: "9103"
+            prometheus.io/scrape: "true"
+          labels:
+            app: thoras-config-controller
+            app.kubernetes.io/name: thoras
+            globalLabel: globalValue
+        spec:
+          containers:
+            - command:
+                - /app/config-controller
+              env:
+                - name: SERVICE_CONFIG_PATH
+                  value: /app/config-controller.yaml
+                - name: SERVICE_THORAS_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: SERVICE_WATCH_NAMESPACES
+                  value: foo
+                - name: SERVICE_ENABLE_SEEDING
+                  value: "true"
+                - name: SERVICE_ENABLE_RESTART_ROLLOUTS
+                  value: "true"
+                - name: SERVICE_POLL_INTERVAL
+                  value: 30s
+                - name: SERVICE_ROLLOUT_DEBOUNCE
+                  value: 10s
+                - name: SERVICE_ROLLOUT_TIMEOUT
+                  value: 5m
+                - name: SERVICE_PORT
+                  value: "9103"
+                - name: SERVICE_ENABLE_PPROF
+                  value: "false"
+                - name: SERVICE_LOG_LEVEL
+                  value: info
+                - name: SERVICE_CLUSTER_NAME
+                  value: ""
+                - name: SERVICE_CHART_VERSION
+                  value: 4.7.0
+                - name: SERVICE_PLATFORM_VERSION
+                  value: TEST
+                - name: SERVICE_SLACK_ERRORS_ENABLED
+                  value: "false"
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /healthz
+                  port: http-health
+                periodSeconds: 30
+                timeoutSeconds: 2
+              name: thoras-config-controller
+              ports:
+                - containerPort: 9103
+                  name: http-metrics
+                - containerPort: 8081
+                  name: http-health
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /readyz
+                  port: http-health
+                periodSeconds: 10
+                timeoutSeconds: 2
+              resources:
+                limits:
+                  memory: 256Mi
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              startupProbe:
+                failureThreshold: 30
+                httpGet:
+                  path: /readyz
+                  port: http-health
+                periodSeconds: 10
+                timeoutSeconds: 2
+              volumeMounts:
+                - mountPath: /app/config-controller.yaml
+                  name: config
+                  readOnly: true
+                  subPath: config-controller.yaml
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: thoras-config-controller
+          volumes:
+            - configMap:
+                name: thoras-config-controller-config
+              name: config
+  17: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-config-controller
+      namespace: foo
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - secrets
+        verbs:
+          - create
+      - apiGroups:
+          - ""
+        resourceNames:
+          - api-client-secret
+          - thoras-config-controller
+          - thoras-timescale-password
+        resources:
+          - secrets
+        verbs:
+          - '*'
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+          - statefulsets
+          - daemonsets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
+      - apiGroups:
+          - ""
+        resources:
+          - events
+        verbs:
+          - create
+          - patch
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - create
+          - update
+  18: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-config-controller
+      namespace: foo
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-config-controller
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-config-controller
+        namespace: foo
+  19: |
+    apiVersion: v1
+    imagePullSecrets:
+      - name: test-secret-registry
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-config-controller
+      namespace: foo
+  20: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: thoras-config-controller
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-config-controller
+      namespace: foo
+    spec:
+      ports:
+        - name: http-metrics
+          port: 9103
+          protocol: TCP
+          targetPort: 9103
+      selector:
+        app: thoras-config-controller
+  21: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
       name: thoras-dashboard
       namespace: foo
     spec:
@@ -918,7 +1147,8 @@ Default matches snapshot:
           app: thoras-dashboard
       template:
         metadata:
-          annotations: null
+          annotations:
+            checksum/config: 7c06c25e759855bb091e963154ab461bc61c44960eaa6a21496b2aa5436bcdf7
           labels:
             app: thoras-dashboard
             app.kubernetes.io/name: thoras
@@ -937,8 +1167,8 @@ Default matches snapshot:
                 - name: SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: secret
-                      name: api-client-secret
+                      key: api-client-secret
+                      name: thoras-config-controller
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -991,7 +1221,7 @@ Default matches snapshot:
             - configMap:
                 name: thoras-dashboard-nginx-config
               name: nginx-config
-  17: |
+  22: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1005,7 +1235,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-dashboard
       namespace: foo
-  18: |
+  23: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1026,7 +1256,7 @@ Default matches snapshot:
       selector:
         app: thoras-dashboard
       type: ClusterIP
-  19: |
+  24: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1098,8 +1328,8 @@ Default matches snapshot:
                 - name: SIMPLE_AUTH_SECRET
                   valueFrom:
                     secretKeyRef:
-                      key: secret
-                      name: api-client-secret
+                      key: api-client-secret
+                      name: thoras-config-controller
               image: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1145,7 +1375,7 @@ Default matches snapshot:
           volumes:
             - emptyDir: {}
               name: worker-state
-  20: |
+  25: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1159,7 +1389,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-forecast-worker
       namespace: foo
-  21: |
+  26: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1180,7 +1410,7 @@ Default matches snapshot:
           targetPort: 9101
       selector:
         app: thoras-forecast-worker
-  22: |
+  27: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1225,22 +1455,12 @@ Default matches snapshot:
             - command:
                 - /app/operator
               env:
-                - name: SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef:
-                      key: webhookUrl
-                      name: thoras-slack
                 - name: THORAS_NS
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
                 - name: SERVICE_SLACK_ERRORS_ENABLED
                   value: "false"
-                - name: SERVICE_SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef:
-                      key: webhookUrl
-                      name: thoras-slack
                 - name: SERVICE_LOG_LEVEL
                   value: info
                 - name: SERVICE_CLUSTER_NAME
@@ -1260,8 +1480,8 @@ Default matches snapshot:
                 - name: DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
-                      key: host
-                      name: thoras-timescale-password
+                      key: timescale-dsn
+                      name: thoras-config-controller
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
                 - name: SERVICE_POSTGRESQL_MAX_CONNS
@@ -1276,11 +1496,6 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_CLOUD_SYNC_BASE_URL
                   value: https://console.thoras.ai
-                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      key: clusterKey
-                      name: thoras-cloud-sync
                 - name: SERVICE_THORAS_NAMESPACE
                   valueFrom:
                     fieldRef:
@@ -1305,13 +1520,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
-                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
-                  value: "true"
-                - name: SERVICE_SIMPLE_AUTH_SECRET
-                  valueFrom:
-                    secretKeyRef:
-                      key: secret
-                      name: api-client-secret
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1388,7 +1596,7 @@ Default matches snapshot:
                   - key: key
                     path: tls.key
                 secretName: thoras-tls-certs
-  23: |
+  28: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1413,7 +1621,7 @@ Default matches snapshot:
           - daemonsetautoscalers/status
         verbs:
           - '*'
-  24: |
+  29: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1433,7 +1641,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-operator
         namespace: foo
-  25: |
+  30: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1469,7 +1677,7 @@ Default matches snapshot:
           - nodes
         verbs:
           - list
-  26: |
+  31: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1489,7 +1697,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-operator
         namespace: foo
-  27: |
+  32: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -1667,7 +1875,7 @@ Default matches snapshot:
           - create
           - update
           - watch
-  28: |
+  33: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -1687,7 +1895,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-operator
         namespace: foo
-  29: |
+  34: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1701,7 +1909,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-operator
       namespace: foo
-  30: |
+  35: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1726,11 +1934,10 @@ Default matches snapshot:
           targetPort: 9101
       selector:
         app: thoras-operator
-  31: |
+  36: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      annotations: null
       labels:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
@@ -1747,6 +1954,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
+            checksum/config: 9b9f3bfc516cdd4faa1fdeb451b6adc86f818c4c8bc8de293eb0fce3cb8cba49
             prometheus.io/path: /metrics
             prometheus.io/port: "9102"
             prometheus.io/scrape: "true"
@@ -1762,8 +1970,8 @@ Default matches snapshot:
                 - name: DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
-                      key: host
-                      name: thoras-timescale-password
+                      key: timescale-dsn
+                      name: thoras-config-controller
                 - name: SERVICE_POSTGRESQL_DSN
                   value: $(DATABASE_HOST)/thoras
                 - name: SERVICE_POSTGRESQL_MAX_CONNS
@@ -1772,11 +1980,6 @@ Default matches snapshot:
                   value: 5m
                 - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
                   value: 1h
-                - name: SERVICE_SLACK_WEBHOOK_URL
-                  valueFrom:
-                    secretKeyRef:
-                      key: webhookUrl
-                      name: thoras-slack
                 - name: SERVICE_SLACK_ERRORS_ENABLED
                   value: "false"
                 - name: SERVICE_LOG_LEVEL
@@ -1823,11 +2026,6 @@ Default matches snapshot:
                   value: ""
                 - name: SERVICE_CLOUD_SYNC_BASE_URL
                   value: https://console.thoras.ai
-                - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      key: clusterKey
-                      name: thoras-cloud-sync
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
                   value: 24h
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
@@ -1928,13 +2126,6 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
                   value: "false"
-                - name: SERVICE_ENABLE_SIMPLE_AUTH_SECRET
-                  value: "true"
-                - name: SERVICE_SIMPLE_AUTH_SECRET
-                  valueFrom:
-                    secretKeyRef:
-                      key: secret
-                      name: api-client-secret
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -1988,7 +2179,7 @@ Default matches snapshot:
             - configMap:
                 name: thoras-monitor-config
               name: monitor-config
-  32: |
+  37: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -2135,7 +2326,7 @@ Default matches snapshot:
           - pods/resize
         verbs:
           - patch
-  33: |
+  38: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2155,7 +2346,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  34: |
+  39: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -2174,7 +2365,7 @@ Default matches snapshot:
           - '*'
         verbs:
           - '*'
-  35: |
+  40: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2194,7 +2385,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  36: |
+  41: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -2230,7 +2421,7 @@ Default matches snapshot:
           - nodes
         verbs:
           - list
-  37: |
+  42: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2250,7 +2441,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  38: |
+  43: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -2271,7 +2462,7 @@ Default matches snapshot:
           - configmaps
         verbs:
           - get
-  39: |
+  44: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -2291,7 +2482,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  40: |
+  45: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -2314,7 +2505,7 @@ Default matches snapshot:
           - get
           - update
           - patch
-  41: |
+  46: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -2334,7 +2525,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  42: |
+  47: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -2348,7 +2539,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: foo
-  43: |
+  48: |
     apiVersion: v1
     kind: Service
     metadata:

@@ -9,3 +9,40 @@ Metrics collector persistence: DISABLED (ephemeral emptyDir — data is lost on 
   To enable, set metricsCollector.persistence.enabled=true, or configure a
   storageClassName / pvcStorageRequestSize and it will be enabled automatically.
 {{- end }}
+
+{{ if and .Values.thorasDashboard.enabled .Values.thorasDashboard.auth.enabled (eq .Values.thorasDashboard.auth.mode "htpasswd") -}}
+Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
+  Username: {{ .Values.thorasDashboard.auth.htpasswd.username }}
+  Password:
+{{- $passwordRef := include "thoras.dashboardAuthPasswordRef" . | fromYaml }}
+    kubectl get secret {{ $passwordRef.name }} -n {{ .Release.Namespace }} \
+      -o jsonpath='{.data.{{ $passwordRef.key }}}' | base64 -d
+{{- if eq $passwordRef.name "thoras-config-controller" }}
+    The Secret appears once config-controller has seeded it.
+{{- end }}
+{{- if .Values.thorasDashboard.auth.cookieSecure }}
+  cookieSecure is enabled: the edge must terminate TLS or login will
+  silently fail.
+{{- end }}
+{{- end }}
+
+{{ if and .Values.thorasConfigController.enabled .Release.IsInstall -}}
+Config controller: seeding any credential you did not supply.
+  Workload pods report CreateContainerConfigError until the
+  thoras-config-controller Secret exists. This clears on its own.
+{{- end }}
+
+{{ if hasKey .Values.featureFlags "enableSimpleAuthSecret" -}}
+DEPRECATED: featureFlags.enableSimpleAuthSecret
+  Rename this field to apiClientSecret.enabled in your values file. The
+  legacy field still works but will be removed in a future chart release.
+{{- end }}
+
+{{ if .Values.featureFlags.enableLegacySecretSeeding -}}
+DEPRECATED: featureFlags.enableLegacySecretSeeding
+  The api-client-secret and thoras-timescale-password Secrets are rendered
+  only so config-controller can migrate them. Set
+  featureFlags.enableLegacySecretSeeding to false once
+  thoras-config-controller carries your values; the flag and the Secrets are
+  removed in chart 6.0. See UPGRADE.md > Migrating from 4.x.
+{{- end }}

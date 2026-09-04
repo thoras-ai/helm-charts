@@ -18,20 +18,17 @@ spec:
         {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasApiServerV2.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- if or .Values.podAnnotations .Values.thorasApiServerV2.podAnnotations .Values.thorasApiServerV2.prometheus.enabled (not .Values.thorasMonitor.unittesting) }}
+      {{- $prometheus := .Values.thorasApiServerV2.prometheus.enabled }}
       annotations:
+        checksum/config: {{ include "thoras.monitorConfigData" . | sha256sum }}
         {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasApiServerV2.podAnnotations) }}
           {{- . | trim | nindent 8 }}
         {{- end }}
-        {{- if .Values.thorasApiServerV2.prometheus.enabled }}
+        {{- if $prometheus }}
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: {{ .Values.thorasApiServerV2.containerPort | quote}}
         {{- end }}
-        {{- if not .Values.thorasMonitor.unittesting }}
-        checksum/configmap: {{ include (print $.Template.BasePath "/monitor/configmap.yaml") . | sha256sum }}
-        {{- end }}
-      {{- end }}
     spec:
       securityContext:
         runAsNonRoot: true
@@ -60,16 +57,12 @@ spec:
             drop: [ALL]
         command: ["/app/api-server"]
         env:
+          {{- $dsn := include "thoras.timescaleDsnRef" . | fromYaml }}
           - name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-              {{- if .Values.externalTimescale.secretRefName }}
-                name: {{ .Values.externalTimescale.secretRefName }}
-                key: {{ .Values.externalTimescale.secretRefKey }}
-              {{- else }}
-                name: thoras-timescale-password
-                key: host
-              {{- end }}
+                name: {{ $dsn.name }}
+                key: {{ $dsn.key }}
           - name: SERVICE_PORT
             value: {{ .Values.thorasApiServerV2.containerPort | quote }}
           - name: SERVICE_POSTGRESQL_DSN
@@ -84,16 +77,7 @@ spec:
             value: {{ coalesce .Values.thorasApiServerV2.postgresql.maxConnIdleTime .Values.postgresql.maxConnIdleTime | quote }}
           - name: SERVICE_POSTGRESQL_MAX_CONN_LIFETIME
             value: {{ coalesce .Values.thorasApiServerV2.postgresql.maxConnLifetime .Values.postgresql.maxConnLifetime | quote }}
-          - name: SERVICE_SLACK_WEBHOOK_URL
-            valueFrom:
-              secretKeyRef:
-            {{- if and .Values.slackWebhookUrlSecretRefName .Values.slackWebhookUrlSecretRefKey }}
-                name: {{ .Values.slackWebhookUrlSecretRefName }}
-                key: {{ .Values.slackWebhookUrlSecretRefKey }}
-            {{- else }}
-                name: thoras-slack
-                key: webhookUrl
-            {{- end }}
+          {{- with include "thoras.slackEnv" (dict "root" . "prefix" "SERVICE_") }}{{- . | nindent 10 }}{{- end }}
           - name: SERVICE_SLACK_ERRORS_ENABLED
             value: "{{ .Values.thorasApiServerV2.slackErrorsEnabled | default .Values.slackErrorsEnabled }}"
           - name: "SERVICE_LOG_LEVEL"
@@ -146,16 +130,7 @@ spec:
             value: {{ .Values.cloudSync.clusterKeyID | quote }}
           - name: SERVICE_CLOUD_SYNC_BASE_URL
             value: {{ .Values.cloudSync.baseUrl | quote }}
-          - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY
-            valueFrom:
-              secretKeyRef:
-            {{- if and .Values.cloudSync.clusterKeySecretRefName .Values.cloudSync.clusterKeySecretRefKey }}
-                name: {{ .Values.cloudSync.clusterKeySecretRefName }}
-                key: {{ .Values.cloudSync.clusterKeySecretRefKey }}
-            {{- else }}
-                name: thoras-cloud-sync
-                key: clusterKey
-            {{- end }}
+          {{- with include "thoras.cloudSyncEnv" (dict "root" . "prefix" "SERVICE_") }}{{- . | nindent 10 }}{{- end }}
           {{- if .Values.flux.enabled }}
           - name: SERVICE_FIELD_MANAGER
             value: {{ .Values.flux.fieldManager | quote }}

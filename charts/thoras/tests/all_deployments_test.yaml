@@ -6,10 +6,6 @@ set:
   thorasForecast:
     worker:
       enabled: true
-  thorasMonitor:
-    unittesting: true
-  thorasDashboard:
-    unittesting: true
   thorasSlmAgent:
     enabled: true
 tests:

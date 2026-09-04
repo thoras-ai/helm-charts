@@ -1,13 +1,13 @@
 suite: Dashboard
 templates:
   - dashboard/deployment.yaml
+# Auth-off; auth-on cases live in dashboard_auth_test.yaml.
 tests:
   - it: Deployment name and image should be correct
     set:
       thorasVersion: TEST
       thorasDashboard:
         replicas: 12
-        unittesting: true
     asserts:
       - isKind:
           of: Deployment
@@ -34,8 +34,6 @@ tests:
               name: thoras-dashboard-nginx-config
   - it: Should set tolerations if specified
     set:
-      thorasDashboard:
-        unittesting: true
       tolerations:
         - key: "example-key"
           operator: "Exists"
@@ -48,16 +46,12 @@ tests:
             operator: "Exists"
             effect: "NoSchedule"
   - it: Should not have tolerations if not specified
-    set:
-      thorasDashboard:
-        unittesting: true
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
   - it: Should add extra containers if specified
     set:
       thorasDashboard:
-        unittesting: true
         extraContainers:
           - name: sidecar
             image: example/sidecar:latest
@@ -70,7 +64,8 @@ tests:
   - it: Should not add extra containers if not specified
     set:
       thorasDashboard:
-        unittesting: true
+        auth:
+          enabled: false
     asserts:
       - lengthEqual:
           path: spec.template.spec.containers
@@ -78,7 +73,6 @@ tests:
   - it: Can override resources block
     set:
       thorasDashboard:
-        unittesting: true
         resources:
           requests:
             memory: "512Mi"

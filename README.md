@@ -15,7 +15,7 @@ helm repo update
 
 # Charts
 
- - [Thoras](https://github.com/thoras-ai/helm-charts/tree/main/charts/thoras)
+ - [Thoras](./charts/thoras/README.md)
 
 # Development
 

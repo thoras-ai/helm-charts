@@ -35,8 +35,8 @@ tests:
             name: DATABASE_HOST
             valueFrom:
               secretKeyRef:
-                name: thoras-timescale-password
-                key: host
+                name: thoras-helm-values
+                key: timescale-dsn
       - contains:
           path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
           content:

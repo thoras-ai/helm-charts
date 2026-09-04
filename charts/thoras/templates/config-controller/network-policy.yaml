@@ -1,16 +1,16 @@
-{{- if and .Values.networkPolicy.enabled .Values.thorasDashboard.enabled }}
+{{- if and .Values.networkPolicy.enabled .Values.thorasConfigController.enabled }}
 {{- if eq .Values.networkPolicy.flavor "kubernetes" }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-dashboard
+  name: {{ .Release.Name }}-config-controller
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
-      app: thoras-dashboard
+      app: thoras-config-controller
   policyTypes:
   - Ingress
   - Egress
@@ -18,17 +18,12 @@ spec:
   # Allow all ingress from pods within the same namespace
   - from:
     - podSelector: {}
-  # Allow ingress from users and ingress controllers on the dashboard port
-  - ports:
-    - port: 8080
-      protocol: TCP
-  {{- with .Values.thorasDashboard.extraIngressRules }}
+  {{- with .Values.thorasConfigController.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
   egress:
-  # Allow all egress to pods within the same namespace
-  - to:
-    - podSelector: {}
+  # Allow access to the Kubernetes API server
+  {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
   # Allow DNS resolution
   - to:
     - namespaceSelector:
@@ -42,41 +37,32 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
-  {{- with .Values.thorasDashboard.extraEgressRules }}
+  {{- with .Values.thorasConfigController.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
 {{- else if eq .Values.networkPolicy.flavor "cilium" }}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: {{ .Release.Name }}-dashboard
+  name: {{ .Release.Name }}-config-controller
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
 spec:
   endpointSelector:
     matchLabels:
-      app: thoras-dashboard
+      app: thoras-config-controller
   ingress:
   # Allow all ingress from endpoints within the same namespace
   - fromEndpoints:
     - {}
-  # Public dashboard port (thorasDashboard.containerPort). Owned by nginx or
-  # the oauth2-proxy sidecar depending on thorasDashboard.auth.enabled; the
-  # policy is the same either way.
-  - fromEntities:
-    - all
-    toPorts:
-    - ports:
-      - port: "{{ .Values.thorasDashboard.containerPort }}"
-        protocol: TCP
-  {{- with .Values.thorasDashboard.extraIngressRules }}
+  {{- with .Values.thorasConfigController.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
   egress:
-  # Allow all egress to endpoints within the same namespace
-  - toEndpoints:
-    - {}
+  # Allow access to the Kubernetes API server
+  - toEntities:
+    - kube-apiserver
   # Allow DNS resolution
   - toEndpoints:
     - matchLabels:
@@ -89,18 +75,7 @@ spec:
       rules:
         dns:
         - matchPattern: "*"
-  {{- if and .Values.thorasDashboard.auth.enabled (eq .Values.thorasDashboard.auth.mode "oidc") }}
-  # OIDC oauth2-proxy needs egress to the IdP. Scope is world:443 because IdP
-  # hostnames resolve to drifting CIDRs; tightening guidance for operators
-  # lives in README (Thoras Dashboard Authentication > NetworkPolicy egress).
-  - toEntities:
-    - world
-    toPorts:
-    - ports:
-      - port: "443"
-        protocol: TCP
-  {{- end }}
-  {{- with .Values.thorasDashboard.extraEgressRules }}
+  {{- with .Values.thorasConfigController.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
 {{- end }}

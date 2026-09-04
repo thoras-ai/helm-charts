@@ -12,10 +12,12 @@ set:
   thorasForecast:
     worker:
       enabled: true
-  thorasMonitor:
-    unittesting: true
+  thorasConfigController:
+    enabled: true
   thorasDashboard:
-    unittesting: true
+    # Pin to pre-auth shape; auth-on lives in dashboard_auth_test.yaml.
+    auth:
+      enabled: false
   thorasSlmAgent:
     enabled: true
   labels:

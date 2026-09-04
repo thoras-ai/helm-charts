@@ -1,10 +1,11 @@
-{{- if .Values.thorasDashboard.enabled }}
+{{- if and .Values.thorasDashboard.enabled .Values.thorasDashboard.auth.enabled }}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: thoras-dashboard-nginx-config
+  name: thoras-dashboard-oauth2-proxy-config
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasDashboard.labels) | nindent 4 }}
-data:{{ include "thoras.dashboardNginxConfigData" . }}
+data:{{ include "thoras.dashboardOauth2ProxyConfigData" . }}
 {{- end }}

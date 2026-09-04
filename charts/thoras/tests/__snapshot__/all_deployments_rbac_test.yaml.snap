@@ -320,6 +320,92 @@ Default matches snapshot:
         namespace: NAMESPACE
   9: |
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-config-controller
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - secrets
+        verbs:
+          - create
+      - apiGroups:
+          - ""
+        resourceNames:
+          - api-client-secret
+          - thoras-config-controller
+          - thoras-timescale-password
+        resources:
+          - secrets
+        verbs:
+          - '*'
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+          - statefulsets
+          - daemonsets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/eviction
+        verbs:
+          - create
+      - apiGroups:
+          - ""
+        resources:
+          - events
+        verbs:
+          - create
+          - patch
+      - apiGroups:
+          - coordination.k8s.io
+        resources:
+          - leases
+        verbs:
+          - get
+          - create
+          - update
+  10: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-config-controller
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: thoras-config-controller
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-config-controller
+        namespace: NAMESPACE
+  11: |
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
       labels:
@@ -342,7 +428,7 @@ Default matches snapshot:
           - daemonsetautoscalers/status
         verbs:
           - '*'
-  10: |
+  12: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -361,7 +447,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-operator
         namespace: NAMESPACE
-  11: |
+  13: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -396,7 +482,7 @@ Default matches snapshot:
           - nodes
         verbs:
           - list
-  12: |
+  14: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -415,7 +501,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-operator
         namespace: NAMESPACE
-  13: |
+  15: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -593,7 +679,7 @@ Default matches snapshot:
           - create
           - update
           - watch
-  14: |
+  16: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -612,7 +698,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-operator
         namespace: NAMESPACE
-  15: |
+  17: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -759,7 +845,7 @@ Default matches snapshot:
           - pods/resize
         verbs:
           - patch
-  16: |
+  18: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -778,7 +864,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  17: |
+  19: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -796,7 +882,7 @@ Default matches snapshot:
           - '*'
         verbs:
           - '*'
-  18: |
+  20: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -815,7 +901,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  19: |
+  21: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -850,7 +936,7 @@ Default matches snapshot:
           - nodes
         verbs:
           - list
-  20: |
+  22: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -869,7 +955,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  21: |
+  23: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -889,7 +975,7 @@ Default matches snapshot:
           - configmaps
         verbs:
           - get
-  22: |
+  24: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -908,7 +994,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: NAMESPACE
-  23: |
+  25: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -930,7 +1016,7 @@ Default matches snapshot:
           - get
           - update
           - patch
-  24: |
+  26: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
