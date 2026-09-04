@@ -1,11 +1,11 @@
-{{define "sign_in.html"}}
+{{ `{{define "sign_in.html"}}` }}
 <!DOCTYPE html>
 <html lang="en" charset="utf-8">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Sign In</title>
-    <link rel="stylesheet" href="{{.ProxyPrefix}}/static/css/bulma.min.css">
+    <link rel="stylesheet" href="{{ `{{.ProxyPrefix}}` }}/static/css/bulma.min.css">
     <style>
       body { height: 100vh; }
       .sign-in-box { max-width: 420px; margin: 4rem auto; }
@@ -42,6 +42,19 @@
         margin-left: 10px;
       }
       footer a { text-decoration: underline; }
+      .password-hint { margin-top: 1rem; text-align: left; font-size: 0.85rem; }
+      .password-hint summary { cursor: pointer; color: #1c1917; font-weight: 600; }
+      .password-hint pre {
+        background: #0c0a09;
+        color: #e7e5e4;
+        padding: 0.75rem;
+        border-radius: 6px;
+        margin-top: 0.5rem;
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 0.75rem;
+      }
+      .password-hint__note { color: #57534e; margin-top: 0.5rem; font-style: italic; }
     </style>
   </head>
   <body class="has-background-light">
@@ -54,20 +67,20 @@
 </svg>
       </div>
 
-      {{ if .SignInMessage }}
-      <p class="block">{{.SignInMessage}}</p>
-      {{ end }}
+      {{ `{{ if .SignInMessage }}` }}
+      <p class="block">{{ `{{.SignInMessage}}` }}</p>
+      {{ `{{ end }}` }}
 
-      {{ if not .CustomLogin }}
-      <form method="GET" action="{{.ProxyPrefix}}/start">
-        <input type="hidden" name="rd" value="{{.Redirect}}">
-        <button type="submit" class="button is-primary is-fullwidth">Sign in with {{.ProviderName}}</button>
+      {{ `{{ if not .CustomLogin }}` }}
+      <form method="GET" action="{{ `{{.ProxyPrefix}}` }}/start">
+        <input type="hidden" name="rd" value="{{ `{{.Redirect}}` }}">
+        <button type="submit" class="button is-primary is-fullwidth">Sign in with {{ `{{.ProviderName}}` }}</button>
       </form>
-      {{ end }}
+      {{ `{{ end }}` }}
 
-      {{ if .CustomLogin }}
-      <form method="POST" action="{{.ProxyPrefix}}/sign_in" class="block">
-        <input type="hidden" name="rd" value="{{.Redirect}}">
+      {{ `{{ if .CustomLogin }}` }}
+      <form method="POST" action="{{ `{{.ProxyPrefix}}` }}/sign_in" class="block">
+        <input type="hidden" name="rd" value="{{ `{{.Redirect}}` }}">
         <div class="field">
           <label class="label" for="username">Username</label>
           <div class="control">
@@ -82,18 +95,30 @@
         </div>
         <button class="button is-primary is-fullwidth">Sign in</button>
       </form>
-      {{ end }}
+      {{- if and .Values.thorasDashboard.enabled .Values.thorasDashboard.auth.enabled (eq .Values.thorasDashboard.auth.mode "htpasswd") }}
+      {{- $passwordRef := include "thoras.dashboardAuthPasswordRef" . | fromYaml }}
+      <details class="password-hint">
+        <summary>How do I get the password?</summary>
+        <p>Run against the cluster where Thoras is installed:</p>
+        <pre><code>kubectl get secret {{ $passwordRef.name }} -n {{ .Release.Namespace }} \
+    -o jsonpath='{.data.{{ $passwordRef.key }}}' | base64 -d</code></pre>
+        {{- if eq $passwordRef.name "thoras-config-controller" }}
+        <p class="password-hint__note">The Secret appears once config-controller has seeded it.</p>
+        {{- end }}
+      </details>
+      {{- end }}
+      {{ `{{ end }}` }}
 
-      {{ if eq .StatusCode 400 401 }}
+      {{ `{{ if eq .StatusCode 400 401 }}` }}
       <div class="alert">
         <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-        {{ if eq .StatusCode 400 }}
-        {{.StatusCode}}: Username cannot be empty
-        {{ else }}
-        {{.StatusCode}}: Invalid Username or Password
-        {{ end }}
+        {{ `{{ if eq .StatusCode 400 }}` }}
+        {{ `{{.StatusCode}}` }}: Username cannot be empty
+        {{ `{{ else }}` }}
+        {{ `{{.StatusCode}}` }}: Invalid Username or Password
+        {{ `{{ end }}` }}
       </div>
-      {{ end }}
+      {{ `{{ end }}` }}
 
     </div>
   </section>
@@ -115,15 +140,15 @@
 
   <footer class="footer has-text-grey has-background-light is-size-7">
     <div class="content has-text-centered">
-      {{ if eq .Footer "-" }}
-      {{ else if eq .Footer ""}}
-      <p>Secured with <a href="https://github.com/oauth2-proxy/oauth2-proxy#oauth2_proxy" class="has-text-grey">OAuth2 Proxy</a> version {{.Version}}</p>
-      {{ else }}
-      <p>{{.Footer}}</p>
-      {{ end }}
+      {{ `{{ if eq .Footer "-" }}` }}
+      {{ `{{ else if eq .Footer ""}}` }}
+      <p>Secured with <a href="https://github.com/oauth2-proxy/oauth2-proxy#oauth2_proxy" class="has-text-grey">OAuth2 Proxy</a> version {{ `{{.Version}}` }}</p>
+      {{ `{{ else }}` }}
+      <p>{{ `{{.Footer}}` }}</p>
+      {{ `{{ end }}` }}
     </div>
   </footer>
 
   </body>
 </html>
-{{end}}
+{{ `{{end}}` }}

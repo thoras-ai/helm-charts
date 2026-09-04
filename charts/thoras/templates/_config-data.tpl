@@ -24,7 +24,7 @@ and their consumers.
 
 {{- define "thoras.dashboardOauth2ProxyTemplatesData" }}
   sign_in.html: |
-{{ .Files.Get "files/oauth2-proxy-sign-in.html" | indent 4 }}
+{{ tpl (.Files.Get "files/oauth2-proxy-sign-in.html") . | indent 4 }}
 {{- end }}
 
 {{- define "thoras.dashboardOauth2ProxyConfigData" -}}
