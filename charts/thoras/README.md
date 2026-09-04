@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 4.144.2](https://img.shields.io/badge/Version-4.144.2-informational?style=flat-square) ![AppVersion: 4.119.0](https://img.shields.io/badge/AppVersion-4.119.0-informational?style=flat-square)
+![Version: 5.0.0](https://img.shields.io/badge/Version-5.0.0-informational?style=flat-square) ![AppVersion: 4.121.0](https://img.shields.io/badge/AppVersion-4.121.0-informational?style=flat-square)
 
 ## Requirements
 
@@ -573,7 +573,7 @@ hostnames (`toFQDNs`), or manage egress out-of-band.
 
 | Key                                | Type    | Default                                          | Description                                                                                                            |
 | ---------------------------------- | ------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                      | String  | 4.119.0                                          | Thoras app version                                                                                                     |
+| thorasVersion                      | String  | 4.121.0                                          | Thoras app version                                                                                                     |
 | imageCredentials.registry          | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                |
 | imageCredentials.username          | String  | \_json_key_base64                                | Container registry username                                                                                            |
 | imageCredentials.password          | String  | ""                                               | Container registry auth string                                                                                         |
