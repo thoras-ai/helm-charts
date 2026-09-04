@@ -142,9 +142,9 @@ and their consumers.
       server {
         {{- if .Values.thorasDashboard.auth.enabled }}
         {{- $internalPort := include "thoras.dashboard.internalNginxPort" . }}
+        {{- /* No [::1] listen: oauth2-proxy only dials 127.0.0.1 and ::1 is absent on IPv4-only pods (EADDRNOTAVAIL). */}}
         # Loopback-only; oauth2-proxy sidecar fronts containerPort.
         listen       127.0.0.1:{{ $internalPort }};
-        listen       [::1]:{{ $internalPort }} ipv6only=on;
         {{- else }}
         listen       {{ .Values.thorasDashboard.containerPort }};
         listen       [::]:{{ .Values.thorasDashboard.containerPort }} ipv6only=on;

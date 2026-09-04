@@ -126,7 +126,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.metadata.annotations['checksum/config']
-          value: f035068bf65324476adf5bb837f9e36b61fd514709a9646829060e46cb9f013b
+          value: 67ed901c3088e5c68d65d0a3ec3febdcece9e3128e84844af1d8aad4a6c617b6
 
   - it: Turning auth off drops the oauth2-proxy ConfigMaps from the hash
     template: dashboard/deployment.yaml
@@ -166,4 +166,4 @@ tests:
     asserts:
       - equal:
           path: spec.template.metadata.annotations['checksum/config']
-          value: 6322ec6f4cfe44e73daab657b1415c5aad8a84008c9b684907597856742706bc
+          value: b9f288f99c22906293a4e504ed6e4ac5c3c706b7da7ac1f306e3c1ac57a8052c

@@ -31,14 +31,16 @@ tests:
           path: data["nginx.conf"]
 
   # Under auth, nginx must not bind containerPort - the sidecar owns it.
+  # [::1] is intentionally omitted: unused (oauth2-proxy dials 127.0.0.1)
+  # and fails on IPv4-only pods with EADDRNOTAVAIL.
   - it: Binds nginx to loopback on the internal port when auth is enabled
     asserts:
       - matchRegex:
           path: data["nginx.conf.template"]
           pattern: 'listen +127\.0\.0\.1:8181;'
-      - matchRegex:
+      - notMatchRegex:
           path: data["nginx.conf.template"]
-          pattern: 'listen +\[::1\]:8181 ipv6only=on;'
+          pattern: '\[::1\]'
       - notMatchRegex:
           path: data["nginx.conf.template"]
           pattern: '(?m)^ *listen +8080;'
