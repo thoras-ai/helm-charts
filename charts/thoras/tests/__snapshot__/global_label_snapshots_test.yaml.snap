@@ -1033,24 +1033,7 @@ Default matches snapshot:
         resources:
           - secrets
         verbs:
-          - get
-      - apiGroups:
-          - ""
-        resourceNames:
-          - thoras-config-controller
-        resources:
-          - secrets
-        verbs:
           - '*'
-      - apiGroups:
-          - ""
-        resourceNames:
-          - api-client-secret
-          - thoras-timescale-password
-        resources:
-          - secrets
-        verbs:
-          - patch
       - apiGroups:
           - apps
         resources:

@@ -371,7 +371,7 @@ tests:
       - hasDocuments:
           count: 2
 
-  - it: Owns the managed Secret and can annotate legacy migration sources
+  - it: Owns the managed Secret and every legacy migration source end to end
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
@@ -383,24 +383,18 @@ tests:
             apiGroups: [""]
             resources: [secrets]
             verbs: [create]
+      # The managed Secret and legacy migrateFrom Secrets collapse into a
+      # single name-scoped rule with all verbs: reads, patches migration
+      # annotations, and may clean them up after migration lands.
       - contains:
           path: rules
           content:
             apiGroups: [""]
             resources: [secrets]
-            resourceNames: [thoras-config-controller]
+            resourceNames: [api-client-secret, thoras-config-controller, thoras-timescale-password]
             verbs: ["*"]
-      # Legacy migrateFrom Secrets get patch only, used for the migrated-to
-      # and migrated-at annotations after a successful migration.
-      - contains:
-          path: rules
-          content:
-            apiGroups: [""]
-            resources: [secrets]
-            resourceNames: [api-client-secret, thoras-timescale-password]
-            verbs: [patch]
 
-  - it: Omits the legacy-secret patch rule when legacy seeding is disabled
+  - it: Shrinks the owned-secrets rule to the managed Secret when legacy seeding is disabled
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
@@ -408,20 +402,35 @@ tests:
       featureFlags:
         enableLegacySecretSeeding: false
     asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            resourceNames: [thoras-config-controller]
+            verbs: ["*"]
       - notContains:
           path: rules
           content:
             apiGroups: [""]
             resources: [secrets]
-            verbs: [patch]
+            resourceNames: [api-client-secret, thoras-config-controller, thoras-timescale-password]
+            verbs: ["*"]
 
-  - it: Never grants unbounded patch on secrets
+  - it: Never grants cluster-wide write on secrets
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
     asserts:
-      # Any secret patch rule must be name-scoped; guards against a future
-      # refactor accidentally dropping resourceNames.
+      # Every non-create secrets rule must be name-scoped; guards against a
+      # future refactor accidentally dropping resourceNames on the "*" rule.
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            verbs: ["*"]
+            resourceNames: null
       - notContains:
           path: rules
           content:
