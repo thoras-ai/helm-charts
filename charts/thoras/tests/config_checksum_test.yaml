@@ -115,23 +115,33 @@ tests:
           path: spec.template.metadata.annotations['checksum/config']
           value: d50bce19c8fe8e981d9a26eda5fa053a0b29ac870a7073ee5ea3df17659b7864
 
+  # Version pinned so chart/app version bumps do not force a hash refresh.
   - it: Dashboard hashes nginx plus the oauth2-proxy pair when auth is on
     template: dashboard/deployment.yaml
+    chart:
+      version: "0.0.0-test"
+      appVersion: "0.0.0-test"
+    set:
+      thorasVersion: "0.0.0-test"
     asserts:
       - equal:
           path: spec.template.metadata.annotations['checksum/config']
-          value: 7e739dcc4781007c0933ca352af85d7de0c7cdc8faaaeeaa294dfef801c0bfcc
+          value: f035068bf65324476adf5bb837f9e36b61fd514709a9646829060e46cb9f013b
 
   - it: Turning auth off drops the oauth2-proxy ConfigMaps from the hash
     template: dashboard/deployment.yaml
+    chart:
+      version: "0.0.0-test"
+      appVersion: "0.0.0-test"
     set:
+      thorasVersion: "0.0.0-test"
       thorasDashboard:
         auth:
           enabled: false
     asserts:
       - equal:
           path: spec.template.metadata.annotations['checksum/config']
-          value: 8f8b82e630307a2379209328c6d25309e164b326a15f8a91df2ab64fdc71a878
+          value: d22c5551ab7237e8d79b81bc55f997fc9031483ef5913bf1199209a12a6bdf0a
 
   - it: Operator has no checksum despite mounting a chart ConfigMap
     # thoras-operator-system-config is deliberately exempt. Its chart content is
@@ -146,10 +156,14 @@ tests:
 
   - it: A value that only reaches nginx.conf still rolls the dashboard
     template: dashboard/deployment.yaml
+    chart:
+      version: "0.0.0-test"
+      appVersion: "0.0.0-test"
     set:
+      thorasVersion: "0.0.0-test"
       cluster:
         name: prod-east
     asserts:
       - equal:
           path: spec.template.metadata.annotations['checksum/config']
-          value: 06cc0ecaa5d5bad0172262aa51168c889accaa9d27637eb9384b3dc3d378984e
+          value: 6322ec6f4cfe44e73daab657b1415c5aad8a84008c9b684907597856742706bc
