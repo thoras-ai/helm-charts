@@ -88,11 +88,9 @@ featureFlags:
   enableMultiDimensional: false
   # Keep rendering the pre-5.0 `api-client-secret` and `thoras-timescale-password`
   # Secrets so config-controller can migrate their values into
-  # `thoras-config-controller`. Nothing consumes them.
-  #
-  # Upgrading from 4.x: leave this true for one release, then set it to false.
-  # New installs: set it to false. Removed in 6.0, which is why the templates
-  # carry helm.sh/resource-policy: keep. See UPGRADE.md > Migrating from 4.x.
+  # `thoras-config-controller`. Nothing consumes them. Removed in 6.0, which
+  # is why the templates carry helm.sh/resource-policy: keep. See UPGRADE.md >
+  # In Cluster Secret Seeding and Update Monitoring.
   enableLegacySecretSeeding: true
 
 # Shared secret Thoras components send to the API server. Toggled with

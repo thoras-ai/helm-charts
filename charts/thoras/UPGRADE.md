@@ -2,29 +2,28 @@
 
 A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an incompatible breaking change needing manual actions.
 
+**WARNING:** only migrating one major version at a time is supported (v1.x.x to v2.x.x).
+
 This doc provides detailed upgrade and migration instructions.
 
 ## To 5.x
 
-Users who manage Thoras via `helm install` and `helm upgrade` with a
-simple values file, and whose deployment matches all of the following,
-only need to read the [Dashboard Auth Enabled by Default](#dashboard-auth-enabled-by-default)
-and [Migrating from 4.x](#migrating-from-4x) sections below:
+All users should read the following [Changes Overview](#changes-overview).
 
-- `thorasDashboard.extraContainers` is unset (no hand-rolled
-  oauth2-proxy sidecar)
-- `thorasDashboard.service.targetPort` is unset (Service targets the
-  chart's containerPort)
-- `featureFlags.enableSimpleAuthSecret` is unset (only added between
-  4.141.0 and 5.0.0)
+Users with a Thoras deployment that matches any of the following should also
+work through the matching section in [Breaking Changes](#breaking-changes).
 
-Any deployment that deviates from one or more of the above must also
-work through the matching section below.
+- [Uses a hand-rolled oauth2-proxy sidecar](#migrating-from-the-standalone-oauth2-proxy-sidecar)
+- [Has externally managed authentication in front of the dashboard](#externally-managed-auth)
+- [`featureFlags.enableSimpleAuthSecret`](#feature-flag-deprecation)
 
-### Dashboard Auth Enabled by Default
 
-Chart 5.0.0 fronts the dashboard with an oauth2-proxy sidecar in
-`htpasswd` mode by default. Sign in with:
+### Changes Overview
+
+#### Dashboard Auth Enabled by Default
+
+Chart 5.0.0 adds authentication to the Thoras dashboard by default.
+Sign in with:
 
 - **Username**: `thoras` (`thorasDashboard.auth.htpasswd.username`)
 - **Password**: seeded by config-controller into the
@@ -40,13 +39,41 @@ Chart 5.0.0 fronts the dashboard with an oauth2-proxy sidecar in
   reconcile. On a fresh install the dashboard pod briefly reports
   `CreateContainerConfigError` until then.
 
-The password is generated on first install and never rotated. To pin a
-known value instead, set `thorasDashboard.auth.htpasswd.password` — the
-pinned value lives in `thoras-helm-values` and takes precedence over
-anything config-controller might seed. To front the dashboard with your
+The password is generated on first install. To provide a
+known value instead, set `thorasDashboard.auth.htpasswd.password` or
+`thorasDashboard.auth.htpasswd.existingSecret`
+To front the dashboard with your
 own auth instead, see [Externally Managed Auth](#externally-managed-auth).
 
-### Migrating from the standalone oauth2-proxy sidecar
+#### In Cluster Secret Seeding and Update Monitoring
+
+5.x moves secret seeding out of the chart and into a new Thoras service: config-controller.
+If you leveraged the Charts secret seeding (default behavior) upgrading to 5.x will automatically
+migrate the existing seeded secrets in cluster, no intervention needed.
+
+If you leverage any of the chart's [Externally Managed Auth](#externally-managed-auth) options,
+config-controller will handle a rolling restart of any Thoras workloads that depend on the secrets when a change is detected.
+
+### Breaking Changes
+
+#### Externally Managed Auth
+
+If you already terminate authentication at the ingress or gateway (a
+custom SSO sidecar, edge-level auth plugin, service-mesh policy, ...),
+disable the chart's built-in oauth2-proxy sidecar:
+
+```yaml
+thorasDashboard:
+  auth:
+    enabled: false
+```
+
+**In-cluster exposure warning.** With `auth.enabled: false`, the
+dashboard's nginx binds `thorasDashboard.containerPort` on all
+interfaces, meaning any workload in the cluster that can reach the `thoras-dashboard` Service
+can access part of the Thoras API without authentication.
+
+#### Migrating from the standalone oauth2-proxy sidecar
 
 Customers who previously ran their own oauth2-proxy as
 `thorasDashboard.extraContainers` and retargeted the Service at port `4180`
@@ -85,109 +112,9 @@ key names: `client-id`, `client-secret`, `cookie-secret`). The Service goes
 back to targeting `containerPort` (now owned by the chart's sidecar), so
 drop any `service.targetPort` override.
 
-### Externally Managed Auth
-
-If you already terminate authentication at the ingress or gateway (a
-custom SSO sidecar, edge-level auth plugin, service-mesh policy, ...),
-disable the chart's built-in oauth2-proxy sidecar:
-
-```yaml
-thorasDashboard:
-  auth:
-    enabled: false
-```
-
-**In-cluster exposure warning.** With `auth.enabled: false`, the
-dashboard's nginx binds `thorasDashboard.containerPort` on all
-interfaces, and the dashboard's `/v1/` block reverse-proxies to the API
-server with the `apiClientSecret` bearer token injected server-side. Any
-workload in the cluster that can reach the `thoras-dashboard` Service
-therefore reaches both the dashboard UI and the allow-listed `/v1/` API
-endpoints without authentication — the external ingress-/gateway-level
-auth only protects the path through the ingress.
-
-### Feature flag deprecation
+#### Feature flag deprecation
 
 `featureFlags.enableSimpleAuthSecret` is deprecated. Rename it to
 `apiClientSecret.enabled` in your `values.yaml`. The legacy field still
 works as an alias but will be removed in a future major release.
 Setting both to conflicting values will cause the helm chart to fail.
-
-### Migrating from 4.x
-
-5.x moves secret seeding out of the chart and into config-controller. Your
-existing API client token and TimescaleDB password are migrated for you, but
-only if you go through 5.x. The supported path is **4.x -> 5.x -> 6.x**;
-jumping straight from 4.x to 6.x loses both values.
-
-Helm refreshes an object from the cluster before it checks
-`helm.sh/resource-policy: keep`, so a single release cannot both stop
-rendering a Secret and protect it. That is why the retention spans two
-releases.
-
-#### Upgrading from 4.x
-
-1. Upgrade to 5.x with `featureFlags.enableLegacySecretSeeding: true` (the
-   default). The chart keeps rendering `api-client-secret` and
-   `thoras-timescale-password` purely as migration sources; nothing consumes
-   them. config-controller copies their values into `thoras-config-controller`
-   on its first reconcile.
-2. Confirm the migration landed:
-
-   ```bash
-   kubectl get secret thoras-config-controller -n <namespace> \
-     -o jsonpath='{.metadata.annotations.thoras\.ai/migrated-keys}'
-   ```
-
-3. Set `featureFlags.enableLegacySecretSeeding: false` and upgrade again. The
-   two legacy Secrets stay in the cluster, orphaned, and you can delete them
-   at your leisure.
-
-Do not skip step 1. Upgrading from 4.x straight to
-`featureFlags.enableLegacySecretSeeding: false` prunes both Secrets before
-anything has read them, which rotates the API client token and desynchronises
-the chart from the running database.
-
-Flipping the flag off is a one-way door. It also stops config-controller from
-adopting the legacy Secrets: once off, the migration entries are removed from
-the controller's config and RBAC. Confirm step 2 first. Turning the flag off
-before the migration has landed makes config-controller seed fresh values on
-its next reconcile, with the same rotation and desynchronisation effect as
-skipping step 1.
-
-#### New installs
-
-Set `featureFlags.enableLegacySecretSeeding: false`. There is nothing to
-migrate.
-
-#### Argo CD
-
-Nothing the chart renders needs `ignoreDifferences` any more.
-`thoras-helm-values` contains only what you pinned in values, and
-`thoras-config-controller` is created by the controller rather than by
-Helm, so Argo CD neither tracks nor prunes it. If you carry an
-`ignoreDifferences` entry for a chart Secret today, you can drop it
-once this migration is complete.
-
-The two legacy Secrets are the exception, for the duration of 5.x only.
-`lookup` returns nothing under Argo CD, so the chart regenerates their
-values on every render; without this, Argo would apply a fresh random
-password that does not match the running database.
-
-```yaml
-spec:
-  ignoreDifferences:
-    - group: ""
-      kind: Secret
-      name: api-client-secret
-      jsonPointers: [/data]
-    - group: ""
-      kind: Secret
-      name: thoras-timescale-password
-      jsonPointers: [/data]
-```
-
-Drop both entries once you set `featureFlags.enableLegacySecretSeeding: false`. See the
-chart README's [ArgoCD](./README.md#argocd) section for the wider
-Argo CD `ignoreDifferences` set (webhook `caBundle`, forecast worker
-replicas).
