@@ -24,9 +24,9 @@ Detailed upgrade procedures found [here](./UPGRADE.md).
     * If you currently ship an oauth2-proxy sidecar, see [migration docs](./UPGRADE.md#migrating-from-the-standalone-oauth2-proxy-sidecar).
     * If you provide external auth via ingress or gateway, see [externally-managed auth notes](./UPGRADE.md#externally-managed-auth).
 - **Chart no longer seeds Secrets.** A new `thoras-config-controller`
-  component owns seeding and rotation. Upgrades from 4.x must go through
-  5.x with `featureFlags.enableLegacySecretSeeding: true` (default) before flipping
-  it off; see [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
+  component owns seeding and rotation. Upgrades from 4.x migrate existing
+  seeded Secrets automatically; see
+  [In Cluster Secret Seeding and Update Monitoring](./UPGRADE.md#in-cluster-secret-seeding-and-update-monitoring).
 - **`featureFlags.enableSimpleAuthSecret` renamed** to
   `apiClientSecret.enabled`. Legacy field still works as an alias; see
   [Feature flag deprecation](./UPGRADE.md#feature-flag-deprecation).
@@ -96,15 +96,61 @@ If you pinned the password in values or point at your own Secret via
 lookup above only applies to the default seeded-by-controller path. See
 [Secrets](#secrets) for the full resolution model.
 
-## Secrets
+## ArgoCD
 
-Every credential resolves to exactly one of three places, in this order:
+Argo CD renders manifests without `lookup`, so a small set of chart
+outputs still drifts on every reconcile. To prevent this, do the follow:
 
-| # | Where you configure it | Where it is stored | Who writes it |
-|---|---|---|---|
-| 1 | `*.existingSecret.secretName` / `*SecretRefName` | your own Secret | you |
-| 2 | the plain values field | `thoras-helm-values` | Helm |
-| 3 | nothing — leave it empty | `thoras-config-controller` | config-controller |
+- Set `featureFlags.enableLegacySecretSeeding: false` (see ADD LINK for more details).
+
+
+Tell Argo to ignore these fields in your `Application`'s
+`spec.ignoreDifferences`:
+
+```yaml
+ignoreDifferences:
+  #  The webhook configs' `caBundle` is injected in-cluster after apply
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    jqPathExpressions:
+      - ".webhooks[]?.clientConfig.caBundle"
+  - group: admissionregistration.k8s.io
+    kind: ValidatingWebhookConfiguration
+    jqPathExpressions:
+      - ".webhooks[]?.clientConfig.caBundle"
+  # The `thoras-forecast-worker` replica count is managed by Thoras at runtime.
+  - jsonPointers:
+      - /spec/replicas
+    kind: Deployment
+    name: thoras-forecast-worker
+```
+
+## helm template
+
+The following should be done if you use a deployment strategy that uses `helm template`:
+
+### Disable Legacy Secret Seeding
+
+Set `featureFlags.enableLegacySecretSeeding: false` (see ADD LINK for more details).
+
+### Webhook certificates
+
+If you have cert-manager, set `thorasOperator.webhookCertGen.certManager.enabled: true` when
+rendering offline. The default certgen path emits a set of imperative
+`Job`/`ClusterRole`/`ServiceAccount` resources gated on Helm lifecycle
+hooks (`pre-install`, `pre-upgrade`), which GitOps tools handle poorly.
+cert-manager mode replaces them with declarative `Issuer` and
+`Certificate` CRs. Requires cert-manager installed in the cluster.
+
+## Configuration
+
+### Secrets
+
+Almost every secret/credential is configured via the chart one of three ways, in this order of precedent:
+
+1. An externally managed secret by setting `*.existingSecret.secretName` or `*SecretRefName` values
+2. In plain text in via the appropriate field values.yaml
+3. Default: Thoras's config-controller service seeds secrets in cluster
 
 | Credential | Existing Secret | Values field |
 |---|---|---|
@@ -117,182 +163,13 @@ Every credential resolves to exactly one of three places, in this order:
 | Cloud-sync cluster key | `cloudSync.clusterKeySecretRef{Name,Key}` | `cloudSync.clusterKey` |
 | Dashboard OIDC credentials | `thorasDashboard.auth.oidc.existingSecret.*` | — (never chart-managed) |
 
-Notes:
+### Disable Legacy Secret Seeding
 
-- `thoras-helm-values` holds only what you pinned in values. It is fully
-  deterministic — no `lookup`, no random generation — so `helm template` and
-  Argo CD render exactly what an apply produces. **Argo CD users no longer
-  need `ignoreDifferences` on this Secret.**
-- `thoras-config-controller` is created and owned by config-controller, never
-  by Helm, so Argo CD does not track or prune it. Values are seeded once and
-  never rotated.
-- The bundled TimescaleDB password cannot be pinned. There is no rotation
-  path for a database that is already initialised, so the chart fails if
-  `metricsCollector.timescale.password` is set.
-- Slack and cloud-sync are never seeded. Leave them unset and the consuming
-  environment variable is omitted entirely.
+Disable legacy secret seeding by setting `featureFlags.enableLegacySecretSeeding: false`.
 
-### Rotating secrets
-
-config-controller drives every rotation. It observes changes to the managed
-Secret (read directly via the API, since it owns that Secret), to
-`thoras-helm-values`, and to any customer-managed Secret referenced via an
-`existingSecret` field (the latter two are projected into the controller pod
-as files), then rolls affected workloads in dependency order on its own. Only
-Thoras workloads (label `app.kubernetes.io/name=thoras`) are ever restarted.
-Rotation propagates within roughly 60s (kubelet's projected-volume refresh) +
-`pollInterval` + `rolloutDebounce` (defaults: 30s + 10s) plus the time to
-evict and replace each tier.
-
-Workloads that are unhealthy or mid-rollout are **not** skipped: a workload
-is often unhealthy precisely because it holds the value being rotated, so the
-controller evicts it anyway. Two consequences:
-
-- `rolloutTimeout` (default 5m) must exceed the slowest consumer's startup
-  time. On timeout the tier fails and the workload is evicted again on the
-  next tick.
-- If you define PodDisruptionBudgets on Thoras workloads, set
-  `unhealthyPodEvictionPolicy: AlwaysAllow` (Kubernetes 1.27+). With the
-  default `IfHealthyBudget`, unready pods cannot be evicted once the budget
-  is exhausted, and a workload broken by a bad value can never be restarted
-  to pick up the fix. A rising
-  `thoras_config_rollout_eviction_blocked_total` is the symptom.
-
-**Seeded values are never rotated automatically.** config-controller writes a
-key once and then leaves it alone. To change one, delete the key from
-`thoras-config-controller` and let the controller re-seed it:
-
-```bash
-kubectl patch secret thoras-config-controller -n <namespace> \
-  --type=json -p='[{"op":"remove","path":"/data/dashboard-auth-password"}]'
-```
-
-Do **not** do this for `timescale-password` or `timescale-dsn`. They are a
-pair — the DSN embeds the password — and re-seeding either one alone produces
-a DSN that no longer matches the initialised database. The bundled Timescale
-password has no supported rotation path.
-
-**Values you pinned in `values.yaml`** rotate on the next `helm upgrade`:
-change the field, apply, and the controller picks the new value up from the
-re-rendered `thoras-helm-values` Secret.
-
-**Values in Secrets you manage** rotate whenever you update the Secret. No
-`helm upgrade` needed; the controller sees the file change and rolls the
-consumers.
-
-Rotating the dashboard cookie secret invalidates every logged-in dashboard
-session.
-
-### Changing ConfigMap-backed settings
-
-Values that land in a chart ConfigMap — `thorasMonitor.config`,
-`metricsCollector.timescale.config.content`, the dashboard's nginx and
-oauth2-proxy settings — roll their consumers on the next `helm upgrade`. The
-chart puts a `checksum/config` annotation over the ConfigMap's data on each
-consumer's pod template, so no manual restart is needed. These ConfigMaps are
-mounted with `subPath`, which Kubernetes never updates in place, so the
-restart is what makes the change take effect.
-
-The annotation is computed at template time, so Argo CD renders the same value
-an apply produces and reports no drift.
-
-## ArgoCD
-
-Argo CD renders manifests without `lookup`, so a small set of chart
-outputs still drifts on every reconcile even after the 5.x
-config-controller migration:
-
-- The webhook configs' `caBundle` is injected in-cluster after apply
-  (either by cert-manager's CA injector when
-  `thorasOperator.webhookCertGen.certManager.enabled: true`, or by the
-  certgen patch Job otherwise).
-- The `thoras-forecast-worker` replica count is managed by Thoras at
-  runtime.
-
-Tell Argo to ignore these fields in your `Application`'s
-`spec.ignoreDifferences`:
-
-```yaml
-ignoreDifferences:
-  - group: admissionregistration.k8s.io
-    kind: MutatingWebhookConfiguration
-    jqPathExpressions:
-      - ".webhooks[]?.clientConfig.caBundle"
-  - group: admissionregistration.k8s.io
-    kind: ValidatingWebhookConfiguration
-    jqPathExpressions:
-      - ".webhooks[]?.clientConfig.caBundle"
-  - jsonPointers:
-      - /spec/replicas
-    kind: Deployment
-    name: thoras-forecast-worker
-```
-
-`thoras-helm-values` is deterministic and needs no `ignoreDifferences`;
-`thoras-config-controller` is owned by the controller and is not tracked
-by Argo CD at all. The one exception is the pair of legacy Secrets
-(`api-client-secret`, `thoras-timescale-password`) rendered under
-`featureFlags.enableLegacySecretSeeding: true` during the 4.x -> 5.x migration; see
-[Migrating from 4.x](./UPGRADE.md#migrating-from-4x) for the extra
-entries and when to drop them.
-
-The full `Application` example plus the ArgoCD HPA custom health
-assessment (needed when Argo watches a Thoras-horizontally-controlled
-workload) live at
-[docs.thoras.ai/guides/argo-cd](https://docs.thoras.ai/guides/argo-cd).
-
-## helm template
-
-Under `helm template` there is no cluster for config-controller to seed
-into, so any credential not already pinned or pointed at an existing
-Secret renders empty — and even randomly-generated placeholders would
-churn on every render. Either pin every chart-generated credential or
-point the chart at a pre-existing Secret you manage out-of-band
-(Sealed Secrets, External Secrets, SOPS, ...).
-
-### Pinning credentials
-
-Set the following values to pin:
-
-| Credential                  | Pin in values                                |
-| --------------------------- | -------------------------------------------- |
-| API client bearer token     | `apiClientSecret.secret`                     |
-| Dashboard htpasswd password | `thorasDashboard.auth.htpasswd.password`     |
-| Dashboard htpasswd cookie   | `thorasDashboard.auth.htpasswd.cookieSecret` |
-| TimescaleDB DSN (external)  | `externalTimescale.dsn`                      |
-
-### Using external secret references
-
-Or point the chart at Secrets you manage out-of-band via the following
-`existingSecret` / `secretRef` fields:
-
-| Credential                                 | secretName field                                          | Key field(s)                                                                                    |
-| ------------------------------------------ | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| API client bearer token                    | `apiClientSecret.existingSecret.secretName`               | `apiClientSecret.existingSecret.secretKey`                                                      |
-| Dashboard htpasswd password + cookie       | `thorasDashboard.auth.htpasswd.existingSecret.secretName` | `thorasDashboard.auth.htpasswd.existingSecret.passwordKey`, `.cookieSecretKey`                  |
-| Dashboard OIDC client credentials + cookie | `thorasDashboard.auth.oidc.existingSecret.secretName`     | `thorasDashboard.auth.oidc.existingSecret.clientIDKey`, `.clientSecretKey`, `.cookieSecretKey`  |
-| TimescaleDB DSN (external)                 | `externalTimescale.secretRefName`                         | `externalTimescale.secretRefKey`                                                                |
-
-**Notes:**
-- Pinning the in-cluster TimescaleDB password
-  (`metricsCollector.timescale.password`) for the chart-managed
-  TimescaleDB is not supported; use `externalTimescale`, or run under a
-  live cluster and let config-controller seed
-  `thoras-config-controller`.
-- Under `thorasDashboard.auth.mode: oidc`, dashboard credentials come
-  from your IdP via `thorasDashboard.auth.oidc.existingSecret.secretName`
-  and are never chart-generated, so no dashboard pinning is needed.
-
-### Webhook certificates
-
-Set `thorasOperator.webhookCertGen.certManager.enabled: true` when
-rendering offline. The default certgen path emits a set of imperative
-`Job`/`ClusterRole`/`ServiceAccount` resources gated on Helm lifecycle
-hooks (`pre-install`, `pre-upgrade`), which GitOps tools handle poorly.
-cert-manager mode replaces them with declarative `Issuer` and
-`Certificate` CRs. Requires cert-manager installed in the cluster.
-
-## Configuration
+**NOTE:** if you are upgrading from 4.x, make sure to perform the upgrade
+first, before disabling `featureFlags.enableLegacySecretSeeding`. After the first
+successful upgrade, the secrets will be migrated and you can disable the feature.
 
 ### Affinity Configuration
 
@@ -406,29 +283,13 @@ Only safe if something external gates every request.
 
 ##### htpasswd mode
 
-config-controller seeds a random password and cookie secret on first install
-and never rotates them. Retrieve the password:
+config-controller seeds a random password and cookie secret on first install.
+Retrieve the password:
 
 ```bash
 kubectl get secret thoras-config-controller -n <namespace> \
   -o jsonpath='{.data.dashboard-auth-password}' | base64 -d
 ```
-
-Pin them instead if you would rather manage them in values, in which case they
-live in `thoras-helm-values`. Changing a pinned value invalidates every
-logged-in session.
-
-```yaml
-thorasDashboard:
-  auth:
-    htpasswd:
-      username: thoras
-      password: <your-password>
-      cookieSecret: <your-32-char-cookie-secret>
-```
-
-Both approaches are GitOps-safe: seeded values live outside Helm's control and
-pinned values render deterministically.
 
 ##### OIDC mode
 
@@ -462,23 +323,9 @@ kubectl create secret generic oauth2-proxy-secrets -n <namespace> \
 The `redirectURL` must exactly match the redirect URI registered on the IdP
 application.
 
-##### Notes
-
-- `thorasDashboard.auth.cookieSecure` defaults to `false` so `kubectl
+**NOTE:** `thorasDashboard.auth.cookieSecure` defaults to `false` so `kubectl
   port-forward` works (Safari drops Secure cookies over plain HTTP).
   Set it to `true` in production; it requires TLS at the edge.
-- The sign-in page is chart-branded (Thoras wordmark, dashboard-sidebar
-  primary button) in both auth modes. Under `mode: htpasswd` only the
-  username/password form is shown; under `mode: oidc` the provider
-  button is retained as the entry point.
-- With auth enabled, the oauth2-proxy sidecar owns
-  `thorasDashboard.containerPort` and proxies to nginx on `127.0.0.1:8181`
-  (loopback-only). To hit nginx directly for debugging:
-  ```
-  kubectl debug -n thoras <dashboard-pod> -it \
-    --image=<debug-image> --target=thoras-dashboard
-  # curl http://127.0.0.1:8181/
-  ```
 
 #### Example Thoras Dashboard Ingress Configuration
 
@@ -515,6 +362,10 @@ hosts:
 
 #### Example Thoras Dashboard Gateway API Configuration
 
+Requires the Gateway API v1 CRDs (`gateway.networking.k8s.io/v1`) installed in
+the cluster and an existing `Gateway` resource that the `parentRefs` below
+target.
+
 ```yaml
 # values.yaml
 ---
@@ -531,6 +382,10 @@ thorasDashboard:
     path: /
     pathType: PathPrefix
 ```
+
+The rendered `HTTPRoute`'s `backendRefs.port` is derived from
+`thorasDashboard.port` (default `80`), so changing the dashboard service port
+automatically updates the route.
 
 Default `thorasDashboard.gatewayAPI.parentRefs` value:
 
@@ -549,23 +404,22 @@ hostnames:
 
 ### NetworkPolicy
 
-Set `networkPolicy.enabled: true` to have the chart render a
-`CiliumNetworkPolicy` (`cilium.io/v2`) per component. Requires
-[Cilium](https://cilium.io/) in the cluster; policies are no-ops with
-any other CNI.
+Set `networkPolicy.enabled: true` to render per-component policies.
+`networkPolicy.flavor: kubernetes` (default) emits standard
+`networking.k8s.io/v1` `NetworkPolicy` for any NetworkPolicy-capable
+CNI; `cilium` emits `CiliumNetworkPolicy` (`cilium.io/v2`) and requires
+[Cilium](https://cilium.io/).
 
-Each policy allows all ingress from same-namespace endpoints, permits
-DNS to `kube-system/kube-dns`, and opens the component's public port to
-its expected callers (`entities: all` for the dashboard, in-namespace
-callers for API/collector/worker/forecast).
+`networkPolicy.apiServerPorts` (default `[443, 6443]`) must list the
+port the API server actually listens on post-DNAT — set it to `8443`
+on minikube, etc. The `cilium` flavor ignores this key and targets the
+API server by identity.
 
-**NOTE:** when Thoras Dashboard auth is enabled in OIDC mode, the chart
-opens broad egress on the dashboard's `CiliumNetworkPolicy` to
-`world:443` so oauth2-proxy can reach the IdP's discovery, token, and
-userinfo endpoints. Okta / Entra / other IdPs resolve to broad, drifting
-CIDR ranges, so a scoped rule would be brittle. Tighten by layering an
-additional `CiliumNetworkPolicy` that restricts egress to specific IdP
-hostnames (`toFQDNs`), or manage egress out-of-band.
+Each component block accepts `extraIngressRules` / `extraEgressRules`,
+appended verbatim to both flavors. When dashboard OIDC auth is
+enabled, the chart opens broad egress on port `443` so oauth2-proxy
+can reach the IdP; tighten with a layered `CiliumNetworkPolicy` scoped
+by `toFQDNs`, or manage egress out-of-band.
 
 ## Values
 
@@ -613,6 +467,14 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations                          |
 | featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                               |
 | featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs    |
+
+### NetworkPolicy
+
+| Key                            | Type      | Default      | Description                                                                                                                                                                     |
+| ------------------------------ | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| networkPolicy.enabled          | Boolean   | false        | Render per-component network policies                                                                                                                                           |
+| networkPolicy.flavor           | String    | kubernetes   | `kubernetes` renders `networking.k8s.io/v1` `NetworkPolicy`; `cilium` renders `CiliumNetworkPolicy` (`cilium.io/v2`)                                                            |
+| networkPolicy.apiServerPorts   | []Number  | [443, 6443]  | Ports the API server actually listens on (post-DNAT). Used by the `kubernetes` flavor to allow egress to the API. Ignored by the `cilium` flavor. Empty list omits the rule.    |
 
 ### Thoras Forecast
 
@@ -806,7 +668,7 @@ must be pre-installed and managed externally.
 | thorasDashboard.auth.oidc.existingSecret.clientSecretKey    | String  | client-secret       | Key inside `existingSecret.secretName` that holds the OIDC client secret |
 | thorasDashboard.auth.oidc.existingSecret.cookieSecretKey    | String  | cookie-secret       | Key inside `existingSecret.secretName` that holds the session cookie secret |
 | thorasDashboard.ingress.enabled                  | Bool    | false            | Enables Ingress for the Dashboard                                        |
-| thorasDashboard.ingress.ingressClassName         | String  | ""               | IngressClass to use for the Dashboard Ingress                            |
+| thorasDashboard.ingress.ingressClassName         | String  | nginx            | IngressClass to use for the Dashboard Ingress                            |
 | thorasDashboard.ingress.annotations              | Object  | {}               | Annotations for the Dashboard Ingress                                    |
 | thorasDashboard.ingress.hosts                    | List    | see below        | List of hosts and paths for the Dashboard Ingress                        |
 | thorasDashboard.ingress.tls                      | List    | []               | TLS configuration for the Dashboard Ingress                              |
