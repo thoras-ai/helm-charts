@@ -25,7 +25,7 @@ Detailed upgrade procedures found [here](./UPGRADE.md).
     * If you provide external auth via ingress or gateway, see [externally-managed auth notes](./UPGRADE.md#externally-managed-auth).
 - **Chart no longer seeds Secrets.** A new `thoras-config-controller`
   component owns seeding and rotation. Upgrades from 4.x must go through
-  5.x with `featureFlags.enableLegacySecretSeeding: true` before flipping
+  5.x with `featureFlags.enableLegacySecretSeeding: true` (default) before flipping
   it off; see [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
 - **`featureFlags.enableSimpleAuthSecret` renamed** to
   `apiClientSecret.enabled`. Legacy field still works as an alias; see
@@ -55,12 +55,9 @@ helm repo update thoras
 helm install thoras thoras/thoras \
   --namespace thoras \
   --create-namespace \
-  --set imageCredentials.password="$(cat ./thoras_license.txt)"
+  --set imageCredentials.password="$(cat ./thoras_license.txt)" \
+  --set featureFlags.enableLegacySecretSeeding=false
 ```
-
-New installs should also set `featureFlags.enableLegacySecretSeeding: false`
-in a values file — the flag only exists as a migration source for existing
-4.x deployments. See [Migrating from 4.x](./UPGRADE.md#migrating-from-4x).
 
 ### Verify installation
 
@@ -73,8 +70,7 @@ kubectl get pods -n thoras
 
 On a fresh install the workload pods briefly report
 `CreateContainerConfigError` while they wait for config-controller to
-seed `thoras-config-controller`. This resolves itself; no action is
-needed.
+seed secrets. This resolves itself; no action is needed.
 
 ### Load the dashboard
 
@@ -84,8 +80,7 @@ Port-forward the dashboard Service to your workstation:
 kubectl port-forward -n thoras svc/thoras-dashboard 8080:80
 ```
 
-Then open <http://localhost:8080>. At chart defaults the dashboard is
-fronted by an oauth2-proxy sidecar in `htpasswd` mode. Sign in with:
+Then open <http://localhost:8080>. Sign in with:
 
 - **Username**: `thoras` (`thorasDashboard.auth.htpasswd.username`)
 - **Password**: seeded by config-controller into the
