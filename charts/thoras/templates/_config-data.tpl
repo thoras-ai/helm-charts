@@ -31,7 +31,8 @@ and their consumers.
 {{- $auth := .Values.thorasDashboard.auth -}}
   {{- if eq $auth.mode "htpasswd" }}
   oauth2-proxy.cfg: |
-    http_address = "0.0.0.0:{{ .Values.thorasDashboard.containerPort }}"
+    # [::] binds dual-stack; Linux default bindv6only=0 also accepts IPv4 clients as ::ffff:v4.
+    http_address = "[::]:{{ .Values.thorasDashboard.containerPort }}"
     upstreams = ["http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}"]
     # provider must be set; the dummy value below is unused by htpasswd auth.
     provider = "google"
@@ -50,7 +51,8 @@ and their consumers.
     custom_templates_dir = "/etc/oauth2-proxy/templates"
   {{- else if eq $auth.mode "oidc" }}
   oauth2-proxy.cfg: |
-    http_address = "0.0.0.0:{{ .Values.thorasDashboard.containerPort }}"
+    # [::] binds dual-stack; Linux default bindv6only=0 also accepts IPv4 clients as ::ffff:v4.
+    http_address = "[::]:{{ .Values.thorasDashboard.containerPort }}"
     upstreams = ["http://127.0.0.1:{{ include "thoras.dashboard.internalNginxPort" . }}"]
     provider = {{ $auth.oidc.provider | quote }}
     oidc_issuer_url = {{ $auth.oidc.issuerURL | quote }}
@@ -142,9 +144,9 @@ and their consumers.
       server {
         {{- if .Values.thorasDashboard.auth.enabled }}
         {{- $internalPort := include "thoras.dashboard.internalNginxPort" . }}
+        {{- /* No [::1] listen: oauth2-proxy only dials 127.0.0.1 and ::1 is absent on IPv4-only pods (EADDRNOTAVAIL). */}}
         # Loopback-only; oauth2-proxy sidecar fronts containerPort.
         listen       127.0.0.1:{{ $internalPort }};
-        listen       [::1]:{{ $internalPort }} ipv6only=on;
         {{- else }}
         listen       {{ .Values.thorasDashboard.containerPort }};
         listen       [::]:{{ .Values.thorasDashboard.containerPort }} ipv6only=on;

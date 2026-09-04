@@ -331,7 +331,7 @@ tests:
           pattern: 'upstreams = \["http://127.0.0.1:8181"\]'
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
-          pattern: 'http_address = "0.0.0.0:8080"'
+          pattern: 'http_address = "\[::\]:8080"'
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
           pattern: 'custom_templates_dir = "/etc/oauth2-proxy/templates"'
