@@ -4,7 +4,7 @@ A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an 
 
 This doc provides detailed upgrade and migration instructions.
 
-## To 5.0.0
+## To 5.x
 
 Users who manage Thoras via `helm install` and `helm upgrade` with a
 simple values file, and whose deployment matches all of the following,
