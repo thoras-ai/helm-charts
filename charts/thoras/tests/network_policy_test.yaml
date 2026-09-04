@@ -162,6 +162,25 @@ tests:
             - port: 8080
               protocol: TCP
 
+  - it: Dashboard kubernetes policy follows containerPort overrides
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        containerPort: 9090
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            ports:
+            - port: 9090
+              protocol: TCP
+      - notContains:
+          path: spec.ingress
+          content:
+            ports:
+            - port: 8080
+              protocol: TCP
+
   - it: All kubernetes policies allow DNS egress via kube-dns
     templates:
       - api-server-v2/network-policy.yaml
