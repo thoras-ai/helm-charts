@@ -44,6 +44,17 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+  {{- if and .Values.thorasDashboard.auth.enabled (eq .Values.thorasDashboard.auth.mode "oidc") }}
+  # OIDC oauth2-proxy needs egress to the IdP. Standard NetworkPolicy cannot
+  # target "outside the cluster", so this permits any :443 egress. Tighten via
+  # thorasDashboard.extraEgressRules with ipBlock CIDRs for specific IdPs.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - port: 443
+      protocol: TCP
+  {{- end }}
   {{- with .Values.thorasDashboard.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
