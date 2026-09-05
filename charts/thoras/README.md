@@ -99,13 +99,13 @@ lookup above only applies to the default seeded-by-controller path. See
 ## ArgoCD
 
 Argo CD renders manifests without `lookup`, so a small set of chart
-outputs still drifts on every reconcile. To prevent this, do the follow:
+outputs still drifts on every reconcile. To prevent this, do the following:
 
-- Set `featureFlags.enableLegacySecretSeeding: false` (see ADD LINK for more details).
-
-
-Tell Argo to ignore these fields in your `Application`'s
-`spec.ignoreDifferences`:
+- Set `featureFlags.enableLegacySecretSeeding: false` (see
+  [Disable Legacy Secret Seeding](#disable-legacy-secret-seeding) for more
+  details).
+- Tell Argo to ignore these fields in your `Application`'s
+  `spec.ignoreDifferences`:
 
 ```yaml
 ignoreDifferences:
@@ -131,7 +131,9 @@ The following should be done if you use a deployment strategy that uses `helm te
 
 ### Disable Legacy Secret Seeding
 
-Set `featureFlags.enableLegacySecretSeeding: false` (see ADD LINK for more details).
+Set `featureFlags.enableLegacySecretSeeding: false` (see
+[Disable Legacy Secret Seeding](#disable-legacy-secret-seeding) for more
+details).
 
 ### Webhook certificates
 
@@ -146,11 +148,11 @@ cert-manager mode replaces them with declarative `Issuer` and
 
 ### Secrets
 
-Almost every secret/credential is configured via the chart one of three ways, in this order of precedent:
+Almost every secret/credential is configured via the chart one of three ways, in this order of precedence:
 
 1. An externally managed secret by setting `*.existingSecret.secretName` or `*SecretRefName` values
-2. In plain text in via the appropriate field values.yaml
-3. Default: Thoras's config-controller service seeds secrets in cluster
+2. In plain text via the appropriate field in values.yaml (stored in the `thoras-helm-values` Secret)
+3. Default: Thoras's config-controller service seeds secrets in cluster (stored in the `thoras-config-controller` Secret)
 
 | Credential | Existing Secret | Values field |
 |---|---|---|
@@ -162,6 +164,25 @@ Almost every secret/credential is configured via the chart one of three ways, in
 | Slack webhook | `slackWebhookUrlSecretRef{Name,Key}` | `slackWebhookUrl` |
 | Cloud-sync cluster key | `cloudSync.clusterKeySecretRef{Name,Key}` | `cloudSync.clusterKey` |
 | Dashboard OIDC credentials | `thorasDashboard.auth.oidc.existingSecret.*` | — (never chart-managed) |
+
+### Rotating secrets
+
+Config-controller watches every credential in the table above and, when one
+changes, restarts the workloads that consume it. Restarts are performed by evicting
+pods (never by patching the pod template), so they do not register as drift
+in GitOps tools. No manual `kubectl rollout restart` is needed.
+
+How you rotate depends on where the value lives:
+
+- **Externally managed Secret**: update the value in your Secret. The
+  controller picks up the change within roughly a minute and rolls the
+  consumers.
+- **Pinned in values**: change the value in `values.yaml` and run
+  `helm upgrade` and the controller rolls the consumers.
+
+Notes:
+- Set `thorasConfigController.enableRestartRollouts: false` to have the
+  controller log the rollouts it would perform without evicting anything.
 
 ### Disable Legacy Secret Seeding
 
@@ -302,7 +323,7 @@ thorasDashboard:
   auth:
     mode: oidc
     oidc:
-      provider: oidc  # or okta, entra-id, google, ...
+      provider: oidc  # or okta, entra-id, ...
       issuerURL: https://<your-okta-domain>/oauth2/default
       redirectURL: https://thoras.example.com/oauth2/callback
       emailDomains: [example.com]
@@ -451,7 +472,7 @@ by `toFQDNs`, or manage egress out-of-band.
 | costRefreshBatching.batchSize      | Number  | 200                                              | Number of AST costs to refresh per batch                                                                               |
 | costRefreshBatching.maxConcurrency | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                  |
 | apiClientSecret.enabled                         | Boolean | true                                             | If true, components authenticate to the API server with a shared bearer token |
-| apiClientSecret.secret                          | String  | ""                                               | Shared secret components send to the API server when `apiClientSecret.enabled` is true. Chart generates if empty. Setting a value overrides any existing value on the next `helm upgrade`; consumer workloads require a manual rollout (see [rotating secrets](#rotating-secrets)). `apiClientSecret.existingSecret` takes precedent. |
+| apiClientSecret.secret                          | String  | ""                                               | Shared secret components send to the API server when `apiClientSecret.enabled` is true. Seeded by config-controller if empty. Setting a value overrides any existing value on the next `helm upgrade`. Config-controller rolls consumer workloads automatically (see [rotating secrets](#rotating-secrets)). `apiClientSecret.existingSecret` takes precedence. |
 | apiClientSecret.existingSecret.secretName       | String  | ""                                               | Read the API-client secret from this pre-existing externally managed secret. Required key documented below |
 | apiClientSecret.existingSecret.secretKey        | String  | api-client-secret                                | Key in `apiClientSecret.existingSecret.secretName` that holds the value.                                                                                                            |
 
@@ -650,14 +671,14 @@ must be pre-installed and managed externally.
 | thorasDashboard.auth.resources                              | Object  | see values.yaml     | oauth2-proxy sidecar resources                                           |
 | thorasDashboard.auth.extraArgs                              | List    | []                  | Extra flags appended to the sidecar's `args` verbatim. Applies to both modes. Flags here override any equivalent directive in the chart-generated `oauth2-proxy.cfg` |
 | thorasDashboard.auth.htpasswd.username                      | String  | thoras              | Login username under `mode: htpasswd`                                    |
-| thorasDashboard.auth.htpasswd.password                      | String  | ""                  | Dashboard login password. Chart generates if empty. Setting a value overrides any existing value on the next `helm upgrade`; consumer workloads require a manual rollout (see [rotating secrets](#rotating-secrets)). `thorasDashboard.auth.htpasswd.existingSecret` takes precedent |
-| thorasDashboard.auth.htpasswd.cookieSecret                  | String  | ""                  | Session cookie secret; 16, 24, or 32 bytes (`openssl rand -base64 32`). Chart generates if empty. Setting a value overrides any existing value on the next `helm upgrade`; consumer workloads require a manual rollout, which invalidates all logged-in dashboard sessions (see [rotating secrets](#rotating-secrets)). `thorasDashboard.auth.htpasswd.existingSecret` takes precedent |
+| thorasDashboard.auth.htpasswd.password                      | String  | ""                  | Dashboard login password. Seeded by config-controller if empty. Setting a value overrides any existing value on the next `helm upgrade`. Config-controller rolls the dashboard automatically (see [rotating secrets](#rotating-secrets)). `thorasDashboard.auth.htpasswd.existingSecret` takes precedence |
+| thorasDashboard.auth.htpasswd.cookieSecret                  | String  | ""                  | Session cookie secret; 16, 24, or 32 bytes (`openssl rand -base64 32`). Seeded by config-controller if empty. Setting a value overrides any existing value on the next `helm upgrade`. Config-controller rolls the dashboard automatically, which invalidates all logged-in dashboard sessions (see [rotating secrets](#rotating-secrets)). `thorasDashboard.auth.htpasswd.existingSecret` takes precedence |
 | thorasDashboard.auth.htpasswd.existingSecret.secretName     | String  | ""                  | Read the htpasswd password + cookie secret from this pre-existing externally managed secret. Required keys documented below |
 | thorasDashboard.auth.htpasswd.existingSecret.passwordKey    | String  | dashboard-auth-password | Key inside `existingSecret.secretName` that holds the password         |
 | thorasDashboard.auth.htpasswd.existingSecret.cookieSecretKey | String | dashboard-auth-cookie-secret | Key inside `existingSecret.secretName` that holds the cookie secret  |
 | thorasDashboard.auth.htpasswd.initImage.imageTag            | String  | 2.4.68-alpine3.24   | httpd image tag for the init container that regenerates the htpasswd file at pod start |
 | thorasDashboard.auth.htpasswd.initImage.resources           | Object  | see values.yaml     | htpasswd init container resources                                        |
-| thorasDashboard.auth.oidc.provider                          | String  | oidc                | oauth2-proxy provider name (`oidc`, `okta`, `entra-id`, `google`, ...)   |
+| thorasDashboard.auth.oidc.provider                          | String  | oidc                | oauth2-proxy provider name (`oidc`, `okta`, `entra-id`, ...)             |
 | thorasDashboard.auth.oidc.issuerURL                         | String  | ""                  | OIDC issuer URL. Required under `mode: oidc`                             |
 | thorasDashboard.auth.oidc.redirectURL                       | String  | ""                  | External redirect URL registered on your IdP app. Required under `mode: oidc` |
 | thorasDashboard.auth.oidc.emailDomains                      | List    | ["*"]               | Allowed login email domains. Rendered as repeated oauth2-proxy `email_domains` entries |
