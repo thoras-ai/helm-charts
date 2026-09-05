@@ -99,8 +99,8 @@ featureFlags:
 apiClientSecret:
   # Seeded by config-controller when empty. Set a value to pin it in
   # `thoras-helm-values` instead; apiClientSecret.existingSecret takes
-  # precedence over both. Changing a pinned value requires a manual rollout of
-  # dependent workloads; see README > "Rotating secrets".
+  # precedence over both. When a pinned value changes, config-controller rolls
+  # the dependent workloads automatically. See README > "Rotating secrets".
   secret: ""
   # Point at a pre-existing Secret you manage. Mutually exclusive with
   # apiClientSecret.secret.
@@ -680,14 +680,14 @@ thorasDashboard:
       username: thoras
       # Seeded by config-controller when empty. Set a value to pin it in
       # `thoras-helm-values` instead; thorasDashboard.auth.htpasswd.existingSecret
-      # takes precedence over both. Changing a pinned value requires a manual
-      # rollout of the dashboard; see README > "Rotating secrets".
+      # takes precedence over both. When a pinned value changes, config-controller
+      # rolls the dashboard automatically. See README > "Rotating secrets".
       password: ""
       # Seeded by config-controller when empty. Set a value to pin it in
       # `thoras-helm-values` instead; thorasDashboard.auth.htpasswd.existingSecret
       # takes precedence over both. Changing a pinned value invalidates every
-      # logged-in dashboard session and requires a manual rollout of the
-      # dashboard; see README > "Rotating secrets".
+      # logged-in dashboard session. Config-controller rolls the dashboard
+      # automatically. See README > "Rotating secrets".
       # Must be 16, 24, or 32 bytes raw, or a base64 string that decodes to
       # that length.
       cookieSecret: ""
@@ -715,7 +715,7 @@ thorasDashboard:
     # the dashboard NetworkPolicy so the sidecar can reach the IdP. Tighten
     # via a separate NetworkPolicy.
     oidc:
-      # oauth2-proxy provider name (oidc | okta | entra-id | google | ...).
+      # oauth2-proxy provider name (oidc | okta | entra-id | ...).
       provider: oidc
       # e.g. https://<okta-domain>/oauth2/default or
       # https://login.microsoftonline.com/<tenant-id>/v2.0
