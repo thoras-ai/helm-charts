@@ -15,7 +15,8 @@ helm repo update
 
 # Charts
 
- - [Thoras](./charts/thoras/README.md)
+ - [Thoras](./charts/thoras/README.md) - the platform, installed onto a cluster you want to observe
+ - [Thoras Console](./charts/thoras-console/README.md) - a self-hosted console for clusters to report into
 
 # Development
 
