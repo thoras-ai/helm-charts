@@ -22,6 +22,10 @@ jobs:
           version: "v3.19.2"
       - name: Install Helm Unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.2
+      - name: Lint Charts
+        run: |
+          helm lint ./charts/thoras
+          helm lint ./charts/thoras-console
       - name: Run Helm Unit Tests
         run: helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
       - uses: actions/setup-python@v3
