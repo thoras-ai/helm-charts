@@ -1,0 +1,57 @@
+Thoras console installed in namespace {{ .Release.Namespace }}.
+{{- /* Each block below opens with a blank line inside its own conditional, so a
+       suppressed block leaves no gap behind. */}}
+{{- if .Values.consoleApi.externalUrl }}
+
+Console URL: {{ .Values.consoleApi.externalUrl }}
+{{- else }}
+
+Console URL: NOT CONFIGURED
+  Set consoleApi.externalUrl to the address you front the console with.
+{{- end }}
+{{- if eq .Values.consoleApi.auth.mode "oidc" }}
+
+Authentication: OIDC
+{{- if and .Values.consoleApi.auth.oidc.issuer .Values.consoleApi.auth.oidc.audiences }}
+  Issuer: {{ .Values.consoleApi.auth.oidc.issuer }}
+  Sign in through your identity provider.
+{{- else }}
+  INCOMPLETE. Set consoleApi.auth.oidc.issuer and .audiences. Leaving them
+  empty falls back to values that point at Thoras' hosted console, which will
+  not accept your users.
+{{- end }}
+{{- else }}
+
+Authentication: {{ .Values.consoleApi.auth.mode | upper }} (shared admin password)
+{{- if .Values.consoleApi.auth.existingSecret.secretName }}
+  Password:
+    kubectl get secret {{ .Values.consoleApi.auth.existingSecret.secretName }} -n {{ .Release.Namespace }} \
+      -o jsonpath='{.data.{{ .Values.consoleApi.auth.existingSecret.passwordKey }}}' | base64 -d
+{{- else if not .Values.consoleApi.auth.adminPassword }}
+  NO PASSWORD SET. Set consoleApi.auth.adminPassword (minimum 12 characters) or
+  point consoleApi.auth.existingSecret at a Secret you manage.
+{{- end }}
+{{- if not .Values.consoleApi.auth.adminSalt }}
+  consoleApi.auth.adminSalt is unset, so the console falls back to a shared
+  built-in salt. Set a unique value of at least 16 characters. It must never
+  change afterwards: the session signing key derives from it.
+{{- end }}
+{{- end }}
+{{- if not (or .Values.imageCredentials.password .Values.imageCredentials.secretRef) }}
+
+Image pull credentials: NOT CONFIGURED
+  Set imageCredentials.password to your license key, or point
+  imageCredentials.secretRef at a Secret already in this namespace.
+{{- end }}
+{{- if not (or .Values.externalDatabase.dsn .Values.externalDatabase.existingSecret.secretName) }}
+
+Database: NOT CONFIGURED
+  Set externalDatabase.dsn, or point externalDatabase.existingSecret at a Secret
+  you manage. The database needs the timescaledb and citext extensions
+  available -- stock Postgres will not work.
+{{- end }}
+{{- if .Release.IsInstall }}
+
+This chart release renders credentials and configuration only. It schedules no
+workloads, so expect no console pods in {{ .Release.Namespace }}.
+{{- end }}

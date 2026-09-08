@@ -1,11 +1,16 @@
 # CLAUDE.md
 
-Single Helm chart (`charts/thoras/`) that installs the Thoras AI platform onto
-Kubernetes clusters.
+Two Helm charts: `charts/thoras/` installs the Thoras AI platform onto a cluster
+you want to observe, and `charts/thoras-console/` installs a self-hosted console
+for those clusters to report into.
 
 ## Repository Overview
 
-This is the official Helm Charts repository for Thoras AI, an ML-powered platform that helps SRE teams view the future of their Kubernetes workloads. The repository contains a single Helm chart that installs the complete Thoras platform onto Kubernetes clusters.
+This is the official Helm Charts repository for Thoras AI, an ML-powered platform that helps SRE teams view the future of their Kubernetes workloads.
+
+`charts/thoras` installs the complete Thoras platform onto Kubernetes clusters and is the chart the rest of this document describes. `charts/thoras-console` is a separate install, currently rendering credentials and configuration only; its workloads land in later releases. The two charts are independent and may share a namespace, so resource and template names must not collide.
+
+Only `charts/thoras` is published. `release.yml` packages an explicit list rather than discovering `charts/*`, so adding a chart to the release means adding a `helm package` line and widening the version-bump diff scope alongside it.
 
 ## Architecture
 
@@ -42,6 +47,13 @@ Run Helm unit tests:
 ```bash
 helm plugin install https://github.com/helm-unittest/helm-unittest.git
 helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
+```
+
+Lint both charts, as CI does:
+
+```bash
+helm lint ./charts/thoras
+helm lint ./charts/thoras-console
 ```
 
 ### Chart Installation
@@ -92,6 +104,15 @@ charts/thoras/
 │   ├── operator/                       # Operator + webhook cert management
 │   └── worker/                         # Background worker
 └── tests/                              # Helm unit tests with snapshots
+
+charts/thoras-console/
+├── Chart.yaml              # Chart metadata and version
+├── values.yaml             # Default configuration values
+├── README.md               # User-facing chart documentation
+└── templates/
+    ├── NOTES.txt                       # Post-install notes rendered by `helm install`
+    ├── _helpers.tpl                    # Chart-wide template helpers, prefixed thoras-console.
+    └── registry-secret.yaml            # Image-pull Secret
 ```
 
 ## Configuration

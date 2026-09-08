@@ -1,0 +1,151 @@
+---
+# Image tag for the console components.
+consoleVersion: "latest"
+
+imageCredentials:
+  registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
+  username: "_json_key_base64"
+
+  # Set the license key directly as a variable (or alternatively
+  # use imageCredentials.secretRef to reference an existing secret
+  password: ""
+
+  # Reference a pre-existing secret in the console namespace
+  secretRef: ""
+  imagePullSecretInDeployment: false
+
+imagePullPolicy: "IfNotPresent"
+
+logLevel: info
+
+# -- Additional environment variables that will be passed onto all console components
+env: []
+
+# -- Proxy settings passed to all console components
+proxy:
+  httpProxy: ""
+  httpsProxy: ""
+  noProxy: ""
+
+# -- Labels added to every resource this chart renders
+labels: {}
+
+# -- Annotations added to every console pod
+podAnnotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+# -- Cluster-wide affinity, applied to components that opt in via
+# useGlobalAffinity
+affinity: {}
+
+# -- Cluster-wide topology spread, overridden per component
+topologySpreadConstraints: []
+
+consoleApi:
+  enabled: true
+  replicaCount: 1
+
+  # Repository is joined to imageCredentials.registry; the tag is consoleVersion.
+  image:
+    repository: console-api
+
+  # -- URL the console is reachable on. Read only by NOTES.txt today; the
+  # Ingress that serves it arrives with the console workloads.
+  externalUrl: ""
+
+  resources: {}
+
+  # -- Auto-provision and implicitly use one organization. Self-hosted installs
+  # have exactly one by definition, so this removes the signup and invite flow.
+  singleOrg:
+    enabled: true
+    # Renames the existing organization if changed after install.
+    name: "Default Organization"
+
+  auth:
+    # local: shared admin password, no external identity provider.
+    # oidc:  an identity provider you already run.
+    # both:  accept either.
+    mode: local
+
+    # -- Required when mode is oidc or both. The defaults compiled into
+    # console-api point at Thoras' own hosted console, so a self-hosted install
+    # must set these or it will validate tokens against the wrong tenant.
+    oidc:
+      # Must match the token's iss claim exactly, including any trailing slash.
+      issuer: ""
+      # Comma-separated.
+      audiences: ""
+      # Only needed when the issuer URL is not reachable from inside the
+      # cluster: the iss claim stays browser-facing while keys are fetched here.
+      jwksUri: ""
+
+    # -- Shared admin password for mode local/both. Minimum 12 characters.
+    # Consumed by the console-api Deployment in a later release; setting it has
+    # no effect yet.
+    adminPassword: ""
+
+    # -- Read the admin password from a Secret you manage instead of pinning it
+    # above. Takes precedence over adminPassword.
+    existingSecret:
+      secretName: ""
+      passwordKey: local-admin-password
+
+    # -- Per-install salt for the admin signing key. Not a secret, so it travels
+    # as plain config -- it only has to be unique and stable. Minimum 16
+    # characters. Never change it once set: the signing key derives from it, so
+    # changing it invalidates every session. Empty falls back to a shared
+    # built-in value and warns at startup.
+    adminSalt: ""
+
+  # -- Shared secret for the identity-provider user-created webhook. Required
+  # only when that webhook is in use.
+  webhookSecret: ""
+
+  # -- Read the webhook secret from a Secret you manage instead of pinning it
+  # above. Takes precedence over webhookSecret.
+  webhookExistingSecret:
+    secretName: ""
+    secretKey: webhook-secret
+
+  useGlobalAffinity: false
+  affinity: {}
+  priorityClassName: ""
+  topologySpreadConstraints: []
+  extraEgressRules: []
+  extraIngressRules: []
+
+# -- Postgres with the timescaledb and citext extensions available. Stock
+# Postgres will not work: the console migrations create hypertables and
+# continuous aggregates.
+externalDatabase:
+  # -- Full DSN, pinned in values.
+  dsn: ""
+
+  # -- Run migrations on startup. console-api defaults this off for local runs
+  # against a shared database, so a deployment has to turn it on. Migrations
+  # take a Postgres advisory lock, so replicas may start together. Disable only
+  # if you apply migrations yourself.
+  migrateOnStart: true
+
+  # -- Read the DSN from a Secret you manage instead of pinning it above. Takes
+  # precedence over dsn.
+  existingSecret:
+    secretName: ""
+    dsnKey: postgresql-dsn
+
+slack:
+  # -- Report console errors to Slack.
+  errorsEnabled: false
+
+  # -- Incoming webhook URL. Secret material.
+  webhookUrl: ""
+
+  # -- Read the webhook URL from a Secret you manage instead of pinning it
+  # above. Takes precedence over webhookUrl.
+  existingSecret:
+    secretName: ""
+    webhookUrlKey: slack-webhook-url

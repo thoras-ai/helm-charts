@@ -18,12 +18,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: "v3.19.2"
+
       - name: Determine if we're bumping the version
         shell: bash
         id: version_bump
         run: |
-          # Diff HEAD against pre-merge state and look for version bump
-          DIFF=$(git diff $(git rev-parse HEAD^1)..HEAD charts/*/Chart.yaml)
+          # Diff HEAD against pre-merge state and look for version bump.
+          # Scoped to the charts listed in the packaging step below: a bump to
+          # any other chart must not trigger a release.
+          DIFF=$(git diff $(git rev-parse HEAD^1)..HEAD charts/thoras/Chart.yaml)
           LATEST_HELM=$(echo "$DIFF" | grep -E '^\+version:' | sed 's/^+version: *//' || true)
           if [ -n "$LATEST_HELM" ]; then
             PREV_HELM=$(echo "$DIFF" | grep -E '^\-version:' | sed 's/^-version: *//' || true)
@@ -40,9 +47,24 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+      - name: Package charts to publish
+        if: steps.version_bump.outputs.is_bump == 'true'
+        shell: bash
+        run: |
+          # chart-releaser otherwise discovers every chart under charts/ and
+          # would publish ones that are not ready. Add a line per chart to
+          # publish, and widen the diff scope above to match.
+          helm package charts/thoras -d .cr-release-packages
+
       - name: Run chart-releaser
         if: steps.version_bump.outputs.is_bump == 'true'
         uses: helm/chart-releaser-action@v1.6.0
+        with:
+          # Upload the packages built above rather than re-discovering charts.
+          skip_packaging: true
+          # Packaging is unconditional, so a run where the chart version did not
+          # actually move must not fail on an existing release.
+          skip_existing: true
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
