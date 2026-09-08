@@ -32,18 +32,7 @@ spec:
   - to:
     - podSelector: {}
   # Allow DNS resolution
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-      podSelector:
-        matchLabels:
-          k8s-app: kube-dns
-    ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+  {{- include "thoras.dnsEgressRules" . | nindent 2 }}
   {{- if and .Values.thorasDashboard.auth.enabled (eq .Values.thorasDashboard.auth.mode "oidc") }}
   # OIDC oauth2-proxy needs egress to the IdP. Standard NetworkPolicy cannot
   # target "outside the cluster", so this permits any :443 egress. Tighten via
@@ -91,17 +80,7 @@ spec:
   - toEndpoints:
     - {}
   # Allow DNS resolution
-  - toEndpoints:
-    - matchLabels:
-        k8s:k8s-app: kube-dns
-        k8s:io.kubernetes.pod.namespace: kube-system
-    toPorts:
-    - ports:
-      - port: "53"
-        protocol: ANY
-      rules:
-        dns:
-        - matchPattern: "*"
+  {{- include "thoras.dnsEgressRulesCilium" . | nindent 2 }}
   {{- if and .Values.thorasDashboard.auth.enabled (eq .Values.thorasDashboard.auth.mode "oidc") }}
   # OIDC oauth2-proxy needs egress to the IdP. Scope is world:443 because IdP
   # hostnames resolve to drifting CIDRs; tightening guidance for operators

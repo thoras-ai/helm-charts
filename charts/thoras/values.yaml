@@ -22,7 +22,10 @@ resourceQuota:
   jobs: 200
 
 networkPolicy:
-  enabled: false
+  # -- Render per-component network policies. Enabled by default as of 6.0.0.
+  # Set to false to restore pre-6.0 behavior. See UPGRADE.md > Network Policies
+  # Enabled by Default.
+  enabled: true
   # flavor: "kubernetes" uses standard NetworkPolicy (networking.k8s.io/v1)
   # flavor: "cilium" uses CiliumNetworkPolicy (cilium.io/v2)
   flavor: kubernetes
@@ -39,6 +42,35 @@ networkPolicy:
   apiServerPorts:
   - 443
   - 6443
+  # minikube fronts the API server on 8443.
+  - 8443
+
+  # -- CIDRs the Kubernetes API server endpoints live in. When empty (the
+  # default) the API egress rule above is ports-only, which standard
+  # NetworkPolicy evaluates as "any destination on those ports" -- it permits
+  # more than the API server. Set this to the control-plane CIDRs to scope the
+  # rule down; the cilium flavor already scopes by identity and ignores it.
+  apiServerCIDRs: []
+
+  # -- Ports an external PostgreSQL/TimescaleDB listens on. Only used when
+  # externalTimescale.dsn or externalTimescale.secretRefName is set; the host is
+  # not knowable at render time, so egress is scoped by port only. Adjust if
+  # your database listens somewhere other than 5432.
+  externalDatabasePorts:
+  - 5432
+
+  # -- Allow a metrics scraper in any namespace to reach each component's
+  # Prometheus port. Prometheus normally runs outside the release namespace, so
+  # disabling this stops metrics collection unless you add extraIngressRules.
+  # Does not cover the API server, whose metrics share its API port. See
+  # README > NetworkPolicy.
+  allowMetricsScraping: true
+
+  # -- In addition to the kube-dns rule, allow port 53 to any destination.
+  # Required by NodeLocal DNSCache (GKE, EKS), which answers on a link-local
+  # address owned by the node rather than a pod, and by CoreDNS installs that
+  # do not carry the k8s-app=kube-dns label.
+  allowDnsToAnyDestination: true
 
 imagePullPolicy: "IfNotPresent"
 
