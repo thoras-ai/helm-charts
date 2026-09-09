@@ -45,7 +45,7 @@ networkPolicy:
 
   # -- CIDRs the Kubernetes API server endpoints live in. When empty (the
   # default) the API egress rule above is ports-only, which standard
-  # NetworkPolicy evaluates as "any destination on those ports" -- it permits
+  # NetworkPolicy evaluates as "any destination on those ports", which permits
   # more than the API server. Set this to the control-plane CIDRs to scope the
   # rule down; the cilium flavor already scopes by identity and ignores it.
   # Under the kubernetes flavor that ports-only rule also carries cloud sync
