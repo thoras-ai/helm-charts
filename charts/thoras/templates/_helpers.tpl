@@ -471,6 +471,7 @@ Usage: include "thoras.metricsIngressRule" (dict "root" . "port" .Values.thorasW
 */}}
 {{- define "thoras.metricsIngressRule" -}}
 {{- if and .root.Values.networkPolicy.allowMetricsScraping .enabled -}}
+{{- if not .port }}{{ fail "networkPolicy.allowMetricsScraping needs the component's prometheus.port; an empty port would open every port to every namespace" }}{{ end -}}
 - from:
   - namespaceSelector: {}
   ports:
@@ -487,6 +488,7 @@ Usage: include "thoras.metricsIngressRuleCilium" (dict "root" . "port" .Values.t
 */}}
 {{- define "thoras.metricsIngressRuleCilium" -}}
 {{- if and .root.Values.networkPolicy.allowMetricsScraping .enabled -}}
+{{- if not .port }}{{ fail "networkPolicy.allowMetricsScraping needs the component's prometheus.port; an empty port would open every port to every namespace" }}{{ end -}}
 - fromEntities:
   - cluster
   toPorts:
