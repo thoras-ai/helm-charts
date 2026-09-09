@@ -467,10 +467,9 @@ release namespace. On top of that:
   empty the API egress rule carries ports but no destination, which
   Kubernetes evaluates as any destination on those ports. The same
   applies to the external-database rule. The `cilium` flavor scopes
-  both by identity. Set `apiServerCIDRs` to close the API half — but
-  under `kubernetes` that ports-only rule is also what lets cloud sync
-  and Slack notifications out, so add `extraEgressRules` for those
-  first.
+  both by identity. Setting `apiServerCIDRs` closes the API half; under
+  `kubernetes` that ports-only rule also carries cloud sync and Slack
+  egress, so add `extraEgressRules` for those first.
 - **Scraping the API server's metrics needs an explicit rule.** Its
   `/metrics` endpoint shares the API port, so opening it to other
   namespaces would expose the API. Add a
@@ -482,10 +481,10 @@ release namespace. On top of that:
   [kube-apiserver]` does not cover the internet. Under `kubernetes`
   the ports-only API rule already permits them unless `apiServerCIDRs`
   is set.
-- **Policies are only as good as the CNI.** On EKS with the VPC CNI
-  the objects apply but nothing enforces them unless the network
-  policy agent is enabled; other CNIs without NetworkPolicy support
-  behave the same way. Nothing in the cluster reports this.
+- **Enforcement depends on the CNI.** On EKS with the VPC CNI the
+  policies apply but are not enforced unless the network policy agent
+  is enabled. Other CNIs without NetworkPolicy support behave the same
+  way, and the cluster does not report it.
 - **Egress through an HTTP proxy is not modeled.** If
   `proxy.httpProxy` or `proxy.httpsProxy` points outside the release
   namespace on a port other than 443 or 6443, add an

@@ -25,9 +25,8 @@ work through the matching section in [Breaking Changes](#breaking-changes).
 #### Network Policies Enabled by Default
 
 `networkPolicy.enabled` now defaults to `true`. A `helm upgrade` that does not
-set it applies eight `NetworkPolicy` objects to the release namespace, moving
-the selected pods from "allow everything" to "allow only what the policy
-lists".
+set it applies eight `NetworkPolicy` objects to the release namespace; the
+selected pods then accept and send only the traffic each policy lists.
 
 Before 6.0.0 a default install had no in-cluster segmentation: any pod in the
 cluster could reach the Thoras API server (`:80`) and TimescaleDB (`:5432`)
@@ -41,10 +40,10 @@ networkPolicy:
   enabled: false
 ```
 
-That render is byte-identical to the 5.x default.
+That render matches the 5.x default.
 
-If connectivity breaks mid-rollout, deleting the policies restores it
-immediately. Substitute your release name and namespace:
+To restore connectivity during a rollout, delete the policies (substitute your
+release name and namespace):
 
 ```
 kubectl delete networkpolicy -l app.kubernetes.io/instance=thoras -n thoras
@@ -59,7 +58,7 @@ The policies allow ingress from, and egress to, other pods in the release
 namespace, plus DNS, the Kubernetes API, Prometheus scrapes, and an external
 TimescaleDB when one is configured. See [README >
 NetworkPolicy](README.md#networkpolicy) for the full list and for the
-per-component `extraIngressRules` / `extraEgressRules` escape hatches.
+per-component `extraIngressRules` / `extraEgressRules` values.
 
 #### New NetworkPolicy Values
 
@@ -99,8 +98,8 @@ cannot reach the API server the hook fails, and the release fails with it.
 #### External TimescaleDB
 
 An external database is outside the release namespace, so the in-namespace
-egress rule does not cover it. The host is not knowable at render time, so
-egress is scoped by port. If your database does not listen on 5432:
+egress rule does not cover it. The host is unknown at render time, so egress
+is scoped by port. If your database does not listen on 5432:
 
 ```yaml
 networkPolicy:
@@ -171,8 +170,7 @@ before setting it.
 
 #### Existing Adopters
 
-If you already set `networkPolicy.enabled: true`, two rules widen on upgrade
-with no action on your part:
+If you already set `networkPolicy.enabled: true`, two rules widen on upgrade:
 
 - Every policy gains a ports-only `:53` egress rule, so DNS may go to any
   destination rather than only to `k8s-app=kube-dns` pods in `kube-system`

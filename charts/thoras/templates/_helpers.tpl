@@ -451,7 +451,7 @@ Usage: include "thoras.metricsIngressRuleCilium" (dict "root" . "port" .Values.t
 {{/*
 Egress rule for components holding a PostgreSQL DSN when the database is
 outside the cluster (externalTimescale.dsn or externalTimescale.secretRefName).
-The host is not knowable at render time, so the "kubernetes" flavor emits a
+The host is unknown at render time, so the "kubernetes" flavor emits a
 ports-only rule and the "cilium" flavor scopes to the world entity. Ports come
 from networkPolicy.externalDatabasePorts; an empty list omits the rule.
 
