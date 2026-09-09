@@ -42,14 +42,14 @@ networkPolicy:
   apiServerPorts:
   - 443
   - 6443
-  # minikube fronts the API server on 8443.
-  - 8443
 
   # -- CIDRs the Kubernetes API server endpoints live in. When empty (the
   # default) the API egress rule above is ports-only, which standard
   # NetworkPolicy evaluates as "any destination on those ports" -- it permits
   # more than the API server. Set this to the control-plane CIDRs to scope the
   # rule down; the cilium flavor already scopes by identity and ignores it.
+  # Under the kubernetes flavor that ports-only rule is also what lets cloud
+  # sync and Slack notifications out, so add extraEgressRules for those first.
   apiServerCIDRs: []
 
   # -- Ports an external PostgreSQL/TimescaleDB listens on. Only used when
