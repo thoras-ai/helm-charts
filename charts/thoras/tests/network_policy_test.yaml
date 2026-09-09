@@ -100,8 +100,6 @@ tests:
               protocol: TCP
             - port: 6443
               protocol: TCP
-            - port: 8443
-              protocol: TCP
 
   - it: All kubernetes policies allow API server egress on custom ports
     templates:
@@ -436,8 +434,6 @@ tests:
               protocol: TCP
             - port: 6443
               protocol: TCP
-            - port: 8443
-              protocol: TCP
 
   - it: Certgen kubernetes policy allows DNS egress via kube-dns
     template: operator/webhooks-certgen-network-policy.yaml
@@ -671,6 +667,76 @@ tests:
               - port: "9102"
                 protocol: TCP
 
+  # A nil port would render `port:` with no value, which Kubernetes reads as
+  # every port, turning the scrape rule into all-namespaces-all-ports.
+  - it: Metrics ingress fails the render when the prometheus port is unset
+    templates:
+      - worker/network-policy.yaml
+    set:
+      thorasWorker:
+        prometheus:
+          port: null
+    asserts:
+      - failedTemplate:
+          errorPattern: prometheus.port
+
+  - it: Metrics ingress fails the render when the prometheus port is unset under cilium
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+      thorasWorker:
+        prometheus:
+          port: null
+    asserts:
+      - failedTemplate:
+          errorPattern: prometheus.port
+
+  - it: An unset prometheus port renders when metrics scraping is off
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy:
+        allowMetricsScraping: false
+      thorasWorker:
+        prometheus:
+          port: null
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  # --- TimescaleDB ingress ---
+
+  # TimescaleDB runs inside the metrics-collector pod, so the collector policy
+  # is what closes :5432 to other namespaces. Service/timescale and the policy
+  # must keep selecting the same pod; if TimescaleDB moves to its own workload
+  # it needs its own policy and this test moves with it.
+  - it: Collector policy selects the pod behind Service/timescale
+    template: collector/network-policy.yaml
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels.app
+          value: metrics-collector
+
+  - it: Service/timescale selects the pod the collector policy covers
+    template: collector/service.yaml
+    documentSelector:
+      path: metadata.name
+      value: timescale
+    asserts:
+      - equal:
+          path: spec.selector.app
+          value: metrics-collector
+
+  - it: Collector policy does not open cross-namespace ingress
+    template: collector/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.ingress
+          any: true
+          content:
+            from:
+            - namespaceSelector: {}
+
   # --- External database egress ---
 
   - it: No external database egress when the bundled TimescaleDB is used
@@ -762,8 +828,6 @@ tests:
               protocol: TCP
             - port: 6443
               protocol: TCP
-            - port: 8443
-              protocol: TCP
       - notContains:
           path: spec.egress
           content:
@@ -771,8 +835,6 @@ tests:
             - port: 443
               protocol: TCP
             - port: 6443
-              protocol: TCP
-            - port: 8443
               protocol: TCP
 
   - it: Cilium flavor ignores apiServerCIDRs
