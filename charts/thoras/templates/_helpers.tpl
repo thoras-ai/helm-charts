@@ -309,19 +309,10 @@ true
 {{- end -}}
 
 {{/*
-Egress rule allowing components to reach the Kubernetes API server, for the
-"kubernetes" NetworkPolicy flavor.
-
-Standard NetworkPolicy cannot target the API server by label, so with
-networkPolicy.apiServerCIDRs empty this permits egress to any destination on
-the configured ports. Setting apiServerCIDRs scopes the rule to those ipBlocks
-instead. Policy is enforced after kube-proxy DNATs the service address to the
-real endpoint, so the ports must match what the API server actually listens on
-rather than the service port. The cilium flavor scopes by identity and does not
-use this helper.
-
-Emits nothing when the port list is empty, leaving the rule out entirely
-instead of rendering a rule that would allow egress on every port.
+API server egress rule for the "kubernetes" flavor. Standard NetworkPolicy
+cannot name the API server, so with apiServerCIDRs empty this allows any
+destination on apiServerPorts. Emits nothing when the port list is empty; a
+rule with no ports would allow every port.
 */}}
 {{- define "thoras.apiServerEgressRule" -}}
 {{- $ports := .Values.networkPolicy.apiServerPorts -}}
@@ -351,11 +342,9 @@ instead of rendering a rule that would allow egress on every port.
 {{/*
 DNS egress rules for the "kubernetes" flavor.
 
-The first rule targets an in-cluster CoreDNS labeled k8s-app=kube-dns in
-kube-system. networkPolicy.allowDnsToAnyDestination adds a second, ports-only
-rule for clusters where that selector matches nothing: NodeLocal DNSCache
-(GKE, EKS) answers on a link-local address owned by the node rather than a
-pod, and some distributions label CoreDNS differently.
+The kube-dns pod selector matches nothing under NodeLocal DNSCache (a node
+listener, not a pod) or a differently labeled CoreDNS;
+allowDnsToAnyDestination adds a ports-only rule for those.
 */}}
 {{- define "thoras.dnsEgressRules" -}}
 - to:
@@ -381,8 +370,7 @@ pod, and some distributions label CoreDNS differently.
 
 {{/*
 DNS egress rules for the "cilium" flavor. Mirrors thoras.dnsEgressRules; the
-fallback targets the host and remote-node entities, where a NodeLocal DNSCache
-listener runs.
+fallback targets the host and remote-node entities.
 */}}
 {{- define "thoras.dnsEgressRulesCilium" -}}
 - toEndpoints:
@@ -408,14 +396,8 @@ listener runs.
 {{- end -}}
 
 {{/*
-Ingress rule allowing a metrics scraper in any namespace to reach a
-component's Prometheus port. Components enable prometheus by default and
-Prometheus normally runs outside the release namespace, which the
-same-namespace ingress rule does not cover. Emits nothing when
-networkPolicy.allowMetricsScraping is false or the component has prometheus
-disabled.
-
-Not used by the API server, whose metrics share its API port.
+Cross-namespace ingress rule for a component's Prometheus port. Not used by
+the API server, whose metrics share its API port.
 
 Usage: include "thoras.metricsIngressRule" (dict "root" . "port" .Values.thorasWorker.prometheus.port "enabled" .Values.thorasWorker.prometheus.enabled)
 */}}
@@ -449,13 +431,9 @@ Usage: include "thoras.metricsIngressRuleCilium" (dict "root" . "port" .Values.t
 {{- end -}}
 
 {{/*
-Egress rule for components holding a PostgreSQL DSN when the database is
-outside the cluster (externalTimescale.dsn or externalTimescale.secretRefName).
-The host is unknown at render time, so the "kubernetes" flavor emits a
-ports-only rule and the "cilium" flavor scopes to the world entity. Ports come
-from networkPolicy.externalDatabasePorts; an empty list omits the rule.
-
-Emits nothing for the bundled TimescaleDB, which the in-namespace rule covers.
+Egress rule to an external TimescaleDB for components holding the DSN. The
+host is unknown at render time, so the rule is ports-only. Emits nothing for
+the bundled TimescaleDB.
 */}}
 {{- define "thoras.externalDatabaseEgressRule" -}}
 {{- if include "thoras.externalTimescaleEnabled" . -}}
