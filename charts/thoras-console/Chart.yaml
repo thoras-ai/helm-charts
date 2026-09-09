@@ -6,6 +6,6 @@ type: application
 # App version is managed as consoleVersion in values.yaml, so the image tag can
 # move without a chart bump.
 #
-# Pre-1.0 while the value surface is still settling: this chart currently ships
-# the image-pull Secret only, and the console workloads land in later releases.
-version: 0.1.0
+# Pre-1.0 while the value surface is still settling. The dashboard and the
+# install guide land in later releases.
+version: 0.2.0
