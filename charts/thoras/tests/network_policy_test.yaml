@@ -1,14 +1,12 @@
 suite: Network Policy
-# networkPolicy.enabled defaults to true as of chart 6.0.0, so the suite only
-# pins the flavor. Tests that need the off state set enabled: false explicitly.
+# networkPolicy.enabled defaults to true; tests for the off state set it
+# explicitly.
 set:
   networkPolicy:
     flavor: kubernetes
 tests:
   # --- Rendering guards ---
 
-  # A default install must carry all eight policies. Without them any pod in
-  # the cluster can reach the API server and TimescaleDB directly.
   - it: Renders every policy with default values
     templates:
       - api-server-v2/network-policy.yaml
@@ -667,8 +665,8 @@ tests:
               - port: "9102"
                 protocol: TCP
 
-  # A nil port would render `port:` with no value, which Kubernetes reads as
-  # every port, turning the scrape rule into all-namespaces-all-ports.
+  # A nil port renders `port:` with no value, which Kubernetes reads as every
+  # port.
   - it: Metrics ingress fails the render when the prometheus port is unset
     templates:
       - worker/network-policy.yaml
@@ -706,10 +704,10 @@ tests:
 
   # --- TimescaleDB ingress ---
 
-  # TimescaleDB runs inside the metrics-collector pod, so the collector policy
-  # is what closes :5432 to other namespaces. Service/timescale and the policy
-  # must keep selecting the same pod; if TimescaleDB moves to its own workload
-  # it needs its own policy and this test moves with it.
+  # TimescaleDB runs in the metrics-collector pod, so the collector policy is
+  # what closes :5432 to other namespaces. Service/timescale and the policy
+  # must select the same pod; if TimescaleDB moves to its own workload it
+  # needs its own policy.
   - it: Collector policy selects the pod behind Service/timescale
     template: collector/network-policy.yaml
     asserts:
