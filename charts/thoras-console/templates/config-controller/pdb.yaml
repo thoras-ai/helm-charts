@@ -1,0 +1,3 @@
+{{- if .Values.consoleConfigController.enabled }}
+{{- include "thoras-console.pdb" (dict "root" . "pdb" .Values.consoleConfigController.pdb "name" "thoras-console-config-controller" "app" "thoras-console-config-controller" "labels" .Values.consoleConfigController.labels) }}
+{{- end }}

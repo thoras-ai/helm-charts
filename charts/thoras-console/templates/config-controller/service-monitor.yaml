@@ -1,0 +1,24 @@
+{{- /* config-controller is the only console component that exports metrics;
+       console-api has no /metrics endpoint. */}}
+{{- if and .Values.serviceMonitor.enabled .Values.consoleConfigController.enabled .Values.consoleConfigController.prometheus.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: thoras-console-config-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleConfigController.labels) | nindent 4 }}
+    {{- with .Values.serviceMonitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      app: thoras-console-config-controller
+  endpoints:
+    - port: http-metrics
+      path: /metrics
+      {{- with .Values.serviceMonitor.interval }}
+      interval: {{ . }}
+      {{- end }}
+{{- end }}
