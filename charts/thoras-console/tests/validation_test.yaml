@@ -1,0 +1,201 @@
+suite: Validation
+templates:
+  - helm-values-secret.yaml
+tests:
+  - it: Rejects an unknown auth mode, naming the value it got
+    set:
+      consoleApi.auth.mode: nonsense
+    asserts:
+      - failedTemplate:
+          errorMessage: 'consoleApi.auth.mode must be "local", "oidc", or "both", got "nonsense"'
+
+  - it: Reports every missing OIDC companion at once
+    set:
+      consoleApi.auth.mode: oidc
+    asserts:
+      - failedTemplate:
+          errorMessage: 'consoleApi.auth.mode "oidc" requires consoleApi.auth.oidc: issuer, audiences. Leaving these empty falls back to values that point at Thoras'' hosted console, which will not accept your users.'
+
+  - it: Reports only the OIDC companion still missing
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+    asserts:
+      - failedTemplate:
+          errorMessage: 'consoleApi.auth.mode "oidc" requires consoleApi.auth.oidc: audiences. Leaving these empty falls back to values that point at Thoras'' hosted console, which will not accept your users.'
+
+  - it: Requires OIDC companions in both mode too, not just oidc
+    set:
+      consoleApi.auth.mode: both
+    asserts:
+      - failedTemplate:
+          errorMessage: 'consoleApi.auth.mode "both" requires consoleApi.auth.oidc: issuer, audiences. Leaving these empty falls back to values that point at Thoras'' hosted console, which will not accept your users.'
+
+  - it: Rejects an admin password shorter than the app will accept
+    set:
+      consoleApi.auth.adminPassword: short
+    asserts:
+      - failedTemplate:
+          errorMessage: consoleApi.auth.adminPassword must be at least 12 characters; got 5
+
+  - it: Rejects a salt shorter than the app will accept
+    set:
+      consoleApi.auth.adminSalt: tooshort
+    asserts:
+      - failedTemplate:
+          errorMessage: consoleApi.auth.adminSalt must be at least 16 characters when set; got 8
+
+  - it: Accepts an unset salt, since the app falls back with a warning
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Rejects pinning the admin password and referencing a Secret together
+    set:
+      consoleApi.auth.adminPassword: twelvechars1
+      consoleApi.auth.existingSecret.secretName: console-admin
+    asserts:
+      - failedTemplate:
+          errorMessage: consoleApi.auth.adminPassword and consoleApi.auth.existingSecret.secretName are mutually exclusive
+
+  - it: Rejects a local mode with no password and nothing able to generate one
+    set:
+      consoleConfigController.enabled: false
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - failedTemplate:
+          errorMessage: 'consoleApi.auth.mode "local" needs an admin password, but none is pinned, no existing Secret is referenced, and consoleConfigController.enabled is false so nothing can generate one. Set consoleApi.auth.adminPassword, point consoleApi.auth.existingSecret at a Secret, or re-enable the controller.'
+
+  ############################
+  # Database, configured exactly once
+  ############################
+  - it: Rejects asking for the bundled and an external database together
+    set:
+      bundledDatabase.enabled: true
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - failedTemplate:
+          errorMessage: 'bundledDatabase.enabled and externalDatabase.existingSecret are both configured, and they are mutually exclusive. Remove bundledDatabase.enabled to use the external database, or clear externalDatabase.existingSecret to use the bundled one.'
+
+  - it: Rejects having no database at all
+    set:
+      bundledDatabase.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: 'no database is configured. Either leave bundledDatabase.enabled unset for the bundled evaluation database, or point externalDatabase.existingSecret at a Secret holding the DSN of your own.'
+
+  - it: Switches to an external database without needing the bundled flag cleared
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - notFailedTemplate: {}
+
+  ############################
+  # Half-set refs. A name without its key reaches config-controller as a
+  # provided value with an empty consumedFrom.key, which it rejects at load
+  # time, so the controller pod would never go ready.
+  ############################
+  - it: Rejects an auth Secret name without its key
+    set:
+      consoleApi.auth.existingSecret.secretName: console-admin
+      consoleApi.auth.existingSecret.passwordKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: consoleApi.auth.existingSecret.passwordKey is required when secretName is set
+
+  - it: Rejects a webhook Secret name without its key
+    set:
+      consoleApi.webhook.existingSecret.secretName: console-webhook
+      consoleApi.webhook.existingSecret.secretKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: consoleApi.webhook.existingSecret.secretKey is required when secretName is set
+
+  - it: Rejects a database Secret name without its key
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+      externalDatabase.existingSecret.dsnKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: externalDatabase.existingSecret.dsnKey is required when secretName is set
+
+  - it: Rejects a Slack Secret name without its key
+    set:
+      slack.existingSecret.secretName: console-slack
+      slack.existingSecret.webhookUrlKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: slack.existingSecret.webhookUrlKey is required when secretName is set
+
+  ############################
+  # Mutually exclusive pins
+  ############################
+  - it: Rejects pinning and referencing the webhook secret together
+    set:
+      consoleApi.webhook.secret: hush
+      consoleApi.webhook.existingSecret.secretName: console-webhook
+    asserts:
+      - failedTemplate:
+          errorMessage: consoleApi.webhook.secret and consoleApi.webhook.existingSecret.secretName are mutually exclusive
+
+  - it: Rejects pinning and referencing the Slack webhook together
+    set:
+      slack.webhookUrl: https://hooks.example
+      slack.existingSecret.secretName: console-slack
+    asserts:
+      - failedTemplate:
+          errorMessage: slack.webhookUrl and slack.existingSecret.secretName are mutually exclusive
+
+  ############################
+  # Controller disabled
+  ############################
+  - it: Fails when the controller is off while a value still needs generating
+    set:
+      consoleConfigController.enabled: false
+      consoleApi.auth.adminPassword: twelvechars1
+    asserts:
+      - failedTemplate:
+          errorMessage: 'consoleConfigController.enabled is false but these values would have to be generated by it: postgres-password, postgresql-dsn. Pin them in values, point them at existing Secrets, or re-enable the controller.'
+
+  - it: Renders with the controller off when every value is supplied
+    set:
+      consoleConfigController.enabled: false
+      consoleApi.auth.adminPassword: twelvechars1
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - notFailedTemplate: {}
+
+  ############################
+  # The pinned Secret itself
+  ############################
+  - it: Renders no Secret when nothing is pinned
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Stores only the values pinned in values, base64 encoded
+    set:
+      consoleApi.auth.adminPassword: twelvechars1
+      externalDatabase.existingSecret.secretName: console-db
+      slack.webhookUrl: https://hooks.example
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: thoras-console-helm-values
+      - equal:
+          path: data.local-admin-password
+          value: dHdlbHZlY2hhcnMx
+      - equal:
+          path: data.slack-webhook-url
+          value: aHR0cHM6Ly9ob29rcy5leGFtcGxl
+      - notExists:
+          path: data.postgres-password
+
+  - it: Keeps a referenced Secret's value out of the pinned Secret
+    set:
+      consoleApi.auth.existingSecret.secretName: console-admin
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - notExists:
+          path: data.local-admin-password

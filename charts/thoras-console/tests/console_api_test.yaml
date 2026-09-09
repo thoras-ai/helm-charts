@@ -1,0 +1,300 @@
+suite: Console API
+templates:
+  - console-api/deployment.yaml
+  - console-api/service.yaml
+  - console-api/service-account.yaml
+  - console-api/pdb.yaml
+tests:
+  ############################
+  # Shape
+  ############################
+  - it: Runs the console-api binary out of the console image
+    template: console-api/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/console-api:latest
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/console-api"]
+
+  - it: Mounts no ServiceAccount token, having no Kubernetes API to call
+    template: console-api/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+
+  - it: Renders nothing when disabled
+    set:
+      consoleApi.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Falls back to this chart's registry Secret, not the thoras chart's
+    template: console-api/service-account.yaml
+    asserts:
+      - equal:
+          path: imagePullSecrets[0].name
+          value: thoras-console-secret-registry
+
+  - it: Uses a referenced registry Secret when one is given
+    template: console-api/service-account.yaml
+    set:
+      imageCredentials.secretRef: my-registry
+    asserts:
+      - equal:
+          path: imagePullSecrets[0].name
+          value: my-registry
+
+  - it: Carries the app label on the Service, which a ServiceMonitor would select
+    template: console-api/service.yaml
+    asserts:
+      - equal:
+          path: metadata.labels["app"]
+          value: thoras-console-api
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 8080
+
+  - it: Renders no PDB by default
+    template: console-api/pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders a PDB when asked
+    template: console-api/pdb.yaml
+    set:
+      consoleApi.pdb.enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-console-api
+
+  ############################
+  # Probes, and their coupling to the database wait
+  ############################
+  - it: Probes the existing health handler, with the DB check on readiness only
+    template: console-api/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health?db=true
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /health
+
+  - it: Leaves the startup budget above the database wait, so the binary reports first
+    template: console-api/deployment.yaml
+    asserts:
+      # 36 * 10s = 360s, against the 300s SERVICE_WAIT_TIMEOUT below.
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 36
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.periodSeconds
+          value: 10
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_WAIT_TIMEOUT')].value
+          value: "300s"
+
+  ############################
+  # Auth mode wiring
+  ############################
+  - it: Passes local mode with its password and no OIDC companions
+    template: console-api/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_AUTH_MODE')].value
+          value: local
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_LOCAL_ADMIN_PASSWORD')].valueFrom.secretKeyRef.name
+          value: thoras-console-config-controller
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_ISSUER')]
+
+  - it: Passes OIDC mode with its companions and no admin password
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_ISSUER')].value
+          value: https://id.example.com/
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_AUDIENCES')].value
+          value: https://console.example.com
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_LOCAL_ADMIN_PASSWORD')]
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_BOOTSTRAP_ADMIN_EMAIL')]
+
+  - it: Passes both an admin password and OIDC companions in both mode
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.auth.mode: both
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_LOCAL_ADMIN_PASSWORD')]
+      - exists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_ISSUER')]
+
+  - it: Omits the JWKS override unless one is configured
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: aud
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_JWKS_URI')]
+
+  - it: Passes the salt as plain config, since it is not secret material
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.auth.adminSalt: a-unique-per-install-salt
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_LOCAL_ADMIN_SALT')].value
+          value: a-unique-per-install-salt
+
+  ############################
+  # Secret material never appears in the spec
+  ############################
+  - it: Binds every credential by reference, never by value
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.auth.adminPassword: SuperSecret123
+      consoleApi.webhook.secret: WebhookHush
+      slack.webhookUrl: https://hooks.example/SECRETPATH
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_LOCAL_ADMIN_PASSWORD')].valueFrom.secretKeyRef.name
+          value: thoras-console-helm-values
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POSTGRESQL_DSN')].valueFrom.secretKeyRef.name
+          value: console-db
+      # An env entry carrying a literal `value` would be the plaintext leaking
+      # into the spec. None of these may have one.
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_LOCAL_ADMIN_PASSWORD')].value
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POSTGRESQL_DSN')].value
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_WEBHOOK_SECRET')].value
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_SLACK_WEBHOOK_URL')].value
+
+  - it: Omits the optional webhook and Slack vars when neither is configured
+    template: console-api/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_WEBHOOK_SECRET')]
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_SLACK_WEBHOOK_URL')]
+
+  - it: Binds the optional vars once configured
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.webhook.secret: hush
+      slack.webhookUrl: https://hooks.example
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_WEBHOOK_SECRET')].valueFrom.secretKeyRef.key
+          value: webhook-secret
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_SLACK_WEBHOOK_URL')].valueFrom.secretKeyRef.key
+          value: slack-webhook-url
+
+  ############################
+  # Database wiring
+  ############################
+  - it: Reads the generated DSN from the managed Secret when bundled
+    template: console-api/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POSTGRESQL_DSN')].valueFrom.secretKeyRef.name
+          value: thoras-console-config-controller
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_TIMESCALE_EXTENSION_VERSION')].value
+          value: "2.28.2"
+
+  - it: Reads a customer-managed DSN Secret when one is referenced
+    template: console-api/deployment.yaml
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POSTGRESQL_DSN')].valueFrom.secretKeyRef.name
+          value: console-db
+      # Nothing to upgrade an extension we do not manage.
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_TIMESCALE_EXTENSION_VERSION')]
+
+  - it: Turns migrations on, since the binary defaults them off
+    template: console-api/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_SHOULD_MIGRATE_ON_START')].value
+          value: "true"
+
+  ############################
+  # Scheduling and resources
+  ############################
+  - it: Renders resource requests and limits
+    template: console-api/deployment.yaml
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].resources.requests
+      - exists:
+          path: spec.template.spec.containers[0].resources.limits
+
+  - it: Takes the component priorityClassName over the global one
+    template: console-api/deployment.yaml
+    set:
+      priorityClassName: global-class
+      consoleApi.priorityClassName: component-class
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: component-class
+
+  - it: Falls back to the global priorityClassName
+    template: console-api/deployment.yaml
+    set:
+      priorityClassName: global-class
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: global-class
+
+  - it: Merges global and component podAnnotations, component winning
+    template: console-api/deployment.yaml
+    set:
+      podAnnotations:
+        shared: global
+        only-global: "yes"
+      consoleApi.podAnnotations:
+        shared: component
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations.shared
+          value: component
+      - equal:
+          path: spec.template.metadata.annotations["only-global"]
+          value: "yes"

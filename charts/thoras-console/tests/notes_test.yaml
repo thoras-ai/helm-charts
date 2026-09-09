@@ -1,0 +1,154 @@
+suite: Install Notes
+templates:
+  - NOTES.txt
+tests:
+  - it: Names the namespace it installed into
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Thoras console installed in namespace NAMESPACE"
+
+  - it: Offers a port-forward until an external URL is configured
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Console URL: NOT CONFIGURED"
+      - matchRegex:
+          path: raw
+          pattern: "kubectl port-forward svc/thoras-console-api 8080:80"
+
+  - it: Prints the configured URL once there is one
+    set:
+      consoleApi.externalUrl: https://console.example.com
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Console URL: https://console.example.com"
+      - notMatchRegex:
+          path: raw
+          pattern: "Console URL: NOT CONFIGURED"
+
+  ############################
+  # The generated password has to be retrievable
+  ############################
+  - it: Tells the operator how to read a generated password out
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "kubectl get secret thoras-console-config-controller"
+      - matchRegex:
+          path: raw
+          pattern: "jsonpath='\\{.data.local-admin-password\\}'"
+      - matchRegex:
+          path: raw
+          pattern: "appears once config-controller has generated it"
+
+  - it: Points at the operator's own Secret when one is referenced
+    set:
+      consoleApi.auth.existingSecret.secretName: console-admin
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "kubectl get secret console-admin"
+      # Nothing to wait for when the operator supplied it themselves.
+      - notMatchRegex:
+          path: raw
+          pattern: "appears once config-controller"
+
+  - it: Says nothing about a password in oidc mode
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Authentication: OIDC"
+      - notMatchRegex:
+          path: raw
+          pattern: "kubectl get secret"
+
+  - it: Warns that an unset salt falls back to a shared value
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "adminSalt is unset"
+
+  - it: Stops warning once a salt is set
+    set:
+      consoleApi.auth.adminSalt: sixteencharacter
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "adminSalt is unset"
+
+  ############################
+  # The bundled database's caveats, per AC 9
+  ############################
+  - it: Labels the bundled database evaluation-only and says why
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Database: BUNDLED -- EVALUATION ONLY"
+      - matchRegex:
+          path: raw
+          pattern: "No backups, no point-in-time recovery, no high availability"
+      - matchRegex:
+          path: raw
+          pattern: "volume is DELETED with the release"
+      - matchRegex:
+          path: raw
+          pattern: "pg_dump -U postgres thoras_cloud"
+
+  - it: Describes the extension requirement instead for an external database
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Database: EXTERNAL"
+      - matchRegex:
+          path: raw
+          pattern: "timescaledb and citext extensions must be available"
+      - notMatchRegex:
+          path: raw
+          pattern: "EVALUATION ONLY"
+
+  ############################
+  # First-install guidance
+  ############################
+  - it: Explains the CreateContainerConfigError window so it does not read as broken
+    release:
+      upgrade: false
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "CreateContainerConfigError until"
+      - matchRegex:
+          path: raw
+          pattern: "no action is needed"
+
+  - it: Points at the next step, connecting a cluster
+    release:
+      upgrade: false
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "connect a cluster"
+      - matchRegex:
+          path: raw
+          pattern: "cloudSync.baseUrl"
+
+  - it: Flags missing image credentials
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Image pull credentials: NOT CONFIGURED"
+
+  - it: Stops flagging them once a license key is set
+    set:
+      imageCredentials.password: license-key
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "Image pull credentials: NOT CONFIGURED"
