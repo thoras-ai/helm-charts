@@ -41,22 +41,84 @@ tolerations: []
 # useGlobalAffinity
 affinity: {}
 
+# -- Cluster-wide priorityClassName, overridden per component
+priorityClassName: ""
+
 # -- Cluster-wide topology spread, overridden per component
 topologySpreadConstraints: []
 
+networkPolicy:
+  enabled: false
+  # flavor: "kubernetes" uses standard NetworkPolicy (networking.k8s.io/v1)
+  # flavor: "cilium" uses CiliumNetworkPolicy (cilium.io/v2)
+  flavor: kubernetes
+  # -- Ports the Kubernetes API server is reachable on, used by the "kubernetes"
+  # flavor for config-controller's egress. NetworkPolicy is evaluated after
+  # kube-proxy translates the service address to the real endpoint, so this must
+  # list the port the API server actually listens on -- not the service port.
+  # Check with:
+  #   kubectl get endpoints kubernetes -n default
+  # Clusters that front the API on a non-standard port (minikube uses 8443)
+  # must add it here or config-controller cannot reach the API.
+  # Ignored by the "cilium" flavor, which resolves the API server via
+  # `toEntities: [kube-apiserver]` and needs no port list.
+  apiServerPorts:
+  - 443
+  - 6443
+
+serviceMonitor:
+  enabled: false
+  # Empty defers to the Prometheus default.
+  interval: ""
+  additionalLabels: {}
+
 consoleApi:
   enabled: true
-  replicaCount: 1
+  replicas: 1
 
   # Repository is joined to imageCredentials.registry; the tag is consoleVersion.
   image:
     repository: console-api
 
+  containerPort: 8080
+  port: 80
+
   # -- URL the console is reachable on. Read only by NOTES.txt today; the
-  # Ingress that serves it arrives with the console workloads.
+  # Ingress that serves it arrives with the dashboard.
   externalUrl: ""
 
-  resources: {}
+  serviceAccount:
+    name: thoras-console-api
+
+  service:
+    annotations: {}
+
+  labels: {}
+  podAnnotations: {}
+
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+    # minAvailable:
+
+  # -- No legacy limits/requests pair here, unlike the thoras chart: this chart
+  # has no pre-existing installs to stay compatible with.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    # No CPU limit on purpose; throttling a request handler is worse than
+    # letting it burst.
+    limits:
+      memory: 1Gi
+
+  # -- Run migrations on startup. console-api defaults this off for local runs
+  # against a shared database, so a deployment has to turn it on. Migrations
+  # take a Postgres advisory lock, so replicas may start together. Disable only
+  # if you apply migrations yourself.
+  migrateOnStart: true
 
   # -- Auto-provision and implicitly use one organization. Self-hosted installs
   # have exactly one by definition, so this removes the signup and invite flow.
@@ -64,6 +126,10 @@ consoleApi:
     enabled: true
     # Renames the existing organization if changed after install.
     name: "Default Organization"
+
+  # -- Email recorded on the seeded local admin user. A label only: nothing
+  # authenticates against it.
+  bootstrapAdminEmail: "admin@localhost"
 
   auth:
     # local: shared admin password, no external identity provider.
@@ -83,13 +149,13 @@ consoleApi:
       # cluster: the iss claim stays browser-facing while keys are fetched here.
       jwksUri: ""
 
-    # -- Shared admin password for mode local/both. Minimum 12 characters.
-    # Consumed by the console-api Deployment in a later release; setting it has
-    # no effect yet.
+    # -- Shared admin password for mode local/both, minimum 12 characters.
+    # Leave empty and config-controller generates one; read it out with the
+    # command `helm install` prints.
     adminPassword: ""
 
     # -- Read the admin password from a Secret you manage instead of pinning it
-    # above. Takes precedence over adminPassword.
+    # above or having it generated. Takes precedence over adminPassword.
     existingSecret:
       secretName: ""
       passwordKey: local-admin-password
@@ -101,15 +167,16 @@ consoleApi:
     # built-in value and warns at startup.
     adminSalt: ""
 
-  # -- Shared secret for the identity-provider user-created webhook. Required
-  # only when that webhook is in use.
-  webhookSecret: ""
+  webhook:
+    # -- Shared secret for the identity-provider user-created webhook. Required
+    # only when that webhook is in use.
+    secret: ""
 
-  # -- Read the webhook secret from a Secret you manage instead of pinning it
-  # above. Takes precedence over webhookSecret.
-  webhookExistingSecret:
-    secretName: ""
-    secretKey: webhook-secret
+    # -- Read the webhook secret from a Secret you manage instead of pinning it
+    # above. Takes precedence over secret.
+    existingSecret:
+      secretName: ""
+      secretKey: webhook-secret
 
   useGlobalAffinity: false
   affinity: {}
@@ -118,21 +185,149 @@ consoleApi:
   extraEgressRules: []
   extraIngressRules: []
 
-# -- Postgres with the timescaledb and citext extensions available. Stock
-# Postgres will not work: the console migrations create hypertables and
+# -- Leader-elected controller that generates the credentials you did not
+# supply into the `thoras-console-config-controller` Secret and rolls dependent
+# workloads when they change. Runs the config-controller binary out of the
+# console-api image.
+consoleConfigController:
+  # Disabling is only valid when every credential is pinned in values or points
+  # at an existing Secret; otherwise the chart fails, since nothing else
+  # creates the generated Secret.
+  enabled: true
+
+  serviceAccount:
+    name: thoras-console-config-controller
+
+  replicas: 1
+  labels: {}
+  podAnnotations: {}
+
+  service:
+    annotations: {}
+
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+    # minAvailable:
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+  logLevel: ""
+
+  prometheus:
+    enabled: true
+    port: 9103
+
+  pprof:
+    enabled: false
+
+  # Write generated values to the managed Secret. With this off the controller
+  # only drives rollouts, and any ungenerated credential stays missing.
+  enableSeeding: true
+  # Safety switch: with this off the controller logs the config diffs it would
+  # act on but never evicts a pod.
+  enableRestartRollouts: true
+  pollInterval: "30s"
+  # Coalescing window after a change is first seen, before a rollout starts.
+  rolloutDebounce: "10s"
+  # Per-workload deadline covering eviction and replacement readiness.
+  rolloutTimeout: "5m"
+
+  # Strict sequential restart tiers: every workload in a tier must go Ready
+  # before the next tier is touched. Workloads not listed here are restarted
+  # last, together.
+  restartOrder:
+    - thoras-console-api
+  # Never restarted. The controller always excludes itself regardless of this
+  # list (the chart rolls it via a config checksum instead).
+  #
+  # The database is excluded because Postgres bakes its password into its data
+  # directory at first start: restarting it cannot make it adopt a new one, so a
+  # rollout would be disruptive and still leave the two diverged.
+  restartExclude:
+    - thoras-console-config-controller
+    - thoras-console-db
+
+  useGlobalAffinity: false
+  affinity: {}
+  priorityClassName: ""
+  topologySpreadConstraints: []
+  extraEgressRules: []
+  extraIngressRules: []
+
+# -- Postgres with the TimescaleDB extension, bundled for evaluation.
+#
+# EVALUATION ONLY. There are no backups, no point-in-time recovery and no high
+# availability, it runs as a single replica, and its volume is DELETED with the
+# release -- `helm uninstall`, or switching to externalDatabase, destroys the
+# data irrecoverably. Production installs should point externalDatabase at a
+# managed database instead.
+#
+# Mutually exclusive with externalDatabase: configure exactly one.
+#
+# `enabled` defaults to true but is intentionally not written here, so the chart
+# can tell an unset value from an explicit one. Setting externalDatabase is
+# enough to switch the database over; setting `enabled: true` as well is an
+# ambiguous request and fails the render rather than picking for you.
+bundledDatabase:
+  # enabled: true
+
+  image:
+    repository: timescaledb
+    tag: "2.28.2-pg16"
+
+  # -- Passed to console-api as the extension version to upgrade to, so the
+  # extension tracks the image rather than drifting.
+  extensionVersion: "2.28.2"
+
+  containerPort: 5432
+
+  # -- Database console-api connects to. Created by the container on first
+  # start.
+  databaseName: thoras_cloud
+
+  # Sized for an evaluation console, deliberately not copied from the thoras
+  # chart's telemetry database, which requests 1 CPU / 3Gi.
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+
+  persistence:
+    size: 10Gi
+    # Empty uses the cluster's default StorageClass.
+    storageClassName: ""
+
+  serviceAccount:
+    name: thoras-console-db
+
+  labels: {}
+  podAnnotations: {}
+
+  useGlobalAffinity: false
+  affinity: {}
+  priorityClassName: ""
+  extraEgressRules: []
+  extraIngressRules: []
+
+# -- An existing Postgres with the timescaledb and citext extensions available.
+# Stock Postgres will not work: the console migrations create hypertables and
 # continuous aggregates.
+#
+# Setting this removes every bundled database resource. Mutually exclusive with
+# bundledDatabase: configure exactly one.
 externalDatabase:
-  # -- Full DSN, pinned in values.
-  dsn: ""
-
-  # -- Run migrations on startup. console-api defaults this off for local runs
-  # against a shared database, so a deployment has to turn it on. Migrations
-  # take a Postgres advisory lock, so replicas may start together. Disable only
-  # if you apply migrations yourself.
-  migrateOnStart: true
-
-  # -- Read the DSN from a Secret you manage instead of pinning it above. Takes
-  # precedence over dsn.
+  # -- Secret you manage holding the full DSN, including the database name.
+  # There is deliberately no way to pin the DSN in values: it carries a
+  # password, and a pinned value would land in `thoras-console-helm-values` and
+  # in `helm get values`.
   existingSecret:
     secretName: ""
     dsnKey: postgresql-dsn
