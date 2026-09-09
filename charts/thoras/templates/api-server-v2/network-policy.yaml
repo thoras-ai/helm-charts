@@ -29,8 +29,10 @@ spec:
   {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
   # Allow DNS resolution
   {{- include "thoras.dnsEgressRules" . | nindent 2 }}
+  {{- with include "thoras.externalDatabaseEgressRule" . }}
   # Allow access to an external TimescaleDB when externalTimescale is configured
-  {{- include "thoras.externalDatabaseEgressRule" . | nindent 2 }}
+  {{- . | nindent 2 }}
+  {{- end }}
   {{- with .Values.thorasApiServerV2.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -62,8 +64,10 @@ spec:
     - kube-apiserver
   # Allow DNS resolution
   {{- include "thoras.dnsEgressRulesCilium" . | nindent 2 }}
+  {{- with include "thoras.externalDatabaseEgressRuleCilium" . }}
   # Allow access to an external TimescaleDB when externalTimescale is configured
-  {{- include "thoras.externalDatabaseEgressRuleCilium" . | nindent 2 }}
+  {{- . | nindent 2 }}
+  {{- end }}
   {{- with .Values.thorasApiServerV2.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
