@@ -436,9 +436,10 @@ can reach the Thoras API server and TimescaleDB directly. Set
 CNI; `cilium` emits `CiliumNetworkPolicy` (`cilium.io/v2`) and requires
 [Cilium](https://cilium.io/).
 
-`networkPolicy.apiServerPorts` (default `[443, 6443, 8443]`) must list
-the port the API server actually listens on post-DNAT. The `cilium`
-flavor ignores this key and targets the API server by identity.
+`networkPolicy.apiServerPorts` (default `[443, 6443]`) must list the
+port the API server actually listens on post-DNAT — set it to `8443`
+on minikube, etc. The `cilium` flavor ignores this key and targets the
+API server by identity.
 
 Each component block accepts `extraIngressRules` / `extraEgressRules`,
 appended verbatim to both flavors. When dashboard OIDC auth is
@@ -466,7 +467,10 @@ release namespace. On top of that:
   empty the API egress rule carries ports but no destination, which
   Kubernetes evaluates as any destination on those ports. The same
   applies to the external-database rule. The `cilium` flavor scopes
-  both by identity. Set `apiServerCIDRs` to close the API half.
+  both by identity. Set `apiServerCIDRs` to close the API half — but
+  under `kubernetes` that ports-only rule is also what lets cloud sync
+  and Slack notifications out, so add `extraEgressRules` for those
+  first.
 - **Scraping the API server's metrics needs an explicit rule.** Its
   `/metrics` endpoint shares the API port, so opening it to other
   namespaces would expose the API. Add a
@@ -476,10 +480,11 @@ release namespace. On top of that:
   (`cloudSync.baseUrl`) and Slack notifications (`slackWebhookUrl`)
   need an explicit `extraEgressRules` entry; `toEntities:
   [kube-apiserver]` does not cover the internet. Under `kubernetes`
-  the ports-only API rule already permits them.
+  the ports-only API rule already permits them unless `apiServerCIDRs`
+  is set.
 - **Egress through an HTTP proxy is not modeled.** If
   `proxy.httpProxy` or `proxy.httpsProxy` points outside the release
-  namespace on a port other than 443, 6443 or 8443, add an
+  namespace on a port other than 443 or 6443, add an
   `extraEgressRules` entry for it.
 
 ## Values
@@ -535,8 +540,8 @@ The following flags are considered temporary and gate access to specific behavio
 | ------------------------------ | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | networkPolicy.enabled                    | Boolean   | true               | Render per-component network policies. Enabled by default since 6.0.0                                                                                                                   |
 | networkPolicy.flavor                     | String    | kubernetes         | `kubernetes` renders `networking.k8s.io/v1` `NetworkPolicy`; `cilium` renders `CiliumNetworkPolicy` (`cilium.io/v2`)                                                            |
-| networkPolicy.apiServerPorts             | []Number  | [443, 6443, 8443]  | Ports the API server actually listens on (post-DNAT). Used by the `kubernetes` flavor to allow egress to the API. Ignored by the `cilium` flavor. Empty list omits the rule.    |
-| networkPolicy.apiServerCIDRs             | []String  | []                 | CIDRs the API server endpoints live in. Empty leaves the API egress rule ports-only, which permits any destination on those ports. Ignored by the `cilium` flavor.              |
+| networkPolicy.apiServerPorts             | []Number  | [443, 6443]        | Ports the API server actually listens on (post-DNAT). Used by the `kubernetes` flavor to allow egress to the API. Ignored by the `cilium` flavor. Empty list omits the rule.    |
+| networkPolicy.apiServerCIDRs             | []String  | []                 | CIDRs the API server endpoints live in. Empty leaves the API egress rule ports-only, which permits any destination on those ports. Under `kubernetes` that rule is also what lets cloud sync and Slack out; add `extraEgressRules` for those before setting this. Ignored by the `cilium` flavor. |
 | networkPolicy.externalDatabasePorts      | []Number  | [5432]             | Ports an external PostgreSQL/TimescaleDB listens on. Only used when `externalTimescale` is configured; the host is unknown at render time so egress is scoped by port.          |
 | networkPolicy.allowMetricsScraping       | Boolean   | true               | Allow a metrics scraper in any namespace to reach each component's Prometheus port. Does not cover the API server, whose metrics share its API port.                            |
 | networkPolicy.allowDnsToAnyDestination   | Boolean   | true               | In addition to the kube-dns rule, allow port 53 to any destination. Required by NodeLocal DNSCache and by CoreDNS installs without the `k8s-app=kube-dns` label.                |
