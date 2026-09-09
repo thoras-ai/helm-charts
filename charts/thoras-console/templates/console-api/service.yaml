@@ -1,0 +1,25 @@
+{{- if .Values.consoleApi.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-console-api
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.consoleApi.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- /* The app label is on the Service, not just the pods: it is what a
+         ServiceMonitor selector would target. */}}
+  labels:
+    app: thoras-console-api
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleApi.labels) | nindent 4 }}
+spec:
+  ports:
+  - name: http
+    port: {{ .Values.consoleApi.port }}
+    protocol: TCP
+    targetPort: {{ .Values.consoleApi.containerPort }}
+  selector:
+    app: thoras-console-api
+{{- end }}

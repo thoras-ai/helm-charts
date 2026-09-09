@@ -1,0 +1,3 @@
+{{- if .Values.consoleApi.enabled }}
+{{- include "thoras-console.pdb" (dict "root" . "pdb" .Values.consoleApi.pdb "name" "thoras-console-api" "app" "thoras-console-api" "labels" .Values.consoleApi.labels) }}
+{{- end }}
