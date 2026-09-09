@@ -482,6 +482,10 @@ release namespace. On top of that:
   [kube-apiserver]` does not cover the internet. Under `kubernetes`
   the ports-only API rule already permits them unless `apiServerCIDRs`
   is set.
+- **Policies are only as good as the CNI.** On EKS with the VPC CNI
+  the objects apply but nothing enforces them unless the network
+  policy agent is enabled; other CNIs without NetworkPolicy support
+  behave the same way. Nothing in the cluster reports this.
 - **Egress through an HTTP proxy is not modeled.** If
   `proxy.httpProxy` or `proxy.httpsProxy` points outside the release
   namespace on a port other than 443 or 6443, add an

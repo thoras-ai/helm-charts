@@ -160,6 +160,10 @@ thorasWorker:
           protocol: TCP
 ```
 
+`toFQDNs` depends on Cilium's DNS proxy seeing every lookup. The default
+`networkPolicy.allowDnsToAnyDestination: true` adds a port-53 rule with no DNS
+inspection, so set it to `false` on clusters that rely on FQDN policies.
+
 The `kubernetes` flavor permits this traffic through the ports-only API server
 egress rule and needs no change unless `networkPolicy.apiServerCIDRs` is set,
 which removes that rule. Add equivalent `ports:`-only `extraEgressRules` entries
