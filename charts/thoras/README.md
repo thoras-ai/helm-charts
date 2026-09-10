@@ -323,7 +323,7 @@ thorasDashboard:
   auth:
     mode: oidc
     oidc:
-      provider: oidc  # or okta, entra-id, ...
+      provider: oidc  # oidc for Okta; entra-id for Microsoft Entra ID
       issuerURL: https://<your-okta-domain>/oauth2/default
       redirectURL: https://thoras.example.com/oauth2/callback
       emailDomains: [example.com]
@@ -678,7 +678,7 @@ must be pre-installed and managed externally.
 | thorasDashboard.auth.htpasswd.existingSecret.cookieSecretKey | String | dashboard-auth-cookie-secret | Key inside `existingSecret.secretName` that holds the cookie secret  |
 | thorasDashboard.auth.htpasswd.initImage.imageTag            | String  | 2.4.68-alpine3.24   | httpd image tag for the init container that regenerates the htpasswd file at pod start |
 | thorasDashboard.auth.htpasswd.initImage.resources           | Object  | see values.yaml     | htpasswd init container resources                                        |
-| thorasDashboard.auth.oidc.provider                          | String  | oidc                | oauth2-proxy provider name (`oidc`, `okta`, `entra-id`, ...)             |
+| thorasDashboard.auth.oidc.provider                          | String  | oidc                | oauth2-proxy provider name (`oidc`, `entra-id`, ...). Okta uses `oidc`; there is no Okta-specific provider |
 | thorasDashboard.auth.oidc.issuerURL                         | String  | ""                  | OIDC issuer URL. Required under `mode: oidc`                             |
 | thorasDashboard.auth.oidc.redirectURL                       | String  | ""                  | External redirect URL registered on your IdP app. Required under `mode: oidc` |
 | thorasDashboard.auth.oidc.emailDomains                      | List    | ["*"]               | Allowed login email domains. Rendered as repeated oauth2-proxy `email_domains` entries |

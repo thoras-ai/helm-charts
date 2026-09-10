@@ -715,7 +715,8 @@ thorasDashboard:
     # the dashboard NetworkPolicy so the sidecar can reach the IdP. Tighten
     # via a separate NetworkPolicy.
     oidc:
-      # oauth2-proxy provider name (oidc | okta | entra-id | ...).
+      # oauth2-proxy provider name (oidc | entra-id | ...).
+      # Okta uses `oidc` (oauth2-proxy has no Okta-specific provider).
       provider: oidc
       # e.g. https://<okta-domain>/oauth2/default or
       # https://login.microsoftonline.com/<tenant-id>/v2.0
