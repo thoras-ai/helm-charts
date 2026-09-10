@@ -6,12 +6,196 @@ A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an 
 
 This doc provides detailed upgrade and migration instructions.
 
-## To 5.x
+## To 6.x
 
 All users should read the following [Changes Overview](#changes-overview).
 
 Users with a Thoras deployment that matches any of the following should also
 work through the matching section in [Breaking Changes](#breaking-changes).
+
+- [Runs an API server on a port other than 443 or 6443](#api-server-port)
+- [Uses an external TimescaleDB](#external-timescaledb)
+- [Scrapes the API server's metrics](#scraping-the-api-server)
+- [Routes component egress through an HTTP proxy](#egress-through-an-http-proxy)
+- [Uses `networkPolicy.flavor: cilium`](#cilium-flavor-and-outbound-https)
+- [Already sets `networkPolicy.enabled: true`](#existing-adopters)
+
+### Changes Overview
+
+#### Network Policies Enabled by Default
+
+`networkPolicy.enabled` now defaults to `true`. A `helm upgrade` that does not
+set it applies eight `NetworkPolicy` objects to the release namespace; the
+selected pods then accept and send only the traffic each policy lists.
+
+Before 6.0.0 a default install had no in-cluster segmentation: any pod in the
+cluster could reach the Thoras API server (`:80`) and TimescaleDB (`:5432`)
+directly. The API server's only other control is a shared bearer token held in
+a Secret in the same cluster.
+
+To keep pre-6.0 behavior:
+
+```yaml
+networkPolicy:
+  enabled: false
+```
+
+That render matches the 5.x default.
+
+To restore connectivity during a rollout, delete the policies (substitute your
+release name and namespace):
+
+```
+kubectl delete networkpolicy -l app.kubernetes.io/instance=thoras -n thoras
+# flavor: cilium
+kubectl delete ciliumnetworkpolicy -l app.kubernetes.io/instance=thoras -n thoras
+```
+
+Set `networkPolicy.enabled: false` afterwards so the next upgrade does not
+re-create them.
+
+The policies allow ingress from, and egress to, other pods in the release
+namespace, plus DNS, the Kubernetes API, Prometheus scrapes, and an external
+TimescaleDB when one is configured. See [README >
+NetworkPolicy](README.md#networkpolicy) for the full list and for the
+per-component `extraIngressRules` / `extraEgressRules` values.
+
+#### New NetworkPolicy Values
+
+| Key | Default | Purpose |
+| --- | --- | --- |
+| `networkPolicy.apiServerCIDRs` | `[]` | Scopes the API server egress rule to these ipBlocks. Left empty, that rule carries ports but no destination, which Kubernetes evaluates as any destination on those ports. Under `kubernetes` that rule is also what lets cloud sync and Slack out; add `extraEgressRules` for those before setting this. Ignored by the `cilium` flavor, which scopes by identity. |
+| `networkPolicy.externalDatabasePorts` | `[5432]` | Ports an external TimescaleDB listens on. |
+| `networkPolicy.allowMetricsScraping` | `true` | Opens each component's Prometheus port to all namespaces. |
+| `networkPolicy.allowDnsToAnyDestination` | `true` | Allows port 53 to any destination alongside the kube-dns rule. Required by NodeLocal DNSCache, which answers on a link-local address owned by the node rather than a pod. |
+
+### Breaking Changes
+
+#### API Server Port
+
+NetworkPolicy is enforced after kube-proxy translates the service address to
+the real endpoint, so `networkPolicy.apiServerPorts` must list the port the API
+server actually listens on. Check with:
+
+```
+kubectl get endpoints kubernetes -n default
+```
+
+If the port is not 443 or 6443, add it (minikube, for example, fronts the API
+on 8443):
+
+```yaml
+networkPolicy:
+  apiServerPorts:
+  - 443
+  - 6443
+  - 8443
+```
+
+The certgen policy is a `pre-install`/`pre-upgrade` hook. If the certgen Job
+cannot reach the API server the hook fails, and the release fails with it.
+
+#### External TimescaleDB
+
+An external database is outside the release namespace, so the in-namespace
+egress rule does not cover it. The host is unknown at render time, so egress
+is scoped by port. If your database does not listen on 5432:
+
+```yaml
+networkPolicy:
+  externalDatabasePorts:
+  - 6432
+```
+
+#### Scraping the API Server
+
+Components with a dedicated Prometheus port accept scrapes from any namespace
+by default. The API server is excluded: its `/metrics` endpoint shares the API
+port, so opening it would expose the API itself. To scrape it, allow your
+monitoring namespace explicitly:
+
+```yaml
+thorasApiServerV2:
+  extraIngressRules:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: monitoring
+      ports:
+      - port: 8080
+        protocol: TCP
+```
+
+#### Egress Through an HTTP Proxy
+
+`proxy.httpProxy` and `proxy.httpsProxy` are not modeled by the policies. If
+the proxy is outside the release namespace on a port other than 443 or 6443,
+add an egress rule to each component that uses it:
+
+```yaml
+thorasWorker:
+  extraEgressRules:
+    - ports:
+      - port: 3128
+        protocol: TCP
+```
+
+#### Cilium Flavor and Outbound HTTPS
+
+Under `networkPolicy.flavor: cilium`, egress is scoped by identity, and
+`toEntities: [kube-apiserver]` does not cover the internet. Cloud sync
+(`cloudSync.baseUrl`) and Slack notifications (`slackWebhookUrl`) need an
+explicit rule on the components that use them (api-server-v2, worker, operator
+for cloud sync; those plus collector and config-controller for Slack):
+
+```yaml
+thorasWorker:
+  extraEgressRules:
+    - toFQDNs:
+      - matchName: "console.thoras.ai"
+      toPorts:
+      - ports:
+        - port: "443"
+          protocol: TCP
+```
+
+`toFQDNs` depends on Cilium's DNS proxy seeing every lookup. The default
+`networkPolicy.allowDnsToAnyDestination: true` adds a port-53 rule with no DNS
+inspection, so set it to `false` on clusters that rely on FQDN policies.
+
+The `kubernetes` flavor permits this traffic through the ports-only API server
+egress rule and needs no change unless `networkPolicy.apiServerCIDRs` is set,
+which removes that rule. Add equivalent `ports:`-only `extraEgressRules` entries
+before setting it.
+
+#### Existing Adopters
+
+If you already set `networkPolicy.enabled: true`, two rules widen on upgrade:
+
+- Every policy gains a ports-only `:53` egress rule, so DNS may go to any
+  destination rather than only to `k8s-app=kube-dns` pods in `kube-system`
+  (`networkPolicy.allowDnsToAnyDestination`).
+- The operator, worker, forecast-worker and config-controller accept ingress
+  on their Prometheus port from any namespace, where before only pods in the
+  release namespace could reach it (`networkPolicy.allowMetricsScraping`).
+
+To keep the 5.x rules:
+
+```yaml
+networkPolicy:
+  allowDnsToAnyDestination: false
+  allowMetricsScraping: false
+```
+
+With those off, NodeLocal DNSCache clusters lose DNS, and a Prometheus outside
+the release namespace needs a per-component `extraIngressRules` entry.
+
+## To 5.x
+
+All users should read the following [Changes Overview](#changes-overview-1).
+
+Users with a Thoras deployment that matches any of the following should also
+work through the matching section in [Breaking Changes](#breaking-changes-1).
 
 - [Uses a hand-rolled oauth2-proxy sidecar](#migrating-from-the-standalone-oauth2-proxy-sidecar)
 - [Has externally managed authentication in front of the dashboard](#externally-managed-auth)

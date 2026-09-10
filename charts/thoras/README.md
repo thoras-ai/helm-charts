@@ -425,7 +425,12 @@ hostnames:
 
 ### NetworkPolicy
 
-Set `networkPolicy.enabled: true` to render per-component policies.
+Per-component policies render by default as of chart 6.0.0
+(`networkPolicy.enabled: true`). Without them, any pod in the cluster
+can reach the Thoras API server and TimescaleDB directly. Set
+`networkPolicy.enabled: false` to opt out; see
+[UPGRADE.md](UPGRADE.md) for the behavior change and rollback.
+
 `networkPolicy.flavor: kubernetes` (default) emits standard
 `networking.k8s.io/v1` `NetworkPolicy` for any NetworkPolicy-capable
 CNI; `cilium` emits `CiliumNetworkPolicy` (`cilium.io/v2`) and requires
@@ -441,6 +446,49 @@ appended verbatim to both flavors. When dashboard OIDC auth is
 enabled, the chart opens broad egress on port `443` so oauth2-proxy
 can reach the IdP; tighten with a layered `CiliumNetworkPolicy` scoped
 by `toFQDNs`, or manage egress out-of-band.
+
+#### What the policies allow
+
+Every component allows ingress from, and egress to, other pods in the
+release namespace. On top of that:
+
+| Traffic | Controlled by | Notes |
+| --- | --- | --- |
+| DNS | `allowDnsToAnyDestination` (default `true`) | Targets kube-dns and permits port 53 to any destination. NodeLocal DNSCache answers on a link-local address owned by the node rather than a pod, which no pod selector matches. |
+| Kubernetes API | `apiServerPorts`, `apiServerCIDRs` | Ports must match what the API server listens on post-DNAT, not the service port. |
+| Prometheus scrapes | `allowMetricsScraping` (default `true`) | Opens each component's dedicated metrics port to all namespaces. Does not cover the API server. |
+| External TimescaleDB | `externalDatabasePorts` (default `[5432]`) | Rendered only when `externalTimescale.dsn` or `externalTimescale.secretRefName` is set. |
+| Dashboard UI | always | The dashboard container port accepts ingress from any source, so ingress controllers and Gateway API implementations in other namespaces work unchanged. |
+
+#### Known gaps
+
+- **The `kubernetes` flavor is looser than `cilium`.** Standard
+  NetworkPolicy cannot name the API server, so with `apiServerCIDRs`
+  empty the API egress rule carries ports but no destination, which
+  Kubernetes evaluates as any destination on those ports. The same
+  applies to the external-database rule. The `cilium` flavor scopes
+  both by identity. Setting `apiServerCIDRs` closes the API half; under
+  `kubernetes` that ports-only rule also carries cloud sync and Slack
+  egress, so add `extraEgressRules` for those first.
+- **Scraping the API server's metrics needs an explicit rule.** Its
+  `/metrics` endpoint shares the API port, so opening it to other
+  namespaces would expose the API. Add a
+  `thorasApiServerV2.extraIngressRules` entry scoped to your
+  monitoring namespace.
+- **Outbound HTTPS is flavor-dependent.** Under `cilium`, cloud sync
+  (`cloudSync.baseUrl`) and Slack notifications (`slackWebhookUrl`)
+  need an explicit `extraEgressRules` entry; `toEntities:
+  [kube-apiserver]` does not cover the internet. Under `kubernetes`
+  the ports-only API rule already permits them unless `apiServerCIDRs`
+  is set.
+- **Enforcement depends on the CNI.** On EKS with the VPC CNI the
+  policies apply but are not enforced unless the network policy agent
+  is enabled. Other CNIs without NetworkPolicy support behave the same
+  way, and the cluster does not report it.
+- **Egress through an HTTP proxy is not modeled.** If
+  `proxy.httpProxy` or `proxy.httpsProxy` points outside the release
+  namespace on a port other than 443 or 6443, add an
+  `extraEgressRules` entry for it.
 
 ## Values
 
@@ -493,9 +541,13 @@ The following flags are considered temporary and gate access to specific behavio
 
 | Key                            | Type      | Default      | Description                                                                                                                                                                     |
 | ------------------------------ | --------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| networkPolicy.enabled          | Boolean   | false        | Render per-component network policies                                                                                                                                           |
-| networkPolicy.flavor           | String    | kubernetes   | `kubernetes` renders `networking.k8s.io/v1` `NetworkPolicy`; `cilium` renders `CiliumNetworkPolicy` (`cilium.io/v2`)                                                            |
-| networkPolicy.apiServerPorts   | []Number  | [443, 6443]  | Ports the API server actually listens on (post-DNAT). Used by the `kubernetes` flavor to allow egress to the API. Ignored by the `cilium` flavor. Empty list omits the rule.    |
+| networkPolicy.enabled                    | Boolean   | true               | Render per-component network policies. Enabled by default since 6.0.0                                                                                                                   |
+| networkPolicy.flavor                     | String    | kubernetes         | `kubernetes` renders `networking.k8s.io/v1` `NetworkPolicy`; `cilium` renders `CiliumNetworkPolicy` (`cilium.io/v2`)                                                            |
+| networkPolicy.apiServerPorts             | []Number  | [443, 6443]        | Ports the API server actually listens on (post-DNAT). Used by the `kubernetes` flavor to allow egress to the API. Ignored by the `cilium` flavor. Empty list omits the rule.    |
+| networkPolicy.apiServerCIDRs             | []String  | []                 | CIDRs the API server endpoints live in. Empty leaves the API egress rule ports-only, which permits any destination on those ports. Under `kubernetes` that rule is also what lets cloud sync and Slack out; add `extraEgressRules` for those before setting this. Ignored by the `cilium` flavor. |
+| networkPolicy.externalDatabasePorts      | []Number  | [5432]             | Ports an external PostgreSQL/TimescaleDB listens on. Only used when `externalTimescale` is configured; the host is unknown at render time so egress is scoped by port.          |
+| networkPolicy.allowMetricsScraping       | Boolean   | true               | Allow a metrics scraper in any namespace to reach each component's Prometheus port. Does not cover the API server, whose metrics share its API port.                            |
+| networkPolicy.allowDnsToAnyDestination   | Boolean   | true               | In addition to the kube-dns rule, allow port 53 to any destination. Required by NodeLocal DNSCache and by CoreDNS installs without the `k8s-app=kube-dns` label.                |
 
 ### Thoras Forecast
 

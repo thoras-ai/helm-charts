@@ -22,18 +22,7 @@ spec:
   # Allow access to the Kubernetes API server to read/write secrets and patch webhooks
   {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
   # Allow DNS resolution
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-      podSelector:
-        matchLabels:
-          k8s-app: kube-dns
-    ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+  {{- include "thoras.dnsEgressRules" . | nindent 2 }}
 {{- else if eq .Values.networkPolicy.flavor "cilium" }}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -56,16 +45,6 @@ spec:
   - toEntities:
     - kube-apiserver
   # Allow DNS resolution
-  - toEndpoints:
-    - matchLabels:
-        k8s:k8s-app: kube-dns
-        k8s:io.kubernetes.pod.namespace: kube-system
-    toPorts:
-    - ports:
-      - port: "53"
-        protocol: ANY
-      rules:
-        dns:
-        - matchPattern: "*"
+  {{- include "thoras.dnsEgressRulesCilium" . | nindent 2 }}
 {{- end }}
 {{- end }}

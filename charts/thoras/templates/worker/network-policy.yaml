@@ -18,6 +18,8 @@ spec:
   # Allow all ingress from pods within the same namespace
   - from:
     - podSelector: {}
+  # Allow metrics scrapes from any namespace (networkPolicy.allowMetricsScraping)
+  {{- include "thoras.metricsIngressRule" (dict "root" $ "port" .Values.thorasWorker.prometheus.port "enabled" .Values.thorasWorker.prometheus.enabled) | nindent 2 }}
   {{- with .Values.thorasWorker.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -28,18 +30,11 @@ spec:
   # Allow access to the Kubernetes API server
   {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
   # Allow DNS resolution
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-      podSelector:
-        matchLabels:
-          k8s-app: kube-dns
-    ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+  {{- include "thoras.dnsEgressRules" . | nindent 2 }}
+  {{- with include "thoras.externalDatabaseEgressRule" . }}
+  # Allow access to an external TimescaleDB when externalTimescale is configured
+  {{- . | nindent 2 }}
+  {{- end }}
   {{- with .Values.thorasWorker.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -59,6 +54,8 @@ spec:
   # Allow all ingress from endpoints within the same namespace
   - fromEndpoints:
     - {}
+  # Allow metrics scrapes from any namespace (networkPolicy.allowMetricsScraping)
+  {{- include "thoras.metricsIngressRuleCilium" (dict "root" $ "port" .Values.thorasWorker.prometheus.port "enabled" .Values.thorasWorker.prometheus.enabled) | nindent 2 }}
   {{- with .Values.thorasWorker.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -70,17 +67,11 @@ spec:
   - toEntities:
     - kube-apiserver
   # Allow DNS resolution
-  - toEndpoints:
-    - matchLabels:
-        k8s:k8s-app: kube-dns
-        k8s:io.kubernetes.pod.namespace: kube-system
-    toPorts:
-    - ports:
-      - port: "53"
-        protocol: ANY
-      rules:
-        dns:
-        - matchPattern: "*"
+  {{- include "thoras.dnsEgressRulesCilium" . | nindent 2 }}
+  {{- with include "thoras.externalDatabaseEgressRuleCilium" . }}
+  # Allow access to an external TimescaleDB when externalTimescale is configured
+  {{- . | nindent 2 }}
+  {{- end }}
   {{- with .Values.thorasWorker.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}

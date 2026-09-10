@@ -18,6 +18,8 @@ spec:
   # Allow all ingress from pods within the same namespace
   - from:
     - podSelector: {}
+  # Allow metrics scrapes from any namespace (networkPolicy.allowMetricsScraping)
+  {{- include "thoras.metricsIngressRule" (dict "root" $ "port" .Values.thorasForecast.prometheus.port "enabled" .Values.thorasForecast.prometheus.enabled) | nindent 2 }}
   {{- with .Values.thorasForecast.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -26,18 +28,7 @@ spec:
   - to:
     - podSelector: {}
   # Allow DNS resolution
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-      podSelector:
-        matchLabels:
-          k8s-app: kube-dns
-    ports:
-    - port: 53
-      protocol: UDP
-    - port: 53
-      protocol: TCP
+  {{- include "thoras.dnsEgressRules" . | nindent 2 }}
   {{- with .Values.thorasForecast.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -57,6 +48,8 @@ spec:
   # Allow all ingress from endpoints within the same namespace
   - fromEndpoints:
     - {}
+  # Allow metrics scrapes from any namespace (networkPolicy.allowMetricsScraping)
+  {{- include "thoras.metricsIngressRuleCilium" (dict "root" $ "port" .Values.thorasForecast.prometheus.port "enabled" .Values.thorasForecast.prometheus.enabled) | nindent 2 }}
   {{- with .Values.thorasForecast.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -65,17 +58,7 @@ spec:
   - toEndpoints:
     - {}
   # Allow DNS resolution
-  - toEndpoints:
-    - matchLabels:
-        k8s:k8s-app: kube-dns
-        k8s:io.kubernetes.pod.namespace: kube-system
-    toPorts:
-    - ports:
-      - port: "53"
-        protocol: ANY
-      rules:
-        dns:
-        - matchPattern: "*"
+  {{- include "thoras.dnsEgressRulesCilium" . | nindent 2 }}
   {{- with .Values.thorasForecast.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}

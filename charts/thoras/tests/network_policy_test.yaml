@@ -1,10 +1,27 @@
 suite: Network Policy
+# networkPolicy.enabled defaults to true; tests for the off state set it
+# explicitly.
 set:
   networkPolicy:
-    enabled: true
     flavor: kubernetes
 tests:
   # --- Rendering guards ---
+
+  - it: Renders every policy with default values
+    templates:
+      - api-server-v2/network-policy.yaml
+      - collector/network-policy.yaml
+      - config-controller/network-policy.yaml
+      - dashboard/network-policy.yaml
+      - forecast-worker/network-policy.yaml
+      - operator/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+      - worker/network-policy.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: NetworkPolicy
 
   - it: Does not render when networkPolicy is disabled
     set:
@@ -70,7 +87,7 @@ tests:
             - port: 9443
               protocol: TCP
 
-  - it: Operator kubernetes policy allows API server egress on ports 443 and 6443
+  - it: Operator kubernetes policy allows API server egress on the default ports
     template: operator/network-policy.yaml
     asserts:
       - contains:
@@ -404,7 +421,7 @@ tests:
           path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
           value: webhook-certgen
 
-  - it: Certgen kubernetes policy allows API server egress on ports 443 and 6443
+  - it: Certgen kubernetes policy allows API server egress on the default ports
     template: operator/webhooks-certgen-network-policy.yaml
     asserts:
       - contains:
@@ -479,3 +496,355 @@ tests:
               rules:
                 dns:
                 - matchPattern: "*"
+
+  # --- DNS fallback (networkPolicy.allowDnsToAnyDestination) ---
+
+  # NodeLocal DNSCache answers on a link-local address owned by the node, which
+  # the kube-dns pod selector does not match.
+  - it: All kubernetes policies allow DNS to any destination by default
+    templates:
+      - api-server-v2/network-policy.yaml
+      - collector/network-policy.yaml
+      - config-controller/network-policy.yaml
+      - dashboard/network-policy.yaml
+      - forecast-worker/network-policy.yaml
+      - operator/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+      - worker/network-policy.yaml
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 53
+              protocol: UDP
+            - port: 53
+              protocol: TCP
+
+  - it: allowDnsToAnyDestination false drops the kubernetes DNS fallback but keeps kube-dns
+    templates:
+      - api-server-v2/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+    set:
+      networkPolicy:
+        allowDnsToAnyDestination: false
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 53
+              protocol: UDP
+            - port: 53
+              protocol: TCP
+      - contains:
+          path: spec.egress
+          content:
+            to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+            ports:
+            - port: 53
+              protocol: UDP
+            - port: 53
+              protocol: TCP
+
+  - it: All cilium policies allow DNS to the node entities by default
+    templates:
+      - api-server-v2/network-policy.yaml
+      - collector/network-policy.yaml
+      - operator/network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+            - host
+            - remote-node
+            toPorts:
+            - ports:
+              - port: "53"
+                protocol: ANY
+
+  - it: allowDnsToAnyDestination false drops the cilium DNS fallback
+    template: api-server-v2/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+        allowDnsToAnyDestination: false
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            toEntities:
+            - host
+            - remote-node
+            toPorts:
+            - ports:
+              - port: "53"
+                protocol: ANY
+
+  # --- Metrics scraping ingress (networkPolicy.allowMetricsScraping) ---
+
+  - it: Components with a dedicated metrics port accept scrapes from any namespace
+    templates:
+      - config-controller/network-policy.yaml
+      - forecast-worker/network-policy.yaml
+      - operator/network-policy.yaml
+      - worker/network-policy.yaml
+    asserts:
+      - contains:
+          path: spec.ingress
+          any: true
+          content:
+            from:
+            - namespaceSelector: {}
+
+  - it: Worker metrics ingress follows the configured prometheus port
+    template: worker/network-policy.yaml
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+            - namespaceSelector: {}
+            ports:
+            - port: 9102
+              protocol: TCP
+
+  # The API server's metrics share its API port, so a cross-namespace scrape
+  # rule would expose the API. Scraping it requires an explicit extraIngressRule.
+  - it: API server policy does not open cross-namespace ingress for metrics
+    template: api-server-v2/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.ingress
+          any: true
+          content:
+            from:
+            - namespaceSelector: {}
+
+  - it: allowMetricsScraping false drops the cross-namespace scrape ingress
+    templates:
+      - config-controller/network-policy.yaml
+      - forecast-worker/network-policy.yaml
+      - operator/network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      networkPolicy:
+        allowMetricsScraping: false
+    asserts:
+      - notContains:
+          path: spec.ingress
+          any: true
+          content:
+            from:
+            - namespaceSelector: {}
+
+  - it: Cilium policies accept scrapes from the cluster entity
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+            - cluster
+            toPorts:
+            - ports:
+              - port: "9102"
+                protocol: TCP
+
+  # A nil port renders `port:` with no value, which Kubernetes reads as every
+  # port.
+  - it: Metrics ingress fails the render when the prometheus port is unset
+    templates:
+      - worker/network-policy.yaml
+    set:
+      thorasWorker:
+        prometheus:
+          port: null
+    asserts:
+      - failedTemplate:
+          errorPattern: prometheus.port
+
+  - it: Metrics ingress fails the render when the prometheus port is unset under cilium
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+      thorasWorker:
+        prometheus:
+          port: null
+    asserts:
+      - failedTemplate:
+          errorPattern: prometheus.port
+
+  - it: An unset prometheus port renders when metrics scraping is off
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy:
+        allowMetricsScraping: false
+      thorasWorker:
+        prometheus:
+          port: null
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  # --- TimescaleDB ingress ---
+
+  # TimescaleDB runs in the metrics-collector pod, so the collector policy is
+  # what closes :5432 to other namespaces. Service/timescale and the policy
+  # must select the same pod; if TimescaleDB moves to its own workload it
+  # needs its own policy.
+  - it: Collector policy selects the pod behind Service/timescale
+    template: collector/network-policy.yaml
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels.app
+          value: metrics-collector
+
+  - it: Service/timescale selects the pod the collector policy covers
+    template: collector/service.yaml
+    documentSelector:
+      path: metadata.name
+      value: timescale
+    asserts:
+      - equal:
+          path: spec.selector.app
+          value: metrics-collector
+
+  - it: Collector policy does not open cross-namespace ingress
+    template: collector/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.ingress
+          any: true
+          content:
+            from:
+            - namespaceSelector: {}
+
+  # --- External database egress ---
+
+  - it: No external database egress when the bundled TimescaleDB is used
+    templates:
+      - api-server-v2/network-policy.yaml
+      - collector/network-policy.yaml
+      - operator/network-policy.yaml
+      - worker/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 5432
+              protocol: TCP
+
+  - it: DSN-holding components get external database egress when externalTimescale is set
+    templates:
+      - api-server-v2/network-policy.yaml
+      - collector/network-policy.yaml
+      - operator/network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://u:p@db.example.com:5432/tsdb"
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 5432
+              protocol: TCP
+
+  - it: External database egress follows externalDatabasePorts
+    template: worker/network-policy.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://u:p@db.example.com:6432/tsdb"
+      networkPolicy:
+        externalDatabasePorts:
+        - 6432
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 6432
+              protocol: TCP
+
+  - it: Cilium external database egress targets the world entity
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+      externalTimescale:
+        dsn: "postgres://u:p@db.example.com:5432/tsdb"
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+            - world
+            toPorts:
+            - ports:
+              - port: "5432"
+                protocol: TCP
+
+  # --- API server egress scoping (networkPolicy.apiServerCIDRs) ---
+
+  # Without CIDRs the rule is ports-only, which standard NetworkPolicy evaluates
+  # as any destination on those ports.
+  - it: apiServerCIDRs scopes the API server egress rule to an ipBlock
+    templates:
+      - api-server-v2/network-policy.yaml
+      - operator/webhooks-certgen-network-policy.yaml
+    set:
+      networkPolicy:
+        apiServerCIDRs:
+        - 10.0.0.0/16
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+            - ipBlock:
+                cidr: 10.0.0.0/16
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+      - notContains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+
+  - it: Cilium flavor ignores apiServerCIDRs
+    template: api-server-v2/network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+        apiServerCIDRs:
+        - 10.0.0.0/16
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+            - kube-apiserver

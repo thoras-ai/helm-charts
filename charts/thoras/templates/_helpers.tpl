@@ -309,25 +309,160 @@ true
 {{- end -}}
 
 {{/*
-Egress rule allowing components to reach the Kubernetes API server, for the
-"kubernetes" NetworkPolicy flavor.
-
-Standard NetworkPolicy cannot target the API server by label, so this permits
-egress to any destination on the configured ports. Policy is enforced after
-kube-proxy DNATs the service address to the real endpoint, so the ports must
-match what the API server actually listens on rather than the service port.
-Use the cilium flavor for precise scoping.
-
-Emits nothing when the port list is empty, leaving the rule out entirely
-instead of rendering a rule that would allow egress on every port.
+API server egress rule for the "kubernetes" flavor. Standard NetworkPolicy
+cannot name the API server, so with apiServerCIDRs empty this allows any
+destination on apiServerPorts. Emits nothing when the port list is empty; a
+rule with no ports would allow every port.
 */}}
 {{- define "thoras.apiServerEgressRule" -}}
-{{- with .Values.networkPolicy.apiServerPorts -}}
+{{- $ports := .Values.networkPolicy.apiServerPorts -}}
+{{- $cidrs := .Values.networkPolicy.apiServerCIDRs -}}
+{{- if $ports -}}
+{{- if $cidrs -}}
+- to:
+  {{- range $cidrs }}
+  - ipBlock:
+      cidr: {{ . }}
+  {{- end }}
+  ports:
+  {{- range $ports }}
+  - port: {{ . }}
+    protocol: TCP
+  {{- end }}
+{{- else -}}
+- ports:
+  {{- range $ports }}
+  - port: {{ . }}
+    protocol: TCP
+  {{- end }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+DNS egress rules for the "kubernetes" flavor.
+
+The kube-dns pod selector matches nothing under NodeLocal DNSCache (a node
+listener, not a pod) or a differently labeled CoreDNS;
+allowDnsToAnyDestination adds a ports-only rule for those.
+*/}}
+{{- define "thoras.dnsEgressRules" -}}
+- to:
+  - namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: kube-system
+    podSelector:
+      matchLabels:
+        k8s-app: kube-dns
+  ports:
+  - port: 53
+    protocol: UDP
+  - port: 53
+    protocol: TCP
+{{- if .Values.networkPolicy.allowDnsToAnyDestination }}
+- ports:
+  - port: 53
+    protocol: UDP
+  - port: 53
+    protocol: TCP
+{{- end -}}
+{{- end -}}
+
+{{/*
+DNS egress rules for the "cilium" flavor. Mirrors thoras.dnsEgressRules; the
+fallback targets the host and remote-node entities.
+*/}}
+{{- define "thoras.dnsEgressRulesCilium" -}}
+- toEndpoints:
+  - matchLabels:
+      k8s:k8s-app: kube-dns
+      k8s:io.kubernetes.pod.namespace: kube-system
+  toPorts:
+  - ports:
+    - port: "53"
+      protocol: ANY
+    rules:
+      dns:
+      - matchPattern: "*"
+{{- if .Values.networkPolicy.allowDnsToAnyDestination }}
+- toEntities:
+  - host
+  - remote-node
+  toPorts:
+  - ports:
+    - port: "53"
+      protocol: ANY
+{{- end -}}
+{{- end -}}
+
+{{/*
+Cross-namespace ingress rule for a component's Prometheus port. Not used by
+the API server, whose metrics share its API port.
+
+Usage: include "thoras.metricsIngressRule" (dict "root" . "port" .Values.thorasWorker.prometheus.port "enabled" .Values.thorasWorker.prometheus.enabled)
+*/}}
+{{- define "thoras.metricsIngressRule" -}}
+{{- if and .root.Values.networkPolicy.allowMetricsScraping .enabled -}}
+{{- if not .port }}{{ fail "networkPolicy.allowMetricsScraping needs the component's prometheus.port; an empty port would open every port to every namespace" }}{{ end -}}
+- from:
+  - namespaceSelector: {}
+  ports:
+  - port: {{ .port }}
+    protocol: TCP
+{{- end -}}
+{{- end -}}
+
+{{/*
+Metrics scrape ingress rule for the "cilium" flavor. Mirrors
+thoras.metricsIngressRule.
+
+Usage: include "thoras.metricsIngressRuleCilium" (dict "root" . "port" .Values.thorasWorker.prometheus.port "enabled" .Values.thorasWorker.prometheus.enabled)
+*/}}
+{{- define "thoras.metricsIngressRuleCilium" -}}
+{{- if and .root.Values.networkPolicy.allowMetricsScraping .enabled -}}
+{{- if not .port }}{{ fail "networkPolicy.allowMetricsScraping needs the component's prometheus.port; an empty port would open every port to every namespace" }}{{ end -}}
+- fromEntities:
+  - cluster
+  toPorts:
+  - ports:
+    - port: "{{ .port }}"
+      protocol: TCP
+{{- end -}}
+{{- end -}}
+
+{{/*
+Egress rule to an external TimescaleDB for components holding the DSN. The
+host is unknown at render time, so the rule is ports-only. Emits nothing for
+the bundled TimescaleDB.
+*/}}
+{{- define "thoras.externalDatabaseEgressRule" -}}
+{{- if include "thoras.externalTimescaleEnabled" . -}}
+{{- with .Values.networkPolicy.externalDatabasePorts -}}
 - ports:
   {{- range . }}
   - port: {{ . }}
     protocol: TCP
   {{- end }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+External database egress rule for the "cilium" flavor. Mirrors
+thoras.externalDatabaseEgressRule.
+*/}}
+{{- define "thoras.externalDatabaseEgressRuleCilium" -}}
+{{- if include "thoras.externalTimescaleEnabled" . -}}
+{{- with .Values.networkPolicy.externalDatabasePorts -}}
+- toEntities:
+  - world
+  toPorts:
+  - ports:
+    {{- range . }}
+    - port: "{{ . }}"
+      protocol: TCP
+    {{- end }}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
