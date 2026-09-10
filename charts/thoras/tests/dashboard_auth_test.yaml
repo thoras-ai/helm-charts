@@ -360,7 +360,7 @@ tests:
         auth:
           mode: oidc
           oidc:
-            provider: okta
+            provider: oidc
             issuerURL: https://acme.okta.com/oauth2/default
             redirectURL: https://thoras.acme.com/oauth2/callback
             emailDomains: [acme.com]
@@ -369,7 +369,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
-          pattern: 'provider = "okta"'
+          pattern: 'provider = "oidc"'
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
           pattern: 'oidc_issuer_url = "https://acme.okta.com/oauth2/default"'
