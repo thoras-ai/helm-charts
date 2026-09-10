@@ -27,6 +27,8 @@ jobs:
           helm lint ./charts/thoras
           helm lint ./charts/thoras-console
       - name: Run Helm Unit Tests
-        run: helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
+        run: |
+          helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
+          helm unittest ./charts/thoras-console --chart-tests-path ./charts/thoras-console/tests
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1
