@@ -58,7 +58,11 @@ jobs:
 
       - name: Run chart-releaser
         if: steps.version_bump.outputs.is_bump == 'true'
-        uses: helm/chart-releaser-action@v1.6.0
+        # Pinned to upstream main HEAD rather than a tag. Under
+        # skip_packaging, cr.sh v1.6.0/v1.7.0 dies on `latest_tag: unbound
+        # variable` after the upload and index push already succeeded
+        # (helm/chart-releaser-action#202). The fix is not in any tag.
+        uses: helm/chart-releaser-action@3e001cb8c68933439c7e721650f20a07a1a5c61e
         with:
           # Upload the packages built above rather than re-discovering charts.
           skip_packaging: true
