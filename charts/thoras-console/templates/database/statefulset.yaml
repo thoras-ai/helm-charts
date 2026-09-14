@@ -1,0 +1,138 @@
+{{- include "thoras-console.validate" . }}
+{{- if include "thoras-console.bundledDatabaseEnabled" . }}
+{{- $db := .Values.bundledDatabase }}
+{{- $password := include "thoras-console.postgresPasswordRef" . | fromYaml }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thoras-console-db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" $db.labels) | nindent 4 }}
+spec:
+  {{- /* One replica: a rollout must never leave two pods on one RWO volume. */}}
+  replicas: 1
+  serviceName: {{ include "thoras-console.databaseServiceName" . }}
+  selector:
+    matchLabels:
+      app: thoras-console-db
+  template:
+    metadata:
+      labels:
+        app: thoras-console-db
+        {{- with include "thoras-console.componentLabels" (dict "root" $ "component" $db.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
+      {{- with include "thoras-console.podAnnotations" (dict "root" $ "component" $db.podAnnotations) }}
+      annotations:
+        {{- . | trim | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- /* fsGroup is what makes the volume writable, so the entrypoint can
+             create PGDATA below it. */}}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ $db.serviceAccount.name }}
+      automountServiceAccountToken: false
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
+      {{- /* Long enough for pg_ctl -m fast to finish checkpointing. */}}
+      terminationGracePeriodSeconds: 120
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/{{ $db.image.repository }}:{{ $db.image.tag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        name: timescaledb
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        {{- /* Clean shutdown: there is no pg_resetwal fallback if WAL is left
+               needing recovery. */}}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["pg_ctl", "stop", "-m", "fast"]
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ $password.name }}
+                key: {{ $password.key }}
+          - name: POSTGRES_DB
+            value: {{ $db.databaseName | quote }}
+          {{- /* A subdirectory of the mount, never the mount itself: initdb
+                 refuses a non-empty directory and many volume types arrive
+                 with lost+found in their root. */}}
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+          - name: TIMESCALEDB_TELEMETRY
+            value: "off"
+        ports:
+        - name: postgresql
+          containerPort: {{ $db.containerPort }}
+        startupProbe:
+          exec:
+            command: ["pg_isready", "-U", "postgres"]
+          periodSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "postgres"]
+          periodSeconds: 5
+          failureThreshold: 3
+        resources: {{ $db.resources | toYaml | nindent 10 }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $db.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := $db.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with $db.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with $db.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+  {{- /* Uninstalling, or switching to an external database, destroys this
+         volume. Needs Kubernetes 1.27+; older clusters silently retain it. */}}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Delete
+    whenScaled: Retain
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        {{- include "thoras-console.resourceLabels" (dict "root" . "component" $db.labels) | nindent 8 }}
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      {{- with $db.persistence.storageClassName }}
+      storageClassName: {{ . }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ $db.persistence.size }}
+{{- end }}

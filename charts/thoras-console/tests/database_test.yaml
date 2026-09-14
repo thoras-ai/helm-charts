@@ -1,0 +1,243 @@
+suite: Bundled Database
+templates:
+  - database/statefulset.yaml
+  - database/service.yaml
+  - database/service-account.yaml
+  - database/network-policy.yaml
+  - console-api/deployment.yaml
+tests:
+  - it: Deploys by default, so a fresh install needs no external database
+    template: database/statefulset.yaml
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.serviceName
+          value: thoras-console-db
+
+  - it: Runs the TimescaleDB image from the Thoras registry, not Docker Hub
+    template: database/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.28.2-pg16
+
+  ############################
+  # AC 7: configuring an external database removes every bundled resource
+  ############################
+  - it: Removes the StatefulSet when an external database Secret is referenced
+    template: database/statefulset.yaml
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Removes the Service, ServiceAccount and NetworkPolicy too
+    templates:
+      - database/service.yaml
+      - database/service-account.yaml
+      - database/network-policy.yaml
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+      networkPolicy.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  ############################
+  # Storage, and the two footguns
+  ############################
+  - it: Claims a volume through the StatefulSet rather than a standalone PVC
+    template: database/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: data
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
+          value: 10Gi
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.accessModes
+          value: ["ReadWriteOnce"]
+
+  - it: Deletes the claim with the StatefulSet, so uninstall leaves nothing behind
+    template: database/statefulset.yaml
+    asserts:
+      # Deliberate for a database documented as evaluation-only: retaining it
+      # would orphan a volume whose Postgres password no longer matches the one
+      # config-controller generates for a reinstall.
+      - equal:
+          path: spec.persistentVolumeClaimRetentionPolicy.whenDeleted
+          value: Delete
+      # Scaling never happens at one replica, but be explicit rather than
+      # relying on the API default.
+      - equal:
+          path: spec.persistentVolumeClaimRetentionPolicy.whenScaled
+          value: Retain
+
+  - it: Leaves storageClassName unset so the cluster default applies
+    template: database/statefulset.yaml
+    asserts:
+      - notExists:
+          path: spec.volumeClaimTemplates[0].spec.storageClassName
+
+  - it: Binds a named StorageClass when one is given
+    template: database/statefulset.yaml
+    set:
+      bundledDatabase.persistence.storageClassName: fast-ssd
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.storageClassName
+          value: fast-ssd
+
+  - it: Puts PGDATA below the mount, never at it
+    template: database/statefulset.yaml
+    asserts:
+      # initdb refuses a non-empty directory, and many volume types arrive with
+      # lost+found in their root.
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'PGDATA')].value
+          value: /var/lib/postgresql/data/pgdata
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+            mountPath: /var/lib/postgresql/data
+
+  - it: Sets fsGroup so the entrypoint can write to the mounted volume
+    template: database/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
+
+  ############################
+  # Credentials and shutdown
+  ############################
+  - it: Takes its password by reference from the generated Secret
+    template: database/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'POSTGRES_PASSWORD')].valueFrom.secretKeyRef.name
+          value: thoras-console-config-controller
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'POSTGRES_PASSWORD')].value
+
+  - it: Creates the database the generated DSN points at
+    template: database/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'POSTGRES_DB')].value
+          value: thoras_cloud
+
+  - it: Shuts down cleanly, since this chart ships no WAL-reset fallback
+    template: database/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
+          value: ["pg_ctl", "stop", "-m", "fast"]
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 120
+
+  - it: Reports readiness by asking Postgres, not by an open socket
+    template: database/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.exec.command
+          value: ["pg_isready", "-U", "postgres"]
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 60
+
+  - it: Disables telemetry, this being a self-hosted install
+    template: database/statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'TIMESCALEDB_TELEMETRY')].value
+          value: "off"
+
+  ############################
+  # Service
+  ############################
+  - it: Fronts the database with a headless Service, as the StatefulSet requires
+    template: database/service.yaml
+    asserts:
+      - equal:
+          path: spec.clusterIP
+          value: None
+      - equal:
+          path: metadata.name
+          value: thoras-console-db
+      - equal:
+          path: spec.ports[0].port
+          value: 5432
+
+  ############################
+  # NetworkPolicy
+  ############################
+  - it: Admits only console-api, not the whole namespace
+    template: database/network-policy.yaml
+    set:
+      networkPolicy.enabled: true
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - podSelector:
+                  matchLabels:
+                    app: thoras-console-api
+            ports:
+              - port: 5432
+                protocol: TCP
+
+  - it: Lets the database initiate nothing but DNS
+    template: database/network-policy.yaml
+    set:
+      networkPolicy.enabled: true
+    asserts:
+      - lengthEqual:
+          path: spec.egress
+          count: 1
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - podSelector: {}
+
+  - it: Admits only console-api in the cilium flavor too
+    template: database/network-policy.yaml
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.flavor: cilium
+    asserts:
+      - isKind:
+          of: CiliumNetworkPolicy
+      - contains:
+          path: spec.ingress
+          content:
+            fromEndpoints:
+              - matchLabels:
+                  app: thoras-console-api
+            toPorts:
+              - ports:
+                  - port: "5432"
+                    protocol: TCP
+
+  ############################
+  # The consumer side
+  ############################
+  - it: Points console-api at the bundled database through the generated DSN
+    template: console-api/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POSTGRESQL_DSN')].valueFrom.secretKeyRef.key
+          value: postgresql-dsn

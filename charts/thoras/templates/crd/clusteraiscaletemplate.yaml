@@ -81,8 +81,10 @@ spec:
                     == 0 || !has(self.includedNamespaces) || self.includedNamespaces.size()
                     == 0'
               selector:
-                description: Selector matches Deployments, Argo Rollouts, and StatefulSets
-                  to apply this template to
+                description: |-
+                  Selector matches Deployments, Argo Rollouts, and StatefulSets to apply this template to.
+                  A matched workload opts out by setting the annotation thoras.ai/skip-template: "true".
+                  An AIScaleTarget already created for it is kept, but no longer updated.
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
@@ -1011,6 +1013,15 @@ spec:
                               required:
                               - lowerbound
                               type: object
+                            exclude:
+                              description: exclude lists container name patterns to
+                                skip, even when they match name
+                              items:
+                                maxLength: 253
+                                minLength: 1
+                                type: string
+                              maxItems: 32
+                              type: array
                             jvm_options:
                               description: |-
                                 JVMOptions configures automatic JVM heap sizing.
@@ -1104,10 +1115,9 @@ spec:
                               type: object
                             name:
                               description: name of container to scale
+                              maxLength: 253
+                              minLength: 1
                               type: string
-                              x-kubernetes-validations:
-                              - message: name must not be empty
-                                rule: size(self) > 0
                           required:
                           - name
                           type: object

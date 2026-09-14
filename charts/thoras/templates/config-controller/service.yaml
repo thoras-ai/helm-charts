@@ -1,0 +1,23 @@
+{{- if .Values.thorasConfigController.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-config-controller
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.thorasConfigController.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app: thoras-config-controller
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasConfigController.labels) | nindent 4 }}
+spec:
+  ports:
+  - name: http-metrics
+    port: {{ .Values.thorasConfigController.prometheus.port }}
+    protocol: TCP
+    targetPort: {{ .Values.thorasConfigController.prometheus.port }}
+  selector:
+    app: thoras-config-controller
+{{- end }}

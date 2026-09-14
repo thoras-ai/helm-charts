@@ -1,0 +1,23 @@
+{{- if include "thoras-console.bundledDatabaseEnabled" . }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thoras-console.databaseServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: thoras-console-db
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.bundledDatabase.labels) | nindent 4 }}
+spec:
+  {{- /* Headless: it is the StatefulSet's required serviceName, and with one
+         replica it resolves to that pod, so the generated DSN can point here
+         directly without a second ClusterIP Service. */}}
+  clusterIP: None
+  ports:
+  - name: postgresql
+    port: {{ .Values.bundledDatabase.containerPort }}
+    protocol: TCP
+    targetPort: postgresql
+  selector:
+    app: thoras-console-db
+{{- end }}

@@ -1,0 +1,165 @@
+{{- include "thoras-console.validate" . }}
+{{- if .Values.consoleApi.enabled }}
+{{- $c := .Values.consoleApi }}
+{{- $auth := $c.auth }}
+{{- $localMode := or (eq $auth.mode "local") (eq $auth.mode "both") }}
+{{- $oidcMode := or (eq $auth.mode "oidc") (eq $auth.mode "both") }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-console-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" $c.labels) | nindent 4 }}
+spec:
+  replicas: {{ $c.replicas }}
+  selector:
+    matchLabels:
+      app: thoras-console-api
+  template:
+    metadata:
+      labels:
+        app: thoras-console-api
+        {{- with include "thoras-console.componentLabels" (dict "root" $ "component" $c.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
+      {{- with include "thoras-console.podAnnotations" (dict "root" $ "component" $c.podAnnotations) }}
+      annotations:
+        {{- . | trim | nindent 8 }}
+      {{- end }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ $c.serviceAccount.name }}
+      {{- /* No RBAC: console-api makes no Kubernetes API calls. */}}
+      automountServiceAccountToken: false
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/{{ $c.image.repository }}:{{ .Values.consoleVersion }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        name: thoras-console-api
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        command: ["/app/console-api"]
+        env:
+          - name: SERVICE_PORT
+            value: {{ $c.containerPort | quote }}
+          {{- $dsn := include "thoras-console.databaseDsnRef" . | fromYaml }}
+          - name: SERVICE_POSTGRESQL_DSN
+            valueFrom:
+              secretKeyRef:
+                name: {{ $dsn.name }}
+                key: {{ $dsn.key }}
+          - name: SERVICE_SHOULD_MIGRATE_ON_START
+            value: {{ $c.migrateOnStart | ternary "true" "false" | quote }}
+          {{- /* Must stay below the startup probe's budget, or an unreachable
+                 database looks like a crash loop. Move both together. */}}
+          - name: SERVICE_WAIT_TIMEOUT
+            value: "300s"
+          {{- if include "thoras-console.bundledDatabaseEnabled" . }}
+          - name: SERVICE_TIMESCALE_EXTENSION_VERSION
+            value: {{ .Values.bundledDatabase.extensionVersion | quote }}
+          {{- end }}
+          - name: SERVICE_AUTH_MODE
+            value: {{ $auth.mode | quote }}
+          {{- if $oidcMode }}
+          - name: SERVICE_JWT_ISSUER
+            value: {{ $auth.oidc.issuer | quote }}
+          - name: SERVICE_JWT_AUDIENCES
+            value: {{ $auth.oidc.audiences | quote }}
+          {{- with $auth.oidc.jwksUri }}
+          - name: SERVICE_JWT_JWKS_URI
+            value: {{ . | quote }}
+          {{- end }}
+          {{- end }}
+          {{- if $localMode }}
+          {{- $admin := include "thoras-console.adminPasswordRef" . | fromYaml }}
+          - name: SERVICE_LOCAL_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ $admin.name }}
+                key: {{ $admin.key }}
+          {{- with $auth.adminSalt }}
+          - name: SERVICE_LOCAL_ADMIN_SALT
+            value: {{ . | quote }}
+          {{- end }}
+          - name: SERVICE_BOOTSTRAP_ADMIN_EMAIL
+            value: {{ $c.bootstrapAdminEmail | quote }}
+          {{- end }}
+          - name: SERVICE_SINGLE_ORG
+            value: {{ $c.singleOrg.enabled | ternary "true" "false" | quote }}
+          {{- if $c.singleOrg.enabled }}
+          - name: SERVICE_SINGLE_ORG_NAME
+            value: {{ $c.singleOrg.name | quote }}
+          {{- end }}
+          {{- with include "thoras-console.webhookEnv" . }}{{- . | nindent 10 }}{{- end }}
+          - name: SERVICE_SLACK_ERRORS_ENABLED
+            value: {{ .Values.slack.errorsEnabled | ternary "true" "false" | quote }}
+          {{- with include "thoras-console.slackEnv" . }}{{- . | nindent 10 }}{{- end }}
+          - name: SERVICE_LOG_LEVEL
+            value: {{ .Values.logLevel }}
+          - name: SERVICE_CHART_VERSION
+            value: {{ .Chart.Version | quote }}
+          {{- with include "thoras-console.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+        ports:
+        - name: http
+          containerPort: {{ $c.containerPort }}
+        {{- /* 36 * 10s = 360s, strictly above SERVICE_WAIT_TIMEOUT's 300s. */}}
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 10
+          failureThreshold: 36
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /health?db=true
+            port: http
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 30
+          failureThreshold: 3
+          timeoutSeconds: 2
+        resources: {{ $c.resources | toYaml | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $c.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := $c.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with $c.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with $c.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- include "thoras-console.topologySpreadConstraints" (dict "root" . "component" $c.topologySpreadConstraints) | nindent 6 }}
+{{- end }}

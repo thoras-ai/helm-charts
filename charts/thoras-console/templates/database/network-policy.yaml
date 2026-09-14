@@ -1,0 +1,90 @@
+{{- if and .Values.networkPolicy.enabled (include "thoras-console.bundledDatabaseEnabled" .) }}
+{{- $db := .Values.bundledDatabase }}
+{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-console-db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-console-db
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  {{- /* Tighter than the thoras chart's equivalent, which lets any pod in the
+         namespace reach 5432. The console chart may share a namespace with the
+         thoras chart, so only console-api is admitted. */}}
+  - from:
+    - podSelector:
+        matchLabels:
+          app: thoras-console-api
+    ports:
+    - port: {{ $db.containerPort }}
+      protocol: TCP
+  {{- with $db.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  {{- /* A database initiates nothing but DNS. */}}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  {{- with $db.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- else if eq .Values.networkPolicy.flavor "cilium" }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-console-db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: thoras-console-db
+  ingress:
+  {{- /* Only console-api, not the whole namespace: this chart may share one
+         with the thoras chart. */}}
+  - fromEndpoints:
+    - matchLabels:
+        app: thoras-console-api
+    toPorts:
+    - ports:
+      - port: "{{ $db.containerPort }}"
+        protocol: TCP
+  {{- with $db.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: "*"
+  {{- with $db.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}

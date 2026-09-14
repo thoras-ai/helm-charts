@@ -39,6 +39,5 @@ spec:
             drop: [ALL]
         command: ["/app/operator", "uninstall"]
         env:
-          {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         resources: {}

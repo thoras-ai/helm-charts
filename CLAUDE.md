@@ -1,11 +1,16 @@
 # CLAUDE.md
 
-Single Helm chart (`charts/thoras/`) that installs the Thoras AI platform onto
-Kubernetes clusters.
+Two Helm charts: `charts/thoras/` installs the Thoras AI platform onto a cluster
+you want to observe, and `charts/thoras-console/` installs a self-hosted console
+for those clusters to report into.
 
 ## Repository Overview
 
-This is the official Helm Charts repository for Thoras AI, an ML-powered platform that helps SRE teams view the future of their Kubernetes workloads. The repository contains a single Helm chart that installs the complete Thoras platform onto Kubernetes clusters.
+This is the official Helm Charts repository for Thoras AI, an ML-powered platform that helps SRE teams view the future of their Kubernetes workloads.
+
+`charts/thoras` installs the complete Thoras platform onto Kubernetes clusters and is the chart the rest of this document describes. `charts/thoras-console` is a separate install, currently rendering credentials and configuration only; its workloads land in later releases. The two charts are independent and may share a namespace, so resource and template names must not collide.
+
+Only `charts/thoras` is published. `release.yml` packages an explicit list rather than discovering `charts/*`, so adding a chart to the release means adding a `helm package` line and widening the version-bump diff scope alongside it.
 
 ## Architecture
 
@@ -15,9 +20,11 @@ The Thoras platform consists of multiple interconnected components deployed as K
 
 - **Thoras Operator**: Singleton operator managing the platform lifecycle
 - **Thoras API Server V2**: Main API service with configurable resource limits and caching
-- **Metrics Collector**: Collects and stores metrics data with Elasticsearch and TimescaleDB backends
-- **Dashboard**: Web UI for visualization and management
+- **Metrics Collector**: Collects and stores metrics data backed by TimescaleDB plus a blob-service for large-object storage
+- **Dashboard**: Web UI for visualization and management, fronted by an oauth2-proxy sidecar (htpasswd or OIDC)
 - **Forecast Worker**: Handles ML-powered forecasting workloads
+- **Worker**: Background worker for cost refresh, monitors, and reconciliation jobs
+- **Config Controller**: Leader-elected controller that seeds credentials into `thoras-config-controller`, migrates pre-5.0 legacy Secrets, and drives dependency-ordered rollouts when watched Secrets change
 
 ### Optional Components
 
@@ -29,7 +36,7 @@ The chart includes Custom Resource Definitions (CRDs) for:
 
 - AI Scale Targets (`aiscaletarget.yaml`)
 - Cluster AI Scale Template (`clusteraiscaletemplate.yaml`)
-- DaemonSet Vertical Autoscaler (`daemonsetverticalautoscaler.yaml`)
+- DaemonSet Autoscaler (`daemonsetautoscaler.yaml`)
 
 ## Common Development Tasks
 
@@ -40,6 +47,13 @@ Run Helm unit tests:
 ```bash
 helm plugin install https://github.com/helm-unittest/helm-unittest.git
 helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
+```
+
+Lint both charts, as CI does:
+
+```bash
+helm lint ./charts/thoras
+helm lint ./charts/thoras-console
 ```
 
 ### Chart Installation
@@ -69,16 +83,36 @@ helm install my-thoras-release thoras/thoras -n thoras --create-namespace -f ./v
 charts/thoras/
 ├── Chart.yaml              # Chart metadata and version
 ├── values.yaml             # Default configuration values
+├── README.md               # User-facing chart documentation
+├── UPGRADE.md              # Breaking-change migration notes
+├── files/                  # Static assets bundled into ConfigMaps (e.g. oauth2-proxy sign-in template)
 ├── templates/              # Kubernetes manifests
-│   ├── api-server-v2/      # API server
-│   ├── collector/          # Metrics storage (timescaledb)
-│   ├── crd/                # Custom Resource Definitions
-│   ├── dashboard/          # Dasbhoard UI
-│   ├── forecast-worker/    # Forecast worker
-│   ├── monitor/            # Monitoring (optional)
-│   ├── operator/           # Operator + webhook cert management
-│   └── worker/             # Background worker
-└── tests/                  # Helm unit tests with snapshots
+│   ├── NOTES.txt                       # Post-install notes rendered by `helm install`
+│   ├── _config-data.tpl                # Shared ConfigMap data payloads (hashed for checksum/config annotations)
+│   ├── _helpers.tpl                    # Chart-wide template helpers, incl. thoras.secretPlan
+│   ├── api-client-secret.yaml          # Legacy migration source, gated by featureFlags.enableLegacySecretSeeding
+│   ├── registry-secret.yaml            # Image-pull Secret
+│   ├── resource-quota.yaml             # Optional namespace ResourceQuota
+│   ├── thoras-helm-values-secret.yaml  # Deterministic Secret holding pinned values
+│   ├── api-server-v2/                  # API server
+│   ├── collector/                      # Metrics storage (TimescaleDB + blob-service)
+│   ├── config-controller/              # Config controller (seeds Secrets, drives rollouts)
+│   ├── crd/                            # Custom Resource Definitions
+│   ├── dashboard/                      # Dashboard UI + oauth2-proxy sidecar
+│   ├── forecast-worker/                # Forecast worker
+│   ├── monitor/                        # Monitoring (optional)
+│   ├── operator/                       # Operator + webhook cert management
+│   └── worker/                         # Background worker
+└── tests/                              # Helm unit tests with snapshots
+
+charts/thoras-console/
+├── Chart.yaml              # Chart metadata and version
+├── values.yaml             # Default configuration values
+├── README.md               # User-facing chart documentation
+└── templates/
+    ├── NOTES.txt                       # Post-install notes rendered by `helm install`
+    ├── _helpers.tpl                    # Chart-wide template helpers, prefixed thoras-console.
+    └── registry-secret.yaml            # Image-pull Secret
 ```
 
 ## Configuration
@@ -102,6 +136,17 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
   - Subject in imperative mood, lowercase first letter, no trailing period.
   - Subject ≤72 characters.
   - Optional body/footers follow a blank line.
+
+## Comments
+
+Keep comments concise and forward-looking. Write for the next reader of the
+chart, not for the review of the PR that added them.
+
+- Explain non-obvious constraints, footguns, and TODOs.
+- Skip history, reasoning narratives, issue numbers, and comparisons to
+  approaches not taken.
+- Do not restate what the code, values, or assertions already say.
+- One line is usually enough; multi-line blocks need to earn it.
 
 ## CI/CD Pipeline
 

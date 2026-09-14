@@ -1,0 +1,705 @@
+suite: ConfigController
+tests:
+  # -------- Deployment --------
+
+  - it: Runs the config-controller binary with both ports
+    templates:
+      - config-controller/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/config-controller"]
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http-metrics
+            containerPort: 9103
+      # the health port is fixed in the binary and cannot be overridden
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http-health
+            containerPort: 8081
+
+  - it: Probes readiness on the health port
+    templates:
+      - config-controller/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /readyz
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: http-health
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /readyz
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /healthz
+
+  # Only the leader reconciles, and readiness is gated on a completed
+  # reconcile, so a second replica would never become ready.
+  - it: Runs a single replica
+    templates:
+      - config-controller/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  # Left unset, the manager caches cluster-wide and the namespaced Role cannot
+  # satisfy the informers, leaving the pod permanently unready.
+  - it: Pins the watch namespace to the release namespace
+    templates:
+      - config-controller/deployment.yaml
+    release:
+      namespace: custom-ns
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_WATCH_NAMESPACES')].value
+          value: custom-ns
+
+  - it: Ignores rbac.namespaces when pinning the watch namespace
+    templates:
+      - config-controller/deployment.yaml
+    release:
+      namespace: custom-ns
+    set:
+      rbac:
+        namespaces:
+          - other-one
+          - other-two
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_WATCH_NAMESPACES')].value
+          value: custom-ns
+
+  - it: Wires the feature flags onto the names the binary reads
+    templates:
+      - config-controller/deployment.yaml
+    set:
+      thorasConfigController:
+        enableSeeding: false
+        enableRestartRollouts: false
+        pollInterval: 45s
+        rolloutDebounce: 5s
+        rolloutTimeout: 10m
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_SEEDING')].value
+          value: "false"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_RESTART_ROLLOUTS')].value
+          value: "false"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POLL_INTERVAL')].value
+          value: "45s"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ROLLOUT_DEBOUNCE')].value
+          value: "5s"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ROLLOUT_TIMEOUT')].value
+          value: "10m"
+
+  # The controller talks to the Kubernetes API, never to the Thoras API server.
+  - it: Does not receive the api client token
+    templates:
+      - config-controller/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_SIMPLE_AUTH_SECRET')]
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_SIMPLE_AUTH_SECRET')]
+
+  - it: Mounts its config file at the path the binary defaults to
+    templates:
+      - config-controller/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CONFIG_PATH')].value
+          value: /app/config-controller.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config
+            mountPath: /app/config-controller.yaml
+            subPath: config-controller.yaml
+            readOnly: true
+
+  # The controller excludes itself from rollouts and reads its config only at
+  # startup, so this is the one checksum the chart still owns.
+  - it: Rolls itself when its config changes
+    templates:
+      - config-controller/deployment.yaml
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+
+  - it: Covers the provided-secret refs in its config checksum
+    templates:
+      - config-controller/deployment.yaml
+    set:
+      slackWebhookUrlSecretRefName: my-slack
+      slackWebhookUrlSecretRefKey: url
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/config"]
+          pattern: "^[0-9a-f]{64}$"
+
+  # -------- Projected volume --------
+
+  - it: Projects no volume when every value is seeded
+    templates:
+      - config-controller/deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: provided
+          any: true
+
+  - it: Projects customer-managed Secrets as files
+    templates:
+      - config-controller/deployment.yaml
+    set:
+      slackWebhookUrlSecretRefName: my-slack
+      slackWebhookUrlSecretRefKey: url
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'provided')].projected.sources
+          content:
+            secret:
+              name: my-slack
+              # a projected source naming a Secret that does not exist wedges
+              # the pod
+              optional: true
+              items:
+                - key: url
+                  path: slack-webhook-url
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: provided
+            mountPath: /etc/thoras/provided
+            readOnly: true
+
+  - it: Groups several keys from one Secret into a single source
+    templates:
+      - config-controller/deployment.yaml
+    set:
+      thorasDashboard:
+        auth:
+          htpasswd:
+            existingSecret:
+              secretName: my-dash
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'provided')].projected.sources
+          content:
+            secret:
+              name: my-dash
+              optional: true
+              items:
+                - key: dashboard-auth-password
+                  path: dashboard-auth-password
+                - key: dashboard-auth-cookie-secret
+                  path: dashboard-auth-cookie-secret
+
+  - it: Projects the OIDC Secret so the controller can watch it too
+    templates:
+      - config-controller/deployment.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'provided')].projected.sources
+          content:
+            secret:
+              name: oauth2-proxy-secrets
+              optional: true
+              items:
+                - key: client-id
+                  path: dashboard-oidc-client-id
+                - key: client-secret
+                  path: dashboard-oidc-client-secret
+                - key: cookie-secret
+                  path: dashboard-oidc-cookie-secret
+
+  - it: Projects thoras-helm-values when values are pinned
+    templates:
+      - config-controller/deployment.yaml
+    set:
+      apiClientSecret:
+        secret: hunter2
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'provided')].projected.sources
+          content:
+            secret:
+              name: thoras-helm-values
+              optional: true
+              items:
+                - key: api-client-secret
+                  path: api-client-secret
+
+  # -------- Config file --------
+
+  - it: Names the Secret it manages
+    templates:
+      - config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "^version: v1\nmanagedSecret: thoras-config-controller\n"
+
+  - it: Seeds the TimescaleDB password and derives the DSN from it
+    templates:
+      - config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: timescale-password\n    source: seed\n    generate:\n      length: 16\n      type: alphanumeric"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "args:\n      - timescale-password\n      format: postgres://postgres:%s@timescale:5432\n      type: format"
+
+  # A format that does not match the running database makes config-controller
+  # reject the migrated pair outright.
+  - it: Tracks the configured TimescaleDB service name and port in the DSN format
+    templates:
+      - config-controller/configmap.yaml
+    set:
+      metricsCollector:
+        timescale:
+          name: tsdb
+          containerPort: 6432
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "format: postgres://postgres:%s@tsdb:6432"
+
+  - it: Seeds no TimescaleDB password under an external database
+    templates:
+      - config-controller/configmap.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: timescale-password"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: timescale-dsn\n    source: provided"
+
+  - it: Omits slack and cloud-sync when neither is configured
+    templates:
+      - config-controller/configmap.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: slack-webhook-url"
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: cloud-sync-cluster-key"
+
+  - it: Records where a provided value is consumed from
+    templates:
+      - config-controller/configmap.yaml
+    set:
+      cloudSync:
+        clusterKeySecretRefName: my-cs
+        clusterKeySecretRefKey: clusterKey
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cloud-sync-cluster-key\n    source: provided\n    path: /etc/thoras/provided/cloud-sync-cluster-key\n    consumedFrom:\n      secret: my-cs\n      key: clusterKey"
+
+  # The controller tracks Secrets only. A watch block here would be silently
+  # ignored by the binary, so it must not be rendered at all.
+  - it: Does not emit a ConfigMap watch list
+    templates:
+      - config-controller/configmap.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "watch:"
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "configMaps:"
+
+  - it: Orders restarts and excludes itself
+    templates:
+      - config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "restart:\n  order:\n    - metrics-collector\n    - thoras-api-server-v2\n    - thoras-operator\n    - thoras-worker\n    - thoras-forecast-worker\n    - thoras-dashboard\n  exclude:\n    - thoras-config-controller"
+
+  # -------- RBAC --------
+
+  - it: Grants namespaced permissions only
+    templates:
+      - config-controller/rbac.yaml
+    asserts:
+      - isKind:
+          of: Role
+        documentIndex: 0
+      - isKind:
+          of: RoleBinding
+        documentIndex: 1
+      - hasDocuments:
+          count: 2
+
+  - it: Does not fan out across rbac.namespaces
+    templates:
+      - config-controller/rbac.yaml
+    set:
+      rbac:
+        namespaces:
+          - other-one
+          - other-two
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: Owns the managed Secret and every legacy migration source end to end
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      # resourceNames cannot restrict create
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            verbs: [create]
+      # The managed Secret and legacy migrateFrom Secrets collapse into a
+      # single name-scoped rule with all verbs: reads, patches migration
+      # annotations, and may clean them up after migration lands.
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            resourceNames: [api-client-secret, thoras-config-controller, thoras-timescale-password]
+            verbs: ["*"]
+
+  - it: Shrinks the owned-secrets rule to the managed Secret when legacy seeding is disabled
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    set:
+      featureFlags:
+        enableLegacySecretSeeding: false
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            resourceNames: [thoras-config-controller]
+            verbs: ["*"]
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            resourceNames: [api-client-secret, thoras-config-controller, thoras-timescale-password]
+            verbs: ["*"]
+
+  - it: Never grants cluster-wide write on secrets
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      # Every non-create secrets rule must be name-scoped; guards against a
+      # future refactor accidentally dropping resourceNames on the "*" rule.
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            verbs: ["*"]
+            resourceNames: null
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [secrets]
+            verbs: [patch]
+            resourceNames: null
+
+  # Restarts evict pods instead of writing the pod template, so a write verb
+  # on workloads would be unused privilege. It would also make the controller
+  # fight GitOps controllers that own those specs.
+  - it: Reads workloads but cannot write them
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [apps]
+            resources: [deployments, statefulsets, daemonsets]
+            verbs: [get, list, watch]
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [apps]
+            resources: [deployments, statefulsets, daemonsets]
+            verbs: [get, list, watch, update]
+
+  - it: Can list and evict pods
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [pods]
+            verbs: [get, list, watch]
+      # Eviction, not delete: PodDisruptionBudgets are honoured.
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [pods/eviction]
+            verbs: [create]
+
+  - it: No longer grants ConfigMap access
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [configmaps]
+            verbs: [get, list, watch]
+
+  - it: Can record leader-election leases and events
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [coordination.k8s.io]
+            resources: [leases]
+            verbs: [get, create, update]
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [events]
+            verbs: [create, patch]
+
+  # Pods are the restart mechanism, but they are only ever listed and evicted.
+  # A delete grant would let the controller bypass PodDisruptionBudgets.
+  - it: Cannot delete pods directly
+    templates:
+      - config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: [pods]
+            verbs: [get, list, watch, delete]
+
+  # -------- enabled: false --------
+
+  - it: Renders nothing when disabled and every value is supplied
+    templates:
+      - config-controller/deployment.yaml
+      - config-controller/configmap.yaml
+      - config-controller/rbac.yaml
+      - config-controller/service.yaml
+      - config-controller/service-account.yaml
+      - config-controller/network-policy.yaml
+    set:
+      thorasConfigController:
+        enabled: false
+      apiClientSecret:
+        secret: hunter2
+      thorasDashboard:
+        auth:
+          htpasswd:
+            password: hunter2
+            cookieSecret: remembermepassw1
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Fails when disabled while a value still needs seeding
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasConfigController:
+        enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasConfigController.enabled is false but these values would have to be seeded by it: api-client-secret, dashboard-auth-password, dashboard-auth-cookie-secret, timescale-password, timescale-dsn. Pin them in values, point them at existing Secrets, or re-enable the controller."
+
+  # -------- consumedFrom is required for provided values --------
+  # config-controller refuses to load a config whose provided value has an
+  # incomplete consumedFrom, so an empty ref must never reach the ConfigMap.
+
+  - it: Records consumedFrom for every provided value
+    templates:
+      - config-controller/configmap.yaml
+    set:
+      apiClientSecret:
+        existingSecret:
+          secretName: cust-api
+          secretKey: token
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://issuer
+            redirectURL: https://cb
+            existingSecret:
+              secretName: cust-oidc
+              clientIDKey: cid
+              clientSecretKey: csec
+              cookieSecretKey: ck
+      externalTimescale:
+        enabled: true
+        secretRefName: cust-ts
+        secretRefKey: dsn
+      slackWebhookUrlSecretRefName: cust-slack
+      slackWebhookUrlSecretRefKey: url
+      cloudSync:
+        clusterKeySecretRefName: cust-cs
+        clusterKeySecretRefKey: clusterKey
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: api-client-secret\n    source: provided\n    path: /etc/thoras/provided/api-client-secret\n    consumedFrom:\n      secret: cust-api\n      key: token"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: dashboard-oidc-client-id\n    source: provided\n    path: /etc/thoras/provided/dashboard-oidc-client-id\n    consumedFrom:\n      secret: cust-oidc\n      key: cid"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: dashboard-oidc-client-secret\n    source: provided\n    path: /etc/thoras/provided/dashboard-oidc-client-secret\n    consumedFrom:\n      secret: cust-oidc\n      key: csec"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: dashboard-oidc-cookie-secret\n    source: provided\n    path: /etc/thoras/provided/dashboard-oidc-cookie-secret\n    consumedFrom:\n      secret: cust-oidc\n      key: ck"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: timescale-dsn\n    source: provided\n    path: /etc/thoras/provided/timescale-dsn\n    consumedFrom:\n      secret: cust-ts\n      key: dsn"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: slack-webhook-url\n    source: provided\n    path: /etc/thoras/provided/slack-webhook-url\n    consumedFrom:\n      secret: cust-slack\n      key: url"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cloud-sync-cluster-key\n    source: provided\n    path: /etc/thoras/provided/cloud-sync-cluster-key\n    consumedFrom:\n      secret: cust-cs\n      key: clusterKey"
+
+  # Each input that can reach a provided entry must be rejected when only half
+  # of the ref is set, rather than rendering an empty consumedFrom field.
+
+  - it: Fails when the api client secret name is set without its key
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      apiClientSecret:
+        existingSecret:
+          secretName: cust-api
+          secretKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "apiClientSecret.existingSecret.secretKey is required when secretName is set"
+
+  - it: Fails when the dashboard htpasswd secret is missing its keys
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          htpasswd:
+            existingSecret:
+              secretName: cust-dash
+              passwordKey: ""
+              cookieSecretKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.htpasswd.existingSecret requires: passwordKey, cookieSecretKey"
+
+  - it: Fails when an oidc secret key is empty
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://issuer
+            redirectURL: https://cb
+            existingSecret:
+              secretName: cust-oidc
+              clientIDKey: ""
+              clientSecretKey: csec
+              cookieSecretKey: ck
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.auth.oidc mode requires: existingSecret.clientIDKey"
+
+  - it: Fails when the external timescale secret name is set without its key
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        enabled: true
+        secretRefName: cust-ts
+        secretRefKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "externalTimescale.secretRefKey is required when secretRefName is set"
+
+  - it: Fails when the external timescale secret key is set without its name
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        enabled: true
+        secretRefKey: dsn
+    asserts:
+      - failedTemplate:
+          errorMessage: "externalTimescale.secretRefName is required when secretRefKey is set"
+
+  # Slack and cloud-sync take the opposite route: both fields are required to
+  # enter provided mode, so a half-set ref silently omits the value instead of
+  # emitting an empty consumedFrom. Guarding it would be a behaviour change.
+  - it: Omits slack and cloud-sync when only half of the ref is set
+    templates:
+      - config-controller/configmap.yaml
+    set:
+      slackWebhookUrlSecretRefName: cust-slack
+      cloudSync:
+        clusterKeySecretRefName: cust-cs
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: slack-webhook-url"
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: cloud-sync-cluster-key"

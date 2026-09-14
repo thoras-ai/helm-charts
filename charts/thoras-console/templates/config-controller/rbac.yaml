@@ -1,0 +1,96 @@
+{{- if .Values.consoleConfigController.enabled }}
+{{- /* Namespaced Role only: the controller reconciles the release namespace
+       exclusively, and the Deployment pins SERVICE_WATCH_NAMESPACES to it so
+       the informer cache matches this grant. */}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: thoras-console-config-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleConfigController.labels) | nindent 4 }}
+rules:
+{{- /* resourceNames cannot restrict create: the object name is unknown at
+       authorization time. The name-scoped rule below covers every other verb. */}}
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+{{- /* One name, not a list: unlike the thoras chart there is no pre-5.0 Secret
+       to migrate from, so the controller owns only what it generates. */}}
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  resourceNames:
+  - thoras-console-config-controller
+  verbs:
+  - "*"
+{{- /* Read-only: restarts evict pods rather than writing the pod template, so
+       the controller never needs to mutate a workload. Writing one would also
+       register as drift to GitOps controllers such as Argo CD.
+       daemonsets is required even though this chart ships none: the controller
+       lists all three kinds on every rollout, and a missing grant fails the
+       whole list, so no workload is ever restarted. */}}
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - watch
+{{- /* Restarts: list the pods a workload owns, then evict them. The eviction
+       subresource is used over delete so PodDisruptionBudgets are honoured. */}}
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/eviction
+  verbs:
+  - create
+{{- /* Leader election records an event on every acquisition. */}}
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - create
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: thoras-console-config-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleConfigController.labels) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: thoras-console-config-controller
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.consoleConfigController.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

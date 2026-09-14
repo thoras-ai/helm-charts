@@ -37,6 +37,7 @@ spec:
   - name: http
     port: {{ .Values.thorasDashboard.port }}
     protocol: TCP
+    {{- /* Explicit service.targetPort wins, otherwise containerPort. */}}
     targetPort: {{ .Values.thorasDashboard.service.targetPort | default .Values.thorasDashboard.containerPort }}
   selector:
     app: thoras-dashboard

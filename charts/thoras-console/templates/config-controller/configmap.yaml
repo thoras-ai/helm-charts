@@ -1,0 +1,15 @@
+{{- if .Values.consoleConfigController.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thoras-console-config-controller-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleConfigController.labels) | nindent 4 }}
+data:
+  {{- /* Read once at startup. The controller excludes itself from rollouts, so
+         the Deployment carries a checksum of this file to force a restart. */}}
+  config-controller.yaml: |
+    {{- include "thoras-console.configControllerConfig" . | nindent 4 }}
+{{- end }}
