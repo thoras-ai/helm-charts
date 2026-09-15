@@ -1,0 +1,103 @@
+{{- if .Values.thorasConfigController.enabled }}
+{{- /* Namespaced Role only, unlike every other component: the controller
+       reconciles the release namespace exclusively, and the Deployment pins
+       SERVICE_WATCH_NAMESPACES to it so the informer cache matches this
+       grant. rbac.namespaces deliberately does not apply. */}}
+{{- $owned := list "thoras-config-controller" }}
+{{- range include "thoras.secretPlan" . | fromYamlArray }}
+{{- range .migrateFrom }}
+{{- $owned = append $owned .secret }}
+{{- end }}
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: thoras-config-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasConfigController.labels) | nindent 4 }}
+rules:
+{{- /* resourceNames cannot restrict create: the object name is unknown at
+       authorization time. The name-scoped rule below covers every other verb. */}}
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+{{- /* Controller owns the managed Secret and every legacy migration source
+       end to end: reads their values, patches migration annotations, and may
+       clean them up once the migration has landed. */}}
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  resourceNames:
+    {{- range $owned | uniq | sortAlpha }}
+  - {{ . }}
+    {{- end }}
+  verbs:
+  - "*"
+{{- /* Read-only: restarts evict pods rather than writing the pod template, so
+       the controller never needs to mutate a workload. Writing one would also
+       register as drift to GitOps controllers such as Argo CD. */}}
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - watch
+{{- /* Restarts: list the pods a workload owns, then evict them. The eviction
+       subresource is used over delete so PodDisruptionBudgets are honoured. */}}
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/eviction
+  verbs:
+  - create
+{{- /* Leader election records an event on every acquisition. */}}
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - create
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: thoras-config-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasConfigController.labels) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: thoras-config-controller
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasConfigController.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

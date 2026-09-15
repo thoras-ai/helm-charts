@@ -1,0 +1,139 @@
+{{- if and .Values.networkPolicy.enabled .Values.consoleApi.enabled }}
+{{- $c := .Values.consoleApi }}
+{{- $oidcMode := or (eq $c.auth.mode "oidc") (eq $c.auth.mode "both") }}
+{{- $external := include "thoras-console.externalDatabaseEnabled" . }}
+{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-console-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-console-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all ingress from pods within the same namespace
+  - from:
+    - podSelector: {}
+  # Tenant clusters and browsers reach the console from outside. Standard
+  # NetworkPolicy cannot express that, so this permits any source on this port.
+  - ports:
+    - port: {{ $c.containerPort }}
+      protocol: TCP
+  {{- with $c.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  # Allow all egress to pods within the same namespace
+  - to:
+    - podSelector: {}
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  {{- if $external }}
+  # An external database is off-cluster and its address may drift, so this
+  # permits any egress on the Postgres default port. The chart cannot parse the
+  # DSN, so another port -- or a narrower CIDR -- needs extraEgressRules.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - port: 5432
+      protocol: TCP
+  {{- end }}
+  {{- if $oidcMode }}
+  # JWKS fetch. IdP hostnames resolve to drifting CIDRs, so this permits any
+  # :443 egress; narrow it with extraEgressRules.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - port: 443
+      protocol: TCP
+  {{- end }}
+  {{- with $c.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- else if eq .Values.networkPolicy.flavor "cilium" }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-console-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: thoras-console-api
+  ingress:
+  # Allow all ingress from endpoints within the same namespace
+  - fromEndpoints:
+    - {}
+  # "all" rather than "world", so ingress-controller and host-sourced traffic
+  # still match.
+  - fromEntities:
+    - all
+    toPorts:
+    - ports:
+      - port: "{{ $c.containerPort }}"
+        protocol: TCP
+  {{- with $c.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  # Allow all egress to endpoints within the same namespace
+  - toEndpoints:
+    - {}
+  # Allow DNS resolution
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: "*"
+  {{- if $external }}
+  # An external database is off-cluster; narrow this with a layered
+  # CiliumNetworkPolicy using toFQDNs.
+  - toEntities:
+    - world
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
+  {{- end }}
+  {{- if $oidcMode }}
+  # console-api fetches JWKS from the identity provider.
+  - toEntities:
+    - world
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  {{- end }}
+  {{- with $c.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}

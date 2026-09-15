@@ -1,0 +1,23 @@
+{{- if .Values.consoleConfigController.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-console-config-controller
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.consoleConfigController.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app: thoras-console-config-controller
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleConfigController.labels) | nindent 4 }}
+spec:
+  ports:
+  - name: http-metrics
+    port: {{ .Values.consoleConfigController.prometheus.port }}
+    protocol: TCP
+    targetPort: {{ .Values.consoleConfigController.prometheus.port }}
+  selector:
+    app: thoras-console-config-controller
+{{- end }}

@@ -77,6 +77,15 @@ spec:
                       required:
                       - lowerbound
                       type: object
+                    exclude:
+                      description: exclude lists container name patterns to skip,
+                        even when they match name
+                      items:
+                        maxLength: 253
+                        minLength: 1
+                        type: string
+                      maxItems: 32
+                      type: array
                     memory:
                       properties:
                         limit:
@@ -107,10 +116,9 @@ spec:
                       type: object
                     name:
                       description: name of container to scale
+                      maxLength: 253
+                      minLength: 1
                       type: string
-                      x-kubernetes-validations:
-                      - message: name must not be empty
-                        rule: size(self) > 0
                   required:
                   - name
                   type: object

@@ -3,8 +3,13 @@ templates:
   - dashboard/service.yaml
 chart:
   version: "4.36.0"
+# Auth-off; auth-on Service/NetworkPolicy live in dashboard_auth_test.yaml.
 tests:
   - it: Default matches snapshot
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
     asserts:
       - matchSnapshot: {}
   - it: Works with LoadBalancer
@@ -52,6 +57,8 @@ tests:
       thorasDashboard:
         port: 5000
         containerPort: 4000
+        auth:
+          enabled: false
     asserts:
       - equal:
           path: spec.ports[0].port

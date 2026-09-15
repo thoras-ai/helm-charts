@@ -1,0 +1,316 @@
+suite: Network Policy
+templates:
+  - console-api/network-policy.yaml
+  - config-controller/network-policy.yaml
+set:
+  networkPolicy:
+    enabled: true
+    flavor: kubernetes
+tests:
+  - it: Renders nothing when network policy is disabled
+    set:
+      networkPolicy.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders NetworkPolicy for the kubernetes flavor
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+      - equal:
+          path: apiVersion
+          value: networking.k8s.io/v1
+
+  - it: Renders CiliumNetworkPolicy for the cilium flavor
+    set:
+      networkPolicy.flavor: cilium
+    asserts:
+      - isKind:
+          of: CiliumNetworkPolicy
+      - equal:
+          path: apiVersion
+          value: cilium.io/v2
+
+  ############################
+  # Ingest from outside the cluster
+  ############################
+  - it: Admits any source on the console port, for tenant ingest and browsers
+    template: console-api/network-policy.yaml
+    asserts:
+      # A rule with ports and no `from` means all sources, which is the only
+      # way standard NetworkPolicy can express "outside the cluster".
+      - contains:
+          path: spec.ingress
+          content:
+            ports:
+              - port: 8080
+                protocol: TCP
+
+  - it: Follows a containerPort override rather than a hardcoded 8080
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.containerPort: 9090
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            ports:
+              - port: 9090
+                protocol: TCP
+      - notContains:
+          path: spec.ingress
+          content:
+            ports:
+              - port: 8080
+                protocol: TCP
+
+  - it: Uses fromEntities all in cilium, so ingress-controller traffic matches
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - all
+            toPorts:
+              - ports:
+                  - port: "8080"
+                    protocol: TCP
+
+  ############################
+  # Database egress, conditional on where the database lives
+  ############################
+  - it: Opens no external Postgres egress when the database is in-cluster
+    template: console-api/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 5432
+                protocol: TCP
+
+  - it: Opens external Postgres egress when the database is not in-cluster
+    template: console-api/network-policy.yaml
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 5432
+                protocol: TCP
+
+  - it: Opens external Postgres egress in cilium too, for flavor parity
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - world
+            toPorts:
+              - ports:
+                  - port: "5432"
+                    protocol: TCP
+
+  ############################
+  # JWKS egress, conditional on auth mode
+  ############################
+  - it: Opens no HTTPS egress in local mode, which contacts no provider
+    template: console-api/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+
+  - it: Opens HTTPS egress in oidc mode so JWKS can be fetched
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+
+  - it: Opens HTTPS egress in both mode too, not just oidc
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.auth.mode: both
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+
+  - it: Opens HTTPS egress in cilium oidc mode, for flavor parity
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - world
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+
+  ############################
+  # Kubernetes API egress belongs to the controller alone
+  ############################
+  - it: Gives console-api no API-server egress, since it makes no API calls
+    template: console-api/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            ports:
+              - port: 443
+                protocol: TCP
+              - port: 6443
+                protocol: TCP
+
+  - it: Gives the controller API-server egress on the configured ports
+    template: config-controller/network-policy.yaml
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+              - port: 443
+                protocol: TCP
+              - port: 6443
+                protocol: TCP
+
+  - it: Drops the API-server rule entirely when the port list is empty
+    template: config-controller/network-policy.yaml
+    set:
+      networkPolicy.apiServerPorts: []
+    asserts:
+      # Rendering a rule with no ports would allow egress to every port
+      # instead of none.
+      - notContains:
+          path: spec.egress
+          content:
+            ports: null
+
+  - it: Targets the API-server entity in cilium regardless of the port list
+    template: config-controller/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      networkPolicy.apiServerPorts: []
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - kube-apiserver
+
+  - it: Gives the controller no same-namespace egress, unlike every other component
+    template: config-controller/network-policy.yaml
+    asserts:
+      # It reads provided values from a mounted file, never over the network.
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - podSelector: {}
+
+  ############################
+  # DNS and operator overrides
+  ############################
+  - it: Allows DNS egress from both components
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: kube-system
+                podSelector:
+                  matchLabels:
+                    k8s-app: kube-dns
+            ports:
+              - port: 53
+                protocol: UDP
+              - port: 53
+                protocol: TCP
+
+  - it: Appends extraEgressRules verbatim
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.extraEgressRules:
+        - to:
+            - ipBlock:
+                cidr: 10.0.0.0/8
+          ports:
+            - port: 9200
+              protocol: TCP
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 10.0.0.0/8
+            ports:
+              - port: 9200
+                protocol: TCP
+
+  - it: Appends extraIngressRules verbatim
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.extraIngressRules:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: monitoring
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: monitoring

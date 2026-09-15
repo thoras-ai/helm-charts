@@ -1,0 +1,250 @@
+suite: Config Controller
+templates:
+  - config-controller/deployment.yaml
+  - config-controller/configmap.yaml
+  - config-controller/rbac.yaml
+  - config-controller/service-monitor.yaml
+tests:
+  - it: Runs the config-controller binary out of the console image
+    template: config-controller/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/console-api:latest
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/config-controller"]
+
+  - it: Overrides the workload selector, whose default matches nothing in this chart
+    template: config-controller/deployment.yaml
+    asserts:
+      # The binary defaults to app.kubernetes.io/name=thoras. Left alone,
+      # seeding works and rollouts silently never happen.
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_WORKLOAD_SELECTOR')].value
+          value: app.kubernetes.io/name=thoras-console
+
+  - it: Pins the watch namespace to the release namespace, matching its Role
+    template: config-controller/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_WATCH_NAMESPACES')].value
+          value: NAMESPACE
+
+  - it: Mounts its config at the path the binary defaults to
+    template: config-controller/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CONFIG_PATH')].value
+          value: /app/config-controller.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config
+            mountPath: /app/config-controller.yaml
+            subPath: config-controller.yaml
+            readOnly: true
+
+  - it: Probes readiness on the fixed health port, not the metrics port
+    template: config-controller/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: http-health
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /healthz
+
+  - it: Rolls itself when its config changes, having no hot reload
+    template: config-controller/deployment.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/config"]
+          pattern: ^[0-9a-f]{64}$
+
+  - it: Renders nothing when disabled
+    set:
+      consoleConfigController.enabled: false
+      consoleApi.auth.adminPassword: twelvechars1
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  ############################
+  # The config document
+  ############################
+  - it: Names the Secret it manages
+    template: config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "managedSecret: thoras-console-config-controller"
+
+  - it: Generates the admin password and derives the DSN from a generated one
+    template: config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: local-admin-password\n    source: seed"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "format: postgres://postgres:%s@thoras-console-db:5432/thoras_cloud"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- postgres-password"
+
+  - it: Generates no database credentials under an external database
+    template: config-controller/configmap.yaml
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: postgres-password"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "name: postgresql-dsn\n    source: provided"
+
+  - it: Records where a provided value is consumed from
+    template: config-controller/configmap.yaml
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "consumedFrom:\n      secret: console-db\n      key: postgresql-dsn"
+
+  - it: Excludes itself and the database from rollouts
+    template: config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- thoras-console-config-controller"
+      # Postgres bakes its password in at first start; a restart cannot adopt
+      # a new one.
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- thoras-console-db"
+
+  ############################
+  # Projected volume
+  ############################
+  - it: Projects no volume when every value is generated
+    template: config-controller/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name == 'provided')]
+
+  - it: Projects pinned and customer-managed Secrets as files
+    template: config-controller/deployment.yaml
+    set:
+      externalDatabase.existingSecret.secretName: console-db
+      slack.webhookUrl: https://hooks.example
+    asserts:
+      - exists:
+          path: spec.template.spec.volumes[?(@.name == 'provided')]
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: provided
+            mountPath: /etc/thoras/provided
+            readOnly: true
+
+  ############################
+  # RBAC
+  ############################
+  - it: Grants namespaced permissions only
+    template: config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: Role
+      - equal:
+          path: metadata.namespace
+          value: NAMESPACE
+
+  - it: Owns only the Secret it manages, having nothing to migrate from
+    template: config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["secrets"]
+            resourceNames: ["thoras-console-config-controller"]
+            verbs: ["*"]
+
+  - it: Reads workloads but cannot write them, so rollouts are not GitOps drift
+    template: config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["apps"]
+            resources: ["deployments", "statefulsets", "daemonsets"]
+            verbs: ["get", "list", "watch"]
+
+  # The controller lists all three workload kinds on every rollout, so dropping
+  # daemonsets -- which this chart ships none of -- fails the whole list and no
+  # workload is ever restarted.
+  - it: Grants daemonsets even though the chart ships none
+    template: config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules[2].resources
+          content: daemonsets
+
+  - it: Can evict pods but not delete them, so PDBs are honoured
+    template: config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["pods/eviction"]
+            verbs: ["create"]
+      - notContains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["pods"]
+            verbs: ["delete"]
+
+  - it: Can record leader-election leases and events
+    template: config-controller/rbac.yaml
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["coordination.k8s.io"]
+            resources: ["leases"]
+            verbs: ["get", "create", "update"]
+
+  ############################
+  # ServiceMonitor
+  ############################
+  - it: Renders no ServiceMonitor by default
+    template: config-controller/service-monitor.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Scrapes the metrics port when monitoring is enabled
+    template: config-controller/service-monitor.yaml
+    set:
+      serviceMonitor.enabled: true
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: spec.endpoints[0].port
+          value: http-metrics
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-console-config-controller

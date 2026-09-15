@@ -148,14 +148,89 @@ tests:
             toEntities:
             - kube-apiserver
 
-  - it: Dashboard kubernetes policy allows external ingress on port 8080
+  - it: Dashboard kubernetes policy allows external ingress on containerPort when auth is disabled
     template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
     asserts:
       - contains:
           path: spec.ingress
           content:
             ports:
             - port: 8080
+              protocol: TCP
+
+  - it: Dashboard kubernetes policy follows containerPort overrides
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        containerPort: 9090
+    asserts:
+      - contains:
+          path: spec.ingress
+          content:
+            ports:
+            - port: 9090
+              protocol: TCP
+      - notContains:
+          path: spec.ingress
+          content:
+            ports:
+            - port: 8080
+              protocol: TCP
+
+  - it: Dashboard kubernetes policy opens external HTTPS egress under mode oidc for IdP reachability
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+            - ipBlock:
+                cidr: 0.0.0.0/0
+            ports:
+            - port: 443
+              protocol: TCP
+
+  - it: Dashboard kubernetes policy does not open external HTTPS egress under mode htpasswd
+    template: dashboard/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+            - ipBlock:
+                cidr: 0.0.0.0/0
+            ports:
+            - port: 443
+              protocol: TCP
+
+  - it: Dashboard kubernetes policy does not open external HTTPS egress when auth is disabled
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+            - ipBlock:
+                cidr: 0.0.0.0/0
+            ports:
+            - port: 443
               protocol: TCP
 
   - it: All kubernetes policies allow DNS egress via kube-dns
