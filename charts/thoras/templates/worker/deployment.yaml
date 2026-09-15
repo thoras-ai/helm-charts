@@ -260,6 +260,10 @@ spec:
             value: {{ .Values.thorasWorker.enableAnalysisEnqueuer | ternary "true" "false" | quote }}
           - name: SERVICE_ANALYSIS_ENQUEUE_INTERVAL
             value: {{ .Values.thorasWorker.analysisEnqueueInterval | quote }}
+          - name: SERVICE_ENABLE_COST_AND_USAGE_COLLECTOR
+            value: {{ .Values.thorasWorker.enableCostAndUsageCollector | ternary "true" "false" | quote }}
+          - name: SERVICE_COST_EXPLORER_FILTER
+            value: {{ .Values.thorasWorker.costExplorerFilter | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics

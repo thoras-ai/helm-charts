@@ -619,6 +619,7 @@ must be pre-installed and managed externally.
 | Key                                                  | Type    | Default       | Description                                                                                                                          |
 | ---------------------------------------------------- | ------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | thorasWorker.serviceAccount.name                     | String  | thoras-worker | Service account name for Thoras worker pod                                                                                           |
+| thorasWorker.serviceAccount.annotations              | Object  | {}            | Annotations for the worker service account, e.g. `eks.amazonaws.com/role-arn` for IRSA                                               |
 | thorasWorker.podAnnotations                          | Object  | {}            | Pod Annotations for Thoras worker                                                                                                    |
 | thorasWorker.labels                                  | Object  | {}            | Pod/service labels for Thoras worker                                                                                                 |
 | thorasWorker.resources                               | Object  | {}            | Specify the resources block. Takes precedence if set.                                                                                |
@@ -637,6 +638,8 @@ must be pre-installed and managed externally.
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | true          | Enable the unified AST utilization monitor                                                                                           |
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                                                                                              |
 | thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                               |
+| thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. Requires an IRSA role granting `ce:GetCostAndUsage`                   |
+| thorasWorker.costExplorerFilter                      | String  | ""            | Cost allocation tag identifying this cluster's spend, as `TAG_KEY=TAG_VALUE`. Empty resolves the tag from node labels                |
 
 ### Thoras Config Controller
 

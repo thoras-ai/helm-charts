@@ -2130,6 +2130,10 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_ANALYSIS_ENQUEUE_INTERVAL
                   value: 1h
+                - name: SERVICE_ENABLE_COST_AND_USAGE_COLLECTOR
+                  value: "false"
+                - name: SERVICE_COST_EXPLORER_FILTER
+                  value: ""
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:

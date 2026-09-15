@@ -473,6 +473,9 @@ thorasWorker:
     stabilization_window: ""
   serviceAccount:
     name: thoras-worker
+    # Set eks.amazonaws.com/role-arn here to give enableCostAndUsageCollector
+    # an IRSA role. The role needs ce:GetCostAndUsage.
+    annotations: {}
   podAnnotations: {}
   labels: {}
   # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
@@ -507,6 +510,13 @@ thorasWorker:
   enableUnifiedAstUtilizationMonitor: true
   enableAnalysisEnqueuer: false
   analysisEnqueueInterval: "1h"
+  # Nightly AWS Cost Explorer collection. The pod reaches Cost Explorer with
+  # whatever AWS credentials it picks up, so give serviceAccount.annotations an
+  # IRSA role before enabling this. Each query is billed by AWS.
+  enableCostAndUsageCollector: false
+  # Cost allocation tag identifying this cluster's spend, as TAG_KEY=TAG_VALUE.
+  # Empty resolves the tag from node labels.
+  costExplorerFilter: ""
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it
