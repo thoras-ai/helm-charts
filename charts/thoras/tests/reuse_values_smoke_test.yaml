@@ -25,6 +25,12 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
+  - it: All templates render when the timescale tls block is missing from stored values
+    set:
+      metricsCollector.timescale.tls: null
+    asserts:
+      - notFailedTemplate: {}
+
   - it: All templates render when the postUpgradeHook block is missing from stored values
     set:
       thorasOperator.postUpgradeHook: null

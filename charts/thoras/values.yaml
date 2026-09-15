@@ -353,6 +353,24 @@ metricsCollector:
       # startup). When disabled, the corrupt state is left as-is.
       enabled: true
       timeoutSeconds: 300
+    # TLS to the bundled TimescaleDB via cert-manager. Requires
+    # thorasOperator.webhookCertGen.certManager.enabled. See README >
+    # Bundled TimescaleDB TLS for the rollout on existing installs.
+    tls:
+      enabled: false
+      # prefer, require, verify-ca, or verify-full
+      sslmode: verify-full
+      duration: 87600h # 10y
+      ca:
+        duration: 87600h # 10y
+      # Sidecar that reloads postgres when the certificate changes.
+      reload:
+        resources:
+          limits:
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 16Mi
   blobService:
     logLevel: "info"
     pprof:

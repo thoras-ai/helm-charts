@@ -61,6 +61,7 @@ spec:
               - key: key
                 path: tls.key
               {{- end }}
+        {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 8 }}{{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
         name: thoras-operator
@@ -117,7 +118,7 @@ spec:
           {{- if include "thoras.externalTimescaleEnabled" . }}
             value: "$(DATABASE_HOST)"
           {{- else }}
-            value: "$(DATABASE_HOST)/thoras"
+            value: "$(DATABASE_HOST)/thoras{{ include "thoras.timescaleDsnParams" . }}"
           {{- end }}
           - name: SERVICE_POSTGRESQL_MAX_CONNS
             value: {{ coalesce .Values.thorasOperator.postgresql.maxConns .Values.postgresql.maxConns | quote }}
@@ -180,6 +181,7 @@ spec:
           - name: tls
             mountPath: /tmp/k8s-webhook-server/serving-certs
             readOnly: true
+          {{- with include "thoras.timescaleCaVolumeMount" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: https-web-hooks
             containerPort: 9443

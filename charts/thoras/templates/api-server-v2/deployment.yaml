@@ -47,6 +47,7 @@ spec:
       - name: system-config
         configMap:
           name: thoras-operator-system-config
+      {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 6 }}{{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -69,7 +70,7 @@ spec:
           {{- if include "thoras.externalTimescaleEnabled" . }}
             value: "$(DATABASE_HOST)"
           {{- else }}
-            value: "$(DATABASE_HOST)/thoras"
+            value: "$(DATABASE_HOST)/thoras{{ include "thoras.timescaleDsnParams" . }}"
           {{- end }}
           - name: SERVICE_POSTGRESQL_MAX_CONNS
             value: {{ coalesce .Values.thorasApiServerV2.postgresql.maxConns .Values.postgresql.maxConns | quote }}
@@ -166,6 +167,7 @@ spec:
             mountPath: /app/system-config.yaml
             subPath: system-config.yaml
             readOnly: true
+          {{- with include "thoras.timescaleCaVolumeMount" . }}{{- . | nindent 10 }}{{- end }}
         ports:
         - name: http
           containerPort: {{ .Values.thorasApiServerV2.containerPort }}

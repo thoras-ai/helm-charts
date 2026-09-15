@@ -144,6 +144,9 @@ hooks (`pre-install`, `pre-upgrade`), which GitOps tools handle poorly.
 cert-manager mode replaces them with declarative `Issuer` and
 `Certificate` CRs. Requires cert-manager installed in the cluster.
 
+cert-manager also lets you turn on TLS for the bundled TimescaleDB (see
+[Bundled TimescaleDB TLS](#bundled-timescaledb-tls)).
+
 ## Configuration
 
 ### Secrets
@@ -569,6 +572,43 @@ must be pre-installed and managed externally.
 | externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`). Requires `secretRefKey`      |
 | externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN. Requires `secretRefName`                                    |
 
+### Bundled TimescaleDB TLS
+
+Off by default: components connect to the bundled TimescaleDB in plaintext.
+With `metricsCollector.timescale.tls.enabled: true`, cert-manager issues a
+server certificate for the `timescale` Service from the chart's own CA
+(`thoras-timescale-ca`, separate from the webhook CA), Postgres starts with
+`ssl=on`, and the api-server, operator, and worker connect with
+`sslmode=<metricsCollector.timescale.tls.sslmode>` (default `verify-full`) and
+that CA. Requires `thorasOperator.webhookCertGen.certManager.enabled: true`.
+Postgres still accepts plaintext connections from other clients. Not applied
+under `externalTimescale`; put `sslmode` in that DSN.
+
+Existing installs: the database and the components restart in the same
+release, and `verify-full` clients fail until the database is back with
+`ssl=on`. Enable in two steps; fresh installs can set `verify-full` directly.
+
+```bash
+helm upgrade ... --set metricsCollector.timescale.tls.enabled=true \
+                 --set metricsCollector.timescale.tls.sslmode=prefer
+# after every pod is Ready; only the components restart
+helm upgrade ... --set metricsCollector.timescale.tls.sslmode=verify-full
+```
+
+Certificate lifetimes default to 10 years (`tls.duration`, `tls.ca.duration`);
+cert-manager renews at two thirds. The `timescale-tls-reload` sidecar in the
+`metrics-collector` pod runs `pg_reload_conf()` at start and whenever the
+mounted Secret changes, so a renewal takes effect within about a minute
+without a restart. Sidecar resources: `metricsCollector.timescale.tls.reload.resources`.
+
+An expired server certificate fails every api-server, operator, and worker
+connection with `certificate has expired`. Renew it; the sidecar reloads
+Postgres within a minute:
+
+```bash
+cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-timescale-tls -n thoras
+```
+
 ### Thoras Metrics Collector
 
 | Key                                                             | Type    | Default          | Description                                                  |
@@ -587,6 +627,10 @@ must be pre-installed and managed externally.
 | metricsCollector.timescale.extensionVersion                     | String  | 2.28.2           | Timescale extension version - should match imageTag          |
 | metricsCollector.timescale.name                                 | String  | timescale        | Timescale container name                                     |
 | metricsCollector.timescale.containerPort                        | Number  | 5432             | Timescale port                                               |
+| metricsCollector.timescale.tls.enabled                          | Boolean | false            | TLS to the bundled TimescaleDB; requires `thorasOperator.webhookCertGen.certManager.enabled` |
+| metricsCollector.timescale.tls.sslmode                          | String  | verify-full      | Component sslmode: prefer, require, verify-ca, or verify-full |
+| metricsCollector.timescale.tls.duration                         | String  | 87600h           | Server certificate lifetime                                  |
+| metricsCollector.timescale.tls.ca.duration                      | String  | 87600h           | Lifetime of the CA that signs the server certificate         |
 | metricsCollector.blobService.port                               | Number  | 80               | Blob service external port                                   |
 | metricsCollector.blobService.logLevel                           | String  | info             | Logging level                                                |
 | metricsCollector.blobService.containerPort                      | Number  | 8080             | Blob service internal port                                   |

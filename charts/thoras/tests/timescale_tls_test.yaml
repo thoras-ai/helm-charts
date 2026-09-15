@@ -1,0 +1,371 @@
+suite: Bundled TimescaleDB TLS
+templates:
+  - collector/certificate.yaml
+  - collector/deployment.yaml
+  - api-server-v2/deployment.yaml
+  - operator/deployment.yaml
+  - worker/deployment.yaml
+  - thoras-helm-values-secret.yaml
+tests:
+  # --- Off by default, even with cert-manager ---
+
+  - it: Renders no Certificate by default
+    template: collector/certificate.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Leaves the timescaledb container and DSN plaintext by default
+    templates:
+      - collector/deployment.yaml
+      - api-server-v2/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].args
+        template: collector/deployment.yaml
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: timescale-tls
+          any: true
+        template: collector/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)/thoras"
+        template: api-server-v2/deployment.yaml
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: timescale-ca
+          any: true
+        template: api-server-v2/deployment.yaml
+
+  # --- Enabled ---
+
+  - it: Issues the server certificate from a chart-managed CA
+    template: collector/certificate.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 4
+      - isKind:
+          of: Issuer
+        documentIndex: 0
+      - equal:
+          path: spec.selfSigned
+          value: {}
+        documentIndex: 0
+      - isKind:
+          of: Certificate
+        documentIndex: 1
+      - equal:
+          path: spec.isCA
+          value: true
+        documentIndex: 1
+      - equal:
+          path: spec.secretName
+          value: thoras-timescale-ca
+        documentIndex: 1
+      - equal:
+          path: spec.duration
+          value: 87600h
+        documentIndex: 1
+      - equal:
+          path: spec.privateKey.rotationPolicy
+          value: Never
+        documentIndex: 1
+      - isKind:
+          of: Issuer
+        documentIndex: 2
+      - equal:
+          path: spec.ca.secretName
+          value: thoras-timescale-ca
+        documentIndex: 2
+      - isKind:
+          of: Certificate
+        documentIndex: 3
+      - equal:
+          path: spec.secretName
+          value: thoras-timescale-tls
+        documentIndex: 3
+      - equal:
+          path: spec.duration
+          value: 87600h
+        documentIndex: 3
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: timescale-tls
+        documentIndex: 0
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: timescale-tls
+        documentIndex: 3
+      - equal:
+          path: spec.issuerRef
+          value:
+            name: thoras-timescale-ca
+            kind: Issuer
+        documentIndex: 3
+      - contains:
+          path: spec.usages
+          content: server auth
+        documentIndex: 3
+
+  - it: Lists every Service DNS form as a SAN
+    template: collector/certificate.yaml
+    release:
+      namespace: thoras
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+    asserts:
+      - equal:
+          path: spec.dnsNames
+          value:
+            - timescale
+            - timescale.thoras
+            - timescale.thoras.svc
+            - timescale.thoras.svc.cluster.local
+        documentIndex: 3
+
+  - it: Honors metricsCollector.timescale.name in the SANs
+    template: collector/certificate.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+      metricsCollector.timescale.name: tsdb
+    asserts:
+      - contains:
+          path: spec.dnsNames
+          content: tsdb.NAMESPACE.svc
+        documentIndex: 3
+
+  - it: Honors custom certificate durations
+    template: collector/certificate.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+      metricsCollector.timescale.tls.duration: 2160h
+      metricsCollector.timescale.tls.ca.duration: 43800h
+    asserts:
+      - equal:
+          path: spec.duration
+          value: 43800h
+        documentIndex: 1
+      - equal:
+          path: spec.duration
+          value: 2160h
+        documentIndex: 3
+
+  - it: Starts postgres with ssl on and the mounted server certificate
+    template: collector/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].command
+          value: ["docker-entrypoint.sh"]
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].args
+          value:
+            - -c
+            - ssl=on
+            - -c
+            - ssl_cert_file=/etc/thoras/timescale-tls/tls.crt
+            - -c
+            - ssl_key_file=/etc/thoras/timescale-tls/tls.key
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].volumeMounts
+          content:
+            name: timescale-tls
+            mountPath: /etc/thoras/timescale-tls
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: timescale-tls
+            secret:
+              secretName: thoras-timescale-tls
+              defaultMode: 416
+              items:
+                - key: tls.crt
+                  path: tls.crt
+                - key: tls.key
+                  path: tls.key
+
+  - it: Runs a sidecar that reloads postgres when the certificate Secret changes
+    template: collector/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[?(@.name == 'timescale-tls-reload')].args[0]
+          pattern: pg_reload_conf
+      - matchRegex:
+          path: spec.template.spec.containers[?(@.name == 'timescale-tls-reload')].args[0]
+          pattern: "trap 'exit 0' TERM INT"
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'timescale-tls-reload')].resources
+          value:
+            limits:
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == 'timescale-tls-reload')].readinessProbe
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'timescale-tls-reload')].volumeMounts
+          content:
+            name: timescale-tls
+            mountPath: /etc/thoras/timescale-tls
+            readOnly: true
+
+  - it: Honors custom reload sidecar resources
+    template: collector/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+      metricsCollector.timescale.tls.reload.resources:
+        limits:
+          cpu: 50m
+          memory: 128Mi
+        requests:
+          cpu: 20m
+          memory: 32Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'timescale-tls-reload')].resources
+          value:
+            limits:
+              cpu: 50m
+              memory: 128Mi
+            requests:
+              cpu: 20m
+              memory: 32Mi
+
+  - it: Runs no reload sidecar without TLS
+    template: collector/deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers
+          content:
+            name: timescale-tls-reload
+          any: true
+
+  - it: Keeps the custom config_file argument ahead of the ssl arguments
+    template: collector/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+      metricsCollector.timescale.config.enabled: true
+      metricsCollector.timescale.config.content: "shared_buffers = 1GB"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].args
+          value:
+            - -c
+            - config_file=/etc/postgresql.conf
+            - -c
+            - ssl=on
+            - -c
+            - ssl_cert_file=/etc/thoras/timescale-tls/tls.crt
+            - -c
+            - ssl_key_file=/etc/thoras/timescale-tls/tls.key
+
+  - it: Points every database consumer at verify-full with the mounted CA
+    templates:
+      - api-server-v2/deployment.yaml
+      - operator/deployment.yaml
+      - worker/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)/thoras?sslmode=verify-full&sslrootcert=/etc/thoras/timescale-ca/ca.crt"
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: timescale-ca
+            secret:
+              secretName: thoras-timescale-tls
+              items:
+                - key: ca.crt
+                  path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: timescale-ca
+            mountPath: /etc/thoras/timescale-ca
+            readOnly: true
+
+  - it: Honors a two-step rollout sslmode
+    template: worker/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+      metricsCollector.timescale.tls.sslmode: prefer
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)/thoras?sslmode=prefer&sslrootcert=/etc/thoras/timescale-ca/ca.crt"
+
+  # --- Guards ---
+
+  - it: Fails when enabled without cert-manager
+    template: thoras-helm-values-secret.yaml
+    set:
+      metricsCollector.timescale.tls.enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: metricsCollector.timescale.tls.enabled requires cert-manager
+
+  - it: Rejects an sslmode that would allow plaintext
+    template: thoras-helm-values-secret.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+      metricsCollector.timescale.tls.enabled: true
+      metricsCollector.timescale.tls.sslmode: disable
+    asserts:
+      - failedTemplate:
+          errorPattern: sslmode must be one of prefer, require, verify-ca, verify-full
+
+  - it: Is ignored under an external TimescaleDB
+    templates:
+      - collector/certificate.yaml
+      - api-server-v2/deployment.yaml
+    set:
+      metricsCollector.timescale.tls.enabled: true
+      externalTimescale.dsn: "postgres://user:pass@ext-db:5432/tsdb?sslmode=require"
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: collector/certificate.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_POSTGRESQL_DSN
+            value: "$(DATABASE_HOST)"
+        template: api-server-v2/deployment.yaml
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: timescale-ca
+          any: true
+        template: api-server-v2/deployment.yaml

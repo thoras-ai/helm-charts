@@ -1,0 +1,70 @@
+{{- if (include "thoras.timescaleTlsEnabled" .) }}
+{{- $tls := .Values.metricsCollector.timescale.tls | default dict }}
+{{- $name := .Values.metricsCollector.timescale.name }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: thoras-timescale-selfsigned
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
+    app.kubernetes.io/component: timescale-tls
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: thoras-timescale-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
+    app.kubernetes.io/component: timescale-tls
+spec:
+  isCA: true
+  commonName: thoras-timescale-ca
+  secretName: thoras-timescale-ca
+  duration: {{ ($tls.ca).duration | default "87600h" | quote }}
+  privateKey:
+    rotationPolicy: Never
+  issuerRef:
+    name: thoras-timescale-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: thoras-timescale-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
+    app.kubernetes.io/component: timescale-tls
+spec:
+  ca:
+    secretName: thoras-timescale-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: thoras-timescale-tls
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.metricsCollector.labels) | nindent 4 }}
+    app.kubernetes.io/component: timescale-tls
+spec:
+  secretName: thoras-timescale-tls
+  duration: {{ $tls.duration | default "87600h" | quote }}
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  dnsNames:
+    - {{ $name }}
+    - {{ $name }}.{{ .Release.Namespace }}
+    - {{ $name }}.{{ .Release.Namespace }}.svc
+    - {{ $name }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    name: thoras-timescale-ca
+    kind: Issuer
+{{- end }}

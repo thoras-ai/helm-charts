@@ -829,5 +829,53 @@ Releases older than the certManager block (chart < 4.124.0) upgraded with
 {{- if ((.Values.thorasOperator.webhookCertGen).certManager).enabled -}}true{{- end -}}
 {{- end -}}
 
+{{/*
+True when components reach the bundled TimescaleDB over TLS ("true" or "").
+Always off under an external TimescaleDB. Nil-safe for --reuse-values.
+*/}}
+{{- define "thoras.timescaleTlsEnabled" -}}
+{{- $tls := (.Values.metricsCollector.timescale).tls | default dict -}}
+{{- if and $tls.enabled (not (include "thoras.externalTimescaleEnabled" .)) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/* Server certificate and key mount for the timescaledb container. */}}
+{{- define "thoras.timescaleTlsServerDir" -}}/etc/thoras/timescale-tls{{- end -}}
+
+{{/* CA file mounted into consumers. */}}
+{{- define "thoras.timescaleCaFile" -}}/etc/thoras/timescale-ca/ca.crt{{- end -}}
+
+{{/* Query string appended to the bundled DSN, or empty without TLS. */}}
+{{- define "thoras.timescaleDsnParams" -}}
+{{- if include "thoras.timescaleTlsEnabled" . -}}
+?sslmode={{ .Values.metricsCollector.timescale.tls.sslmode | default "verify-full" }}&sslrootcert={{ include "thoras.timescaleCaFile" . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Volume and mount exposing only ca.crt of the server Secret to a consumer, or
+nothing without TLS.
+Usage: {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 6 }}{{- end }}
+*/}}
+{{- define "thoras.timescaleCaVolume" -}}
+{{- if include "thoras.timescaleTlsEnabled" . }}
+- name: timescale-ca
+  secret:
+    secretName: thoras-timescale-tls
+    items:
+      - key: ca.crt
+        path: ca.crt
+{{- end -}}
+{{- end -}}
+
+{{- define "thoras.timescaleCaVolumeMount" -}}
+{{- if include "thoras.timescaleTlsEnabled" . }}
+- name: timescale-ca
+  mountPath: {{ include "thoras.timescaleCaFile" . | dir }}
+  readOnly: true
+{{- end -}}
+{{- end -}}
+
 {{/* Loopback port for nginx behind the oauth2-proxy sidecar. */}}
 {{- define "thoras.dashboard.internalNginxPort" -}}8181{{- end -}}
