@@ -44,6 +44,7 @@ spec:
       - name: monitor-config
         configMap:
           name: thoras-monitor-config
+      {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 6 }}{{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
@@ -64,7 +65,7 @@ spec:
           {{- if include "thoras.externalTimescaleEnabled" . }}
             value: "$(DATABASE_HOST)"
           {{- else }}
-            value: "$(DATABASE_HOST)/thoras"
+            value: "$(DATABASE_HOST)/thoras{{ include "thoras.timescaleDsnParams" . }}"
           {{- end }}
           - name: SERVICE_POSTGRESQL_MAX_CONNS
             value: {{ coalesce .Values.thorasWorker.postgresql.maxConns .Values.postgresql.maxConns | quote }}
@@ -301,6 +302,7 @@ spec:
           mountPath: /app/config.yaml
           subPath: config.yaml
           readOnly: true
+        {{- with include "thoras.timescaleCaVolumeMount" . }}{{- . | nindent 8 }}{{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

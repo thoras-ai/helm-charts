@@ -23,6 +23,7 @@ spec:
         {{- end }}
       {{- $userAnnotations := or .Values.podAnnotations .Values.metricsCollector.podAnnotations }}
       {{- $chartTimescale := and .Values.metricsCollector.timescale.config.enabled (not (include "thoras.externalTimescaleEnabled" .)) }}
+      {{- $timescaleTls := include "thoras.timescaleTlsEnabled" . }}
       {{- if or $userAnnotations $chartTimescale }}
       annotations:
         {{- if $chartTimescale }}
@@ -51,6 +52,18 @@ spec:
         - name: timescale-config
           configMap:
             name: thoras-timescale-config
+      {{- end }}
+      {{- if $timescaleTls }}
+        - name: timescale-tls
+          secret:
+            secretName: thoras-timescale-tls
+            {{- /* fsGroup yields root:1000 0640, accepted by postgres. */}}
+            defaultMode: 0640
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
       {{- end }}
       {{- if and (include "thoras.persistenceEnabled" .) (not (include "thoras.externalTimescaleEnabled" .)) }}
         - name: elastic-search-data
@@ -178,9 +191,22 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
-        {{- if .Values.metricsCollector.timescale.config.enabled }}
+        {{- if or .Values.metricsCollector.timescale.config.enabled $timescaleTls }}
         command: ["docker-entrypoint.sh"]
-        args: ["-c", "config_file=/etc/postgresql.conf"]
+        args:
+          {{- if .Values.metricsCollector.timescale.config.enabled }}
+          - -c
+          - config_file=/etc/postgresql.conf
+          {{- end }}
+          {{- if $timescaleTls }}
+          {{- $tlsDir := include "thoras.timescaleTlsServerDir" . }}
+          - -c
+          - ssl=on
+          - -c
+          - ssl_cert_file={{ $tlsDir }}/tls.crt
+          - -c
+          - ssl_key_file={{ $tlsDir }}/tls.key
+          {{- end }}
         {{- end }}
         ports:
         - containerPort: {{ .Values.metricsCollector.timescale.containerPort }}
@@ -225,11 +251,51 @@ spec:
             mountPath: /etc/postgresql.conf
             subPath: custom.conf
         {{- end }}
+        {{- if $timescaleTls }}
+          - name: timescale-tls
+            mountPath: {{ include "thoras.timescaleTlsServerDir" . }}
+            readOnly: true
+        {{- end }}
           - mountPath: /var/lib/share
       {{- if (include "thoras.persistenceEnabled" .) }}
             name: elastic-search-data
       {{- else }}
             name: timescale-data
+      {{- end }}
+      {{- if $timescaleTls }}
+      {{- /* postgres reloads ssl files on SIGHUP; the image's STOPSIGNAL is SIGINT. */}}
+      - name: timescale-tls-reload
+        image: {{ .Values.imageCredentials.registry }}/{{ .Values.metricsCollector.timescale.image }}:{{ .Values.metricsCollector.timescale.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            trap 'exit 0' TERM INT
+            dir={{ include "thoras.timescaleTlsServerDir" . }}
+            last=""
+            while :; do
+              cur=$(readlink "$dir/..data")
+              if [ "$cur" != "$last" ] && psql -h localhost -U postgres -qAtc 'select pg_reload_conf()' >/dev/null; then
+                echo "server certificate $cur loaded; postgres reloaded"
+                last=$cur
+              fi
+              sleep 30 & wait $!
+            done
+        env:
+          - name: PGCONNECT_TIMEOUT
+            value: "5"
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+        {{- with ((.Values.metricsCollector.timescale.tls).reload).resources }}
+        resources: {{ . | toYaml | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+          - name: timescale-tls
+            mountPath: {{ include "thoras.timescaleTlsServerDir" . }}
+            readOnly: true
       {{- end }}
       {{- end }}
       {{- if not .Values.featureFlags.enableNoBlobApiServer }}
