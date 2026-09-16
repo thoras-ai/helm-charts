@@ -1,0 +1,11 @@
+{{- if .Values.consoleDashboard.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thoras-console-dashboard-nginx-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleDashboard.labels) | nindent 4 }}
+data:{{ include "thoras-console.dashboardNginxConfigData" . }}
+{{- end }}

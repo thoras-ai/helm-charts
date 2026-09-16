@@ -1,0 +1,112 @@
+suite: Dashboard workload
+templates:
+  - dashboard/deployment.yaml
+  - dashboard/service.yaml
+  - dashboard/service-account.yaml
+  - dashboard/pdb.yaml
+tests:
+  ############################
+  # Shape
+  ############################
+
+  # The same image the agent chart uses. There is no console-flavoured build:
+  # the bundle switches on the `console` key in config.json.
+  - it: Runs the stock dashboard image
+    template: dashboard/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:latest
+
+  - it: Lets the image tag be pinned away from consoleVersion
+    template: dashboard/deployment.yaml
+    set:
+      consoleDashboard.imageTag: "4.36.0"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:4.36.0
+
+  # The stock image ships no nginx config, so the mounted template is rendered
+  # by its envsubst entrypoint into /tmp.
+  - it: Runs nginx from the mounted template
+    template: dashboard/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["nginx", "-c", "/tmp/nginx.conf", "-g", "daemon off;"]
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: nginx-config
+            mountPath: /etc/nginx/templates/nginx.conf.template
+            subPath: nginx.conf.template
+
+  - it: Mounts no ServiceAccount token, being a static bundle and a proxy
+    template: dashboard/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+
+  - it: Carries no oauth2-proxy sidecar, console-api authenticating itself
+    template: dashboard/deployment.yaml
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+
+  # The agent chart's readiness probe curls its api-server. Copying that here
+  # would take the UI down whenever console-api restarted.
+  - it: Probes nginx itself, not console-api
+    template: dashboard/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.exec
+
+  ############################
+  # Config checksum
+  ############################
+
+  - it: Rolls the pod when the nginx config changes
+    template: dashboard/deployment.yaml
+    set:
+      consoleDashboard.extras:
+        demo_mode: true
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/config"]
+          pattern: '^[0-9a-f]{64}$'
+
+  ############################
+  # Service
+  ############################
+
+  - it: Targets the dashboard container port
+    template: dashboard/service.yaml
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 80
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 8080
+      - equal:
+          path: spec.selector.app
+          value: thoras-console-dashboard
+
+  ############################
+  # Toggle
+  ############################
+
+  - it: Renders nothing when disabled
+    set:
+      consoleDashboard.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

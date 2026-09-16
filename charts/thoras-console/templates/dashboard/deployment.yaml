@@ -1,0 +1,119 @@
+{{- include "thoras-console.validate" . }}
+{{- if .Values.consoleDashboard.enabled }}
+{{- $d := .Values.consoleDashboard }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-console-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" $d.labels) | nindent 4 }}
+spec:
+  replicas: {{ $d.replicas }}
+  selector:
+    matchLabels:
+      app: thoras-console-dashboard
+  template:
+    metadata:
+      labels:
+        app: thoras-console-dashboard
+        {{- with include "thoras-console.componentLabels" (dict "root" $ "component" $d.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include "thoras-console.dashboardNginxConfigData" . | sha256sum }}
+        {{- with include "thoras-console.podAnnotations" (dict "root" $ "component" $d.podAnnotations) }}
+          {{- . | trim | nindent 8 }}
+        {{- end }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ $d.serviceAccount.name }}
+      {{- /* No RBAC: the dashboard is a static bundle and a reverse proxy. */}}
+      automountServiceAccountToken: false
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: thoras-console-dashboard-nginx-config
+      containers:
+      {{- /* No console-flavoured build exists; the bundle switches on the
+             `console` key in the config.json nginx serves. */}}
+      - image: {{ .Values.imageCredentials.registry }}/{{ $d.image.repository }}:{{ default .Values.consoleVersion $d.imageTag }}
+        name: thoras-console-dashboard
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        securityContext:
+          runAsUser: 101 # user: nginx
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        {{- /* The stock image ships no nginx config: no SPA fallback, no
+               /config.json. The entrypoint renders the mount into /tmp. */}}
+        args: ["nginx", "-c", "/tmp/nginx.conf", "-g", "daemon off;"]
+        env:
+        {{- with include "thoras-console.globalEnv" . }}
+          {{- . | nindent 10 }}
+        {{- end }}
+          - name: NGINX_ENVSUBST_OUTPUT_DIR
+            value: /tmp
+        ports:
+        - containerPort: {{ $d.containerPort }}
+          name: http
+        {{- /* nginx only: probing console-api here would take the UI down with it. */}}
+        startupProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 5
+          failureThreshold: 12
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 5
+          failureThreshold: 48
+        resources: {{ $d.resources | toYaml | nindent 10 }}
+        volumeMounts:
+          - name: nginx-config
+            mountPath: /etc/nginx/templates/nginx.conf.template
+            subPath: nginx.conf.template
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $d.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := $d.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with $d.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with $d.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- include "thoras-console.topologySpreadConstraints" (dict "root" . "component" $d.topologySpreadConstraints) | nindent 6 }}
+{{- end }}

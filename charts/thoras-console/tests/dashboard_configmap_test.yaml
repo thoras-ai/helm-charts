@@ -1,0 +1,179 @@
+suite: Dashboard nginx config
+templates:
+  - dashboard/nginx-config-map.yaml
+chart:
+  # Pinned so .Chart.Version inside config.json does not churn the snapshot on
+  # every release bump.
+  version: "0.2.0"
+tests:
+  ############################
+  # config.json
+  ############################
+
+  # The image bakes in a developer config.json pointing at localhost with a
+  # staging identity provider. nginx shadows it with the block below; if that
+  # block is ever lost the pod serves the baked one instead of failing, so this
+  # assertion is the regression guard for a silent, credential-shaped bug.
+  - it: Shadows the config.json baked into the image
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'location /config\.json \{'
+
+  - it: Serves same-origin, so the allowlist below is what gates API calls
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"api_base_url":""'
+
+  - it: Carries the console block that switches the bundle into console mode
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"console":\{"auth":\{'
+
+  - it: Takes the auth mode from console-api rather than a second value
+    set:
+      consoleApi.auth.mode: local
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"mode":"local"'
+      # No identity provider in local mode, so no OIDC fields at all.
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"issuer"'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"client_id"'
+
+  - it: Renders the OIDC fields in oidc mode, issuer mirrored from console-api
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+      consoleDashboard.auth.clientId: abc123
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"mode":"oidc"'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"issuer":"https://id\.example\.com/"'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"client_id":"abc123"'
+
+  # console-api takes a comma-separated list; the browser sends exactly one.
+  - it: Defaults the audience to the first console-api audience
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://first.example.com,https://second.example.com
+      consoleDashboard.auth.clientId: abc123
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"audience":"https://first\.example\.com"'
+
+  - it: Lets the audience be overridden when the list has more than one
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://first.example.com,https://second.example.com
+      consoleDashboard.auth.clientId: abc123
+      consoleDashboard.auth.audience: https://second.example.com
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"audience":"https://second\.example\.com"'
+
+  # read:* covers neither write scope, so omitting these 403s key management.
+  - it: Templates the scopes explicitly rather than leaving them to the bundle
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"scope":"openid profile read:\* write:clusters write:cluster-tokens"'
+
+  - it: Lets the scopes be trimmed for providers that reject unknown ones
+    set:
+      consoleDashboard.auth.scope: openid profile
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"scope":"openid profile"'
+
+  - it: Merges extras into config.json
+    set:
+      consoleDashboard.extras:
+        demo_mode: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"extra":\{"demo_mode":true\}'
+
+  ############################
+  # Route allowlist
+  ############################
+
+  - it: Denies by default and proxies the console API
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'default 0;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'proxy_pass http://thoras-console-api:80;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'return 403;'
+
+  - it: Allows the console API surface the dashboard calls
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '~\*\^/api/v1/ {2,}1;'
+
+  # Cluster agents post ingest and the IdP posts the user-created hook. Neither
+  # is a dashboard route, and this hostname is browser-facing.
+  - it: Denies ingest and the identity-provider hook
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '~\*\^/api/v1/ingest/ {2,}0;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '~\*\^/api/v1/hook/ {2,}0;'
+
+  # nginx map takes the first matching regex, so a denial placed after the
+  # blanket allow would never fire.
+  - it: Orders the denials before the allow
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '(?s)ingest/.*hook/.*\^/api/v1/ {2,}1;'
+
+  - it: Serves the SPA fallback the stock image does not ship
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'try_files \$uri /index\.html;'
+
+  - it: Renders nothing when the dashboard is disabled
+    set:
+      consoleDashboard.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders the config under the nginx.conf.template key
+    asserts:
+      - exists:
+          path: data["nginx.conf.template"]
+      - notExists:
+          path: data["nginx.conf"]
+
+  - it: Matches the snapshot
+    asserts:
+      - matchSnapshot:
+          path: data["nginx.conf.template"]

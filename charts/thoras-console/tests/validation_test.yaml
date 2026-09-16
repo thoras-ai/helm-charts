@@ -199,3 +199,41 @@ tests:
     asserts:
       - notExists:
           path: data.local-admin-password
+
+  # The dashboard needs a browser client_id of its own; console-api has no
+  # equivalent to fall back on, and without it the dashboard renders a hard
+  # error page instead of a login.
+  - it: Requires a dashboard client ID in oidc mode
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: 'consoleApi.auth.mode "oidc" requires consoleDashboard.auth.clientId, the OAuth client ID the dashboard signs in with. Register https://<dashboard-host>/landing as a callback URL for it too.'
+
+  - it: Requires a dashboard client ID in both mode too
+    set:
+      consoleApi.auth.mode: both
+      consoleApi.auth.adminPassword: correct-horse-battery
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+    asserts:
+      - failedTemplate:
+          errorMessage: 'consoleApi.auth.mode "both" requires consoleDashboard.auth.clientId, the OAuth client ID the dashboard signs in with. Register https://<dashboard-host>/landing as a callback URL for it too.'
+
+  - it: Asks for no client ID when there is no dashboard to sign in to
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+      consoleDashboard.enabled: false
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Asks for no client ID in local mode
+    set:
+      consoleApi.auth.mode: local
+      consoleApi.auth.adminPassword: correct-horse-battery
+    asserts:
+      - notFailedTemplate: {}

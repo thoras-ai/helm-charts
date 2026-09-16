@@ -1,23 +1,59 @@
 Thoras console installed in namespace {{ .Release.Namespace }}.
 {{- /* Each block below opens with a blank line inside its own conditional, so a
        suppressed block leaves no gap behind. */}}
-{{- if .Values.consoleApi.externalUrl }}
+{{- $dashboardHost := "" }}
+{{- if and .Values.consoleDashboard.enabled .Values.consoleDashboard.ingress.enabled }}
+{{- $dashboardHost = (first .Values.consoleDashboard.ingress.hosts).host }}
+{{- else if and .Values.consoleDashboard.enabled .Values.consoleDashboard.gatewayAPI.enabled }}
+{{- $dashboardHost = first .Values.consoleDashboard.gatewayAPI.hostnames }}
+{{- end }}
+{{- $apiHost := "" }}
+{{- if .Values.consoleApi.ingress.enabled }}
+{{- $apiHost = (first .Values.consoleApi.ingress.hosts).host }}
+{{- else if .Values.consoleApi.gatewayAPI.enabled }}
+{{- $apiHost = first .Values.consoleApi.gatewayAPI.hostnames }}
+{{- end }}
+{{- if or .Values.consoleApi.externalUrl $dashboardHost }}
 
-Console URL: {{ .Values.consoleApi.externalUrl }}
-{{- else }}
+Console URL (for people): {{ .Values.consoleApi.externalUrl | default (printf "https://%s" $dashboardHost) }}
+{{- else if .Values.consoleDashboard.enabled }}
 
-Console URL: NOT CONFIGURED
-  Set consoleApi.externalUrl to the address you front the console with. Until
-  then, reach it directly:
-    kubectl port-forward svc/thoras-console-api 8080:{{ .Values.consoleApi.port }} \
+Console URL (for people): NOT CONFIGURED
+  Enable consoleDashboard.ingress, or reach it directly:
+    kubectl port-forward svc/thoras-console-dashboard 8080:{{ .Values.consoleDashboard.port }} \
       -n {{ .Release.Namespace }}
   then browse to http://localhost:8080
+{{- else }}
+
+Console URL (for people): NO DASHBOARD
+  consoleDashboard.enabled is false, so nothing serves the UI.
+{{- end }}
+{{- if $apiHost }}
+
+Ingest URL (for clusters): https://{{ $apiHost }}
+  This is the address workload clusters sync to, and it is NOT the console URL
+  above. The dashboard refuses ingest on purpose: its hostname is the one
+  browsers use.
+{{- else }}
+
+Ingest URL (for clusters): NOT CONFIGURED
+  No workload cluster can send data to this console yet. Enable
+  consoleApi.ingress (or consoleApi.gatewayAPI) and give it a hostname of its
+  own, separate from the dashboard's.
 {{- end }}
 {{- if eq .Values.consoleApi.auth.mode "oidc" }}
 
 Authentication: OIDC
   Issuer: {{ .Values.consoleApi.auth.oidc.issuer }}
   Sign in through your identity provider.
+{{- if .Values.consoleDashboard.enabled }}
+  Register these with your provider for client ID
+  {{ .Values.consoleDashboard.auth.clientId }}, or the redirect fails:
+    callback   {{ if $dashboardHost }}https://{{ $dashboardHost }}/landing{{ else }}https://<console URL>/landing{{ end }}
+    logout     {{ if $dashboardHost }}https://{{ $dashboardHost }}{{ else }}https://<console URL>{{ end }}
+  The scopes in consoleDashboard.auth.scope must also be defined and granted on
+  the tenant; providers that reject unknown scopes fail the redirect outright.
+{{- end }}
 {{- else }}
 
 Authentication: {{ .Values.consoleApi.auth.mode | upper }} (shared admin password)
@@ -64,7 +100,7 @@ config-controller has generated the credentials they read. This clears on its
 own; no action is needed.
 
 Next, connect a cluster: create one in the console, mint a key, then point the
-tenant chart at this console with
-  --set cloudSync.baseUrl=<console URL> --set cloudSync.clusterKeyID=... \
-  --set cloudSync.clusterKey=...
+tenant chart at the INGEST url above -- not the console url -- with
+  --set cloudSync.baseUrl={{ if $apiHost }}https://{{ $apiHost }}{{ else }}<ingest URL>{{ end }} \
+  --set cloudSync.clusterKeyID=... --set cloudSync.clusterKey=...
 {{- end }}

@@ -1,0 +1,26 @@
+{{- if .Values.consoleDashboard.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thoras-console-dashboard
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.consoleDashboard.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    app: thoras-console-dashboard
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleDashboard.labels) | nindent 4 }}
+spec:
+  {{- with .Values.consoleDashboard.service.type }}
+  type: {{ . }}
+  {{- end }}
+  ports:
+  - name: http
+    port: {{ .Values.consoleDashboard.port }}
+    protocol: TCP
+    targetPort: {{ .Values.consoleDashboard.containerPort }}
+  selector:
+    app: thoras-console-dashboard
+{{- end }}
