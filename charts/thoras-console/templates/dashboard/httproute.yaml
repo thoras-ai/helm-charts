@@ -1,0 +1,3 @@
+{{- if .Values.consoleDashboard.enabled }}
+{{- include "thoras-console.httpRoute" (dict "root" . "gatewayAPI" .Values.consoleDashboard.gatewayAPI "name" "thoras-console-dashboard" "port" .Values.consoleDashboard.port "labels" .Values.consoleDashboard.labels) }}
+{{- end }}

@@ -1,0 +1,163 @@
+suite: Ingress and HTTPRoute
+templates:
+  - dashboard/ingress.yaml
+  - dashboard/httproute.yaml
+  - console-api/ingress.yaml
+  - console-api/httproute.yaml
+tests:
+  ############################
+  # Off by default
+  ############################
+
+  - it: Renders no routing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  ############################
+  # Dashboard -- the browser-facing host
+  ############################
+
+  - it: Routes the dashboard host to the dashboard Service
+    template: dashboard/ingress.yaml
+    set:
+      consoleDashboard.ingress.enabled: true
+      consoleDashboard.ingress.hosts:
+        - host: console.example.com
+          paths:
+            - path: /
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.name
+          value: thoras-console-dashboard
+      - equal:
+          path: spec.rules[0].host
+          value: console.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: thoras-console-dashboard
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 80
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+
+  - it: Renders TLS for the dashboard host
+    template: dashboard/ingress.yaml
+    set:
+      consoleDashboard.ingress.enabled: true
+      consoleDashboard.ingress.tls:
+        - hosts: [console.example.com, www.console.example.com]
+          secretName: console-tls
+    asserts:
+      - equal:
+          path: spec.tls[0].hosts
+          value: [console.example.com, www.console.example.com]
+      - equal:
+          path: spec.tls[0].secretName
+          value: console-tls
+
+  - it: Omits ingressClassName when cleared
+    template: dashboard/ingress.yaml
+    set:
+      consoleDashboard.ingress.enabled: true
+      consoleDashboard.ingress.ingressClassName: ""
+    asserts:
+      - notExists:
+          path: spec.ingressClassName
+
+  - it: Routes the dashboard through Gateway API
+    template: dashboard/httproute.yaml
+    set:
+      consoleDashboard.gatewayAPI.enabled: true
+      consoleDashboard.gatewayAPI.hostnames: [console.example.com]
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - equal:
+          path: spec.hostnames
+          value: [console.example.com]
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: thoras-console-dashboard
+
+  ############################
+  # console-api -- the ingest host
+  ############################
+
+  # Cluster agents POST to {cloudSync.baseUrl}/api/v1/ingest/bulk from other
+  # clusters. The dashboard's proxy refuses ingest, so without this route a
+  # console serves a UI and never receives data.
+  - it: Routes the ingest host straight to console-api
+    template: console-api/ingress.yaml
+    set:
+      consoleApi.ingress.enabled: true
+      consoleApi.ingress.hosts:
+        - host: api.console.example.com
+          paths:
+            - path: /
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.name
+          value: thoras-console-api
+      - equal:
+          path: spec.rules[0].host
+          value: api.console.example.com
+      # Straight to console-api, not through the dashboard's allowlist.
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: thoras-console-api
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 80
+
+  - it: Renders TLS for the ingest host
+    template: console-api/ingress.yaml
+    set:
+      consoleApi.ingress.enabled: true
+      consoleApi.ingress.tls:
+        - hosts: [api.console.example.com]
+          secretName: console-api-tls
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: console-api-tls
+
+  # A cluster standardised on Gateway API would otherwise have no ingest path.
+  - it: Routes ingest through Gateway API too
+    template: console-api/httproute.yaml
+    set:
+      consoleApi.gatewayAPI.enabled: true
+      consoleApi.gatewayAPI.hostnames: [api.console.example.com]
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: thoras-console-api
+
+  ############################
+  # Independence
+  ############################
+
+  - it: Leaves the ingest route alone when only the dashboard is exposed
+    template: console-api/ingress.yaml
+    set:
+      consoleDashboard.ingress.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Serves ingest even with the dashboard turned off
+    template: console-api/ingress.yaml
+    set:
+      consoleDashboard.enabled: false
+      consoleApi.ingress.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1

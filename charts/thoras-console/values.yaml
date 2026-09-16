@@ -83,9 +83,38 @@ consoleApi:
   containerPort: 8080
   port: 80
 
-  # -- URL the console is reachable on. Read only by NOTES.txt today; the
-  # Ingress that serves it arrives with the dashboard.
+  # -- URL a human reaches the console UI on, i.e. the dashboard's host. Read
+  # only by NOTES.txt. Not the host cluster agents sync to -- that is this
+  # component's own ingress below.
   externalUrl: ""
+
+  # -- Route for cluster agents. They POST to
+  # {cloudSync.baseUrl}/api/v1/ingest/bulk from other clusters, and the
+  # dashboard's proxy deliberately refuses ingest because its hostname is
+  # browser-facing. Without one of these two, the console serves a UI and never
+  # receives data.
+  ingress:
+    enabled: false
+    ingressClassName: "nginx"
+    annotations: {}
+    hosts:
+      - host: console-api.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  # -- The same route for clusters standardised on Gateway API.
+  gatewayAPI:
+    enabled: false
+    annotations: {}
+    parentRefs:
+      - name: gateway
+        namespace: default
+    hostnames:
+      - console-api.local
+    path: /
+    pathType: PathPrefix
 
   serviceAccount:
     name: thoras-console-api
@@ -177,6 +206,102 @@ consoleApi:
     existingSecret:
       secretName: ""
       secretKey: webhook-secret
+
+  useGlobalAffinity: false
+  affinity: {}
+  priorityClassName: ""
+  topologySpreadConstraints: []
+  extraEgressRules: []
+  extraIngressRules: []
+
+# -- The console web UI. The same thoras-dashboard-v2 image the agent chart
+# uses: there is no console-flavoured build, the bundle switches to console
+# mode purely on the `console` key in the config.json this chart serves.
+consoleDashboard:
+  enabled: true
+  replicas: 1
+
+  # Repository is joined to imageCredentials.registry; the tag is consoleVersion
+  # unless imageTag overrides it.
+  image:
+    repository: thoras-dashboard-v2
+  imageTag: ""
+
+  containerPort: 8080
+  port: 80
+
+  # -- Browser-facing auth. mode and issuer are NOT settable here: they are read
+  # from consoleApi.auth so the two halves cannot drift. The dashboard is the
+  # only side that needs a client_id.
+  auth:
+    # -- OAuth client ID for the dashboard. Required when consoleApi.auth.mode
+    # is oidc or both. Register https://<dashboard-host>/landing as an allowed
+    # callback and the bare origin as an allowed logout URL with your provider,
+    # or sign-in fails at the redirect.
+    clientId: ""
+
+    # -- Defaults to the first entry of consoleApi.auth.oidc.audiences. Set it
+    # when that list has more than one and the browser needs a specific value.
+    audience: ""
+
+    # -- Scopes requested at sign-in. Templated explicitly rather than left to
+    # the bundle's built-in default: the console's scope check prefix-matches
+    # only within a namespace, so read:* covers neither write:clusters nor
+    # write:cluster-tokens and cluster/key management would 403. Providers that
+    # reject undefined scopes with invalid_scope need these defined on the
+    # tenant, or this trimmed to what they do define.
+    scope: "openid profile read:* write:clusters write:cluster-tokens"
+
+  # -- Free-form keys merged into config.json's `extra` block and read by the
+  # dashboard at runtime.
+  extras: {}
+
+  serviceAccount:
+    name: thoras-console-dashboard
+
+  service:
+    type: ""
+    annotations: {}
+
+  labels: {}
+  podAnnotations: {}
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+    # minAvailable:
+
+  ingress:
+    enabled: false
+    ingressClassName: "nginx"
+    annotations: {}
+    hosts:
+      - host: console.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  gatewayAPI:
+    enabled: false
+    annotations: {}
+    parentRefs:
+      - name: gateway
+        namespace: default
+    hostnames:
+      - console.local
+    path: /
+    pathType: PathPrefix
 
   useGlobalAffinity: false
   affinity: {}

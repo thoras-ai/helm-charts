@@ -1,0 +1,100 @@
+{{- if and .Values.networkPolicy.enabled .Values.consoleDashboard.enabled }}
+{{- $d := .Values.consoleDashboard }}
+{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-console-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-console-dashboard
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all ingress from pods within the same namespace
+  - from:
+    - podSelector: {}
+  # Browsers reach the dashboard from outside. Standard NetworkPolicy cannot
+  # express that, so this permits any source on this port.
+  - ports:
+    - port: {{ $d.containerPort }}
+      protocol: TCP
+  {{- with $d.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  {{- /* console-api is in this namespace, so the blanket in-namespace rule
+         already covers the proxy. No IdP egress: the browser talks to the
+         identity provider directly, never this pod. */}}
+  # Allow all egress to pods within the same namespace
+  - to:
+    - podSelector: {}
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  {{- with $d.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- else if eq .Values.networkPolicy.flavor "cilium" }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-console-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras-console.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: thoras-console-dashboard
+  ingress:
+  # Allow all ingress from endpoints within the same namespace
+  - fromEndpoints:
+    - {}
+  # "all" rather than "world", so ingress-controller and host-sourced traffic
+  # still match.
+  - fromEntities:
+    - all
+    toPorts:
+    - ports:
+      - port: "{{ $d.containerPort }}"
+        protocol: TCP
+  {{- with $d.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  # Allow all egress to endpoints within the same namespace
+  - toEndpoints:
+    - {}
+  # Allow DNS resolution
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: "*"
+  {{- with $d.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}

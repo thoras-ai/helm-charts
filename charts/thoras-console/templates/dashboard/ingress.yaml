@@ -1,0 +1,3 @@
+{{- if .Values.consoleDashboard.enabled }}
+{{- include "thoras-console.ingress" (dict "root" . "ingress" .Values.consoleDashboard.ingress "name" "thoras-console-dashboard" "port" .Values.consoleDashboard.port "labels" .Values.consoleDashboard.labels) }}
+{{- end }}

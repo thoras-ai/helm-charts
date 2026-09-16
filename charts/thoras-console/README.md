@@ -4,16 +4,21 @@ The Thoras console is the control plane that tenant clusters report into. This
 Helm Chart installs a self-hosted [Thoras](https://www.thoras.ai) console onto
 Kubernetes, as an alternative to the hosted console at `console.thoras.ai`.
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square)
+![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square)
 
 To install the Thoras platform onto a cluster you want to *observe*, you want
 the [thoras](../thoras/README.md) chart instead. The two are separate installs
 and may share a namespace.
 
-The chart installs `console-api`, a `config-controller` that generates any
-credential you do not supply, and — for evaluation only — a bundled TimescaleDB.
-The console dashboard arrives in a later release, so today you reach the console
-through its API.
+The chart installs the console dashboard, `console-api`, a `config-controller`
+that generates any credential you do not supply, and — for evaluation only — a
+bundled TimescaleDB.
+
+Two hostnames are involved, and they are not interchangeable. People reach the
+dashboard (`consoleDashboard.ingress`), which proxies the API for them. Workload
+clusters sync to `console-api` directly (`consoleApi.ingress`), because the
+dashboard refuses ingest on its browser-facing hostname. Point `cloudSync.baseUrl`
+in the [thoras](../thoras/README.md) chart at the second one.
 
 ## Requirements
 
@@ -60,7 +65,7 @@ For anything beyond a first look, use a values file instead — see
 
 ### Verify installation
 
-Confirm all three pods reach `Running` (usually under a minute):
+Confirm all four pods reach `Running` (usually under a minute):
 
 ```
 kubectl get pods -n thoras-console
@@ -72,32 +77,42 @@ their credentials. This resolves itself; no action is needed.
 
 ### Sign in
 
-Port-forward the console to your workstation:
+Port-forward the dashboard to your workstation:
 
 ```
-kubectl port-forward -n thoras-console svc/thoras-console-api 8080:80
+kubectl port-forward -n thoras-console svc/thoras-console-dashboard 8080:80
 ```
 
-Then reach it at <http://localhost:8080>. In the default `local` auth mode there
-is a single admin, and its password is generated into the
-`thoras-console-config-controller` Secret:
+Then reach it at <http://localhost:8080>. The dashboard serves the UI and
+proxies the API for it, so this one port-forward is all you need.
+
+In the default `local` auth mode there is a single admin, and its password is
+generated into the `thoras-console-config-controller` Secret:
 
 ```
 kubectl get secret thoras-console-config-controller -n thoras-console \
   -o jsonpath='{.data.local-admin-password}' | base64 -d
 ```
 
+That lookup only applies to the default generated path. If you supplied the
+password yourself, read it from where you put it:
+
+| How you supplied it                      | Where to read it                                          |
+| ---------------------------------------- | --------------------------------------------------------- |
+| Left empty (default)                     | `thoras-console-config-controller` → `local-admin-password` |
+| `consoleApi.auth.adminPassword`          | `thoras-console-helm-values` → `local-admin-password`       |
+| `consoleApi.auth.existingSecret`         | your own Secret, at the key you named                       |
+
+See [Secrets](#secrets) for the full resolution model.
+
+To call the API directly rather than through the UI, exchange the password for a
+bearer token valid for one hour:
+
 ```
 curl -s localhost:8080/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"password":"<the password above>"}'
 ```
-
-The response carries a bearer token, valid for one hour, that authenticates
-subsequent API calls. If you pinned the password in values or point at your own
-Secret, use that instead; the lookup above only applies to the default
-generated-by-controller path. See [Secrets](#secrets) for the full resolution
-model.
 
 ## Sample configurations
 
@@ -143,6 +158,31 @@ consoleApi:
     oidc:
       issuer: https://id.example.com/
       audiences: https://console.example.com
+  # Workload clusters sync here. Separate host from the dashboard's.
+  ingress:
+    enabled: true
+    hosts:
+      - host: console-api.example.com
+        paths:
+          - path: /
+    tls:
+      - hosts: [console-api.example.com]
+        secretName: console-api-tls
+
+consoleDashboard:
+  auth:
+    # Required in oidc and both modes. Register
+    # https://console.example.com/landing as a callback for this client.
+    clientId: your-oauth-client-id
+  ingress:
+    enabled: true
+    hosts:
+      - host: console.example.com
+        paths:
+          - path: /
+    tls:
+      - hosts: [console.example.com]
+        secretName: console-tls
 
 externalDatabase:
   existingSecret:
@@ -295,6 +335,46 @@ There is deliberately no way to pin the DSN in values: it carries a password,
 and a pinned value would land in `thoras-console-helm-values` and in
 `helm get values`.
 
+### Routing
+
+The console needs two hostnames, and they carry different traffic.
+
+| Host                          | Who reaches it                 | Values                                          |
+| ----------------------------- | ------------------------------ | ----------------------------------------------- |
+| dashboard, e.g. `console.example.com`     | people, in a browser | `consoleDashboard.ingress` / `.gatewayAPI` |
+| console API, e.g. `console-api.example.com` | workload clusters  | `consoleApi.ingress` / `.gatewayAPI`       |
+
+Both are off by default. Ingress and Gateway API are independent switches on
+each component; enable whichever your cluster uses.
+
+The dashboard serves the UI and reverse-proxies `/api/` to `console-api`, so a
+browser only ever talks to the first host, and `config.json` ships
+`api_base_url: ""` to keep those calls same-origin. That proxy is a
+deny-by-default allowlist: everything under `/api/v1/` is forwarded **except**
+`ingest/` and `hook/`, which return 403. They are not dashboard routes, and this
+hostname is public.
+
+Workload clusters therefore sync to the second host, not the first. In the
+[thoras](../thoras/README.md) chart:
+
+```
+cloudSync.baseUrl: https://console-api.example.com
+```
+
+Point that at the dashboard host instead and every sync fails with 403 from
+nginx, which looks nothing like a misconfigured agent.
+
+If a workload cluster is the *same* cluster the console runs in, skip the
+ingress entirely and use in-cluster DNS:
+
+```
+cloudSync.baseUrl: http://thoras-console-api.<console-namespace>.svc.cluster.local
+```
+
+With `consoleApi.auth.mode: oidc` or `both`, the dashboard host must also be
+registered with your identity provider before anyone can sign in — see
+[Registering the dashboard with your provider](#registering-the-dashboard-with-your-provider).
+
 ### Secrets
 
 Every secret-bearing value can be pinned in values, read from a Secret you
@@ -381,6 +461,49 @@ Set `consoleApi.auth.oidc.jwksUri` only when the issuer URL is unreachable from
 inside the cluster: the `iss` claim must stay the browser-facing URL while keys
 are fetched from somewhere routable.
 
+#### Registering the dashboard with your provider
+
+`oidc` and `both` need work on the provider as well as in values, and the chart
+cannot do it for you. Both steps are required — miss either and sign-in fails at
+the redirect, with an error from the provider rather than from the console.
+
+**1. Set the client ID.** The dashboard signs in as an OAuth client of its own.
+`consoleApi.auth` has no equivalent — the client ID is browser-side — so it is
+the one auth value you set on the dashboard:
+
+```yaml
+consoleDashboard:
+  auth:
+    clientId: your-oauth-client-id
+```
+
+The chart refuses to render in `oidc` or `both` without it.
+
+**2. Register the redirect URIs.** Both are derived from the browser's origin,
+so they follow whatever host serves the dashboard:
+
+| Provider setting        | Value                              |
+| ----------------------- | ---------------------------------- |
+| Allowed callback URL    | `https://<dashboard-host>/landing` |
+| Allowed logout URL      | `https://<dashboard-host>`         |
+
+For a dashboard at `console.example.com` that is
+`https://console.example.com/landing` and `https://console.example.com`. If you
+reach the console by port-forward while evaluating, register the port-forwarded
+origin too — `http://localhost:8080/landing` — or OIDC sign-in will not work
+there. `local` and `both` mode still let you in with the admin password.
+
+`mode` and `issuer` are not repeated on the dashboard: it reads both from
+`consoleApi.auth` so the two halves cannot disagree. Only `clientId`, and
+optionally `audience` and `scope`, are the dashboard's own — see
+[Console Dashboard](#console-dashboard).
+
+On Auth0, `audience` is an extension rather than a standard OIDC field and the
+dashboard passes it as a query parameter. Without it Auth0 issues an opaque
+access token that console-api's verifier rejects, so sign-in appears to succeed
+and every subsequent call 401s. It defaults to the first entry of
+`consoleApi.auth.oidc.audiences`.
+
 #### The admin salt
 
 `consoleApi.auth.adminSalt` makes the session signing key unique to your
@@ -405,10 +528,12 @@ API server actually listens on post-DNAT — set it to `8443` on minikube, etc.
 Only config-controller uses it; `console-api` makes no Kubernetes API calls. The
 `cilium` flavor ignores the key and targets the API server by identity.
 
-Three policies render: one per component, plus one for the bundled database when
-it is in use. Ingress to `console-api` is open on `consoleApi.containerPort`
-from any source, because tenant clusters push metrics to it from outside the
-cluster. The bundled database admits only `console-api`, by pod selector.
+Four policies render: one per component, including the bundled database when it
+is in use. Ingress to `console-api` is open on `consoleApi.containerPort` from
+any source, because tenant clusters push metrics to it from outside the cluster
+through `consoleApi.ingress`. The dashboard is open on its own container port
+for the same structural reason — browsers are outside the cluster. The bundled
+database admits only `console-api`, by pod selector.
 
 Two egress rules are deliberately broad, because standard NetworkPolicy cannot
 name a host whose address may drift:
@@ -444,6 +569,12 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 **Rendering fails with a message naming a value.** Deliberate — the chart
 validates configuration at render time rather than letting it surface as a
 `CrashLoopBackOff`. The message names the values path and what to set.
+
+**A cluster appears in the console but never reports data.** Its agent cannot
+reach the ingest host. `cloudSync.baseUrl` must point at `consoleApi.ingress`,
+not at the dashboard — the dashboard's proxy returns 403 for `/api/v1/ingest/`
+by design. Check the tenant cluster's worker logs, and see
+[Routing](#routing).
 
 **`console-api` restarts in a loop with no clear error.** Check it can reach the
 database. It waits up to 300s before opening its listener, and the startup probe
@@ -491,7 +622,18 @@ unreachable logs a timeout.
 | consoleApi.image.repository                  | String | console-api          | Joined to imageCredentials.registry                              |
 | consoleApi.containerPort                     | Number | 8080                 | Port the container listens on                                    |
 | consoleApi.port                              | Number | 80                   | Service port                                                     |
-| consoleApi.externalUrl                       | String | ""                   | URL the console is reachable on. Read by install notes only      |
+| consoleApi.externalUrl                       | String | ""                   | Dashboard URL shown in the install notes. Not the ingest host    |
+| consoleApi.ingress.enabled                   | Bool   | false                | Route for workload clusters to sync to. Own host, not the UI's   |
+| consoleApi.ingress.ingressClassName          | String | nginx                | Cleared renders no ingressClassName                              |
+| consoleApi.ingress.annotations               | object | {}                   | Annotations on the Ingress                                       |
+| consoleApi.ingress.hosts                     | list   | console-api.local    | Hosts and paths. pathType defaults to Prefix                     |
+| consoleApi.ingress.tls                       | list   | []                   | Each entry is hosts plus an optional secretName                  |
+| consoleApi.gatewayAPI.enabled                | Bool   | false                | The same route as an HTTPRoute. Independent of ingress           |
+| consoleApi.gatewayAPI.annotations            | object | {}                   | Annotations on the HTTPRoute                                     |
+| consoleApi.gatewayAPI.parentRefs             | list   | gateway/default      | Gateways to attach to                                            |
+| consoleApi.gatewayAPI.hostnames              | list   | console-api.local    | Hostnames to match                                               |
+| consoleApi.gatewayAPI.path                   | String | /                    | Path to match                                                    |
+| consoleApi.gatewayAPI.pathType               | String | PathPrefix           | Match type                                                       |
 | consoleApi.serviceAccount.name               | String | thoras-console-api   | ServiceAccount name                                              |
 | consoleApi.service.annotations               | object | {}                   | Annotations on the Service                                       |
 | consoleApi.labels                            | object | {}                   | Component labels                                                 |
@@ -520,6 +662,66 @@ unreachable logs a timeout.
 | consoleApi.topologySpreadConstraints         | list   | []                   | Replaces the global list when non-empty                          |
 | consoleApi.extraEgressRules                  | list   | []                   | Appended verbatim to both NetworkPolicy flavors                  |
 | consoleApi.extraIngressRules                 | list   | []                   | Appended verbatim to both NetworkPolicy flavors                  |
+
+### Console Dashboard
+
+The web UI. It runs the same `thoras-dashboard-v2` image the agent chart uses —
+there is no console-flavoured build — and switches into console mode purely on
+the `console` block the chart writes into the `config.json` it serves.
+
+`auth.mode` and `auth.issuer` are deliberately absent: they are read from
+`consoleApi.auth` so the two halves cannot drift. Only `clientId` is the
+dashboard's own, because it is browser-side and has no server counterpart.
+
+nginx serves the bundle and proxies `/api/` to console-api behind a
+deny-by-default allowlist. `ingest/` and `hook/` are refused here: they are not
+dashboard routes, and this host is the one browsers use. Workload clusters reach
+them through `consoleApi.ingress` instead.
+
+Every scope in `auth.scope` must be defined and granted on your identity
+provider. `openid` is required for an id_token, and both write scopes are
+needed because the console's scope check prefix-matches only within a
+namespace: `read:*` covers neither, so without them cluster and key management
+return 403 in OIDC mode. Some providers answer `invalid_scope` and fail the
+redirect outright rather than ignoring a scope they do not know.
+
+| Key                                        | Type   | Default                                                   | Description                                              |
+| ------------------------------------------ | ------ | --------------------------------------------------------- | -------------------------------------------------------- |
+| consoleDashboard.enabled                   | Bool   | true                                                      | Deploy the dashboard                                     |
+| consoleDashboard.replicas                  | Number | 1                                                         | Replica count                                            |
+| consoleDashboard.image.repository          | String | thoras-dashboard-v2                                       | Joined to imageCredentials.registry                      |
+| consoleDashboard.imageTag                  | String | ""                                                        | Overrides consoleVersion for this component              |
+| consoleDashboard.containerPort             | Number | 8080                                                      | Port nginx listens on                                    |
+| consoleDashboard.port                      | Number | 80                                                        | Service port                                             |
+| consoleDashboard.auth.clientId             | String | ""                                                        | OAuth client ID. Required for oidc/both                  |
+| consoleDashboard.auth.audience             | String | ""                                                        | Defaults to the first of consoleApi.auth.oidc.audiences  |
+| consoleDashboard.auth.scope                | String | openid profile read:* write:clusters write:cluster-tokens | Scopes requested at sign-in. Must be defined on your IdP |
+| consoleDashboard.extras                    | object | {}                                                        | Merged into config.json's extra block                    |
+| consoleDashboard.serviceAccount.name       | String | thoras-console-dashboard                                  | ServiceAccount name                                      |
+| consoleDashboard.service.type              | String | ""                                                        | Service type. Empty leaves it to Kubernetes              |
+| consoleDashboard.service.annotations       | object | {}                                                        | Annotations on the Service                               |
+| consoleDashboard.labels                    | object | {}                                                        | Component labels                                         |
+| consoleDashboard.podAnnotations            | object | {}                                                        | Component pod annotations                                |
+| consoleDashboard.resources                 | object | 50m/64Mi, 500m/256Mi                                      | Requests and limits                                      |
+| consoleDashboard.pdb.enabled               | Bool   | false                                                     | Render a PodDisruptionBudget                             |
+| consoleDashboard.pdb.maxUnavailable        | Number | 1                                                         | minAvailable takes precedence if both are set            |
+| consoleDashboard.ingress.enabled           | Bool   | false                                                     | Route browsers to the UI                                 |
+| consoleDashboard.ingress.ingressClassName  | String | nginx                                                     | Cleared renders no ingressClassName                      |
+| consoleDashboard.ingress.annotations       | object | {}                                                        | Annotations on the Ingress                               |
+| consoleDashboard.ingress.hosts             | list   | console.local                                             | Hosts and paths. pathType defaults to Prefix             |
+| consoleDashboard.ingress.tls               | list   | []                                                        | Each entry is hosts plus an optional secretName          |
+| consoleDashboard.gatewayAPI.enabled        | Bool   | false                                                     | The same route as an HTTPRoute. Independent of ingress   |
+| consoleDashboard.gatewayAPI.annotations    | object | {}                                                        | Annotations on the HTTPRoute                             |
+| consoleDashboard.gatewayAPI.parentRefs     | list   | gateway/default                                           | Gateways to attach to                                    |
+| consoleDashboard.gatewayAPI.hostnames      | list   | console.local                                             | Hostnames to match                                       |
+| consoleDashboard.gatewayAPI.path           | String | /                                                         | Path to match                                            |
+| consoleDashboard.gatewayAPI.pathType       | String | PathPrefix                                                | Match type                                               |
+| consoleDashboard.useGlobalAffinity         | Bool   | false                                                     | Merge the global affinity into this component's          |
+| consoleDashboard.affinity                  | object | {}                                                        | Component affinity                                       |
+| consoleDashboard.priorityClassName         | String | ""                                                        | Takes precedence over the global priority class          |
+| consoleDashboard.topologySpreadConstraints | list   | []                                                        | Replaces the global list when non-empty                  |
+| consoleDashboard.extraEgressRules          | list   | []                                                        | Appended verbatim to both NetworkPolicy flavors          |
+| consoleDashboard.extraIngressRules         | list   | []                                                        | Appended verbatim to both NetworkPolicy flavors          |
 
 ### Config Controller
 

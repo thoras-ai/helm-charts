@@ -127,6 +127,7 @@ tests:
     template: console-api/deployment.yaml
     set:
       consoleApi.auth.mode: oidc
+      consoleDashboard.auth.clientId: test-client
       consoleApi.auth.oidc.issuer: https://id.example.com/
       consoleApi.auth.oidc.audiences: https://console.example.com
     asserts:
@@ -145,6 +146,7 @@ tests:
     template: console-api/deployment.yaml
     set:
       consoleApi.auth.mode: both
+      consoleDashboard.auth.clientId: test-client
       consoleApi.auth.oidc.issuer: https://id.example.com/
       consoleApi.auth.oidc.audiences: https://console.example.com
     asserts:
@@ -157,6 +159,7 @@ tests:
     template: console-api/deployment.yaml
     set:
       consoleApi.auth.mode: oidc
+      consoleDashboard.auth.clientId: test-client
       consoleApi.auth.oidc.issuer: https://id.example.com/
       consoleApi.auth.oidc.audiences: aud
     asserts:

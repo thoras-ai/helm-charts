@@ -1,0 +1,3 @@
+{{- if .Values.consoleApi.enabled }}
+{{- include "thoras-console.ingress" (dict "root" . "ingress" .Values.consoleApi.ingress "name" "thoras-console-api" "port" .Values.consoleApi.port "labels" .Values.consoleApi.labels) }}
+{{- end }}

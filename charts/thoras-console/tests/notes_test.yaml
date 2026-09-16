@@ -8,14 +8,14 @@ tests:
           path: raw
           pattern: "Thoras console installed in namespace NAMESPACE"
 
-  - it: Offers a port-forward until an external URL is configured
+  - it: Offers a port-forward until the dashboard is exposed
     asserts:
       - matchRegex:
           path: raw
-          pattern: "Console URL: NOT CONFIGURED"
+          pattern: "Console URL \\(for people\\): NOT CONFIGURED"
       - matchRegex:
           path: raw
-          pattern: "kubectl port-forward svc/thoras-console-api 8080:80"
+          pattern: "kubectl port-forward svc/thoras-console-dashboard 8080:80"
 
   - it: Prints the configured URL once there is one
     set:
@@ -23,10 +23,74 @@ tests:
     asserts:
       - matchRegex:
           path: raw
-          pattern: "Console URL: https://console.example.com"
+          pattern: "Console URL \\(for people\\): https://console.example.com"
       - notMatchRegex:
           path: raw
-          pattern: "Console URL: NOT CONFIGURED"
+          pattern: "Console URL \\(for people\\): NOT CONFIGURED"
+
+  - it: Takes the console URL from the dashboard ingress when there is no externalUrl
+    set:
+      consoleDashboard.ingress.enabled: true
+      consoleDashboard.ingress.hosts:
+        - host: console.example.com
+          paths:
+            - path: /
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Console URL \\(for people\\): https://console.example.com"
+
+  - it: Says so when nothing serves the UI
+    set:
+      consoleDashboard.enabled: false
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Console URL \\(for people\\): NO DASHBOARD"
+
+  # A console with no ingest route serves a UI and never receives data, so the
+  # notes have to say which host clusters sync to -- it is not the console URL.
+  - it: Warns that no cluster can reach the console until ingest is exposed
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Ingest URL \\(for clusters\\): NOT CONFIGURED"
+
+  - it: Prints the ingest URL and separates it from the console URL
+    set:
+      consoleApi.ingress.enabled: true
+      consoleApi.ingress.hosts:
+        - host: api.console.example.com
+          paths:
+            - path: /
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Ingest URL \\(for clusters\\): https://api.console.example.com"
+      - matchRegex:
+          path: raw
+          pattern: "cloudSync.baseUrl=https://api.console.example.com"
+
+  # Nothing in the chart can register these; a missing callback fails sign-in
+  # at the redirect with an error from the provider, not from us.
+  - it: Spells out the OIDC callbacks the provider needs
+    set:
+      consoleApi.auth.mode: oidc
+      consoleApi.auth.oidc.issuer: https://id.example.com/
+      consoleApi.auth.oidc.audiences: https://console.example.com
+      consoleDashboard.auth.clientId: abc123
+      consoleDashboard.ingress.enabled: true
+      consoleDashboard.ingress.hosts:
+        - host: console.example.com
+          paths:
+            - path: /
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "callback   https://console.example.com/landing"
+      - matchRegex:
+          path: raw
+          pattern: "logout     https://console.example.com"
 
   ############################
   # The generated password has to be retrievable

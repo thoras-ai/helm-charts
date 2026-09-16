@@ -8,7 +8,9 @@ for those clusters to report into.
 
 This is the official Helm Charts repository for Thoras AI, an ML-powered platform that helps SRE teams view the future of their Kubernetes workloads.
 
-`charts/thoras` installs the complete Thoras platform onto Kubernetes clusters and is the chart the rest of this document describes. `charts/thoras-console` is a separate install, currently rendering credentials and configuration only; its workloads land in later releases. The two charts are independent and may share a namespace, so resource and template names must not collide.
+`charts/thoras` installs the complete Thoras platform onto Kubernetes clusters and is the chart the rest of this document describes. `charts/thoras-console` is a separate install running the console dashboard, `console-api`, a config-controller and an optional bundled TimescaleDB. The two charts are independent and may share a namespace, so resource and template names must not collide.
+
+The console exposes two hostnames that are not interchangeable: the dashboard serves browsers and proxies the API for them, while `console-api` has its own Ingress because workload clusters sync to it directly and the dashboard refuses ingest on its browser-facing hostname.
 
 Only `charts/thoras` is published. `release.yml` packages an explicit list rather than discovering `charts/*`, so adding a chart to the release means adding a `helm package` line and widening the version-bump diff scope alongside it.
 
@@ -109,10 +111,17 @@ charts/thoras-console/
 ├── Chart.yaml              # Chart metadata and version
 ├── values.yaml             # Default configuration values
 ├── README.md               # User-facing chart documentation
-└── templates/
-    ├── NOTES.txt                       # Post-install notes rendered by `helm install`
-    ├── _helpers.tpl                    # Chart-wide template helpers, prefixed thoras-console.
-    └── registry-secret.yaml            # Image-pull Secret
+├── templates/
+│   ├── NOTES.txt                       # Post-install notes rendered by `helm install`
+│   ├── _config-data.tpl                # Dashboard nginx config, hashed for checksum/config
+│   ├── _helpers.tpl                    # Chart-wide helpers, prefixed thoras-console.
+│   ├── helm-values-secret.yaml         # Deterministic Secret holding pinned values
+│   ├── registry-secret.yaml            # Image-pull Secret
+│   ├── config-controller/              # Credential generation and dependent rollouts
+│   ├── console-api/                    # API workload, plus its own Ingress for ingest
+│   ├── dashboard/                      # Web UI: nginx serving the SPA and proxying the API
+│   └── database/                       # Bundled TimescaleDB (evaluation only)
+└── tests/                              # Helm unit tests with snapshots
 ```
 
 ## Configuration
