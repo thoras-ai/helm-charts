@@ -535,6 +535,15 @@ thorasWorker:
   # Cost allocation tag identifying this cluster's spend, as TAG_KEY=TAG_VALUE.
   # Empty resolves the tag from node labels.
   costExplorerFilter: ""
+  # Daily ingestion of the AWS Cost and Usage Report. Requires the report to
+  # be delivered with resource IDs enabled, and give serviceAccount.annotations
+  # an IRSA role that can read it from S3.
+  enableCurIngestion: false
+  # S3 location the Cost and Usage Report is delivered to.
+  curBucket: ""
+  curPrefix: ""
+  curExportName: ""
+  curRegion: ""
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it
