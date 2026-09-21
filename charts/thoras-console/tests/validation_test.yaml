@@ -237,3 +237,13 @@ tests:
       consoleApi.auth.adminPassword: correct-horse-battery
     asserts:
       - notFailedTemplate: {}
+
+  # console-api refuses this combination at startup, so catching it here turns
+  # a crash loop into a message.
+  - it: Refuses cluster join without single-org
+    set:
+      consoleApi.clusterJoin.enabled: true
+      consoleApi.singleOrg.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "consoleApi.clusterJoin.enabled requires consoleApi.singleOrg.enabled: a joining agent presents no user identity, so the organization has to be implicit"

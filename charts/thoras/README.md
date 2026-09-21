@@ -166,7 +166,37 @@ Almost every secret/credential is configured via the chart one of three ways, in
 | TimescaleDB password       | — (bundled database only)                                                   | — (not configurable)                         |
 | Slack webhook              | `slackWebhookUrlSecretRef{Name,Key}`                                        | `slackWebhookUrl`                            |
 | Cloud-sync cluster key     | `cloudSync.clusterKeySecretRef{Name,Key}`                                   | `cloudSync.clusterKey`                       |
+| Cloud-sync join secret     | `cloudSync.joinSecretSecretRef{Name,Key}`                                   | `cloudSync.joinSecret`                       |
 | Dashboard OIDC credentials | `thorasDashboard.auth.oidc.existingSecret.*`                                | — (never chart-managed)                      |
+
+### Registering a cluster automatically
+
+Instead of creating each cluster through the console API and copying its key into
+values, one secret shared across the fleet lets a cluster register itself. Read it from
+the console install:
+
+```bash
+kubectl get secret thoras-console-config-controller -n thoras-console \
+  -o jsonpath='{.data.cluster-join-secret}' | base64 -d
+```
+
+then set it on each agent install alongside a name and the console's URL:
+
+```yaml
+cluster:
+  name: production-eu          # required: the console registers the cluster under it
+cloudSync:
+  baseUrl: https://console.example.com
+  joinSecret: <the secret>
+```
+
+config-controller then seeds a stable install ID, calls the console once, and writes the
+cluster key it receives into `thoras-config-controller`. Until that succeeds the
+workloads run with cloud sync off rather than failing, and they restart once it lands.
+Re-running `helm upgrade` does not re-register: the key is preserved.
+
+A pinned cluster key and a join secret are mutually exclusive. Setting both disables
+cloud sync and prints a warning, rather than silently picking one.
 
 ### Rotating secrets
 
@@ -487,7 +517,11 @@ by `toFQDNs`, or manage egress out-of-band.
 | slackErrorsEnabled                        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                                                                                                                                                                                                                    |
 | cloudSync.clusterKeyID                    | String  | ""                                               | Identity of cluster sync key. Cloud sync is disabled if not specified                                                                                                                                                                                                                                                                                           |
 | cloudSync.clusterKey                      | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                                                                                                                                                                                                                                                               |
-| cloudSync.baseUrl                         | String  | "https://console.thoras.ai"                      | Thoras cloud base url.                                                                                                                                                                                                                                                                                                                                          |
+| cloudSync.baseUrl                         | String  | "https://console.thoras.ai"                      | Console base URL. A self-hosted install **must** override this; the default points at Thoras' hosted console and nothing can detect a wrong value.                                                                                                                                                                                                              |
+| cloudSync.joinSecret                      | String  | ""                                               | Register this cluster with the console instead of pinning a key. Requires `cluster.name`. Setting it alongside a cluster key disables cloud sync.                                                                                                                                                                                                                |
+| cloudSync.joinSecretSecretRefName         | String  | ""                                               | Read the join secret from a Secret you manage. Both this and the key field are required.                                                                                                                                                                                                                                                                        |
+| cloudSync.joinSecretSecretRefKey          | String  | ""                                               | Data key holding the join secret.                                                                                                                                                                                                                                                                                                                               |
+| thorasConfigController.enableClusterAutoJoin | Bool | null                                             | Unset derives auto-join from `cloudSync.joinSecret`. Set `false` to stop the outbound call without removing the secret.                                                                                                                                                                                                                                          |
 | queriesPerSecond                          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                                                                                                                                                                                                                                                                        |
 | nodeSelector                              | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                                                                                                                                                                                                                                                              |
 | tolerations                               | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                                                                                                                                                                                                                                                                |

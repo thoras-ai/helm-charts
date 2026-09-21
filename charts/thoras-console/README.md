@@ -385,9 +385,28 @@ entry within it.
 | Value             | Generated    | Pin it                        | Or reference it                   |
 | ----------------- | ------------ | ----------------------------- | --------------------------------- |
 | Admin password    | yes          | consoleApi.auth.adminPassword | consoleApi.auth.existingSecret    |
+| Cluster join secret | yes        | consoleApi.clusterJoin.secret | consoleApi.clusterJoin.existingSecret |
 | Database DSN      | when bundled | — (never pinnable)            | externalDatabase.existingSecret   |
 | Webhook secret    | no           | consoleApi.webhook.secret     | consoleApi.webhook.existingSecret |
 | Slack webhook URL | no           | slack.webhookUrl              | slack.existingSecret              |
+
+### Letting clusters register themselves
+
+With `consoleApi.clusterJoin.enabled`, a cluster can register itself using one secret
+shared across the fleet instead of being created through the API first. Turn it on, then
+read the generated secret out:
+
+```bash
+kubectl get secret thoras-console-config-controller -n thoras-console \
+  -o jsonpath='{.data.cluster-join-secret}' | base64 -d
+```
+
+and set it as `cloudSync.joinSecret` on each agent install. It is a bootstrap credential
+only: a join returns an ordinary per-cluster token, so revoking one cluster is unchanged,
+and rotating the join secret does not disturb clusters that have already joined.
+
+Requires `consoleApi.singleOrg.enabled` — a joining agent presents no user identity, so
+the organization has to be implicit.
 
 Referencing wins over pinning wherever both are set, and setting both fails the
 render rather than picking for you.
@@ -653,6 +672,10 @@ unreachable logs a timeout.
 | consoleApi.auth.existingSecret.secretName    | String | ""                   | Read the admin password from your own Secret                     |
 | consoleApi.auth.existingSecret.passwordKey   | String | local-admin-password | Key within that Secret                                           |
 | consoleApi.auth.adminSalt                    | String | ""                   | Minimum 16 characters. Not secret. Never change it once set      |
+| consoleApi.clusterJoin.enabled               | Bool   | false                | Let clusters register themselves. Requires singleOrg             |
+| consoleApi.clusterJoin.secret                | String | ""                   | Minimum 32 characters. Generated when empty                      |
+| consoleApi.clusterJoin.existingSecret.secretName | String | ""               | Read the join secret from your own Secret                        |
+| consoleApi.clusterJoin.existingSecret.secretKey | String | clusterJoinSecret | Key within that Secret                                           |
 | consoleApi.webhook.secret                    | String | ""                   | Shared secret for the identity-provider user-created webhook     |
 | consoleApi.webhook.existingSecret.secretName | String | ""                   | Read the webhook secret from your own Secret                     |
 | consoleApi.webhook.existingSecret.secretKey  | String | webhook-secret       | Key within that Secret                                           |

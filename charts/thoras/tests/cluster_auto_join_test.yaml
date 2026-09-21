@@ -1,0 +1,331 @@
+suite: Cluster auto-join
+templates:
+  - config-controller/configmap.yaml
+  - config-controller/deployment.yaml
+  - worker/deployment.yaml
+  - operator/deployment.yaml
+  - api-server-v2/deployment.yaml
+  - thoras-helm-values-secret.yaml
+  - NOTES.txt
+set:
+  cluster:
+    name: production-eu
+tests:
+  ############################
+  # Which mode the chart picks
+  ############################
+
+  - it: Emits no auto-join values when no join secret is set
+    template: config-controller/configmap.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "source: exchange"
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "cloud-sync-install-id"
+
+  - it: Obtains the cluster key from the console when a join secret is set
+    template: config-controller/configmap.yaml
+    set:
+      cloudSync.joinSecret: join-me
+    asserts:
+      # The install id is seeded once and presented on every join, which is
+      # what makes a re-join resolve the same cluster.
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cloud-sync-install-id\n    source: seed\n    generate:\n      type: uuid"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cloud-sync-cluster-key-id\n    source: exchange\n    exchange:\n      field: id\n      installId: cloud-sync-install-id\n      kind: console"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cloud-sync-cluster-key\n    source: exchange\n    exchange:\n      field: token\n      installId: cloud-sync-install-id\n      kind: console"
+
+  # The cluster key is one plan entry, so pinning it and asking to join are
+  # mutually exclusive. Pinned wins rather than failing the upgrade.
+  - it: Keeps the pinned key and skips the join when both are configured
+    template: config-controller/configmap.yaml
+    set:
+      cloudSync.joinSecret: join-me
+      cloudSync.clusterKey: pinned-key
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "source: exchange"
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cloud-sync-cluster-key\n    source: provided"
+
+  - it: Reads the join secret from an existing Secret when referenced
+    template: config-controller/configmap.yaml
+    set:
+      cloudSync.joinSecretSecretRefName: my-join
+      cloudSync.joinSecretSecretRefKey: secret
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cloud-sync-join-secret\n    source: provided\n    path: /etc/thoras/provided/cloud-sync-join-secret\n    consumedFrom:\n      secret: my-join\n      key: secret"
+
+  # Both fields are required to enter ref mode; a half-set ref reads as unset,
+  # which NOTES.txt warns about rather than the template failing.
+  - it: Ignores a half-set join secret ref
+    template: config-controller/configmap.yaml
+    set:
+      cloudSync.joinSecretSecretRefName: my-join
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "source: exchange"
+
+  ############################
+  # The join secret reaches the controller as a file
+  ############################
+
+  - it: Projects the join secret into the controller
+    template: config-controller/deployment.yaml
+    set:
+      cloudSync.joinSecret: join-me
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'provided')].projected.sources
+          content:
+            secret:
+              name: thoras-helm-values
+              optional: true
+              items:
+                - key: cloud-sync-join-secret
+                  path: cloud-sync-join-secret
+
+  - it: Tells the controller where the console is, only when joining
+    template: config-controller/deployment.yaml
+    set:
+      cloudSync.joinSecret: join-me
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_ENABLE_CLUSTER_AUTO_JOIN
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_CLOUD_SYNC_BASE_URL
+            value: "https://console.thoras.ai"
+
+  - it: Leaves auto-join off by default
+    template: config-controller/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_ENABLE_CLUSTER_AUTO_JOIN
+            value: "false"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_CLOUD_SYNC_BASE_URL
+            value: "https://console.thoras.ai"
+
+  # The kill switch: leave the secret in place but stop the outbound call.
+  - it: Lets auto-join be forced off without removing the secret
+    template: config-controller/configmap.yaml
+    set:
+      cloudSync.joinSecret: join-me
+      thorasConfigController.enableClusterAutoJoin: false
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "source: exchange"
+
+  # There is nothing to present without a secret, so the flag cannot switch
+  # auto-join on by itself: doing so would emit an exchange plan carrying an
+  # empty join secret and crash-loop the controller.
+  - it: Cannot be forced on without a join secret
+    template: config-controller/configmap.yaml
+    set:
+      thorasConfigController.enableClusterAutoJoin: true
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "source: exchange"
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "cloud-sync-join-secret"
+
+  ############################
+  # Consumer env
+  ############################
+
+  # Neither key exists until the join succeeds, so a required ref would wedge
+  # every consumer until the console answered, and forever if it never did.
+  - it: Marks both exchange refs optional
+    templates:
+      - worker/deployment.yaml
+      - operator/deployment.yaml
+      - api-server-v2/deployment.yaml
+    set:
+      cloudSync.joinSecret: join-me
+    asserts:
+      - equal:
+          path: $..spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY')].valueFrom.secretKeyRef.optional
+          value: true
+      - equal:
+          path: $..spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID')].valueFrom.secretKeyRef.optional
+          value: true
+
+  - it: Leaves a pinned key ref required
+    templates:
+      - worker/deployment.yaml
+      - api-server-v2/deployment.yaml
+    set:
+      cloudSync.clusterKeySecretRefName: my-key
+      cloudSync.clusterKeySecretRefKey: key
+    asserts:
+      - notExists:
+          path: $..spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY')].valueFrom.secretKeyRef.optional
+
+  - it: Takes the key ID from the managed Secret when joining
+    templates:
+      - worker/deployment.yaml
+      - operator/deployment.yaml
+      - api-server-v2/deployment.yaml
+    set:
+      cloudSync.joinSecret: join-me
+    asserts:
+      - equal:
+          path: $..spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID')].valueFrom.secretKeyRef.name
+          value: thoras-config-controller
+      - equal:
+          path: $..spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID')].valueFrom.secretKeyRef.key
+          value: cloud-sync-cluster-key-id
+
+  - it: Keeps the key ID a literal when it is pinned
+    template: worker/deployment.yaml
+    set:
+      cloudSync.clusterKeyID: pinned-id
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID')].value
+          value: pinned-id
+
+  ############################
+  # The enable flag, all four cases
+  ############################
+
+  - it: Enables sync when joining
+    template: worker/deployment.yaml
+    set:
+      cloudSync.joinSecret: join-me
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "true"
+
+  - it: Enables sync when a key is pinned
+    template: worker/deployment.yaml
+    set:
+      cloudSync.clusterKey: k
+      cloudSync.clusterKeyID: id
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "true"
+
+  - it: Disables sync when both are configured
+    template: worker/deployment.yaml
+    set:
+      cloudSync.joinSecret: join-me
+      cloudSync.clusterKey: k
+      cloudSync.clusterKeyID: id
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "false"
+
+  - it: Disables sync when neither is configured
+    template: worker/deployment.yaml
+    asserts:
+      - equal:
+          path: $.spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CLOUD_SYNC_WORKER')].value
+          value: "false"
+
+  ############################
+  # Guard
+  ############################
+
+  - it: Refuses to join without a cluster name
+    template: thoras-helm-values-secret.yaml
+    set:
+      cluster.name: ""
+      cloudSync.joinSecret: join-me
+    asserts:
+      - failedTemplate:
+          errorMessage: "cluster.name is required when cloudSync.joinSecret is set: the console registers this cluster under that name"
+
+  - it: Does not require a cluster name when not joining
+    template: thoras-helm-values-secret.yaml
+    set:
+      cluster.name: ""
+      cloudSync.clusterKey: k
+    asserts:
+      - notFailedTemplate: {}
+
+  ############################
+  # Notices
+  ############################
+
+  # An ambiguous config disables sync rather than failing the upgrade, so the
+  # notice is the only thing that stops it being invisible.
+  - it: Says why sync is off when both are configured
+    template: NOTES.txt
+    set:
+      cloudSync.joinSecret: join-me
+      cloudSync.clusterKey: pinned-key
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "WARNING: cloud sync is disabled"
+      - matchRegex:
+          path: raw
+          pattern: "Remove cloudSync.clusterKey"
+
+  - it: Warns that a half-set ref is being ignored
+    template: NOTES.txt
+    set:
+      cloudSync.clusterKeySecretRefName: only-the-name
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "WARNING: cloudSync.clusterKeySecretRef is half set"
+
+  - it: Warns that a half-set join ref is being ignored
+    template: NOTES.txt
+    set:
+      cloudSync.joinSecretSecretRefName: only-the-name
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "WARNING: cloudSync.joinSecretSecretRef is half set"
+
+  - it: Explains the wait on a joining install
+    template: NOTES.txt
+    set:
+      cloudSync.joinSecret: join-me
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Cluster auto-join: registering with https://console.thoras.ai as production-eu"
+      - matchRegex:
+          path: raw
+          pattern: "they run with\n  cloud sync off rather than failing"
+
+  - it: Says nothing about auto-join when it is not configured
+    template: NOTES.txt
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "auto-join"
+      - notMatchRegex:
+          path: raw
+          pattern: "WARNING: cloud sync"

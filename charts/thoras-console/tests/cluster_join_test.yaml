@@ -1,0 +1,62 @@
+suite: Cluster join secret
+templates:
+  - console-api/deployment.yaml
+  - config-controller/configmap.yaml
+  - helm-values-secret.yaml
+tests:
+  - it: Stays off until asked for
+    template: console-api/deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_CLUSTER_JOIN_SECRET
+          any: true
+
+  # Generated rather than operator-chosen: its whole security rests on being
+  # unguessable, and one secret serves the entire fleet.
+  - it: Generates a long secret when none is supplied
+    template: config-controller/configmap.yaml
+    set:
+      consoleApi.clusterJoin.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: cluster-join-secret\n    source: seed\n    generate:\n      length: 48\n      type: alphanumeric"
+
+  - it: Reads console-api's secret from wherever it resolved
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.clusterJoin.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.name
+          value: thoras-console-config-controller
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.key
+          value: cluster-join-secret
+
+  - it: Takes a pinned secret over generating one
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.clusterJoin.enabled: true
+      consoleApi.clusterJoin.secret: shared-across-the-fleet
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.name
+          value: thoras-console-helm-values
+
+  - it: Takes an existing Secret over both
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.clusterJoin.enabled: true
+      consoleApi.clusterJoin.secret: ignored
+      consoleApi.clusterJoin.existingSecret.secretName: my-join
+      consoleApi.clusterJoin.existingSecret.secretKey: theKey
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.name
+          value: my-join
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.key
+          value: theKey
