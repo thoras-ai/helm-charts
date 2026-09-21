@@ -141,6 +141,17 @@ cloudSync:
   clusterKeySecretRefName: ""
   clusterKeySecretRefKey: ""
 
+  # -- Shared secret letting this cluster register itself with the console and
+  # receive its own cluster key, instead of one being pinned above. Read it from
+  # the console install:
+  #   kubectl get secret thoras-console-config-controller -n thoras-console \
+  #     -o jsonpath='{.data.cluster-join-secret}' | base64 -d
+  # Requires cluster.name, and baseUrl must point at your console. Setting this
+  # alongside a cluster key disables cloud sync: only one may be used.
+  joinSecret: ""
+  joinSecretSecretRefName: ""
+  joinSecretSecretRefKey: ""
+
 # External TimescaleDB configuration. When set, the chart skips deploying the
 # in-cluster TimescaleDB and configures all components to use the external
 # database instead. The TimescaleDB extension must be pre-installed and managed
@@ -596,6 +607,10 @@ thorasConfigController:
   # Safety switch: with this off the controller logs the config diffs it would
   # act on but never evicts a pod.
   enableRestartRollouts: true
+  # Cluster auto-join, the controller's only outbound call. Unset derives it
+  # from cloudSync.joinSecret; set it explicitly to force it off without
+  # removing the secret.
+  enableClusterAutoJoin: null
   pollInterval: "30s"
   # Coalescing window after a change is first seen, before a rollout starts.
   rolloutDebounce: "10s"

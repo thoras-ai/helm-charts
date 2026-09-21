@@ -309,6 +309,43 @@ true
 {{- end -}}
 
 {{/*
+Cloud sync can take its cluster key from values or obtain one by joining the
+console, never both. These three decide which, and every consumer asks them
+rather than re-reading the values.
+
+A half-set secretRef reads as unconfigured here, matching how the chart has
+always treated one: the value is silently omitted rather than guarded. NOTES.txt
+warns about it, since with auto-join that silence would switch the install into
+a different mode.
+*/}}
+{{- define "thoras.cloudSyncPinned" -}}
+{{- if or .Values.cloudSync.clusterKey (and .Values.cloudSync.clusterKeySecretRefName .Values.cloudSync.clusterKeySecretRefKey) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{- define "thoras.cloudSyncJoinConfigured" -}}
+{{- if or .Values.cloudSync.joinSecret (and .Values.cloudSync.joinSecretSecretRefName .Values.cloudSync.joinSecretSecretRefKey) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Auto-join runs only when a join secret is configured, no key is pinned, and the
+controller is present to make the call.
+
+thorasConfigController.enableClusterAutoJoin can only force it *off*: there is
+nothing to present without a secret, so an explicit `true` would otherwise emit
+an exchange plan carrying an empty one and crash-loop the controller.
+*/}}
+{{- define "thoras.clusterAutoJoinActive" -}}
+{{- if eq (.Values.thorasConfigController.enableClusterAutoJoin | toString) "false" -}}
+{{- else if and (eq (include "thoras.cloudSyncJoinConfigured" .) "true") (ne (include "thoras.cloudSyncPinned" .) "true") .Values.thorasConfigController.enabled -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
 Egress rule allowing components to reach the Kubernetes API server, for the
 "kubernetes" NetworkPolicy flavor.
 
@@ -475,10 +512,30 @@ migrated and generated values are indistinguishable.
 {{- $plan = append $plan (dict "name" "slack-webhook-url" "mode" "values" "secret" "thoras-helm-values" "key" "slack-webhook-url" "value" .Values.slackWebhookUrl) -}}
 {{- end -}}
 
+{{- /* A pinned key and a join secret are mutually exclusive: the cluster key is
+       one plan entry, so it is either read from values or obtained from the
+       console, never both. Pinned wins and cloud sync is disabled, rather than
+       failing an upgrade that merely added a join secret; NOTES.txt says so. */ -}}
+{{- $pinnedKey := include "thoras.cloudSyncPinned" . -}}
+{{- if eq $pinnedKey "true" -}}
 {{- if and .Values.cloudSync.clusterKeySecretRefName .Values.cloudSync.clusterKeySecretRefKey -}}
 {{- $plan = append $plan (dict "name" "cloud-sync-cluster-key" "mode" "existing" "secret" .Values.cloudSync.clusterKeySecretRefName "key" .Values.cloudSync.clusterKeySecretRefKey) -}}
-{{- else if .Values.cloudSync.clusterKey -}}
+{{- else -}}
 {{- $plan = append $plan (dict "name" "cloud-sync-cluster-key" "mode" "values" "secret" "thoras-helm-values" "key" "cloud-sync-cluster-key" "value" .Values.cloudSync.clusterKey) -}}
+{{- end -}}
+{{- else if eq (include "thoras.clusterAutoJoinActive" .) "true" -}}
+{{- if and .Values.cloudSync.joinSecretSecretRefName .Values.cloudSync.joinSecretSecretRefKey -}}
+{{- $plan = append $plan (dict "name" "cloud-sync-join-secret" "mode" "existing" "secret" .Values.cloudSync.joinSecretSecretRefName "key" .Values.cloudSync.joinSecretSecretRefKey) -}}
+{{- else -}}
+{{- $plan = append $plan (dict "name" "cloud-sync-join-secret" "mode" "values" "secret" "thoras-helm-values" "key" "cloud-sync-join-secret" "value" .Values.cloudSync.joinSecret) -}}
+{{- end -}}
+{{- /* Seeded once and never rotated: it is what makes a re-join resolve the
+       same cluster instead of creating a second one. */ -}}
+{{- $plan = append $plan (dict "name" "cloud-sync-install-id" "mode" "seed" "secret" "thoras-config-controller" "key" "cloud-sync-install-id" "generate" (dict "type" "uuid")) -}}
+{{- /* Two entries, one join: they differ only in `field`. optional is required
+       because neither key exists until that join succeeds. */ -}}
+{{- $plan = append $plan (dict "name" "cloud-sync-cluster-key-id" "mode" "exchange" "secret" "thoras-config-controller" "key" "cloud-sync-cluster-key-id" "optional" true "exchange" (dict "kind" "console" "field" "id" "installId" "cloud-sync-install-id")) -}}
+{{- $plan = append $plan (dict "name" "cloud-sync-cluster-key" "mode" "exchange" "secret" "thoras-config-controller" "key" "cloud-sync-cluster-key" "optional" true "exchange" (dict "kind" "console" "field" "token" "installId" "cloud-sync-install-id")) -}}
 {{- end -}}
 
 {{- toYaml $plan -}}
@@ -556,6 +613,10 @@ Full env var for an optional credential, or nothing when it is unresolved.
 Unset optional secrets must omit the var rather than bind a Secret key that
 does not exist, which would wedge the pod in CreateContainerConfigError.
 Wrap the call in `with` so an unresolved value emits no blank line.
+
+Exchange entries carry `optional`, because their key genuinely does not exist
+until the first join completes: without it every consumer would wedge until the
+console answered, and forever if it never did.
 */}}
 {{- define "thoras.optionalSecretEnv" -}}
 {{- $want := .name -}}
@@ -567,6 +628,9 @@ Wrap the call in `with` so an unresolved value emits no blank line.
     secretKeyRef:
       name: {{ .secret }}
       key: {{ .key }}
+      {{- if .optional }}
+      optional: true
+      {{- end }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -656,6 +720,10 @@ values:
     validate:
       {{- toYaml . | nindent 6 }}
     {{- end }}
+  {{- else if eq .mode "exchange" }}
+    source: exchange
+    exchange:
+      {{- toYaml .exchange | nindent 6 }}
   {{- else }}
     source: provided
     path: /etc/thoras/provided/{{ .name }}

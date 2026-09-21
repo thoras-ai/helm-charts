@@ -88,6 +88,16 @@ spec:
               secretKeyRef:
                 name: {{ $admin.name }}
                 key: {{ $admin.key }}
+          {{- end }}
+          {{- if .Values.consoleApi.clusterJoin.enabled }}
+          {{- $join := include "thoras-console.clusterJoinSecretRef" . | fromYaml }}
+          - name: SERVICE_CLUSTER_JOIN_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ $join.name }}
+                key: {{ $join.key }}
+          {{- end }}
+          {{- if $localMode }}
           {{- with $auth.adminSalt }}
           - name: SERVICE_LOCAL_ADMIN_SALT
             value: {{ . | quote }}

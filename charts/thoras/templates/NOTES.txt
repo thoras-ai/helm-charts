@@ -32,6 +32,34 @@ Config controller: seeding any credential you did not supply.
   thoras-config-controller Secret exists. This clears on its own.
 {{- end }}
 
+{{ if and (eq (include "thoras.cloudSyncPinned" .) "true") (eq (include "thoras.cloudSyncJoinConfigured" .) "true") -}}
+WARNING: cloud sync is disabled.
+  cloudSync.joinSecret is set alongside a cluster key, and only one may be
+  used. Remove cloudSync.clusterKey / clusterKeySecretRef* to let this
+  cluster register itself, or remove cloudSync.joinSecret to keep the key.
+{{- end }}
+
+{{ if and (eq (include "thoras.clusterAutoJoinActive" .) "true") .Release.IsInstall -}}
+Cluster auto-join: registering with {{ .Values.cloudSync.baseUrl }} as {{ .Values.cluster.name }}.
+  The cluster key arrives in thoras-config-controller once the console
+  answers, and the workloads restart then. Until it does they run with
+  cloud sync off rather than failing.
+{{- end }}
+
+{{- /* A half-set ref has always been silently ignored; with auto-join that
+       silence also switches which mode the install runs in. */}}
+{{ if or (and .Values.cloudSync.clusterKeySecretRefName (not .Values.cloudSync.clusterKeySecretRefKey)) (and .Values.cloudSync.clusterKeySecretRefKey (not .Values.cloudSync.clusterKeySecretRefName)) -}}
+WARNING: cloudSync.clusterKeySecretRef is half set.
+  Both clusterKeySecretRefName and clusterKeySecretRefKey are required to
+  read the cluster key from a Secret; as configured it is ignored.
+{{- end }}
+
+{{ if or (and .Values.cloudSync.joinSecretSecretRefName (not .Values.cloudSync.joinSecretSecretRefKey)) (and .Values.cloudSync.joinSecretSecretRefKey (not .Values.cloudSync.joinSecretSecretRefName)) -}}
+WARNING: cloudSync.joinSecretSecretRef is half set.
+  Both joinSecretSecretRefName and joinSecretSecretRefKey are required; as
+  configured the join secret is ignored and auto-join will not run.
+{{- end }}
+
 {{ if hasKey .Values.featureFlags "enableSimpleAuthSecret" -}}
 DEPRECATED: featureFlags.enableSimpleAuthSecret
   Rename this field to apiClientSecret.enabled in your values file. The

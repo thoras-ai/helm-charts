@@ -203,6 +203,20 @@ install to adopt values from.
 {{- end -}}
 {{- end -}}
 
+{{- /* Generated when unset: its whole security rests on being unguessable, and
+       an operator-chosen string is the weak link. Longer than the admin
+       password because no human ever types it. */ -}}
+{{- $join := .Values.consoleApi.clusterJoin -}}
+{{- if $join.enabled -}}
+{{- if $join.existingSecret.secretName -}}
+{{- $plan = append $plan (dict "name" "cluster-join-secret" "mode" "existing" "secret" $join.existingSecret.secretName "key" $join.existingSecret.secretKey) -}}
+{{- else if $join.secret -}}
+{{- $plan = append $plan (dict "name" "cluster-join-secret" "mode" "values" "secret" $pinned "key" "cluster-join-secret" "value" $join.secret) -}}
+{{- else -}}
+{{- $plan = append $plan (dict "name" "cluster-join-secret" "mode" "seed" "secret" $managed "key" "cluster-join-secret" "generate" (dict "type" "alphanumeric" "length" 48)) -}}
+{{- end -}}
+{{- end -}}
+
 {{- /* Bundled seeds a password and derives the DSN from it, so the plaintext
        exists in one place only. The database name is in the format string
        rather than appended by consumers, so both modes yield a complete DSN. */ -}}
@@ -268,6 +282,10 @@ key: {{ $entry.key }}
 
 {{- define "thoras-console.adminPasswordRef" -}}
 {{- include "thoras-console.secretRef" (dict "root" . "name" "local-admin-password") -}}
+{{- end -}}
+
+{{- define "thoras-console.clusterJoinSecretRef" -}}
+{{- include "thoras-console.secretRef" (dict "root" . "name" "cluster-join-secret") -}}
 {{- end -}}
 
 {{- define "thoras-console.databaseDsnRef" -}}
@@ -408,6 +426,11 @@ reported with an actionable message rather than as an unresolved plan entry
 from whichever template Helm happens to render first.
 */}}
 {{- define "thoras-console.validate" -}}
+{{- /* console-api refuses this combination at startup; catching it here turns a
+       crash loop into a message. */ -}}
+{{- if and .Values.consoleApi.clusterJoin.enabled (not .Values.consoleApi.singleOrg.enabled) -}}
+{{- fail "consoleApi.clusterJoin.enabled requires consoleApi.singleOrg.enabled: a joining agent presents no user identity, so the organization has to be implicit" -}}
+{{- end -}}
 {{- $auth := .Values.consoleApi.auth -}}
 {{- $localMode := or (eq $auth.mode "local") (eq $auth.mode "both") -}}
 {{- $oidcMode := or (eq $auth.mode "oidc") (eq $auth.mode "both") -}}

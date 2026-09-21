@@ -80,6 +80,12 @@ spec:
             value: {{ $cc.enableSeeding | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_RESTART_ROLLOUTS
             value: {{ $cc.enableRestartRollouts | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_CLUSTER_AUTO_JOIN
+            value: {{ eq (include "thoras.clusterAutoJoinActive" .) "true" | ternary "true" "false" | quote }}
+          {{- if eq (include "thoras.clusterAutoJoinActive" .) "true" }}
+          - name: SERVICE_CLOUD_SYNC_BASE_URL
+            value: {{ .Values.cloudSync.baseUrl | quote }}
+          {{- end }}
           - name: SERVICE_POLL_INTERVAL
             value: {{ $cc.pollInterval | quote }}
           - name: SERVICE_ROLLOUT_DEBOUNCE

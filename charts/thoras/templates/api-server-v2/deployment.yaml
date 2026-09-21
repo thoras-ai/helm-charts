@@ -122,13 +122,18 @@ spec:
           - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
             value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC
-          {{- if (and .Values.cloudSync.baseUrl .Values.cloudSync.clusterKeyID)}}
+          {{- if (and .Values.cloudSync.baseUrl (or (and .Values.cloudSync.clusterKeyID (ne (include "thoras.cloudSyncJoinConfigured" .) "true")) (eq (include "thoras.clusterAutoJoinActive" .) "true")))}}
             value: "true"
           {{- else }}
             value: "false"
           {{- end }}
+{{- $keyID := include "thoras.optionalSecretEnv" (dict "root" . "name" "cloud-sync-cluster-key-id" "env" "SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID") }}
+          {{- if $keyID }}
+          {{- $keyID | nindent 10 }}
+          {{- else }}
           - name: SERVICE_CLOUD_SYNC_CLUSTER_KEY_ID
             value: {{ .Values.cloudSync.clusterKeyID | quote }}
+          {{- end }}
           - name: SERVICE_CLOUD_SYNC_BASE_URL
             value: {{ .Values.cloudSync.baseUrl | quote }}
           {{- with include "thoras.cloudSyncEnv" (dict "root" . "prefix" "SERVICE_") }}{{- . | nindent 10 }}{{- end }}

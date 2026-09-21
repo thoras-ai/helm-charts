@@ -930,6 +930,8 @@ Default matches snapshot:
                   value: "true"
                 - name: SERVICE_ENABLE_RESTART_ROLLOUTS
                   value: "true"
+                - name: SERVICE_ENABLE_CLUSTER_AUTO_JOIN
+                  value: "false"
                 - name: SERVICE_POLL_INTERVAL
                   value: 30s
                 - name: SERVICE_ROLLOUT_DEBOUNCE

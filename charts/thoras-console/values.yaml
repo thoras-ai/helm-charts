@@ -156,6 +156,23 @@ consoleApi:
     # Renames the existing organization if changed after install.
     name: "Default Organization"
 
+  # -- Shared secret letting clusters register themselves rather than being
+  # created through the API first. Generated when left unset; read it out with
+  #   kubectl get secret thoras-console-config-controller -n <ns> \
+  #     -o jsonpath='{.data.cluster-join-secret}' | base64 -d
+  # and pass it to each agent install as cloudSync.joinSecret. Requires
+  # singleOrg: a joining agent presents no user identity, so the organization
+  # has to be implicit.
+  clusterJoin:
+    # Off by default: it is a live registration endpoint, and enabling it
+    # implicitly would also make config-controller a hard requirement for
+    # installs that have it switched off.
+    enabled: false
+    secret: ""
+    existingSecret:
+      secretName: ""
+      secretKey: "clusterJoinSecret"
+
   # -- Email recorded on the seeded local admin user. A label only: nothing
   # authenticates against it.
   bootstrapAdminEmail: "admin@localhost"
