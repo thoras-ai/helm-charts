@@ -4,7 +4,7 @@ The Thoras console is the control plane that tenant clusters report into. This
 Helm Chart installs a self-hosted [Thoras](https://www.thoras.ai) console onto
 Kubernetes, as an alternative to the hosted console at `console.thoras.ai`.
 
-![Version: 0.5.0](https://img.shields.io/badge/Version-0.5.0-informational?style=flat-square)
+![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square)
 
 To install the Thoras platform onto a cluster you want to *observe*, you want
 the [thoras](../thoras/README.md) chart instead. The two are separate installs
