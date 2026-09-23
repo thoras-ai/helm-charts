@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 5.1.0](https://img.shields.io/badge/Version-5.1.0-informational?style=flat-square) ![AppVersion: 4.122.0](https://img.shields.io/badge/AppVersion-4.122.0-informational?style=flat-square)
+![Version: 5.3.0](https://img.shields.io/badge/Version-5.3.0-informational?style=flat-square) ![AppVersion: 4.122.0](https://img.shields.io/badge/AppVersion-4.122.0-informational?style=flat-square)
 
 ## Requirements
 
@@ -506,7 +506,8 @@ Set `networkPolicy.enabled: true` to render per-component policies.
 `networkPolicy.flavor: kubernetes` (default) emits standard
 `networking.k8s.io/v1` `NetworkPolicy` for any NetworkPolicy-capable
 CNI; `cilium` emits `CiliumNetworkPolicy` (`cilium.io/v2`) and requires
-[Cilium](https://cilium.io/).
+[Cilium](https://cilium.io/). Any other value fails the render rather than
+quietly producing no policy; the names are lower-case.
 
 `networkPolicy.apiServerPorts` (default `[443, 6443]`) must list the
 port the API server actually listens on post-DNAT — set it to `8443`
@@ -575,7 +576,7 @@ The following flags are considered temporary and gate access to specific behavio
 | Key                          | Type     | Default     | Description                                                                                                                                                                  |
 | ---------------------------- | -------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | networkPolicy.enabled        | Boolean  | false       | Render per-component network policies                                                                                                                                        |
-| networkPolicy.flavor         | String   | kubernetes  | `kubernetes` renders `networking.k8s.io/v1` `NetworkPolicy`; `cilium` renders `CiliumNetworkPolicy` (`cilium.io/v2`)                                                         |
+| networkPolicy.flavor         | String   | kubernetes  | `kubernetes` renders `networking.k8s.io/v1` `NetworkPolicy`; `cilium` renders `CiliumNetworkPolicy` (`cilium.io/v2`). Any other value fails the render                        |
 | networkPolicy.apiServerPorts | []Number | [443, 6443] | Ports the API server actually listens on (post-DNAT). Used by the `kubernetes` flavor to allow egress to the API. Ignored by the `cilium` flavor. Empty list omits the rule. |
 
 ### Thoras Forecast

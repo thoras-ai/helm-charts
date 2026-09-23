@@ -247,3 +247,44 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "consoleApi.clusterJoin.enabled requires consoleApi.singleOrg.enabled: a joining agent presents no user identity, so the organization has to be implicit"
+
+  ############################
+  # networkPolicy.flavor
+  ############################
+
+  # Every network-policy template tests the flavor for equality with no else
+  # branch, so before this guard an unrecognised value rendered no policy at all
+  # -- with enabled: true set, and with helm lint and a server-side dry-run both
+  # reporting success.
+  - it: Rejects an unknown network policy flavor, naming the value it got
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.flavor: calico
+    asserts:
+      - failedTemplate:
+          errorMessage: 'networkPolicy.flavor must be either "kubernetes" or "cilium", got "calico"'
+
+  # The likely way in: Cilium brands itself capitalised.
+  - it: Rejects a capitalised network policy flavor
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.flavor: Cilium
+    asserts:
+      - failedTemplate:
+          errorMessage: 'networkPolicy.flavor must be either "kubernetes" or "cilium", got "Cilium"'
+
+  - it: Rejects an empty network policy flavor
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.flavor: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: 'networkPolicy.flavor must be either "kubernetes" or "cilium", got ""'
+
+  # A stale flavor on a disabled policy must not block an unrelated install.
+  - it: Ignores the network policy flavor when network policy is disabled
+    set:
+      networkPolicy.enabled: false
+      networkPolicy.flavor: calico
+    asserts:
+      - notFailedTemplate: {}

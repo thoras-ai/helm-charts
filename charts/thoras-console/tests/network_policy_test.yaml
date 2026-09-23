@@ -314,3 +314,12 @@ tests:
               - namespaceSelector:
                   matchLabels:
                     kubernetes.io/metadata.name: monitoring
+
+  - it: Renders nothing, and does not fail, when disabled with a bad flavor
+    set:
+      networkPolicy.enabled: false
+      networkPolicy.flavor: calico
+    asserts:
+      - notFailedTemplate: {}
+      - hasDocuments:
+          count: 0
