@@ -551,7 +551,8 @@ Set `networkPolicy.enabled: true` to render per-component policies.
 `networkPolicy.flavor: kubernetes` (default) emits standard
 `networking.k8s.io/v1` `NetworkPolicy` for any NetworkPolicy-capable CNI;
 `cilium` emits `CiliumNetworkPolicy` (`cilium.io/v2`) and requires
-[Cilium](https://cilium.io/).
+[Cilium](https://cilium.io/). Any other value fails the render rather than
+quietly producing no policy; the names are lower-case.
 
 `networkPolicy.apiServerPorts` (default `[443, 6443]`) must list the port the
 API server actually listens on post-DNAT — set it to `8443` on minikube, etc.
@@ -639,7 +640,7 @@ unreachable logs a timeout.
 | priorityClassName               | String | ""                                               | Global priority class, overridden per component            |
 | topologySpreadConstraints       | list   | []                                               | Global spread, overridden per component                    |
 | networkPolicy.enabled           | Bool   | false                                            | Render per-component network policies                      |
-| networkPolicy.flavor            | String | kubernetes                                       | kubernetes or cilium                                       |
+| networkPolicy.flavor            | String | kubernetes                                       | kubernetes or cilium; any other value fails the render     |
 | networkPolicy.apiServerPorts    | list   | [443, 6443]                                      | API server ports post-DNAT. Set 8443 on minikube           |
 | serviceMonitor.enabled          | Bool   | false                                            | Scrape console-api and config-controller. Needs the Prometheus Operator |
 | serviceMonitor.interval         | String | ""                                               | Empty defers to the Prometheus default                     |

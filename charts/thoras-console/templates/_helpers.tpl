@@ -118,6 +118,19 @@ topologySpreadConstraints:
 {{- end }}
 
 {{/*
+The supported way to read networkPolicy.flavor. Every network-policy template
+branches on the result, so an unknown value fails the render here rather than
+falling through every branch and emitting no policy at all.
+*/}}
+{{- define "thoras-console.networkPolicyFlavor" -}}
+{{- $flavor := .Values.networkPolicy.flavor -}}
+{{- if not (or (eq $flavor "kubernetes") (eq $flavor "cilium")) -}}
+{{- fail (printf "networkPolicy.flavor must be either \"kubernetes\" or \"cilium\", got %q" $flavor) -}}
+{{- end -}}
+{{- $flavor -}}
+{{- end -}}
+
+{{/*
 Egress rule allowing config-controller to reach the Kubernetes API server, for
 the "kubernetes" NetworkPolicy flavor.
 
@@ -426,6 +439,12 @@ reported with an actionable message rather than as an unresolved plan entry
 from whichever template Helm happens to render first.
 */}}
 {{- define "thoras-console.validate" -}}
+{{- /* Every network-policy template validates the flavor as it reads it, but each
+       is also gated on its component, so check here too: this renders whatever is
+       enabled. */ -}}
+{{- if .Values.networkPolicy.enabled -}}
+{{- $_ := include "thoras-console.networkPolicyFlavor" . -}}
+{{- end -}}
 {{- /* console-api refuses this combination at startup; catching it here turns a
        crash loop into a message. */ -}}
 {{- if and .Values.consoleApi.clusterJoin.enabled (not .Values.consoleApi.singleOrg.enabled) -}}

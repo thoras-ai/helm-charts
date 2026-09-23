@@ -346,6 +346,19 @@ true
 {{- end -}}
 
 {{/*
+The supported way to read networkPolicy.flavor. Every network-policy template
+branches on the result, so an unknown value fails the render here rather than
+falling through every branch and emitting no policy at all.
+*/}}
+{{- define "thoras.networkPolicyFlavor" -}}
+{{- $flavor := .Values.networkPolicy.flavor -}}
+{{- if not (or (eq $flavor "kubernetes") (eq $flavor "cilium")) -}}
+{{- fail (printf "networkPolicy.flavor must be either \"kubernetes\" or \"cilium\", got %q" $flavor) -}}
+{{- end -}}
+{{- $flavor -}}
+{{- end -}}
+
+{{/*
 Egress rule allowing components to reach the Kubernetes API server, for the
 "kubernetes" NetworkPolicy flavor.
 

@@ -479,3 +479,56 @@ tests:
               rules:
                 dns:
                 - matchPattern: "*"
+
+  ############################
+  # Flavor validation
+  ############################
+
+  # Every network-policy template tests the flavor for equality with no else
+  # branch, so before this guard an unrecognised value rendered no policy at all
+  # -- with enabled: true set, and with helm lint and a server-side dry-run both
+  # reporting success. No template is pinned here: a chart-wide render aborts at
+  # whichever one raises first. Every network-policy template reads the flavor
+  # through thoras.networkPolicyFlavor, so none can branch on an unvalidated one.
+  - it: Rejects an unknown flavor, naming the value it got
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.flavor: calico
+    asserts:
+      - failedTemplate:
+          errorMessage: 'networkPolicy.flavor must be either "kubernetes" or "cilium", got "calico"'
+
+  # The likely way in: Cilium brands itself capitalised.
+  - it: Rejects a capitalised flavor
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.flavor: Cilium
+    asserts:
+      - failedTemplate:
+          errorMessage: 'networkPolicy.flavor must be either "kubernetes" or "cilium", got "Cilium"'
+
+  - it: Rejects an empty flavor
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.flavor: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: 'networkPolicy.flavor must be either "kubernetes" or "cilium", got ""'
+
+  # A stale flavor on a disabled policy must not block an unrelated install.
+  - it: Renders nothing, and does not fail, when disabled with a bad flavor
+    templates:
+      - api-server-v2/network-policy.yaml
+      - collector/network-policy.yaml
+      - config-controller/network-policy.yaml
+      - dashboard/network-policy.yaml
+      - forecast-worker/network-policy.yaml
+      - operator/network-policy.yaml
+      - worker/network-policy.yaml
+    set:
+      networkPolicy.enabled: false
+      networkPolicy.flavor: calico
+    asserts:
+      - notFailedTemplate: {}
+      - hasDocuments:
+          count: 0

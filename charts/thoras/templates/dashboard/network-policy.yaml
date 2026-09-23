@@ -1,5 +1,6 @@
 {{- if and .Values.networkPolicy.enabled .Values.thorasDashboard.enabled }}
-{{- if eq .Values.networkPolicy.flavor "kubernetes" }}
+{{- $flavor := include "thoras.networkPolicyFlavor" . }}
+{{- if eq $flavor "kubernetes" }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -58,7 +59,7 @@ spec:
   {{- with .Values.thorasDashboard.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
-{{- else if eq .Values.networkPolicy.flavor "cilium" }}
+{{- else if eq $flavor "cilium" }}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
