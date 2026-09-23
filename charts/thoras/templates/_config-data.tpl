@@ -169,15 +169,20 @@ and their consumers.
           proxy_set_header Authorization "Bearer ${SIMPLE_AUTH_SECRET}";
           {{- end }}
           {{- if .Values.thorasDashboard.auth.enabled }}
-          # Identity set by the oauth2-proxy sidecar (pass_user_headers
-          # default); the api-server records it on audit events for
-          # privileged actions. oauth2-proxy overwrites, not merges, any
-          # same-named header a client sent, so this cannot be client-forged.
+          # nginx already passes an unrecognized header through unchanged,
+          # so oauth2-proxy's identity headers (pass_user_headers default)
+          # reach the api-server with or without these two lines; they're
+          # explicit so that survives a future nginx default change. The
+          # guarantee that a client can't forge these instead depends on
+          # oauth2-proxy being in front (see the else branch) and on
+          # auth.extraArgs not disabling pass_user_headers or
+          # skip_auth_strip_headers.
           proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
           proxy_set_header X-Forwarded-User $http_x_forwarded_user;
           {{- else }}
           # No sidecar in front of nginx here, so these headers would
-          # otherwise be whatever the browser sent: strip them.
+          # otherwise be whatever the browser sent: strip them. This is
+          # the branch that actually changes nginx's default behavior.
           proxy_set_header X-Forwarded-Email "";
           proxy_set_header X-Forwarded-User "";
           {{- end }}

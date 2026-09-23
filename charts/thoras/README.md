@@ -414,6 +414,16 @@ single shared username, so use `oidc` mode where per-person attribution
 matters. With `auth.enabled: false` these headers are stripped before nginx
 proxies the request, and actions are recorded with actor `unknown`.
 
+This chart version is what makes that strip happen. On an older chart, or
+on any chart with `auth.enabled: false`, nginx passes an unrecognized
+request header through unchanged, so a browser talking to the dashboard
+could set `X-Forwarded-Email` itself. Deploy this alongside
+thoras-ai/platform#5164, which is what actually reads and records the
+header — this chart change by itself has no effect. Also don't set
+`--pass-user-headers=false` or `--skip-auth-strip-headers=true` under
+`thorasDashboard.auth.extraArgs`; either one reopens the same gap even on
+this chart version.
+
 #### Example Thoras Dashboard Ingress Configuration
 
 ```yaml

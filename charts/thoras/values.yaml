@@ -719,6 +719,10 @@ thorasDashboard:
     # Flags here override any equivalent directive in the chart-generated
     # oauth2-proxy.cfg (oauth2-proxy resolves CLI flags after config-file
     # directives).
+    # WARNING: --pass-user-headers=false or --skip-auth-strip-headers=true
+    # here would let a client set its own X-Forwarded-Email/-User, since
+    # both default to protecting those headers. The audit trail's actor
+    # attribution relies on the defaults; don't override either.
     extraArgs: []
     # Consulted when thorasDashboard.auth.mode: htpasswd.
     htpasswd:
