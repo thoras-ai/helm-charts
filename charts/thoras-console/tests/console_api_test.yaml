@@ -4,6 +4,7 @@ templates:
   - console-api/service.yaml
   - console-api/service-account.yaml
   - console-api/pdb.yaml
+  - console-api/service-monitor.yaml
 tests:
   ############################
   # Shape
@@ -301,3 +302,119 @@ tests:
       - equal:
           path: spec.template.metadata.annotations["only-global"]
           value: "yes"
+
+  ############################
+  # Metrics
+  ############################
+
+  # The API port is published through a browser-facing ingress, so /metrics has
+  # to be somewhere that ingress does not reach.
+  - it: Serves metrics on a port of its own
+    template: console-api/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_METRICS_PORT')].value
+          value: "9104"
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http-metrics
+            containerPort: 9104
+      - notEqual:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_PORT')].value
+          value: "9104"
+
+  - it: Exposes the metrics port on the Service for a ServiceMonitor to select
+    template: console-api/service.yaml
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: http-metrics
+            port: 9104
+            protocol: TCP
+            targetPort: 9104
+      # The selector matches on the Service's own label, not the pod template's.
+      - equal:
+          path: metadata.labels.app
+          value: thoras-console-api
+
+  - it: Drops the metrics port everywhere when prometheus is disabled
+    templates:
+      - console-api/deployment.yaml
+      - console-api/service.yaml
+    set:
+      consoleApi.prometheus.enabled: false
+    asserts:
+      - notContains:
+          path: $..spec.containers[0].ports
+          content:
+            name: http-metrics
+            containerPort: 9104
+          any: true
+      - notExists:
+          path: $..spec.containers[0].env[?(@.name == 'SERVICE_METRICS_PORT')]
+
+  ############################
+  # ServiceMonitor
+  ############################
+
+  - it: Renders no ServiceMonitor by default
+    template: console-api/service-monitor.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Scrapes the metrics port when monitoring is enabled
+    template: console-api/service-monitor.yaml
+    set:
+      serviceMonitor.enabled: true
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: metadata.name
+          value: thoras-console-api
+      - equal:
+          path: spec.endpoints[0].port
+          value: http-metrics
+      - equal:
+          path: spec.endpoints[0].path
+          value: /metrics
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-console-api
+
+  # Both toggles gate it: a ServiceMonitor pointing at a port the container no
+  # longer opens scrapes nothing and reports a target down.
+  - it: Renders no ServiceMonitor when prometheus is off
+    template: console-api/service-monitor.yaml
+    set:
+      serviceMonitor.enabled: true
+      consoleApi.prometheus.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Defers to the Prometheus default interval unless one is set
+    template: console-api/service-monitor.yaml
+    set:
+      serviceMonitor.enabled: true
+    asserts:
+      - notExists:
+          path: spec.endpoints[0].interval
+
+  - it: Carries the configured interval and additional labels
+    template: console-api/service-monitor.yaml
+    set:
+      serviceMonitor.enabled: true
+      serviceMonitor.interval: 45s
+      serviceMonitor.additionalLabels:
+        release: kube-prometheus-stack
+    asserts:
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 45s
+      - equal:
+          path: metadata.labels.release
+          value: kube-prometheus-stack

@@ -4,7 +4,7 @@ The Thoras console is the control plane that tenant clusters report into. This
 Helm Chart installs a self-hosted [Thoras](https://www.thoras.ai) console onto
 Kubernetes, as an alternative to the hosted console at `console.thoras.ai`.
 
-![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square)
+![Version: 0.5.0](https://img.shields.io/badge/Version-0.5.0-informational?style=flat-square)
 
 To install the Thoras platform onto a cluster you want to *observe*, you want
 the [thoras](../thoras/README.md) chart instead. The two are separate installs
@@ -33,8 +33,14 @@ in the [thoras](../thoras/README.md) chart at the second one.
 ## Upgrading
 
 The chart is pre-1.0 while the value surface settles, so a minor bump
-(`0.2.0` → `0.3.0`) may contain breaking value changes. Read the release notes
+(`0.4.0` → `0.5.0`) may contain breaking value changes. Read the release notes
 before upgrading, and pin the chart version in production.
+
+Upgrade with `--reset-then-reuse-values` rather than `--reuse-values`. A minor
+bump usually adds values, and `--reuse-values` keeps the previous release's
+values *instead of* the new chart's defaults, so a newly added key is simply
+absent and the upgrade fails on it. `--reset-then-reuse-values` layers your
+overrides on top of the new defaults, which is almost always what you want.
 
 An upgrade never rotates a generated credential: config-controller writes a
 value only when it is absent from the managed Secret. Your admin password
@@ -214,7 +220,12 @@ helm install thoras-console thoras/thoras-console -n thoras-console -f values.ya
 
 `serviceMonitor.enabled` needs the Prometheus Operator installed; without its
 CRDs the release fails to apply with `no matches for kind "ServiceMonitor"`. It
-scrapes config-controller — `console-api` exports no metrics.
+scrapes config-controller and `console-api`, each on its own metrics port.
+
+`console-api` serves `/metrics` on `consoleApi.prometheus.port` (9104) rather
+than on `containerPort`, which is published through a browser-facing ingress.
+With `networkPolicy.enabled`, a Prometheus in this namespace already reaches it;
+one in another namespace needs a rule via `consoleApi.extraIngressRules`.
 
 `replicas: 2` multiplies the login rate limit, which is per-process. That
 matters only in `local` and `both` modes.
@@ -547,12 +558,14 @@ API server actually listens on post-DNAT — set it to `8443` on minikube, etc.
 Only config-controller uses it; `console-api` makes no Kubernetes API calls. The
 `cilium` flavor ignores the key and targets the API server by identity.
 
-Four policies render: one per component, including the bundled database when it
-is in use. Ingress to `console-api` is open on `consoleApi.containerPort` from
-any source, because tenant clusters push metrics to it from outside the cluster
-through `consoleApi.ingress`. The dashboard is open on its own container port
-for the same structural reason — browsers are outside the cluster. The bundled
-database admits only `console-api`, by pod selector.
+Four policies render: one per component, including the bundled database when
+it is in use. Ingress to `console-api` is open on `consoleApi.containerPort`
+from any source, because tenant clusters push metrics to it from outside the
+cluster through `consoleApi.ingress`. `consoleApi.prometheus.port` is
+deliberately not in that rule: it is reachable from this namespace only. The
+dashboard is open on its own container port for the same structural reason —
+browsers are outside the cluster. The bundled database admits only
+`console-api`, by pod selector.
 
 Two egress rules are deliberately broad, because standard NetworkPolicy cannot
 name a host whose address may drift:
@@ -628,7 +641,7 @@ unreachable logs a timeout.
 | networkPolicy.enabled           | Bool   | false                                            | Render per-component network policies                      |
 | networkPolicy.flavor            | String | kubernetes                                       | kubernetes or cilium                                       |
 | networkPolicy.apiServerPorts    | list   | [443, 6443]                                      | API server ports post-DNAT. Set 8443 on minikube           |
-| serviceMonitor.enabled          | Bool   | false                                            | Scrape config-controller. Needs the Prometheus Operator    |
+| serviceMonitor.enabled          | Bool   | false                                            | Scrape console-api and config-controller. Needs the Prometheus Operator |
 | serviceMonitor.interval         | String | ""                                               | Empty defers to the Prometheus default                     |
 | serviceMonitor.additionalLabels | object | {}                                               | Extra labels on the ServiceMonitor                         |
 
@@ -641,6 +654,8 @@ unreachable logs a timeout.
 | consoleApi.image.repository                  | String | console-api          | Joined to imageCredentials.registry                              |
 | consoleApi.containerPort                     | Number | 8080                 | Port the container listens on                                    |
 | consoleApi.port                              | Number | 80                   | Service port                                                     |
+| consoleApi.prometheus.enabled                | Bool   | true                 | Expose /metrics on its own port                                  |
+| consoleApi.prometheus.port                   | Number | 9104                 | Metrics port; kept off the ingress-published containerPort       |
 | consoleApi.externalUrl                       | String | ""                   | Dashboard URL shown in the install notes. Not the ingest host    |
 | consoleApi.ingress.enabled                   | Bool   | false                | Route for workload clusters to sync to. Own host, not the UI's   |
 | consoleApi.ingress.ingressClassName          | String | nginx                | Cleared renders no ingressClassName                              |

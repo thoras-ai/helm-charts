@@ -83,6 +83,12 @@ consoleApi:
   containerPort: 8080
   port: 80
 
+  # -- Prometheus scrape target. Served on its own port because containerPort is
+  # published through a browser-facing ingress.
+  prometheus:
+    enabled: true
+    port: 9104
+
   # -- URL a human reaches the console UI on, i.e. the dashboard's host. Read
   # only by NOTES.txt. Not the host cluster agents sync to -- that is this
   # component's own ingress below.

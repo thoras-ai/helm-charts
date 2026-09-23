@@ -20,6 +20,12 @@ spec:
     port: {{ .Values.consoleApi.port }}
     protocol: TCP
     targetPort: {{ .Values.consoleApi.containerPort }}
+  {{- if .Values.consoleApi.prometheus.enabled }}
+  - name: http-metrics
+    port: {{ .Values.consoleApi.prometheus.port }}
+    protocol: TCP
+    targetPort: {{ .Values.consoleApi.prometheus.port }}
+  {{- end }}
   selector:
     app: thoras-console-api
 {{- end }}
