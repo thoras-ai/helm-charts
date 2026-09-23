@@ -403,6 +403,28 @@ application.
   port-forward` works (Safari drops Secure cookies over plain HTTP).
 Set it to `true` in production; it requires TLS at the edge.
 
+##### Actor attribution and audit events
+
+When `thorasDashboard.auth.enabled` (the default), nginx forwards the
+oauth2-proxy sidecar's identity headers (`X-Forwarded-Email`,
+`X-Forwarded-User`) to the api-server, which records them as the actor on
+audit events for privileged actions: scale-mode changes, pausing or resuming
+scaling, and enrollment. In `htpasswd` mode every action is attributed to the
+single shared username, so use `oidc` mode where per-person attribution
+matters. With `auth.enabled: false` these headers are stripped before nginx
+proxies the request, and actions are recorded with actor `unknown`.
+
+This chart version is what makes that strip happen. On an older chart, or
+on any chart with `auth.enabled: false`, nginx passes an unrecognized
+request header through unchanged, so a browser talking to the dashboard
+could set `X-Forwarded-Email` itself. Pair this with a `thorasVersion` that
+records audit events (see the platform release notes for the version that
+added it) — this chart change by itself has no effect, since it's the
+api-server that reads and records the header. Also don't set
+`--pass-user-headers=false` or `--skip-auth-strip-headers=true` under
+`thorasDashboard.auth.extraArgs`; either one reopens the same gap even on
+this chart version.
+
 #### Example Thoras Dashboard Ingress Configuration
 
 ```yaml

@@ -168,6 +168,19 @@ and their consumers.
           {{- if eq (include "thoras.apiClientEnabled" .) "true" }}
           proxy_set_header Authorization "Bearer ${SIMPLE_AUTH_SECRET}";
           {{- end }}
+          {{- if .Values.thorasDashboard.auth.enabled }}
+          # Identity headers oauth2-proxy sets after authenticating the
+          # session; the api-server records them for audit attribution.
+          # Depends on auth.extraArgs not disabling pass_user_headers or
+          # skip_auth_strip_headers.
+          proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
+          proxy_set_header X-Forwarded-User $http_x_forwarded_user;
+          {{- else }}
+          # No sidecar in front to authenticate these, so strip whatever
+          # a client sent.
+          proxy_set_header X-Forwarded-Email "";
+          proxy_set_header X-Forwarded-User "";
+          {{- end }}
         }
 
         location /config.json {

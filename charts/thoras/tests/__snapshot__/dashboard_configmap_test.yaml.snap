@@ -88,6 +88,12 @@ Should default to v2 port:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Authorization "Bearer ${SIMPLE_AUTH_SECRET}";
+            # Identity headers oauth2-proxy sets after authenticating the
+            # session; the api-server records them for audit attribution.
+            # Depends on auth.extraArgs not disabling pass_user_headers or
+            # skip_auth_strip_headers.
+            proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
+            proxy_set_header X-Forwarded-User $http_x_forwarded_user;
           }
 
           location /config.json {
@@ -201,6 +207,12 @@ should set extras in config.json:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Authorization "Bearer ${SIMPLE_AUTH_SECRET}";
+            # Identity headers oauth2-proxy sets after authenticating the
+            # session; the api-server records them for audit attribution.
+            # Depends on auth.extraArgs not disabling pass_user_headers or
+            # skip_auth_strip_headers.
+            proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
+            proxy_set_header X-Forwarded-User $http_x_forwarded_user;
           }
 
           location /config.json {
