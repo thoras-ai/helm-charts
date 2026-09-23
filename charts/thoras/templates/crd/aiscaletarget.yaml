@@ -1535,6 +1535,14 @@ spec:
                 description: LatestSuggestion contains the most recent scaling recommendations
                   from Thoras AI
                 properties:
+                  adjustedReplicas:
+                    description: |-
+                      AdjustedReplicas is SuggestedReplicas with the AST's horizontal constraints
+                      applied (clamped to min/max, then snapped to allowedReplicas or multipleOf). It
+                      previews what autonomous mode would apply, for recommendation mode without an
+                      HPA. Omitted until there is enough data to recommend scaling.
+                    format: int32
+                    type: integer
                   currentReplicas:
                     description: |-
                       CurrentReplicas is the number of replicas at the time this suggestion was generated.
