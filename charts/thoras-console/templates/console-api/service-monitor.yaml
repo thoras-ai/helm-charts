@@ -1,18 +1,18 @@
-{{- if and .Values.serviceMonitor.enabled .Values.consoleConfigController.enabled .Values.consoleConfigController.prometheus.enabled }}
+{{- if and .Values.serviceMonitor.enabled .Values.consoleApi.enabled .Values.consoleApi.prometheus.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: thoras-console-config-controller
+  name: thoras-console-api
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleConfigController.labels) | nindent 4 }}
+    {{- include "thoras-console.resourceLabels" (dict "root" . "component" .Values.consoleApi.labels) | nindent 4 }}
     {{- with .Values.serviceMonitor.additionalLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   selector:
     matchLabels:
-      app: thoras-console-config-controller
+      app: thoras-console-api
   endpoints:
     - port: http-metrics
       path: /metrics

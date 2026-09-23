@@ -53,6 +53,10 @@ spec:
         env:
           - name: SERVICE_PORT
             value: {{ $c.containerPort | quote }}
+          {{- if $c.prometheus.enabled }}
+          - name: SERVICE_METRICS_PORT
+            value: {{ $c.prometheus.port | quote }}
+          {{- end }}
           {{- $dsn := include "thoras-console.databaseDsnRef" . | fromYaml }}
           - name: SERVICE_POSTGRESQL_DSN
             valueFrom:
@@ -123,6 +127,10 @@ spec:
         ports:
         - name: http
           containerPort: {{ $c.containerPort }}
+        {{- if $c.prometheus.enabled }}
+        - name: http-metrics
+          containerPort: {{ $c.prometheus.port }}
+        {{- end }}
         {{- /* 36 * 10s = 360s, strictly above SERVICE_WAIT_TIMEOUT's 300s. */}}
         startupProbe:
           httpGet:
