@@ -88,13 +88,9 @@ Should default to v2 port:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Authorization "Bearer ${SIMPLE_AUTH_SECRET}";
-            # nginx already passes an unrecognized header through unchanged,
-            # so oauth2-proxy's identity headers (pass_user_headers default)
-            # reach the api-server with or without these two lines; they're
-            # explicit so that survives a future nginx default change. The
-            # guarantee that a client can't forge these instead depends on
-            # oauth2-proxy being in front (see the else branch) and on
-            # auth.extraArgs not disabling pass_user_headers or
+            # Identity headers oauth2-proxy sets after authenticating the
+            # session; the api-server records them for audit attribution.
+            # Depends on auth.extraArgs not disabling pass_user_headers or
             # skip_auth_strip_headers.
             proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
             proxy_set_header X-Forwarded-User $http_x_forwarded_user;
@@ -211,13 +207,9 @@ should set extras in config.json:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header Authorization "Bearer ${SIMPLE_AUTH_SECRET}";
-            # nginx already passes an unrecognized header through unchanged,
-            # so oauth2-proxy's identity headers (pass_user_headers default)
-            # reach the api-server with or without these two lines; they're
-            # explicit so that survives a future nginx default change. The
-            # guarantee that a client can't forge these instead depends on
-            # oauth2-proxy being in front (see the else branch) and on
-            # auth.extraArgs not disabling pass_user_headers or
+            # Identity headers oauth2-proxy sets after authenticating the
+            # session; the api-server records them for audit attribution.
+            # Depends on auth.extraArgs not disabling pass_user_headers or
             # skip_auth_strip_headers.
             proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
             proxy_set_header X-Forwarded-User $http_x_forwarded_user;
