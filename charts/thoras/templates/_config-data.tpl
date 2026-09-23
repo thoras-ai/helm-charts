@@ -168,6 +168,19 @@ and their consumers.
           {{- if eq (include "thoras.apiClientEnabled" .) "true" }}
           proxy_set_header Authorization "Bearer ${SIMPLE_AUTH_SECRET}";
           {{- end }}
+          {{- if .Values.thorasDashboard.auth.enabled }}
+          # Identity set by the oauth2-proxy sidecar (pass_user_headers
+          # default); the api-server records it on audit events for
+          # privileged actions. oauth2-proxy overwrites, not merges, any
+          # same-named header a client sent, so this cannot be client-forged.
+          proxy_set_header X-Forwarded-Email $http_x_forwarded_email;
+          proxy_set_header X-Forwarded-User $http_x_forwarded_user;
+          {{- else }}
+          # No sidecar in front of nginx here, so these headers would
+          # otherwise be whatever the browser sent: strip them.
+          proxy_set_header X-Forwarded-Email "";
+          proxy_set_header X-Forwarded-User "";
+          {{- end }}
         }
 
         location /config.json {

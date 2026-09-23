@@ -70,3 +70,28 @@ tests:
       - notMatchRegex:
           path: data["nginx.conf.template"]
           pattern: '8181'
+
+  - it: Forwards oauth2-proxy identity headers to the API when auth is enabled
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'proxy_set_header X-Forwarded-Email \$http_x_forwarded_email;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'proxy_set_header X-Forwarded-User \$http_x_forwarded_user;'
+
+  - it: Strips identity headers when auth is disabled
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'proxy_set_header X-Forwarded-Email "";'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'proxy_set_header X-Forwarded-User "";'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '\$http_x_forwarded_email'
