@@ -154,6 +154,16 @@ instead of rendering a rule that would allow egress on every port.
 {{- end -}}
 
 {{/*
+Labels for the bundled database's volumeClaimTemplates, as JSON. Kubernetes
+forbids changing volumeClaimTemplates in place, so these are frozen for the
+life of every install: nothing here may vary with the chart version or values.
+Built as a dict so a numeric-looking release name stays a string.
+*/}}
+{{- define "thoras-console.databaseVolumeLabels" -}}
+{{- dict "app.kubernetes.io/name" .Chart.Name "app.kubernetes.io/instance" .Release.Name | toJson -}}
+{{- end -}}
+
+{{/*
 True when the chart should deploy its own database.
 
 bundledDatabase.enabled is deliberately absent from values.yaml so hasKey can

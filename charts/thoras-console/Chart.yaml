@@ -8,4 +8,4 @@ type: application
 #
 # Pre-1.0 while the value surface is still settling. The install guide lands in
 # a later release.
-version: 0.6.0
+version: 0.7.0
