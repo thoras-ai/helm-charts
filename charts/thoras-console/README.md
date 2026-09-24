@@ -4,7 +4,7 @@ The Thoras console is the control plane that tenant clusters report into. This
 Helm Chart installs a self-hosted [Thoras](https://www.thoras.ai) console onto
 Kubernetes, as an alternative to the hosted console at `console.thoras.ai`.
 
-![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square)
+![Version: 0.7.0](https://img.shields.io/badge/Version-0.7.0-informational?style=flat-square)
 
 To install the Thoras platform onto a cluster you want to *observe*, you want
 the [thoras](../thoras/README.md) chart instead. The two are separate installs
@@ -45,6 +45,22 @@ overrides on top of the new defaults, which is almost always what you want.
 An upgrade never rotates a generated credential: config-controller writes a
 value only when it is absent from the managed Secret. Your admin password
 survives upgrades untouched.
+
+### Bundled database installs from before 0.7.0
+
+Before `0.7.0` the bundled database's volume template carried the chart version
+as a label, and Kubernetes forbids changing a StatefulSet's volume template in
+place, so the upgrade onto `0.7.0` fails with `StatefulSet ... is invalid: spec:
+Forbidden`. Run this once, then re-run the upgrade:
+
+```
+kubectl delete statefulset thoras-console-db -n <namespace> --cascade=orphan
+```
+
+`--cascade=orphan` removes only the StatefulSet object. The database pod and its
+volume keep running, and the StatefulSet the upgrade creates adopts them, so no
+data is touched. From `0.7.0` on the volume template never changes, so this is
+needed once per install.
 
 ## Installing the Chart
 

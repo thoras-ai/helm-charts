@@ -126,7 +126,7 @@ spec:
   - metadata:
       name: data
       labels:
-        {{- include "thoras-console.resourceLabels" (dict "root" . "component" $db.labels) | nindent 8 }}
+        {{- include "thoras-console.databaseVolumeLabels" . | fromJson | toYaml | nindent 8 }}
     spec:
       accessModes: ["ReadWriteOnce"]
       {{- with $db.persistence.storageClassName }}

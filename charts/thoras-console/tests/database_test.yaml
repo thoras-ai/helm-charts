@@ -241,3 +241,51 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_POSTGRESQL_DSN')].valueFrom.secretKeyRef.key
           value: postgresql-dsn
+
+  ############################
+  # volumeClaimTemplates are immutable
+  ############################
+  # Kubernetes rejects any change to them in place, so a label that moves with
+  # the chart version or with values fails every upgrade.
+  - it: Gives the volume template only labels that can never change
+    template: database/statefulset.yaml
+    release:
+      name: console
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.labels
+          value:
+            app.kubernetes.io/instance: console
+            app.kubernetes.io/name: thoras-console
+
+  - it: Keeps the volume template labels fixed across chart versions and label values
+    template: database/statefulset.yaml
+    release:
+      name: console
+    chart:
+      version: 9.9.9
+    set:
+      labels.costcenter: eng
+      bundledDatabase.labels.team: platform
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.labels
+          value:
+            app.kubernetes.io/instance: console
+            app.kubernetes.io/name: thoras-console
+      # The StatefulSet's own metadata is mutable and still carries them.
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels["helm.sh/chart"]
+          value: thoras-console-9.9.9
+
+  - it: Keeps a numeric-looking release name a string in the volume labels
+    template: database/statefulset.yaml
+    release:
+      name: "2026"
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.labels["app.kubernetes.io/instance"]
+          value: "2026"
