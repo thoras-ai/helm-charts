@@ -1,6 +1,6 @@
 {{- if and .Values.networkPolicy.enabled .Values.consoleApi.enabled }}
 {{- $c := .Values.consoleApi }}
-{{- $oidcMode := or (eq $c.auth.mode "oidc") (eq $c.auth.mode "both") }}
+{{- $oidcMode := or (eq .Values.auth.mode "oidc") (eq .Values.auth.mode "both") }}
 {{- $external := include "thoras-console.externalDatabaseEnabled" . }}
 {{- $flavor := include "thoras-console.networkPolicyFlavor" . }}
 {{- if eq $flavor "kubernetes" }}

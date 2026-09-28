@@ -47,7 +47,7 @@ spec:
       {{- /* Long enough for pg_ctl -m fast to finish checkpointing. */}}
       terminationGracePeriodSeconds: 120
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/{{ $db.image.repository }}:{{ $db.image.tag }}
+      - image: {{ .Values.imageCredentials.registry }}/{{ $db.image.repository }}:{{ $db.imageTag }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: timescaledb
         securityContext:

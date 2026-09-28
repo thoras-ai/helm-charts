@@ -40,17 +40,16 @@ tests:
     template: console-api/deployment.yaml
     set:
       consoleApi.clusterJoin.enabled: true
-      consoleApi.clusterJoin.secret: shared-across-the-fleet
+      consoleApi.clusterJoin.secret: exactly-32-characters-long-00000
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.name
           value: thoras-console-helm-values
 
-  - it: Takes an existing Secret over both
+  - it: Reads an existing Secret at the key named
     template: console-api/deployment.yaml
     set:
       consoleApi.clusterJoin.enabled: true
-      consoleApi.clusterJoin.secret: ignored
       consoleApi.clusterJoin.existingSecret.secretName: my-join
       consoleApi.clusterJoin.existingSecret.secretKey: theKey
     asserts:
@@ -60,3 +59,36 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.key
           value: theKey
+
+  - it: Rejects a pinned secret alongside an existing Secret
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.clusterJoin.enabled: true
+      consoleApi.clusterJoin.secret: shared-across-the-fleet-0123456789
+      consoleApi.clusterJoin.existingSecret.secretName: my-join
+    asserts:
+      - failedTemplate:
+          errorMessage: consoleApi.clusterJoin.secret and consoleApi.clusterJoin.existingSecret.secretName are mutually exclusive
+
+  # console-api refuses a shorter one at startup.
+  - it: Rejects a pinned secret under 32 characters
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.clusterJoin.enabled: true
+      consoleApi.clusterJoin.secret: one-short-of-32-characters-0000
+    asserts:
+      - failedTemplate:
+          errorMessage: "consoleApi.clusterJoin.secret must be at least 32 characters; got 31"
+
+  - it: Reads cluster-join-secret from an existing Secret when no key is named
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.clusterJoin.enabled: true
+      consoleApi.clusterJoin.existingSecret.secretName: my-join
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.name
+          value: my-join
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CLUSTER_JOIN_SECRET')].valueFrom.secretKeyRef.key
+          value: cluster-join-secret

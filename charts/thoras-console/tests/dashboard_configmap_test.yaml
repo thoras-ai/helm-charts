@@ -34,7 +34,7 @@ tests:
 
   - it: Takes the auth mode from console-api rather than a second value
     set:
-      consoleApi.auth.mode: local
+      auth.mode: local
     asserts:
       - matchRegex:
           path: data["nginx.conf.template"]
@@ -49,10 +49,10 @@ tests:
 
   - it: Renders the OIDC fields in oidc mode, issuer mirrored from console-api
     set:
-      consoleApi.auth.mode: oidc
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://console.example.com
-      consoleDashboard.auth.clientId: abc123
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com
+      auth.oidc.client.id: abc123
     asserts:
       - matchRegex:
           path: data["nginx.conf.template"]
@@ -67,10 +67,24 @@ tests:
   # console-api takes a comma-separated list; the browser sends exactly one.
   - it: Defaults the audience to the first console-api audience
     set:
-      consoleApi.auth.mode: oidc
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://first.example.com,https://second.example.com
-      consoleDashboard.auth.clientId: abc123
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://first.example.com,https://second.example.com
+      auth.oidc.client.id: abc123
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"audience":"https://first\.example\.com"'
+
+
+  - it: Defaults the audience to the first of a list of audiences
+    set:
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences:
+        - https://first.example.com
+        - https://second.example.com
+      auth.oidc.client.id: abc123
     asserts:
       - matchRegex:
           path: data["nginx.conf.template"]
@@ -78,11 +92,11 @@ tests:
 
   - it: Lets the audience be overridden when the list has more than one
     set:
-      consoleApi.auth.mode: oidc
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://first.example.com,https://second.example.com
-      consoleDashboard.auth.clientId: abc123
-      consoleDashboard.auth.audience: https://second.example.com
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://first.example.com,https://second.example.com
+      auth.oidc.client.id: abc123
+      auth.oidc.client.audience: https://second.example.com
     asserts:
       - matchRegex:
           path: data["nginx.conf.template"]
@@ -97,7 +111,7 @@ tests:
 
   - it: Lets the scopes be trimmed for providers that reject unknown ones
     set:
-      consoleDashboard.auth.scope: openid profile
+      auth.oidc.client.scope: openid profile
     asserts:
       - matchRegex:
           path: data["nginx.conf.template"]

@@ -67,7 +67,7 @@ tests:
   - it: Renders nothing when disabled
     set:
       consoleConfigController.enabled: false
-      consoleApi.auth.adminPassword: twelvechars1
+      auth.local.adminPassword: twelvechars1
       externalDatabase.existingSecret.secretName: console-db
     asserts:
       - hasDocuments:

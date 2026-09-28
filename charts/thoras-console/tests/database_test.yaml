@@ -28,6 +28,16 @@ tests:
   ############################
   # AC 7: configuring an external database removes every bundled resource
   ############################
+
+  - it: Lets the database image tag be pinned
+    template: database/statefulset.yaml
+    set:
+      bundledDatabase.imageTag: 2.99.0-pg16
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.99.0-pg16
+
   - it: Removes the StatefulSet when an external database Secret is referenced
     template: database/statefulset.yaml
     set:
