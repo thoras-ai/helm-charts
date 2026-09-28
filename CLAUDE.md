@@ -85,7 +85,7 @@ Install with minimum configuration:
 helm install my-thoras-release thoras/thoras -n thoras --create-namespace -f ./values.yaml
 ```
 
-Install the console from a checkout, with the bundled database and a generated admin password:
+Install the console, with the bundled database and a generated admin password:
 
 ```bash
 helm install thoras-console thoras/thoras-console -n thoras-console --create-namespace \
