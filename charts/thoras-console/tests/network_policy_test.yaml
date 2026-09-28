@@ -146,9 +146,9 @@ tests:
   - it: Opens HTTPS egress in oidc mode so JWKS can be fetched
     template: console-api/network-policy.yaml
     set:
-      consoleApi.auth.mode: oidc
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://console.example.com
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com
     asserts:
       - contains:
           path: spec.egress
@@ -163,9 +163,9 @@ tests:
   - it: Opens HTTPS egress in both mode too, not just oidc
     template: console-api/network-policy.yaml
     set:
-      consoleApi.auth.mode: both
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://console.example.com
+      auth.mode: both
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com
     asserts:
       - contains:
           path: spec.egress
@@ -181,9 +181,9 @@ tests:
     template: console-api/network-policy.yaml
     set:
       networkPolicy.flavor: cilium
-      consoleApi.auth.mode: oidc
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://console.example.com
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com
     asserts:
       - contains:
           path: spec.egress

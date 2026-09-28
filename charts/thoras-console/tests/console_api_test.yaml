@@ -129,10 +129,10 @@ tests:
   - it: Passes OIDC mode with its companions and no admin password
     template: console-api/deployment.yaml
     set:
-      consoleApi.auth.mode: oidc
-      consoleDashboard.auth.clientId: test-client
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://console.example.com
+      auth.mode: oidc
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_ISSUER')].value
@@ -148,23 +148,51 @@ tests:
   - it: Passes both an admin password and OIDC companions in both mode
     template: console-api/deployment.yaml
     set:
-      consoleApi.auth.mode: both
-      consoleDashboard.auth.clientId: test-client
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://console.example.com
+      auth.mode: both
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com
     asserts:
       - exists:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_LOCAL_ADMIN_PASSWORD')]
       - exists:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_ISSUER')]
 
+
+  # console-api reads one comma-separated string; the chart accepts either form.
+  - it: Joins a list of audiences into the one string console-api reads
+    template: console-api/deployment.yaml
+    set:
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences:
+        - https://console.example.com
+        - https://api.example.com
+      auth.oidc.client.id: test-client
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_AUDIENCES')].value
+          value: https://console.example.com,https://api.example.com
+
+  - it: Passes a comma-separated audiences string through unchanged
+    template: console-api/deployment.yaml
+    set:
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com,https://api.example.com
+      auth.oidc.client.id: test-client
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_AUDIENCES')].value
+          value: https://console.example.com,https://api.example.com
+
   - it: Omits the JWKS override unless one is configured
     template: console-api/deployment.yaml
     set:
-      consoleApi.auth.mode: oidc
-      consoleDashboard.auth.clientId: test-client
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: aud
+      auth.mode: oidc
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: aud
     asserts:
       - notExists:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_JWKS_URI')]
@@ -172,7 +200,7 @@ tests:
   - it: Passes the salt as plain config, since it is not secret material
     template: console-api/deployment.yaml
     set:
-      consoleApi.auth.adminSalt: a-unique-per-install-salt
+      auth.local.adminSalt: a-unique-per-install-salt
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_LOCAL_ADMIN_SALT')].value
@@ -184,7 +212,7 @@ tests:
   - it: Binds every credential by reference, never by value
     template: console-api/deployment.yaml
     set:
-      consoleApi.auth.adminPassword: SuperSecret123
+      auth.local.adminPassword: SuperSecret123
       consoleApi.webhook.secret: WebhookHush
       slack.webhookUrl: https://hooks.example/SECRETPATH
       externalDatabase.existingSecret.secretName: console-db

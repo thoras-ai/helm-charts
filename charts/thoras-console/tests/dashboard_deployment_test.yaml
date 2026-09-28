@@ -9,7 +9,7 @@ tests:
   # Shape
   ############################
 
-  # The same image the agent chart uses. There is no console-flavoured build:
+  # The same image the thoras chart uses. There is no console-flavoured build:
   # the bundle switches on the `console` key in config.json.
   - it: Runs the stock dashboard image
     template: dashboard/deployment.yaml
@@ -58,7 +58,7 @@ tests:
           path: spec.template.spec.containers
           count: 1
 
-  # The agent chart's readiness probe curls its api-server. Copying that here
+  # The thoras chart's readiness probe curls its api-server. Copying that here
   # would take the UI down whenever console-api restarted.
   - it: Probes nginx itself, not console-api
     template: dashboard/deployment.yaml

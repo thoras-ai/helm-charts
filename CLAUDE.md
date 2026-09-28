@@ -10,7 +10,7 @@ This is the official Helm Charts repository for Thoras AI, an ML-powered platfor
 
 `charts/thoras` installs the complete Thoras platform onto Kubernetes clusters. `charts/thoras-console` is a separate install running the console dashboard, `console-api`, a config-controller and an optional bundled TimescaleDB. The two charts are independent and may share a namespace, so resource and template names must not collide.
 
-The console exposes two hostnames that are not interchangeable: the dashboard serves browsers and proxies the API for them, while `console-api` has its own Ingress because workload clusters sync to it directly and the dashboard refuses ingest on its browser-facing hostname.
+The console exposes two hostnames that are not interchangeable: the dashboard serves browsers and proxies the API for them, while `console-api` has its own Ingress because tenant clusters sync to it directly and the dashboard refuses ingest on its browser-facing hostname.
 
 Both charts are published, each released when its own `Chart.yaml` version changes. A version bump cuts a release on merge, so it goes in a release PR of its own rather than inside a feature PR. `release.yml` lists the charts explicitly rather than discovering `charts/*`, so adding a chart means adding a version check and a `helm package` line there.
 
@@ -49,7 +49,7 @@ The chart includes Custom Resource Definitions (CRDs) for:
 - **Config Controller**: The `config-controller` binary from the `console-api` image. Generates any credential not supplied — local admin password, database password and DSN, cluster-join secret — into `thoras-console-config-controller`, and rolls dependent workloads when they change
 - **Bundled TimescaleDB**: Evaluation-only StatefulSet, the default when no external database is configured. Its volume-template labels must never change: Kubernetes forbids editing them in place, so any change fails the upgrade
 
-Operators sign in with a local admin password by default (`consoleApi.auth.mode: local`), or through OIDC (`oidc`, `both`). Single-organization mode is on by default; cluster self-registration (`consoleApi.clusterJoin`) is off.
+Operators sign in with a local admin password by default (`auth.mode: local`), or through OIDC (`oidc`, `both`). Single-organization mode is on by default; cluster self-registration (`consoleApi.clusterJoin`) is off.
 
 ## Common Development Tasks
 
@@ -160,7 +160,7 @@ charts/thoras-console/
 
 `charts/thoras-console`'s key sections:
 
-- **`consoleApi.auth`**: Sign-in mode (`local`, `oidc`, `both`) and the OIDC issuer and audiences
+- **`auth`**: Sign-in mode (`local`, `oidc`, `both`), the local admin, and OIDC — both what console-api accepts and the dashboard's own client
 - **`consoleApi.singleOrg`, `consoleApi.clusterJoin`**: The implicit organization, and cluster self-registration (which requires it)
 - **`bundledDatabase` / `externalDatabase`**: Exactly one database; configuring `externalDatabase` switches off the bundled one
 - **`consoleDashboard.ingress`, `consoleApi.ingress`**: The two hostnames — browsers, and tenant-cluster ingest

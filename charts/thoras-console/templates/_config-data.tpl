@@ -11,18 +11,18 @@ opens with a newline; callers write `data:{{ include ... }}` with no space.
 */}}
 
 {{- define "thoras-console.dashboardNginxConfigData" }}
-{{- $auth := .Values.consoleApi.auth }}
+{{- $auth := .Values.auth }}
+{{- $client := $auth.oidc.client }}
 {{- $dashboard := .Values.consoleDashboard }}
 {{- $oidcMode := or (eq $auth.mode "oidc") (eq $auth.mode "both") }}
-{{- /* Mode and issuer mirror console-api: the dashboard has no way to ask the
-       server which it is running, so the two must not drift. client_id is
-       browser-only and has no server-side counterpart. */}}
-{{- $consoleAuth := dict "mode" $auth.mode "scope" $dashboard.auth.scope }}
+{{- /* The dashboard can't ask console-api for its mode or issuer, so both come
+       from the same auth block. */}}
+{{- $consoleAuth := dict "mode" $auth.mode "scope" $client.scope }}
 {{- if $oidcMode }}
 {{- $_ := set $consoleAuth "issuer" $auth.oidc.issuer }}
-{{- $_ := set $consoleAuth "client_id" $dashboard.auth.clientId }}
-{{- /* console-api takes a comma-separated list; the browser sends exactly one. */}}
-{{- $audience := $dashboard.auth.audience | default (first (splitList "," $auth.oidc.audiences)) | trim }}
+{{- $_ := set $consoleAuth "client_id" $client.id }}
+{{- /* console-api accepts several audiences; the browser requests exactly one. */}}
+{{- $audience := $client.audience | default (first (splitList "," (include "thoras-console.oidcAudiences" .))) | trim }}
 {{- if $audience }}
 {{- $_ := set $consoleAuth "audience" $audience }}
 {{- end }}

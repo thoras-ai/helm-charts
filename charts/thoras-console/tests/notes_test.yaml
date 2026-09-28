@@ -19,7 +19,7 @@ tests:
 
   - it: Prints the configured URL once there is one
     set:
-      consoleApi.externalUrl: https://console.example.com
+      consoleDashboard.externalUrl: https://console.example.com
     asserts:
       - matchRegex:
           path: raw
@@ -75,10 +75,10 @@ tests:
   # at the redirect with an error from the provider, not from us.
   - it: Spells out the OIDC callbacks the provider needs
     set:
-      consoleApi.auth.mode: oidc
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://console.example.com
-      consoleDashboard.auth.clientId: abc123
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com
+      auth.oidc.client.id: abc123
       consoleDashboard.ingress.enabled: true
       consoleDashboard.ingress.hosts:
         - host: console.example.com
@@ -109,7 +109,7 @@ tests:
 
   - it: Points at the operator's own Secret when one is referenced
     set:
-      consoleApi.auth.existingSecret.secretName: console-admin
+      auth.local.existingSecret.secretName: console-admin
     asserts:
       - matchRegex:
           path: raw
@@ -121,9 +121,9 @@ tests:
 
   - it: Says nothing about a password in oidc mode
     set:
-      consoleApi.auth.mode: oidc
-      consoleApi.auth.oidc.issuer: https://id.example.com/
-      consoleApi.auth.oidc.audiences: https://console.example.com
+      auth.mode: oidc
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: https://console.example.com
     asserts:
       - matchRegex:
           path: raw
@@ -140,7 +140,7 @@ tests:
 
   - it: Stops warning once a salt is set
     set:
-      consoleApi.auth.adminSalt: sixteencharacter
+      auth.local.adminSalt: sixteencharacter
     asserts:
       - notMatchRegex:
           path: raw

@@ -1,7 +1,7 @@
 {{- include "thoras-console.validate" . }}
 {{- if .Values.consoleApi.enabled }}
 {{- $c := .Values.consoleApi }}
-{{- $auth := $c.auth }}
+{{- $auth := .Values.auth }}
 {{- $localMode := or (eq $auth.mode "local") (eq $auth.mode "both") }}
 {{- $oidcMode := or (eq $auth.mode "oidc") (eq $auth.mode "both") }}
 ---
@@ -79,7 +79,7 @@ spec:
           - name: SERVICE_JWT_ISSUER
             value: {{ $auth.oidc.issuer | quote }}
           - name: SERVICE_JWT_AUDIENCES
-            value: {{ $auth.oidc.audiences | quote }}
+            value: {{ include "thoras-console.oidcAudiences" . | quote }}
           {{- with $auth.oidc.jwksUri }}
           - name: SERVICE_JWT_JWKS_URI
             value: {{ . | quote }}
@@ -102,12 +102,12 @@ spec:
                 key: {{ $join.key }}
           {{- end }}
           {{- if $localMode }}
-          {{- with $auth.adminSalt }}
+          {{- with $auth.local.adminSalt }}
           - name: SERVICE_LOCAL_ADMIN_SALT
             value: {{ . | quote }}
           {{- end }}
           - name: SERVICE_BOOTSTRAP_ADMIN_EMAIL
-            value: {{ $c.bootstrapAdminEmail | quote }}
+            value: {{ $auth.local.adminEmail | quote }}
           {{- end }}
           - name: SERVICE_SINGLE_ORG
             value: {{ $c.singleOrg.enabled | ternary "true" "false" | quote }}

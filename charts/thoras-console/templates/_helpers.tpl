@@ -1,7 +1,6 @@
 {{/*
-Helpers are prefixed even where the thoras chart leaves one unprefixed
-(imagePullSecret): template names are global to a rendering, so an unprefixed
-duplicate would collide if the two charts are ever composed.
+Every helper is prefixed: template names are global to a rendering, so an
+unprefixed one would collide with the thoras chart's if the two are composed.
 */}}
 {{- define "thoras-console.imagePullSecret" }}
 {{- printf "{\"auths\": {\"%s\": {\"auth\": \"%s\"}}}" .Values.imageCredentials.registry (printf "%s:%s" .Values.imageCredentials.username .Values.imageCredentials.password | b64enc) | b64enc }}
@@ -166,10 +165,9 @@ Built as a dict so a numeric-looking release name stays a string.
 {{/*
 True when the chart should deploy its own database.
 
-bundledDatabase.enabled is deliberately absent from values.yaml so hasKey can
-tell an unset value from an explicit one: configuring externalDatabase is enough
-to switch over, while asking for both is ambiguous and rejected in
-helm-values-secret.yaml. Returns "true" or "".
+bundledDatabase.enabled is absent from values.yaml so hasKey can tell unset
+from explicit: configuring externalDatabase alone switches over, while asking
+for both fails in thoras-console.validate. Returns "true" or "".
 */}}
 {{- define "thoras-console.bundledDatabaseEnabled" -}}
 {{- $bundled := .Values.bundledDatabase -}}
@@ -186,6 +184,19 @@ True when an external database is configured. Returns "true" or "".
 {{- define "thoras-console.externalDatabaseEnabled" -}}
 {{- if .Values.externalDatabase.existingSecret.secretName -}}
 true
+{{- end -}}
+{{- end -}}
+
+{{/*
+auth.oidc.audiences as the comma-separated string console-api reads. Accepts a
+list or, for a single audience or an existing value, a string.
+*/}}
+{{- define "thoras-console.oidcAudiences" -}}
+{{- $a := .Values.auth.oidc.audiences -}}
+{{- if kindIs "slice" $a -}}
+{{- join "," $a -}}
+{{- else -}}
+{{- $a | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -208,7 +219,8 @@ Unlike the thoras chart there is no `migrateFrom`: this chart has no pre-5.0
 install to adopt values from.
 */}}
 {{- define "thoras-console.secretPlan" -}}
-{{- $auth := .Values.consoleApi.auth -}}
+{{- $auth := .Values.auth -}}
+{{- $local := $auth.local -}}
 {{- $localMode := or (eq $auth.mode "local") (eq $auth.mode "both") -}}
 {{- $bundled := include "thoras-console.bundledDatabaseEnabled" . -}}
 {{- $managed := "thoras-console-config-controller" -}}
@@ -217,18 +229,16 @@ install to adopt values from.
 
 {{- /* The admin password only exists in a mode that compares one. */ -}}
 {{- if $localMode -}}
-{{- if $auth.existingSecret.secretName -}}
-{{- $plan = append $plan (dict "name" "local-admin-password" "mode" "existing" "secret" $auth.existingSecret.secretName "key" $auth.existingSecret.passwordKey) -}}
-{{- else if $auth.adminPassword -}}
-{{- $plan = append $plan (dict "name" "local-admin-password" "mode" "values" "secret" $pinned "key" "local-admin-password" "value" $auth.adminPassword) -}}
+{{- if $local.existingSecret.secretName -}}
+{{- $plan = append $plan (dict "name" "local-admin-password" "mode" "existing" "secret" $local.existingSecret.secretName "key" $local.existingSecret.passwordKey) -}}
+{{- else if $local.adminPassword -}}
+{{- $plan = append $plan (dict "name" "local-admin-password" "mode" "values" "secret" $pinned "key" "local-admin-password" "value" $local.adminPassword) -}}
 {{- else -}}
 {{- $plan = append $plan (dict "name" "local-admin-password" "mode" "seed" "secret" $managed "key" "local-admin-password" "generate" (dict "type" "alphanumeric" "length" 24)) -}}
 {{- end -}}
 {{- end -}}
 
-{{- /* Generated when unset: its whole security rests on being unguessable, and
-       an operator-chosen string is the weak link. Longer than the admin
-       password because no human ever types it. */ -}}
+{{- /* No human types it, so it is generated longer than the admin password. */ -}}
 {{- $join := .Values.consoleApi.clusterJoin -}}
 {{- if $join.enabled -}}
 {{- if $join.existingSecret.secretName -}}
@@ -249,9 +259,7 @@ install to adopt values from.
 {{- $format := printf "postgres://postgres:%%s@%s:%d/%s?sslmode=disable" (include "thoras-console.databaseServiceName" .) ($db.containerPort | int) $db.databaseName -}}
 {{- $plan = append $plan (dict "name" "postgresql-dsn" "mode" "seed" "secret" $managed "key" "postgresql-dsn" "generate" (dict "type" "format" "format" $format "args" (list "postgres-password"))) -}}
 {{- else if .Values.externalDatabase.existingSecret.secretName -}}
-{{- /* An external DSN is only ever read from a Secret the customer manages,
-       never pinned in values: it carries a password, and a pinned value would
-       land in `thoras-console-helm-values` and in `helm get values`. */ -}}
+{{- /* Never pinned in values: it carries a password. */ -}}
 {{- $plan = append $plan (dict "name" "postgresql-dsn" "mode" "existing" "secret" .Values.externalDatabase.existingSecret.secretName "key" .Values.externalDatabase.existingSecret.dsnKey) -}}
 {{- end -}}
 
@@ -458,61 +466,53 @@ from whichever template Helm happens to render first.
 {{- /* console-api refuses this combination at startup; catching it here turns a
        crash loop into a message. */ -}}
 {{- if and .Values.consoleApi.clusterJoin.enabled (not .Values.consoleApi.singleOrg.enabled) -}}
-{{- fail "consoleApi.clusterJoin.enabled requires consoleApi.singleOrg.enabled: a joining agent presents no user identity, so the organization has to be implicit" -}}
+{{- fail "consoleApi.clusterJoin.enabled requires consoleApi.singleOrg.enabled: a joining cluster presents no user identity, so the organization has to be implicit" -}}
 {{- end -}}
-{{- $auth := .Values.consoleApi.auth -}}
+{{- $auth := .Values.auth -}}
+{{- $local := $auth.local -}}
 {{- $localMode := or (eq $auth.mode "local") (eq $auth.mode "both") -}}
 {{- $oidcMode := or (eq $auth.mode "oidc") (eq $auth.mode "both") -}}
 
-{{- /* Mode selector first: every guard below reads from it. */}}
 {{- if not (or $localMode $oidcMode) -}}
-{{- fail (printf "consoleApi.auth.mode must be \"local\", \"oidc\", or \"both\", got %q" $auth.mode) -}}
+{{- fail (printf "auth.mode must be \"local\", \"oidc\", or \"both\", got %q" $auth.mode) -}}
 {{- end -}}
 
-{{- /* OIDC companions. console-api's compiled defaults point at Thoras' own
-       hosted console, so an unset issuer silently validates tokens against the
-       wrong tenant rather than failing. Report both at once. */}}
+{{- /* console-api's compiled defaults point at Thoras' hosted console, so an
+       unset issuer would check tokens against the wrong provider. */}}
 {{- if $oidcMode -}}
 {{- $missing := list -}}
 {{- if not $auth.oidc.issuer -}}{{- $missing = append $missing "issuer" -}}{{- end -}}
-{{- if not $auth.oidc.audiences -}}{{- $missing = append $missing "audiences" -}}{{- end -}}
+{{- if not (include "thoras-console.oidcAudiences" .) -}}{{- $missing = append $missing "audiences" -}}{{- end -}}
 {{- if $missing -}}
-{{- fail (printf "consoleApi.auth.mode %q requires consoleApi.auth.oidc: %s. Leaving these empty falls back to values that point at Thoras' hosted console, which will not accept your users." $auth.mode (join ", " $missing)) -}}
+{{- fail (printf "auth.mode %q requires auth.oidc: %s. Leaving these empty falls back to values that point at Thoras' hosted console, which will not accept your users." $auth.mode (join ", " $missing)) -}}
 {{- end -}}
 {{- end -}}
 
-{{- /* The dashboard needs a browser client_id of its own; console-api has no
-       equivalent to fall back on. Without it the dashboard renders a hard
-       error page instead of a login, so fail at install time. */}}
-{{- if and $oidcMode .Values.consoleDashboard.enabled (not .Values.consoleDashboard.auth.clientId) -}}
-{{- fail (printf "consoleApi.auth.mode %q requires consoleDashboard.auth.clientId, the OAuth client ID the dashboard signs in with. Register https://<dashboard-host>/landing as a callback URL for it too." $auth.mode) -}}
+{{- /* Without a client ID the dashboard shows an error page instead of a
+       login. */}}
+{{- if and $oidcMode .Values.consoleDashboard.enabled (not $auth.oidc.client.id) -}}
+{{- fail (printf "auth.mode %q requires auth.oidc.client.id, the OAuth client ID the dashboard signs in with. Register https://<dashboard-host>/landing as a callback URL for it too." $auth.mode) -}}
 {{- end -}}
 
-{{- /* Local-admin password must be resolvable from somewhere. */}}
 {{- if $localMode -}}
-{{- if and $auth.adminPassword $auth.existingSecret.secretName -}}
-{{- fail "consoleApi.auth.adminPassword and consoleApi.auth.existingSecret.secretName are mutually exclusive" -}}
+{{- if and $local.adminPassword $local.existingSecret.secretName -}}
+{{- fail "auth.local.adminPassword and auth.local.existingSecret.secretName are mutually exclusive" -}}
 {{- end -}}
-{{- if and (not $auth.adminPassword) (not $auth.existingSecret.secretName) (not .Values.consoleConfigController.enabled) -}}
-{{- fail (printf "consoleApi.auth.mode %q needs an admin password, but none is pinned, no existing Secret is referenced, and consoleConfigController.enabled is false so nothing can generate one. Set consoleApi.auth.adminPassword, point consoleApi.auth.existingSecret at a Secret, or re-enable the controller." $auth.mode) -}}
+{{- if and (not $local.adminPassword) (not $local.existingSecret.secretName) (not .Values.consoleConfigController.enabled) -}}
+{{- fail (printf "auth.mode %q needs an admin password, but none is pinned, no existing Secret is referenced, and consoleConfigController.enabled is false so nothing can generate one. Set auth.local.adminPassword, point auth.local.existingSecret at a Secret, or re-enable the controller." $auth.mode) -}}
 {{- end -}}
-{{- /* Fail here rather than letting console-api reject it at startup and
-       CrashLoopBackOff. */}}
-{{- if and $auth.adminPassword (lt (len $auth.adminPassword) 12) -}}
-{{- fail (printf "consoleApi.auth.adminPassword must be at least 12 characters; got %d" (len $auth.adminPassword)) -}}
+{{- /* console-api refuses a shorter one at startup. */}}
+{{- if and $local.adminPassword (lt (len $local.adminPassword) 12) -}}
+{{- fail (printf "auth.local.adminPassword must be at least 12 characters; got %d" (len $local.adminPassword)) -}}
 {{- end -}}
-{{- end -}}
-
-{{- /* Not secret, but still validated: the signing key derives from it, so a
-       too-short salt weakens every session token. */}}
-{{- if and $auth.adminSalt (lt (len $auth.adminSalt) 16) -}}
-{{- fail (printf "consoleApi.auth.adminSalt must be at least 16 characters when set; got %d" (len $auth.adminSalt)) -}}
 {{- end -}}
 
-{{- /* Exactly one database. bundledDatabase.enabled is unset by default so
-       hasKey tells an explicit request from the chart default: configuring
-       externalDatabase alone switches over silently, while asking for both is
-       ambiguous. */}}
+{{- /* The signing key derives from it, so a short salt weakens every token. */}}
+{{- if and $local.adminSalt (lt (len $local.adminSalt) 16) -}}
+{{- fail (printf "auth.local.adminSalt must be at least 16 characters when set; got %d" (len $local.adminSalt)) -}}
+{{- end -}}
+
+{{- /* Exactly one database. */}}
 {{- $bundled := include "thoras-console.bundledDatabaseEnabled" . -}}
 {{- $external := include "thoras-console.externalDatabaseEnabled" . -}}
 {{- if and $bundled $external -}}
@@ -526,8 +526,8 @@ from whichever template Helm happens to render first.
        provided value with an empty consumedFrom.key, which it rejects at load
        time, so the controller pod would never go ready. The key fields all
        carry defaults, so only this direction is reachable. */}}
-{{- if and $auth.existingSecret.secretName (not $auth.existingSecret.passwordKey) -}}
-{{- fail "consoleApi.auth.existingSecret.passwordKey is required when secretName is set" -}}
+{{- if and $local.existingSecret.secretName (not $local.existingSecret.passwordKey) -}}
+{{- fail "auth.local.existingSecret.passwordKey is required when secretName is set" -}}
 {{- end -}}
 {{- if and .Values.consoleApi.webhook.existingSecret.secretName (not .Values.consoleApi.webhook.existingSecret.secretKey) -}}
 {{- fail "consoleApi.webhook.existingSecret.secretKey is required when secretName is set" -}}
@@ -539,13 +539,20 @@ from whichever template Helm happens to render first.
 {{- fail "slack.existingSecret.webhookUrlKey is required when secretName is set" -}}
 {{- end -}}
 
-{{- /* Mutually exclusive pins, for the values the plan resolves in priority
-       order. auth is handled above, alongside its own required-somewhere check. */}}
+{{- /* A value both set and referenced is ambiguous. The admin password is
+       checked above. */}}
 {{- if and .Values.consoleApi.webhook.secret .Values.consoleApi.webhook.existingSecret.secretName -}}
 {{- fail "consoleApi.webhook.secret and consoleApi.webhook.existingSecret.secretName are mutually exclusive" -}}
 {{- end -}}
 {{- if and .Values.slack.webhookUrl .Values.slack.existingSecret.secretName -}}
 {{- fail "slack.webhookUrl and slack.existingSecret.secretName are mutually exclusive" -}}
+{{- end -}}
+{{- $join := .Values.consoleApi.clusterJoin -}}
+{{- if and $join.secret $join.existingSecret.secretName -}}
+{{- fail "consoleApi.clusterJoin.secret and consoleApi.clusterJoin.existingSecret.secretName are mutually exclusive" -}}
+{{- end -}}
+{{- if and $join.secret (lt (len $join.secret) 32) -}}
+{{- fail (printf "consoleApi.clusterJoin.secret must be at least 32 characters; got %d" (len $join.secret)) -}}
 {{- end -}}
 
 {{- /* Nothing else creates the generated Secret, so disabling the controller

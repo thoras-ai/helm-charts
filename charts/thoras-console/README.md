@@ -1,172 +1,252 @@
 # Thoras Console
 
-The Thoras console is the control plane that tenant clusters report into. This
-Helm Chart installs a self-hosted [Thoras](https://www.thoras.ai) console onto
-Kubernetes, as an alternative to the hosted console at `console.thoras.ai`.
+The Thoras console is where your clusters report in. This Helm chart installs a
+self-hosted [Thoras](https://www.thoras.ai) console onto Kubernetes, as an
+alternative to the hosted console at `console.thoras.ai`.
 
 ![Version: 0.7.0](https://img.shields.io/badge/Version-0.7.0-informational?style=flat-square)
 
-To install the Thoras platform onto a cluster you want to *observe*, you want
-the [thoras](../thoras/README.md) chart instead. The two are separate installs
-and may share a namespace.
-
 The chart installs the console dashboard, `console-api`, a `config-controller`
 that generates any credential you do not supply, and — for evaluation only — a
-bundled TimescaleDB.
+bundled TimescaleDB. To install Thoras onto a cluster you want to *observe*, use
+the [thoras](../thoras/README.md) chart instead; the two are separate installs.
 
-Two hostnames are involved, and they are not interchangeable. People reach the
-dashboard (`consoleDashboard.ingress`), which proxies the API for them. Workload
-clusters sync to `console-api` directly (`consoleApi.ingress`), because the
-dashboard refuses ingest on its browser-facing hostname. Point `cloudSync.baseUrl`
-in the [thoras](../thoras/README.md) chart at the second one.
+```
+people ──────────────▶ dashboard address ──▶ dashboard ──▶ console-api ──▶ database
+                                                               ▲
+tenant clusters ─────▶ ingest address ─────────────────────────┘
+(thoras chart)
+```
+
+Three terms are used throughout:
+
+- **Tenant cluster** — a cluster running the [thoras](../thoras/README.md) chart
+  that reports to this console. The software it runs is the Thoras agent.
+- **Dashboard address** — where people sign in (`consoleDashboard.ingress`). The
+  dashboard serves the UI and proxies the API for browsers.
+- **Ingest address** — where tenant clusters send data (`consoleApi.ingress`). It
+  is never the dashboard address: the dashboard refuses ingest by design.
+
+## Contents
+
+- [Requirements](#requirements)
+- [Quick start](#quick-start)
+- [Connecting a cluster](#connecting-a-cluster)
+- [Production install](#production-install)
+- [GitOps](#gitops)
+- [Operations](#operations)
+- [Troubleshooting](#troubleshooting)
+- [Values](#values)
 
 ## Requirements
 
-- Thoras license key (email support@thoras.ai if you don't have one)
-- Recommended Kubernetes Minimum: 1.24+
-- For the bundled database: **Kubernetes 1.27+** and a default StorageClass. On
-  older clusters the volume-retention policy is ignored, so the database volume
-  survives `helm uninstall` instead of being removed with it.
+- A Thoras license key (email support@thoras.ai if you don't have one).
+- Kubernetes 1.24 or later.
+- For the bundled database: **Kubernetes 1.27 or later** and a default
+  StorageClass. On older clusters the volume-retention policy is ignored, so the
+  database volume survives `helm uninstall` instead of being removed with it.
 - For an external database: Postgres with the `timescaledb` and `citext`
-  extensions available
+  extensions available. See [External database](#external-database).
 
 ### Version compatibility
 
 - Console images (`consoleVersion`): `4.123.0` or later
 - [thoras](../thoras/README.md) chart on each tenant cluster: `5.4.0` or later
 
-## Upgrading
+## Quick start
 
-The chart is pre-1.0 while the value surface settles, so a minor bump
-(`0.4.0` → `0.5.0`) may contain breaking value changes. Read the release notes
-before upgrading, and pin the chart version in production.
+A running console in a few minutes, with the bundled database and a generated
+admin password. This is for evaluation: see [Production install](#production-install)
+before relying on it.
 
-Upgrade with `--reset-then-reuse-values` rather than `--reuse-values`. A minor
-bump usually adds values, and `--reuse-values` keeps the previous release's
-values *instead of* the new chart's defaults, so a newly added key is simply
-absent and the upgrade fails on it. `--reset-then-reuse-values` layers your
-overrides on top of the new defaults, which is almost always what you want.
-
-An upgrade never rotates a generated credential: config-controller writes a
-value only when it is absent from the managed Secret. Your admin password
-survives upgrades untouched.
-
-### Bundled database installs from before 0.7.0
-
-Before `0.7.0` the bundled database's volume template carried the chart version
-as a label, and Kubernetes forbids changing a StatefulSet's volume template in
-place, so the upgrade onto `0.7.0` fails with `StatefulSet ... is invalid: spec:
-Forbidden`. Run this once, then re-run the upgrade:
-
-```
-kubectl delete statefulset thoras-console-db -n <namespace> --cascade=orphan
-```
-
-`--cascade=orphan` removes only the StatefulSet object. The database pod and its
-volume keep running, and the StatefulSet the upgrade creates adopts them, so no
-data is touched. From `0.7.0` on the volume template never changes, so this is
-needed once per install.
-
-## Installing the Chart
-
-### Use the Thoras Helm repo
+**1. Install.** A license key is the only thing you must supply:
 
 ```
 helm repo add thoras https://thoras-ai.github.io/helm-charts
 helm repo update thoras
-```
 
-### Install the console
-
-A license key is the only thing you must supply. The database, the admin
-password and the database credentials are all created for you:
-
-```
 helm install thoras-console thoras/thoras-console \
   -n thoras-console --create-namespace \
-  --set imageCredentials.password=$(cat thoras_license.txt)
+  --set imageCredentials.password="$(cat thoras_license.txt)"
 ```
 
-For anything beyond a first look, use a values file instead — see
-[Sample configurations](#sample-configurations).
-
-### Verify installation
-
-Confirm all four pods reach `Running` (usually under a minute):
+**2. Check the pods.** All four reach `Running`, usually within a minute:
 
 ```
 kubectl get pods -n thoras-console
 ```
 
-On a fresh install `console-api` and the database briefly report
-`CreateContainerConfigError` while they wait for config-controller to generate
-their credentials. This resolves itself; no action is needed.
+On a fresh install `console-api` and the database briefly show
+`CreateContainerConfigError` while config-controller generates their
+credentials. It clears on its own.
 
-### Sign in
-
-Port-forward the dashboard to your workstation:
+**3. Sign in.** Forward the dashboard to your workstation:
 
 ```
 kubectl port-forward -n thoras-console svc/thoras-console-dashboard 8080:80
 ```
 
-Then reach it at <http://localhost:8080>. The dashboard serves the UI and
-proxies the API for it, so this one port-forward is all you need.
-
-In the default `local` auth mode there is a single admin, and its password is
-generated into the `thoras-console-config-controller` Secret:
+Open <http://localhost:8080> and sign in with the generated admin password:
 
 ```
 kubectl get secret thoras-console-config-controller -n thoras-console \
-  -o jsonpath='{.data.local-admin-password}' | base64 -d
+  -o jsonpath='{.data.local-admin-password}' | base64 -d; echo
 ```
 
-That lookup only applies to the default generated path. If you supplied the
-password yourself, read it from where you put it:
+That is where a *generated* password lives. If you supplied one yourself, read
+it from where you put it:
 
-| How you supplied it                      | Where to read it                                          |
-| ---------------------------------------- | --------------------------------------------------------- |
-| Left empty (default)                     | `thoras-console-config-controller` → `local-admin-password` |
-| `consoleApi.auth.adminPassword`          | `thoras-console-helm-values` → `local-admin-password`       |
-| `consoleApi.auth.existingSecret`         | your own Secret, at the key you named                       |
-
-See [Secrets](#secrets) for the full resolution model.
+| How you supplied it                | Where to read it                                            |
+| ---------------------------------- | ----------------------------------------------------------- |
+| Left empty (default)               | `thoras-console-config-controller` → `local-admin-password` |
+| `auth.local.adminPassword`         | `thoras-console-helm-values` → `local-admin-password`       |
+| `auth.local.existingSecret`        | your own Secret, at the key you named                       |
 
 To call the API directly rather than through the UI, exchange the password for a
-bearer token valid for one hour:
+bearer token, valid for one hour:
 
 ```
 curl -s localhost:8080/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"password":"<the password above>"}'
+  -d '{"password":"<the admin password>"}'
 ```
 
-## Sample configurations
+Next, [connect a cluster](#connecting-a-cluster).
 
-Three complete setups. Each is a `values.yaml` you can copy and adapt.
+## Connecting a cluster
 
-### Evaluation
+A tenant cluster reports to the console through the Thoras agent, installed by
+the [thoras](../thoras/README.md) chart. It can connect with a key you create in
+the dashboard, or register itself with a shared join secret.
 
-Bundled database, generated admin password, local sign-in. Nothing external
-beyond the image registry.
+### Before you connect
+
+On the tenant cluster:
+
+- **The thoras chart, 5.4.0 or later.**
+- **metrics-server, running.** The agent reads pod usage from the Kubernetes
+  Metrics API. Without it the cluster still reports, but its targets show
+  "Target workload missing" and no version. Check that this prints usage:
+
+  ```
+  kubectl top pods -n thoras
+  ```
+
+- **A route to the ingest address**, described next.
+
+### The ingest address
+
+Where tenant clusters send data depends on where they run:
+
+| Tenant cluster                  | `cloudSync.baseUrl`                                                  |
+| ------------------------------- | -------------------------------------------------------------------- |
+| The same cluster as the console | `http://thoras-console-api.thoras-console.svc.cluster.local`         |
+| Any other cluster               | `https://console-api.example.com`, served by `consoleApi.ingress`    |
+
+For other clusters, give `console-api` its own host, separate from the
+dashboard's, and serve it over TLS:
 
 ```yaml
-# values.yaml
-imageCredentials:
-  password: "<your license key>"
+consoleApi:
+  ingress:
+    enabled: true
+    hosts:
+      - host: console-api.example.com
+        paths:
+          - path: /
+    tls:
+      - hosts: [console-api.example.com]
+        secretName: console-api-tls
 ```
 
+`consoleApi.gatewayAPI` renders the same route as an HTTPRoute instead. See
+[Routing](#routing) for why the two addresses must stay separate.
+
+### With a key
+
+1. In the dashboard, choose **Create cluster** and give it a name. The cluster's
+   first key appears: a **Key ID** and a **Key**. Store the key now: it is shown
+   only once.
+2. On the tenant cluster, set three values on its thoras chart release. The
+   dialog builds this command for you from the ingest address, release and
+   namespace you give it. For a release named `thoras` in the `thoras`
+   namespace:
+
+   ```
+   helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
+     --set cloudSync.baseUrl=https://console-api.example.com \
+     --set cloudSync.clusterKeyID=<key ID> \
+     --set cloudSync.clusterKey=<key>
+   ```
+
+   `helm list -A` shows the release name if yours differs.
+
+Two things to avoid:
+
+- **Leaving `cloudSync.baseUrl` unset.** Its default is `https://console.thoras.ai`,
+  Thoras' hosted console, which rejects a key from this one.
+- **Setting `cloudSync.joinSecret` as well.** With both a key and a join secret,
+  the thoras chart can't tell which you meant and turns cloud sync off.
+
+To replace a key, open **Keys** for the cluster, choose **Mint new key**, set it
+the same way, then **Revoke** the old one. Minting a key does not revoke the
+previous one.
+
+### Joining by itself
+
+Instead of creating each cluster in the dashboard, you can let clusters register
+themselves with one secret shared across your fleet.
+
+Enable it on the console:
+
+```yaml
+consoleApi:
+  clusterJoin:
+    enabled: true
 ```
-helm install thoras-console thoras/thoras-console \
-  -n thoras-console --create-namespace -f values.yaml
+
+and read the generated secret out:
+
+```
+kubectl get secret thoras-console-config-controller -n thoras-console \
+  -o jsonpath='{.data.cluster-join-secret}' | base64 -d; echo
 ```
 
-Remember the bundled database is evaluation-only: uninstalling destroys it.
+Then install each tenant cluster's thoras chart with the join secret and the
+name to register under:
 
-### Production with OIDC
+```
+helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
+  --set cloudSync.baseUrl=https://console-api.example.com \
+  --set cloudSync.joinSecret=<join secret> \
+  --set cluster.name=production-eu
+```
 
-Pinned image version, a database you manage, sign-in through your identity
-provider, network policies on.
+On its first sync the cluster registers under that name and receives a key of
+its own. From then on it sends data with that key, like any other cluster:
+
+- The join secret is only used to register. Revoking one cluster's key works as
+  usual, and rotating the join secret does not affect clusters already joined.
+- Renaming a cluster in the dashboard sticks: later upgrades don't rename it
+  back.
+- Two clusters can't register under the same name. The second is refused until
+  you pick another `cluster.name`.
+
+Requires `consoleApi.singleOrg.enabled`, the default: a joining cluster presents
+no user identity, so the organization has to be implicit.
+
+### Checking it works
+
+In the dashboard, the cluster's **Last ingest** updates within a couple of
+minutes, and its targets appear when you open it. If it doesn't, see
+[Troubleshooting](#troubleshooting).
+
+## Production install
+
+Pin the image version, use a database you manage, sign people in through your
+identity provider or a password you control, and turn network policies on.
+
+### Sample: OIDC
 
 ```yaml
 # values.yaml
@@ -175,17 +255,20 @@ consoleVersion: "4.123.0"
 imageCredentials:
   secretRef: thoras-console-registry
 
+auth:
+  mode: oidc
+  oidc:
+    issuer: https://id.example.com/
+    audiences: [https://console.example.com]
+    client:
+      # Register https://console.example.com/landing as a callback for it.
+      id: your-oauth-client-id
+
 consoleApi:
   replicas: 2
-  externalUrl: https://console.example.com
   pdb:
     enabled: true
-  auth:
-    mode: oidc
-    oidc:
-      issuer: https://id.example.com/
-      audiences: https://console.example.com
-  # Workload clusters sync here. Separate host from the dashboard's.
+  # The ingest address: tenant clusters sync here.
   ingress:
     enabled: true
     hosts:
@@ -197,10 +280,8 @@ consoleApi:
         secretName: console-api-tls
 
 consoleDashboard:
-  auth:
-    # Required in oidc and both modes. Register
-    # https://console.example.com/landing as a callback for this client.
-    clientId: your-oauth-client-id
+  externalUrl: https://console.example.com
+  # The dashboard address: people sign in here.
   ingress:
     enabled: true
     hosts:
@@ -214,7 +295,6 @@ consoleDashboard:
 externalDatabase:
   existingSecret:
     secretName: console-db
-    dsnKey: postgresql-dsn
 
 networkPolicy:
   enabled: true
@@ -223,7 +303,7 @@ serviceMonitor:
   enabled: true
 ```
 
-Create the two Secrets first:
+Create the two Secrets it refers to, then install:
 
 ```
 kubectl create ns thoras-console
@@ -239,23 +319,16 @@ kubectl create secret generic console-db -n thoras-console \
 helm install thoras-console thoras/thoras-console -n thoras-console -f values.yaml
 ```
 
-`serviceMonitor.enabled` needs the Prometheus Operator installed; without its
-CRDs the release fails to apply with `no matches for kind "ServiceMonitor"`. It
-scrapes config-controller and `console-api`, each on its own metrics port.
+Your identity provider needs setting up too: see [Authentication](#authentication).
+`serviceMonitor` needs the Prometheus Operator: see [Monitoring](#monitoring).
+With `replicas: 2` the login rate limit, which is per process, doubles; that
+only matters in `local` and `both` modes.
 
-`console-api` serves `/metrics` on `consoleApi.prometheus.port` (9104) rather
-than on `containerPort`, which is published through a browser-facing ingress.
-With `networkPolicy.enabled`, a Prometheus in this namespace already reaches it;
-one in another namespace needs a rule via `consoleApi.extraIngressRules`.
+### Sample: a password you control
 
-`replicas: 2` multiplies the login rate limit, which is per-process. That
-matters only in `local` and `both` modes.
-
-### Production without an identity provider
-
-The same, but signing in with a shared password you control rather than one the
-chart generates. Set a salt: without it the install falls back to a value shared
-by every install that also leaves it empty.
+The same, but people sign in with a shared password you set, kept in a Secret
+you manage. Set a salt too: without one, the install falls back to a value
+shared by every install that also leaves it empty.
 
 ```yaml
 # values.yaml
@@ -264,14 +337,15 @@ consoleVersion: "4.123.0"
 imageCredentials:
   secretRef: thoras-console-registry
 
-consoleApi:
-  externalUrl: https://console.example.com
-  auth:
-    mode: local
+auth:
+  mode: local
+  local:
     existingSecret:
       secretName: console-admin
-      passwordKey: local-admin-password
     adminSalt: "a-unique-string-for-this-install"
+
+consoleDashboard:
+  externalUrl: https://console.example.com
 
 externalDatabase:
   existingSecret:
@@ -286,197 +360,371 @@ kubectl create secret generic console-admin -n thoras-console \
 Never change `adminSalt` once the install is live: the session signing key
 derives from it, so changing it signs everyone out.
 
-## ArgoCD
-
-The chart renders deterministically. There is no `lookup`, no value generated
-inside a template, and nothing a mutating webhook rewrites after apply, so
-`helm template` and a cluster apply produce the same manifests and **no
-`ignoreDifferences` is needed**.
-
-Credentials you do not supply are generated in-cluster by config-controller into
-the `thoras-console-config-controller` Secret. That Secret is not part of the
-release and carries no Argo tracking label, so Argo neither diffs nor prunes it.
-
-## helm template
-
-Nothing special is required: the chart is safe to render offline and apply with
-any GitOps tool. The only thing to know is the startup ordering — the generated
-Secret does not exist at apply time, so `console-api` and the database report
-`CreateContainerConfigError` until config-controller creates it. Sync waves are
-not needed; the pods recover on their own.
-
-## Configuration
-
 ### The database
 
-`bundledDatabase` and `externalDatabase` are mutually exclusive, and the chart
-fails to render if both or neither are configured. The bundled database is the
-default, so configuring `externalDatabase` is enough to switch over — you do not
-also have to disable the bundled one.
+`bundledDatabase` and `externalDatabase` are mutually exclusive. The bundled one
+is the default, so configuring `externalDatabase` is enough to switch over; you
+don't also have to disable the bundled one. Configuring both, or disabling the
+bundled one without an external one, fails the render.
 
-#### Bundled — evaluation only
+#### Bundled database
 
 A single-replica TimescaleDB StatefulSet with a PersistentVolumeClaim. It exists
-so `helm install` works with no external dependency, and it is not suitable for
-production:
+so `helm install` works with nothing external, and it is **for evaluation
+only**:
 
-- no backups and no point-in-time recovery
+- no automatic backups and no point-in-time recovery
 - no high availability, and no read replicas
 - one replica, so every upgrade is downtime
 - the volume is **deleted with the release**
 
-That last point is deliberate. `helm uninstall`, or switching to
-`externalDatabase`, destroys the data irrecoverably. For evaluation data that is
-the right trade: uninstall leaves no orphaned volume behind.
+That last point is deliberate: `helm uninstall`, or switching to
+`externalDatabase`, destroys the data. For evaluation that is the right trade,
+since uninstalling leaves no orphaned volume behind. Take a backup first if the
+data matters — see [Backup and restore](#backup-and-restore).
 
-The credentials outlive the volume. `thoras-console-config-controller` is
-written by config-controller at runtime rather than by Helm, so it survives
-`helm uninstall`, and a reinstall reuses the same generated passwords against a
-fresh, empty database. Delete that Secret too if you want a genuinely clean
-slate.
+Postgres fixes its password when the data directory is first created, and
+restarting it does not change that. So the database is excluded from
+config-controller's restarts, and regenerating `postgres-password` does not
+change the password it accepts — see [Rotating secrets](#rotating-secrets).
 
-Take a dump first if the data matters:
+#### External database
+
+Put the DSN, including the database name, in a Secret and point the chart at
+it:
+
+```
+kubectl create secret generic console-db -n thoras-console \
+  --from-literal=postgresql-dsn='postgres://user:pass@db.example.com:5432/thoras_cloud'
+```
+
+```yaml
+externalDatabase:
+  existingSecret:
+    secretName: console-db
+```
+
+**Stock Postgres will not work.** The console's migrations create TimescaleDB
+hypertables and continuous aggregates, and run `CREATE EXTENSION` for
+`timescaledb` and `citext`, so the database user must be allowed to create them
+or they must exist already. Timescale Cloud, Azure Database for PostgreSQL, and
+self-managed Postgres with TimescaleDB installed all work; Amazon RDS and Cloud
+SQL do not offer TimescaleDB.
+
+There is deliberately no way to put the DSN in values: it carries a password,
+which would then sit in `thoras-console-helm-values` and in `helm get values`.
+
+### Routing
+
+The console needs two addresses, carrying different traffic:
+
+| Address                                      | Who reaches it   | Values                                     |
+| -------------------------------------------- | ---------------- | ------------------------------------------ |
+| Dashboard address, e.g. `console.example.com` | people           | `consoleDashboard.ingress` / `.gatewayAPI` |
+| Ingest address, e.g. `console-api.example.com` | tenant clusters | `consoleApi.ingress` / `.gatewayAPI`       |
+
+Both are off by default. Ingress and Gateway API are independent switches on
+each component; enable whichever your cluster uses.
+
+The dashboard serves the UI and forwards `/api/` to `console-api`, so a browser
+only ever talks to the dashboard address. That forwarding is deny-by-default:
+everything under `/api/v1/` passes **except** `ingest/` and `hook/`, which
+return 403, because they are not dashboard routes and this address is public.
+So a tenant cluster pointed at the dashboard address fails every sync with a 403
+from nginx. Point `cloudSync.baseUrl` at the ingest address instead — see
+[The ingest address](#the-ingest-address).
+
+`consoleDashboard.externalUrl` only sets the URL printed after install. It is
+worked out from the dashboard's ingress when unset.
+
+### Authentication
+
+`auth.mode` selects how people sign in. The same `auth` block configures both
+`console-api`, which checks tokens, and the dashboard, which obtains them.
+
+| Mode    | Sign in with                                                        |
+| ------- | ------------------------------------------------------------------- |
+| `local` | one shared admin password, no identity provider. The default        |
+| `oidc`  | an OIDC identity provider you already run                           |
+| `both`  | either                                                              |
+
+#### Local admin
+
+There is a single admin. Its password is generated when you leave it empty, or
+you can set it in values or keep it in a Secret you manage — see
+[Secrets](#secrets). Minimum 12 characters.
+
+`auth.local.adminSalt` makes the session signing key unique to your install. It
+is **not secret**, only unique and stable, so it is plain configuration. Two
+rules:
+
+- Minimum 16 characters. Leaving it empty falls back to a value shared by every
+  install that does the same, and warns at startup.
+- Never change it once set: the signing key derives from it, so changing it
+  signs everyone out.
+
+#### OIDC
+
+```yaml
+auth:
+  mode: oidc
+  oidc:
+    issuer: https://id.example.com/
+    audiences: [https://console.example.com]
+    client:
+      id: your-oauth-client-id
+```
+
+The chart refuses to render without `issuer`, `audiences` and `client.id`:
+`console-api`'s built-in defaults point at Thoras' hosted console and would check
+your users' tokens against the wrong provider.
+
+**What your provider must issue.** `console-api` checks each request's access
+token, which must:
+
+- carry an `iss` claim equal to `issuer` **exactly**, trailing slash included;
+- be signed with **RS256**;
+- carry one of `audiences` in its `aud` claim;
+- carry the console's scopes in its **`scope` claim**, a space-separated
+  string: `read:*` (or each `read:` scope), `write:clusters` and
+  `write:cluster-tokens`. `read:*` covers every read scope but neither write
+  scope, so without those, cluster and key management return 403.
+
+A token that fails the first three checks gets a 401; a missing scope gets a
+403, which is how to tell the two apart.
+
+**Register the dashboard with your provider.** The dashboard signs in as an
+OAuth client of its own, `auth.oidc.client.id`. Register these for it, or
+sign-in fails at the redirect with an error from your provider:
+
+| Provider setting     | Value                                 |
+| -------------------- | ------------------------------------- |
+| Allowed callback URL | `https://<dashboard address>/landing` |
+| Allowed logout URL   | `https://<dashboard address>`         |
+
+For a dashboard at `console.example.com` that is
+`https://console.example.com/landing` and `https://console.example.com`. If you
+sign in through a port-forward, register `http://localhost:8080/landing` too;
+`both` mode still lets you in with the admin password.
+
+The dashboard requests the scopes in `auth.oidc.client.scope`. Every one must be
+defined and granted on your provider: some answer `invalid_scope` and fail the
+redirect rather than ignore a scope they don't know.
+
+Set `auth.oidc.jwksUri` only when the issuer URL is unreachable from inside the
+cluster: the `iss` claim stays the browser-facing URL while signing keys are
+fetched from the address you give.
+
+**Provider notes.**
+
+- **Auth0.** Define the console's scopes as permissions on the API and grant
+  them. `audience` is an Auth0 extension: without it Auth0 issues an opaque
+  access token, so sign-in appears to work and every later call fails with 401.
+  The dashboard sends `auth.oidc.client.audience`, which defaults to the first
+  of `audiences`. Auth0 issuers end with a slash.
+- **Keycloak.** Keycloak issuers don't end with a slash. Its access tokens carry
+  `account` in `aud` by default, so add an audience mapper to the client, and
+  add client scopes named exactly `read:*`, `write:clusters` and
+  `write:cluster-tokens`. A realm switched to a signing algorithm other than
+  RS256 won't work.
+- **Okta and Dex aren't supported yet.** The console reads scopes only from a
+  `scope` string claim. Okta puts them in an `scp` list instead, and Dex can't
+  issue custom scopes, so every call would return 403.
+
+### NetworkPolicy
+
+Set `networkPolicy.enabled: true` to render a policy per component.
+`networkPolicy.flavor: kubernetes` (the default) emits standard
+`networking.k8s.io/v1` `NetworkPolicy` for any NetworkPolicy-capable CNI;
+`cilium` emits `CiliumNetworkPolicy` (`cilium.io/v2`) and needs
+[Cilium](https://cilium.io/). Any other value fails the render rather than
+quietly producing no policy; both names are lower-case.
+
+`networkPolicy.apiServerPorts` (default `[443, 6443]`) must list the port the
+API server actually listens on after DNAT — `8443` on minikube, for example.
+To find it:
+
+```
+kubectl get endpointslice -n default -l kubernetes.io/service-name=kubernetes \
+  -o jsonpath='{.items[0].ports[0].port}{"\n"}'
+```
+
+Only config-controller uses it; `console-api` makes no Kubernetes API calls. The
+`cilium` flavor ignores it and targets the API server by identity.
+
+Four policies render, one per component, including the bundled database when it
+is in use:
+
+- `console-api` accepts traffic on `consoleApi.containerPort` from any source,
+  because tenant clusters reach it from outside through the ingest address. Its
+  metrics port is reachable from this namespace only.
+- The dashboard accepts traffic on its own port from any source, because
+  browsers are outside the cluster.
+- The bundled database admits only `console-api`.
+
+Two egress rules are deliberately broad, because standard NetworkPolicy can't
+name a host whose address may change:
+
+- port 5432 to any address, from `console-api`, when the database is external
+- port 443 to any address, from `console-api`, in `oidc` or `both` mode, to fetch
+  the provider's signing keys
+
+Every component accepts `extraIngressRules` and `extraEgressRules`, appended
+verbatim to both flavors. That is where to narrow the two rules above to a CIDR,
+or to layer a `CiliumNetworkPolicy` scoped with `toFQDNs`.
+
+### Monitoring
+
+`serviceMonitor.enabled: true` renders ServiceMonitors for `console-api` and
+config-controller. It needs the Prometheus Operator: without its CRDs the
+release fails to apply with `no matches for kind "ServiceMonitor"`.
+
+`console-api` serves `/metrics` on its own port, `consoleApi.prometheus.port`
+(9104), rather than on `containerPort`, which the ingest address publishes. With
+`networkPolicy.enabled`, a Prometheus in this namespace already reaches it; one
+in another namespace needs a rule in `consoleApi.extraIngressRules`.
+
+### Secrets
+
+Every secret-bearing value can be set in values, read from a Secret you manage,
+or — where the chart can generate it — left empty. A reference names the Secret
+with `secretName` and the entry within it with the matching `…Key`.
+
+| Value               | Generated    | Set it                        | Or reference it                       |
+| ------------------- | ------------ | ----------------------------- | ------------------------------------- |
+| Admin password      | yes          | `auth.local.adminPassword`    | `auth.local.existingSecret`           |
+| Cluster join secret | yes          | `consoleApi.clusterJoin.secret` | `consoleApi.clusterJoin.existingSecret` |
+| Database DSN        | when bundled | — (never in values)           | `externalDatabase.existingSecret`     |
+| Webhook secret      | no           | `consoleApi.webhook.secret`   | `consoleApi.webhook.existingSecret`   |
+| Slack webhook URL   | no           | `slack.webhookUrl`            | `slack.existingSecret`                |
+
+Set a value or reference it, not both: setting both fails the render rather
+than picking one for you.
+
+Prefer referencing. A value set directly lives in your values file, in whatever
+repository holds it, and in Helm's release history, where `helm get values`
+returns it to anyone who can read the release. Referencing is also how you feed
+the console from External Secrets Operator, Vault or Sealed Secrets: they
+create the Secret, and the chart only points at it.
+
+Either way, no secret material reaches a pod spec: every credential is bound with
+`secretKeyRef`. `auth.local.adminSalt` is the exception to all of this: it isn't
+secret, so it takes no Secret reference.
+
+## GitOps
+
+The chart renders deterministically. There is no `lookup`, no value generated
+inside a template, and nothing a mutating webhook rewrites after apply, so
+`helm template` and a cluster apply produce the same manifests. With Argo CD **no
+`ignoreDifferences` is needed**.
+
+Credentials you don't supply are generated in the cluster by config-controller,
+into the `thoras-console-config-controller` Secret. That Secret isn't part of the
+release and carries no Argo CD tracking label, so Argo CD neither diffs nor
+prunes it.
+
+Rendering offline and applying with any other tool works the same way. The
+generated Secret doesn't exist at first apply, so `console-api` and the database
+show `CreateContainerConfigError` until config-controller creates it. They
+recover on their own; no sync waves are needed.
+
+## Operations
+
+### Upgrading
+
+```
+helm repo update thoras
+helm upgrade thoras-console thoras/thoras-console -n thoras-console --reset-then-reuse-values
+```
+
+The chart is pre-1.0 while its values settle, so a minor bump (`0.4.0` →
+`0.5.0`) may rename or restructure values. Read the release notes before
+upgrading, and pin the chart version in production.
+
+Use `--reset-then-reuse-values`, not `--reuse-values`. A new chart version often
+adds values, and `--reuse-values` keeps the previous release's values *instead
+of* the new chart's defaults, so a newly added value is missing and the upgrade
+can fail on it. `--reset-then-reuse-values` applies your values on top of the
+new defaults.
+
+An upgrade never changes a generated credential: config-controller only writes a
+value that is missing. Your admin password survives upgrades.
+
+### Backup and restore
+
+This section is for the bundled database. With an external database, use your
+provider's backups.
+
+**Back up** with `pg_dump`:
 
 ```
 kubectl exec sts/thoras-console-db -n thoras-console -- \
   pg_dump -U postgres thoras_cloud > console-backup.sql
 ```
 
-Postgres bakes its password into the data directory at first start and cannot
-be made to adopt a new one by restarting. The database is therefore excluded
-from config-controller's rollouts, and regenerating `postgres-password` on a
-running install does not change the password the database actually accepts --
-see [Rotating secrets](#rotating-secrets).
+A warning about circular foreign-key constraints on `continuous_agg` is normal
+for TimescaleDB and harmless.
 
-#### External — for production
+**Restore** only into a new, empty install. Restoring into a console that is
+already running is not an error `psql` reports: it exits successfully while
+leaving clusters missing and the database damaged. The steps:
 
-```
-kubectl create secret generic console-db -n thoras-console \
-  --from-literal=postgresql-dsn='postgres://user:pass@host:5432/thoras_cloud'
+1. Install with `console-api` stopped, so it can't set up the empty database
+   before the restore does. Pass the same values you installed with; `-f
+   values.yaml` stands for them here:
 
-helm install ... --set externalDatabase.existingSecret.secretName=console-db
-```
+   ```
+   helm install thoras-console thoras/thoras-console -n thoras-console --create-namespace \
+     -f values.yaml --set consoleApi.replicas=0
+   kubectl rollout status sts/thoras-console-db -n thoras-console
+   ```
 
-The DSN must include the database name, and the database needs the
-`timescaledb` and `citext` extensions available. **Stock Postgres will not
-work**: the console migrations create hypertables and continuous aggregates.
-Timescale Cloud, Azure Database for PostgreSQL, or self-managed Postgres with
-the extension installed all work; RDS and Cloud SQL do not offer TimescaleDB.
+2. Restore between TimescaleDB's two restore hooks:
 
-There is deliberately no way to pin the DSN in values: it carries a password,
-and a pinned value would land in `thoras-console-helm-values` and in
-`helm get values`.
+   ```
+   kubectl exec sts/thoras-console-db -n thoras-console -- \
+     psql -U postgres -d thoras_cloud -c "SELECT timescaledb_pre_restore();"
 
-### Routing
+   kubectl exec -i sts/thoras-console-db -n thoras-console -- \
+     psql -U postgres -d thoras_cloud -v ON_ERROR_STOP=1 < console-backup.sql
 
-The console needs two hostnames, and they carry different traffic.
+   kubectl exec sts/thoras-console-db -n thoras-console -- \
+     psql -U postgres -d thoras_cloud -c "SELECT timescaledb_post_restore();"
+   ```
 
-| Host                          | Who reaches it                 | Values                                          |
-| ----------------------------- | ------------------------------ | ----------------------------------------------- |
-| dashboard, e.g. `console.example.com`     | people, in a browser | `consoleDashboard.ingress` / `.gatewayAPI` |
-| console API, e.g. `console-api.example.com` | workload clusters  | `consoleApi.ingress` / `.gatewayAPI`       |
+3. Start `console-api`:
 
-Both are off by default. Ingress and Gateway API are independent switches on
-each component; enable whichever your cluster uses.
+   ```
+   helm upgrade thoras-console thoras/thoras-console -n thoras-console \
+     --reset-then-reuse-values --set consoleApi.replicas=1
+   ```
 
-The dashboard serves the UI and reverse-proxies `/api/` to `console-api`, so a
-browser only ever talks to the first host, and `config.json` ships
-`api_base_url: ""` to keep those calls same-origin. That proxy is a
-deny-by-default allowlist: everything under `/api/v1/` is forwarded **except**
-`ingest/` and `hook/`, which return 403. They are not dashboard routes, and this
-hostname is public.
-
-Workload clusters therefore sync to the second host, not the first. In the
-[thoras](../thoras/README.md) chart:
-
-```
-cloudSync.baseUrl: https://console-api.example.com
-```
-
-Point that at the dashboard host instead and every sync fails with 403 from
-nginx, which looks nothing like a misconfigured agent.
-
-If a workload cluster is the *same* cluster the console runs in, skip the
-ingress entirely and use in-cluster DNS:
-
-```
-cloudSync.baseUrl: http://thoras-console-api.<console-namespace>.svc.cluster.local
-```
-
-With `consoleApi.auth.mode: oidc` or `both`, the dashboard host must also be
-registered with your identity provider before anyone can sign in — see
-[Registering the dashboard with your provider](#registering-the-dashboard-with-your-provider).
-
-### Secrets
-
-Every secret-bearing value can be pinned in values, read from a Secret you
-manage, or — where the chart can generate it — left empty. Each pair follows the
-same shape: `secretName` picks the Secret, and the companion `*Key` picks the
-entry within it.
-
-| Value             | Generated    | Pin it                        | Or reference it                   |
-| ----------------- | ------------ | ----------------------------- | --------------------------------- |
-| Admin password    | yes          | consoleApi.auth.adminPassword | consoleApi.auth.existingSecret    |
-| Cluster join secret | yes        | consoleApi.clusterJoin.secret | consoleApi.clusterJoin.existingSecret |
-| Database DSN      | when bundled | — (never pinnable)            | externalDatabase.existingSecret   |
-| Webhook secret    | no           | consoleApi.webhook.secret     | consoleApi.webhook.existingSecret |
-| Slack webhook URL | no           | slack.webhookUrl              | slack.existingSecret              |
-
-### Letting clusters register themselves
-
-With `consoleApi.clusterJoin.enabled`, a cluster can register itself using one secret
-shared across the fleet instead of being created through the API first. Turn it on, then
-read the generated secret out:
-
-```bash
-kubectl get secret thoras-console-config-controller -n thoras-console \
-  -o jsonpath='{.data.cluster-join-secret}' | base64 -d
-```
-
-and set it as `cloudSync.joinSecret` on each agent install. It is a bootstrap credential
-only: a join returns an ordinary per-cluster token, so revoking one cluster is unchanged,
-and rotating the join secret does not disturb clusters that have already joined.
-
-Requires `consoleApi.singleOrg.enabled` — a joining agent presents no user identity, so
-the organization has to be implicit.
-
-Referencing wins over pinning wherever both are set, and setting both fails the
-render rather than picking for you.
-
-Prefer referencing. A pinned value lives in your values file, in whatever
-repository holds it, and in Helm's release history — `helm get values` returns
-it to anyone who can read the release. Referencing is also how you feed the
-console from External Secrets Operator, Vault or Sealed Secrets: those create
-the Secret, and the chart only points at it.
-
-Whichever you choose, no secret material reaches a pod spec: every credential is
-bound with `secretKeyRef`.
-
-`consoleApi.auth.adminSalt` is the exception — it is not secret material, so it
-takes no Secret reference.
+The admin password isn't in the database: it lives in Kubernetes. If the
+`thoras-console-config-controller` Secret is gone too, for example with the
+namespace, the restored console generates a new admin password unless you set
+one or [reference your own](#secrets).
 
 ### Rotating secrets
 
-Change the value, then `helm upgrade`. config-controller notices and evicts the
-consuming pods.
+Change the value, then `helm upgrade`. config-controller notices and restarts the
+pods that use it.
 
 Rotating the admin password is the **only** way to revoke outstanding sessions:
 the session signing key derives from the password and salt together, so there is
-no per-session revocation. Generated values are never rotated by an upgrade; to
-force a new one, delete its key from the `thoras-console-config-controller`
-Secret and let the controller regenerate it and restart the pods that read it.
+no per-session revocation.
 
-Delete only the key, and leave config-controller alone: it keeps the baseline it
-diffs against in memory, so restarting it makes the regenerated value look like
-the starting state and no rollout follows.
+Generated values are never rotated by an upgrade. To force a new one, delete its
+key from the `thoras-console-config-controller` Secret; config-controller
+generates a new value and restarts the pods that read it. Delete only the key,
+and leave config-controller running: it keeps the previous values in memory to
+compare against, so restarting it makes the new value look like the starting
+state, and nothing restarts.
 
-That procedure is safe for `local-admin-password`. Do **not** use it on
-`postgres-password` or `postgresql-dsn` with the bundled database. The running
-Postgres still only accepts the password baked into its data directory at first
-start, so a regenerated one authenticates against nothing; regenerate the DSN as
-well and the next `console-api` pod can never connect, failing its startup probe
-until the rollout gives up. To change the bundled database password, set it on
-the database first and then match the Secret to it:
+That is safe for `local-admin-password`. Do **not** do it to `postgres-password`
+or `postgresql-dsn` with the bundled database: the database still accepts only
+the password it was created with, so `console-api` could never connect again.
+To change the bundled database's password, change it in the database first, then
+make the Secret match:
 
 ```
 NEW='choose-a-strong-password'
@@ -490,150 +738,100 @@ kubectl patch secret thoras-console-config-controller -n thoras-console \
     \"postgresql-dsn\":\"postgres://postgres:$NEW@thoras-console-db:5432/thoras_cloud?sslmode=disable\"}}"
 ```
 
-config-controller rolls `console-api` onto the new DSN on its own, and only ever
-generates keys that are absent, so the values you set by hand are left alone.
-With `externalDatabase` none of this applies: the DSN is read from a Secret you
-manage, and the database password is yours to rotate.
+config-controller restarts `console-api` onto the new DSN by itself, and it only
+generates values that are missing, so the ones you set by hand stay. With an
+external database none of this applies: the DSN comes from your own Secret, and
+the password is yours to rotate.
 
-### Authentication
+### Uninstalling
 
-`consoleApi.auth.mode` selects how operators sign in:
-
-- `local` — a single shared admin password, no external identity provider. The
-  default, and intended for self-hosted installs.
-- `oidc` — an identity provider you already run. Requires
-  `consoleApi.auth.oidc.issuer` and `.audiences`; the chart refuses to render
-  without them, because the defaults compiled into `console-api` point at
-  Thoras' own hosted console and would validate your users' tokens against the
-  wrong tenant.
-- `both` — accept either.
-
-Set `consoleApi.auth.oidc.jwksUri` only when the issuer URL is unreachable from
-inside the cluster: the `iss` claim must stay the browser-facing URL while keys
-are fetched from somewhere routable.
-
-#### Registering the dashboard with your provider
-
-`oidc` and `both` need work on the provider as well as in values, and the chart
-cannot do it for you. Both steps are required — miss either and sign-in fails at
-the redirect, with an error from the provider rather than from the console.
-
-**1. Set the client ID.** The dashboard signs in as an OAuth client of its own.
-`consoleApi.auth` has no equivalent — the client ID is browser-side — so it is
-the one auth value you set on the dashboard:
-
-```yaml
-consoleDashboard:
-  auth:
-    clientId: your-oauth-client-id
+```
+helm uninstall thoras-console -n thoras-console
 ```
 
-The chart refuses to render in `oidc` or `both` without it.
+This removes the console, and with it the bundled database's volume (on
+Kubernetes 1.27 or later). It keeps the `thoras-console-config-controller`
+Secret, because config-controller creates it at runtime rather than Helm. A
+reinstall into the same namespace then reuses the same generated admin password
+and database credentials against a new, empty database.
 
-**2. Register the redirect URIs.** Both are derived from the browser's origin,
-so they follow whatever host serves the dashboard:
+For a clean slate, delete that Secret too, or the whole namespace:
 
-| Provider setting        | Value                              |
-| ----------------------- | ---------------------------------- |
-| Allowed callback URL    | `https://<dashboard-host>/landing` |
-| Allowed logout URL      | `https://<dashboard-host>`         |
-
-For a dashboard at `console.example.com` that is
-`https://console.example.com/landing` and `https://console.example.com`. If you
-reach the console by port-forward while evaluating, register the port-forwarded
-origin too — `http://localhost:8080/landing` — or OIDC sign-in will not work
-there. `local` and `both` mode still let you in with the admin password.
-
-`mode` and `issuer` are not repeated on the dashboard: it reads both from
-`consoleApi.auth` so the two halves cannot disagree. Only `clientId`, and
-optionally `audience` and `scope`, are the dashboard's own — see
-[Console Dashboard](#console-dashboard).
-
-On Auth0, `audience` is an extension rather than a standard OIDC field and the
-dashboard passes it as a query parameter. Without it Auth0 issues an opaque
-access token that console-api's verifier rejects, so sign-in appears to succeed
-and every subsequent call 401s. It defaults to the first entry of
-`consoleApi.auth.oidc.audiences`.
-
-#### The admin salt
-
-`consoleApi.auth.adminSalt` makes the session signing key unique to your
-install. It is **not a secret** — it only has to be unique and stable — so it
-travels as plain configuration. Two rules:
-
-- Minimum 16 characters. Leaving it empty falls back to a value shared by every
-  install that does the same, and warns at startup.
-- Never change it once set. The signing key derives from it, so changing it
-  signs every operator out.
-
-### NetworkPolicy
-
-Set `networkPolicy.enabled: true` to render per-component policies.
-`networkPolicy.flavor: kubernetes` (default) emits standard
-`networking.k8s.io/v1` `NetworkPolicy` for any NetworkPolicy-capable CNI;
-`cilium` emits `CiliumNetworkPolicy` (`cilium.io/v2`) and requires
-[Cilium](https://cilium.io/). Any other value fails the render rather than
-quietly producing no policy; the names are lower-case.
-
-`networkPolicy.apiServerPorts` (default `[443, 6443]`) must list the port the
-API server actually listens on post-DNAT — set it to `8443` on minikube, etc.
-Only config-controller uses it; `console-api` makes no Kubernetes API calls. The
-`cilium` flavor ignores the key and targets the API server by identity.
-
-Four policies render: one per component, including the bundled database when
-it is in use. Ingress to `console-api` is open on `consoleApi.containerPort`
-from any source, because tenant clusters push metrics to it from outside the
-cluster through `consoleApi.ingress`. `consoleApi.prometheus.port` is
-deliberately not in that rule: it is reachable from this namespace only. The
-dashboard is open on its own container port for the same structural reason —
-browsers are outside the cluster. The bundled database admits only
-`console-api`, by pod selector.
-
-Two egress rules are deliberately broad, because standard NetworkPolicy cannot
-name a host whose address may drift:
-
-- `0.0.0.0/0:5432` from `console-api` when the database is external
-- `0.0.0.0/0:443` from `console-api` in `oidc` or `both` mode, for the JWKS fetch
-
-Each component block accepts `extraIngressRules` / `extraEgressRules`, appended
-verbatim to both flavors — that is where to narrow the two rules above to an
-`ipBlock` CIDR, or a layered `CiliumNetworkPolicy` scoped by `toFQDNs`.
+```
+kubectl delete secret thoras-console-config-controller -n thoras-console
+```
 
 ## Troubleshooting
 
-**Pods stuck in `CreateContainerConfigError` right after install.** Expected,
-and brief: they are waiting for config-controller to generate the credentials
-they read. It clears without intervention. If it persists, check the controller
-is running and read its logs.
+**Pods stay in `CreateContainerConfigError` after install.** Expected briefly:
+they are waiting for config-controller to generate their credentials. If it
+persists, check config-controller is running and read its logs.
 
-**config-controller crashes with `executable file not found`.** The image
-predates config-controller being built into it. Pin `consoleVersion` to a
-release that includes it rather than relying on `latest`, which a node may have
-cached.
+**Rendering fails with a message naming a value.** Deliberate: the chart checks
+its configuration when it renders, rather than letting a mistake surface as a
+crash loop. The message names the value and what to set.
 
-**A generated password stops working after reinstalling.** Only possible on
-Kubernetes older than 1.27, where the old database volume survives uninstall and
-keeps its original password while a new one is generated. Delete the claim and
-reinstall:
+**`console-api` logs `no webhook secret provided` at `ERROR`.** Harmless unless
+you use the identity-provider user-created webhook, which needs
+`consoleApi.webhook.secret`. Without one the webhook accepts nothing.
+
+**`console-api` restarts in a loop with no clear error.** Check it can reach the
+database. It waits up to five minutes for the database before starting, so a
+slow one still comes up; one it can't reach logs a timeout.
+
+**config-controller fails with `executable file not found`.** `consoleVersion`
+is older than the console images this chart needs. Set it to a
+[supported version](#version-compatibility).
+
+**A tenant cluster never reports, and its worker logs show `401`.** The key is
+wrong, or `cloudSync.baseUrl` still points at `console.thoras.ai`, whose default
+rejects a key from this console. Set it to the [ingest address](#the-ingest-address).
+Check the worker logs on the tenant cluster:
+
+```
+kubectl logs deploy/thoras-worker -n thoras | grep -i sync
+```
+
+**A tenant cluster never reports, and its worker logs show `403` from nginx.**
+`cloudSync.baseUrl` points at the dashboard address, which refuses ingest by
+design. Point it at the [ingest address](#the-ingest-address).
+
+**A tenant cluster has a key but never reports, with no errors.** It also has
+`cloudSync.joinSecret` set, which turns cloud sync off. Keep one: the key, or the
+join secret.
+
+**A cluster reports, but its targets show "Target workload missing", or it shows
+no version and 0 onboarded.** The tenant cluster has no metrics-server, so the
+agent can't read pod usage. Install metrics-server there; the next sync fills
+the targets in.
+
+**The target list stays empty after moving a tenant cluster to a new key.** The
+agent sends each target once and doesn't send it again for a new key, so the
+new cluster entry never receives them. Clear the marker and they are sent again
+on the next pass:
+
+```
+kubectl annotate aiscaletargets --all -A thoras.ai/cloud-sync-generation-
+```
+
+**A cluster that joins by itself never appears in the dashboard.** Read the
+tenant cluster's config-controller logs for `console refused the cluster join`.
+A 401 means the join secret is wrong; a 409 means another cluster already has
+that `cluster.name`.
+
+**A restore left clusters missing, or the database unreadable.** It was restored
+into a running install. Start again from an empty install and follow
+[Backup and restore](#backup-and-restore).
+
+**A reinstall comes back with the old data, or a generated password stops
+working.** The old database volume survived the uninstall. That happens on
+Kubernetes older than 1.27, and with some local storage provisioners, such as
+minikube's, which leave the data directory behind. Delete the claim, and the
+leftover volume if one remains, then reinstall:
 
 ```
 kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 ```
-
-**Rendering fails with a message naming a value.** Deliberate — the chart
-validates configuration at render time rather than letting it surface as a
-`CrashLoopBackOff`. The message names the values path and what to set.
-
-**A cluster appears in the console but never reports data.** Its agent cannot
-reach the ingest host. `cloudSync.baseUrl` must point at `consoleApi.ingress`,
-not at the dashboard — the dashboard's proxy returns 403 for `/api/v1/ingest/`
-by design. Check the tenant cluster's worker logs, and see
-[Routing](#routing).
-
-**`console-api` restarts in a loop with no clear error.** Check it can reach the
-database. It waits up to 300s before opening its listener, and the startup probe
-allows 360s, so a database that is merely slow will still come up; one that is
-unreachable logs a timeout.
 
 ## Values
 
@@ -667,6 +865,23 @@ unreachable logs a timeout.
 | serviceMonitor.interval         | String | ""                                               | Empty defers to the Prometheus default                     |
 | serviceMonitor.additionalLabels | object | {}                                               | Extra labels on the ServiceMonitor                         |
 
+### Auth
+
+| Key                                   | Type   | Default                                                   | Description                                                        |
+| ------------------------------------- | ------ | --------------------------------------------------------- | ------------------------------------------------------------------ |
+| auth.mode                             | String | local                                                     | local, oidc, or both                                               |
+| auth.local.adminEmail                 | String | admin@localhost                                           | Label on the seeded admin user. Nothing authenticates against it   |
+| auth.local.adminPassword              | String | ""                                                        | Minimum 12 characters. Generated when empty                        |
+| auth.local.existingSecret.secretName  | String | ""                                                        | Read the admin password from your own Secret                       |
+| auth.local.existingSecret.passwordKey | String | local-admin-password                                      | Key within that Secret                                             |
+| auth.local.adminSalt                  | String | ""                                                        | Minimum 16 characters. Not secret. Never change it once set        |
+| auth.oidc.issuer                      | String | ""                                                        | Required for oidc/both. Must match the iss claim exactly           |
+| auth.oidc.audiences                   | list   | []                                                        | Required for oidc/both. Accepted aud values. A comma-separated string also works |
+| auth.oidc.jwksUri                     | String | ""                                                        | Only when the issuer URL is unreachable from the cluster           |
+| auth.oidc.client.id                   | String | ""                                                        | The dashboard's OAuth client ID. Required for oidc/both            |
+| auth.oidc.client.scope                | String | openid profile read:* write:clusters write:cluster-tokens | Scopes requested at sign-in. Must be defined on your provider      |
+| auth.oidc.client.audience             | String | ""                                                        | Audience the dashboard requests (Auth0). Defaults to the first of audiences |
+
 ### Console API
 
 | Key                                          | Type   | Default              | Description                                                      |
@@ -678,8 +893,7 @@ unreachable logs a timeout.
 | consoleApi.port                              | Number | 80                   | Service port                                                     |
 | consoleApi.prometheus.enabled                | Bool   | true                 | Expose /metrics on its own port                                  |
 | consoleApi.prometheus.port                   | Number | 9104                 | Metrics port; kept off the ingress-published containerPort       |
-| consoleApi.externalUrl                       | String | ""                   | Dashboard URL shown in the install notes. Not the ingest host    |
-| consoleApi.ingress.enabled                   | Bool   | false                | Route for workload clusters to sync to. Own host, not the UI's   |
+| consoleApi.ingress.enabled                   | Bool   | false                | The ingest address. Its own host, never the dashboard's          |
 | consoleApi.ingress.ingressClassName          | String | nginx                | Cleared renders no ingressClassName                              |
 | consoleApi.ingress.annotations               | object | {}                   | Annotations on the Ingress                                       |
 | consoleApi.ingress.hosts                     | list   | console-api.local    | Hosts and paths. pathType defaults to Prefix                     |
@@ -700,19 +914,10 @@ unreachable logs a timeout.
 | consoleApi.migrateOnStart                    | Bool   | true                 | Run migrations at startup, under a Postgres advisory lock        |
 | consoleApi.singleOrg.enabled                 | Bool   | true                 | Auto-provision and implicitly use one organization               |
 | consoleApi.singleOrg.name                    | String | Default Organization | Renames the existing organization if changed after install       |
-| consoleApi.bootstrapAdminEmail               | String | admin@localhost      | Label on the seeded admin user. Nothing authenticates against it |
-| consoleApi.auth.mode                         | String | local                | local, oidc, or both                                             |
-| consoleApi.auth.oidc.issuer                  | String | ""                   | Required for oidc/both. Must match the iss claim exactly         |
-| consoleApi.auth.oidc.audiences               | String | ""                   | Required for oidc/both. Comma-separated                          |
-| consoleApi.auth.oidc.jwksUri                 | String | ""                   | Only when the issuer URL is unreachable from the cluster         |
-| consoleApi.auth.adminPassword                | String | ""                   | Minimum 12 characters. Generated when empty                      |
-| consoleApi.auth.existingSecret.secretName    | String | ""                   | Read the admin password from your own Secret                     |
-| consoleApi.auth.existingSecret.passwordKey   | String | local-admin-password | Key within that Secret                                           |
-| consoleApi.auth.adminSalt                    | String | ""                   | Minimum 16 characters. Not secret. Never change it once set      |
 | consoleApi.clusterJoin.enabled               | Bool   | false                | Let clusters register themselves. Requires singleOrg             |
 | consoleApi.clusterJoin.secret                | String | ""                   | Minimum 32 characters. Generated when empty                      |
 | consoleApi.clusterJoin.existingSecret.secretName | String | ""               | Read the join secret from your own Secret                        |
-| consoleApi.clusterJoin.existingSecret.secretKey | String | clusterJoinSecret | Key within that Secret                                           |
+| consoleApi.clusterJoin.existingSecret.secretKey | String | cluster-join-secret | Key within that Secret                                        |
 | consoleApi.webhook.secret                    | String | ""                   | Shared secret for the identity-provider user-created webhook     |
 | consoleApi.webhook.existingSecret.secretName | String | ""                   | Read the webhook secret from your own Secret                     |
 | consoleApi.webhook.existingSecret.secretKey  | String | webhook-secret       | Key within that Secret                                           |
@@ -725,72 +930,55 @@ unreachable logs a timeout.
 
 ### Console Dashboard
 
-The web UI. It runs the same `thoras-dashboard-v2` image the agent chart uses —
-there is no console-flavoured build — and switches into console mode purely on
-the `console` block the chart writes into the `config.json` it serves.
+The web UI. It runs the same `thoras-dashboard-v2` image as the
+[thoras](../thoras/README.md) chart — there is no console-specific build — and
+switches into console mode because of the `console` block this chart writes into
+the `config.json` it serves. Its sign-in settings are in [Auth](#auth).
 
-`auth.mode` and `auth.issuer` are deliberately absent: they are read from
-`consoleApi.auth` so the two halves cannot drift. Only `clientId` is the
-dashboard's own, because it is browser-side and has no server counterpart.
-
-nginx serves the bundle and proxies `/api/` to console-api behind a
-deny-by-default allowlist. `ingest/` and `hook/` are refused here: they are not
-dashboard routes, and this host is the one browsers use. Workload clusters reach
-them through `consoleApi.ingress` instead.
-
-Every scope in `auth.scope` must be defined and granted on your identity
-provider. `openid` is required for an id_token, and both write scopes are
-needed because the console's scope check prefix-matches only within a
-namespace: `read:*` covers neither, so without them cluster and key management
-return 403 in OIDC mode. Some providers answer `invalid_scope` and fail the
-redirect outright rather than ignoring a scope they do not know.
-
-| Key                                        | Type   | Default                                                   | Description                                              |
-| ------------------------------------------ | ------ | --------------------------------------------------------- | -------------------------------------------------------- |
-| consoleDashboard.enabled                   | Bool   | true                                                      | Deploy the dashboard                                     |
-| consoleDashboard.replicas                  | Number | 1                                                         | Replica count                                            |
-| consoleDashboard.image.repository          | String | thoras-dashboard-v2                                       | Joined to imageCredentials.registry                      |
-| consoleDashboard.imageTag                  | String | ""                                                        | Overrides consoleVersion for this component              |
-| consoleDashboard.containerPort             | Number | 8080                                                      | Port nginx listens on                                    |
-| consoleDashboard.port                      | Number | 80                                                        | Service port                                             |
-| consoleDashboard.auth.clientId             | String | ""                                                        | OAuth client ID. Required for oidc/both                  |
-| consoleDashboard.auth.audience             | String | ""                                                        | Defaults to the first of consoleApi.auth.oidc.audiences  |
-| consoleDashboard.auth.scope                | String | openid profile read:* write:clusters write:cluster-tokens | Scopes requested at sign-in. Must be defined on your IdP |
-| consoleDashboard.extras                    | object | {}                                                        | Merged into config.json's extra block                    |
-| consoleDashboard.serviceAccount.name       | String | thoras-console-dashboard                                  | ServiceAccount name                                      |
-| consoleDashboard.service.type              | String | ""                                                        | Service type. Empty leaves it to Kubernetes              |
-| consoleDashboard.service.annotations       | object | {}                                                        | Annotations on the Service                               |
-| consoleDashboard.labels                    | object | {}                                                        | Component labels                                         |
-| consoleDashboard.podAnnotations            | object | {}                                                        | Component pod annotations                                |
-| consoleDashboard.resources                 | object | 50m/64Mi, 500m/256Mi                                      | Requests and limits                                      |
-| consoleDashboard.pdb.enabled               | Bool   | false                                                     | Render a PodDisruptionBudget                             |
-| consoleDashboard.pdb.maxUnavailable        | Number | 1                                                         | minAvailable takes precedence if both are set            |
-| consoleDashboard.ingress.enabled           | Bool   | false                                                     | Route browsers to the UI                                 |
-| consoleDashboard.ingress.ingressClassName  | String | nginx                                                     | Cleared renders no ingressClassName                      |
-| consoleDashboard.ingress.annotations       | object | {}                                                        | Annotations on the Ingress                               |
-| consoleDashboard.ingress.hosts             | list   | console.local                                             | Hosts and paths. pathType defaults to Prefix             |
-| consoleDashboard.ingress.tls               | list   | []                                                        | Each entry is hosts plus an optional secretName          |
-| consoleDashboard.gatewayAPI.enabled        | Bool   | false                                                     | The same route as an HTTPRoute. Independent of ingress   |
-| consoleDashboard.gatewayAPI.annotations    | object | {}                                                        | Annotations on the HTTPRoute                             |
-| consoleDashboard.gatewayAPI.parentRefs     | list   | gateway/default                                           | Gateways to attach to                                    |
-| consoleDashboard.gatewayAPI.hostnames      | list   | console.local                                             | Hostnames to match                                       |
-| consoleDashboard.gatewayAPI.path           | String | /                                                         | Path to match                                            |
-| consoleDashboard.gatewayAPI.pathType       | String | PathPrefix                                                | Match type                                               |
-| consoleDashboard.useGlobalAffinity         | Bool   | false                                                     | Merge the global affinity into this component's          |
-| consoleDashboard.affinity                  | object | {}                                                        | Component affinity                                       |
-| consoleDashboard.priorityClassName         | String | ""                                                        | Takes precedence over the global priority class          |
-| consoleDashboard.topologySpreadConstraints | list   | []                                                        | Replaces the global list when non-empty                  |
-| consoleDashboard.extraEgressRules          | list   | []                                                        | Appended verbatim to both NetworkPolicy flavors          |
-| consoleDashboard.extraIngressRules         | list   | []                                                        | Appended verbatim to both NetworkPolicy flavors          |
+| Key                                        | Type   | Default                  | Description                                              |
+| ------------------------------------------ | ------ | ------------------------ | -------------------------------------------------------- |
+| consoleDashboard.enabled                   | Bool   | true                     | Deploy the dashboard                                     |
+| consoleDashboard.replicas                  | Number | 1                        | Replica count                                            |
+| consoleDashboard.image.repository          | String | thoras-dashboard-v2      | Joined to imageCredentials.registry                      |
+| consoleDashboard.imageTag                  | String | ""                       | Overrides consoleVersion for this component              |
+| consoleDashboard.containerPort             | Number | 8080                     | Port nginx listens on                                    |
+| consoleDashboard.port                      | Number | 80                       | Service port                                             |
+| consoleDashboard.externalUrl               | String | ""                       | Dashboard URL printed after install. Worked out from ingress when unset |
+| consoleDashboard.extras                    | object | {}                       | Merged into config.json's extra block                    |
+| consoleDashboard.serviceAccount.name       | String | thoras-console-dashboard | ServiceAccount name                                      |
+| consoleDashboard.service.type              | String | ""                       | Service type. Empty leaves it to Kubernetes              |
+| consoleDashboard.service.annotations       | object | {}                       | Annotations on the Service                               |
+| consoleDashboard.labels                    | object | {}                       | Component labels                                         |
+| consoleDashboard.podAnnotations            | object | {}                       | Component pod annotations                                |
+| consoleDashboard.resources                 | object | 50m/64Mi, 500m/256Mi     | Requests and limits                                      |
+| consoleDashboard.pdb.enabled               | Bool   | false                    | Render a PodDisruptionBudget                             |
+| consoleDashboard.pdb.maxUnavailable        | Number | 1                        | minAvailable takes precedence if both are set            |
+| consoleDashboard.ingress.enabled           | Bool   | false                    | The dashboard address, for people                        |
+| consoleDashboard.ingress.ingressClassName  | String | nginx                    | Cleared renders no ingressClassName                      |
+| consoleDashboard.ingress.annotations       | object | {}                       | Annotations on the Ingress                               |
+| consoleDashboard.ingress.hosts             | list   | console.local            | Hosts and paths. pathType defaults to Prefix             |
+| consoleDashboard.ingress.tls               | list   | []                       | Each entry is hosts plus an optional secretName          |
+| consoleDashboard.gatewayAPI.enabled        | Bool   | false                    | The same route as an HTTPRoute. Independent of ingress   |
+| consoleDashboard.gatewayAPI.annotations    | object | {}                       | Annotations on the HTTPRoute                             |
+| consoleDashboard.gatewayAPI.parentRefs     | list   | gateway/default          | Gateways to attach to                                    |
+| consoleDashboard.gatewayAPI.hostnames      | list   | console.local            | Hostnames to match                                       |
+| consoleDashboard.gatewayAPI.path           | String | /                        | Path to match                                            |
+| consoleDashboard.gatewayAPI.pathType       | String | PathPrefix               | Match type                                               |
+| consoleDashboard.useGlobalAffinity         | Bool   | false                    | Merge the global affinity into this component's          |
+| consoleDashboard.affinity                  | object | {}                       | Component affinity                                       |
+| consoleDashboard.priorityClassName         | String | ""                       | Takes precedence over the global priority class          |
+| consoleDashboard.topologySpreadConstraints | list   | []                       | Replaces the global list when non-empty                  |
+| consoleDashboard.extraEgressRules          | list   | []                       | Appended verbatim to both NetworkPolicy flavors          |
+| consoleDashboard.extraIngressRules         | list   | []                       | Appended verbatim to both NetworkPolicy flavors          |
 
 ### Config Controller
 
-Generates any credential you do not supply into the
-`thoras-console-config-controller` Secret, and evicts the pods that consume them
-when they change. It writes a value only when that value is absent, so an
-upgrade never rotates a generated password.
+Generates any credential you don't supply into the
+`thoras-console-config-controller` Secret, and restarts the pods that use them
+when they change. It only writes a value that is missing, so an upgrade never
+changes a generated password.
 
-Disabling it is only valid when every credential is pinned or referenced;
+Disabling it is only valid when every credential is set or referenced;
 otherwise the chart fails to render, because nothing else creates the Secret.
 
 | Key                                           | Type   | Default                          | Description                                            |
@@ -828,7 +1016,7 @@ otherwise the chart fails to render, because nothing else creates the Secret.
 | -------------------------------------------- | ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | bundledDatabase.enabled                      | Bool   | true, unwritten   | Absent from values.yaml so the chart can tell unset from explicit. Setting externalDatabase is enough to switch over; setting this to true as well fails the render |
 | bundledDatabase.image.repository             | String | timescaledb       | Joined to imageCredentials.registry                                                                                                                                |
-| bundledDatabase.image.tag                    | String | 2.28.2-pg16       | TimescaleDB image tag                                                                                                                                              |
+| bundledDatabase.imageTag                     | String | 2.28.2-pg16       | TimescaleDB image tag                                                                                                                                              |
 | bundledDatabase.extensionVersion             | String | 2.28.2            | Extension version console-api upgrades to                                                                                                                          |
 | bundledDatabase.containerPort                | Number | 5432              | Postgres port                                                                                                                                                      |
 | bundledDatabase.databaseName                 | String | thoras_cloud      | Created on first start                                                                                                                                             |
