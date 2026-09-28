@@ -30,6 +30,11 @@ in the [thoras](../thoras/README.md) chart at the second one.
 - For an external database: Postgres with the `timescaledb` and `citext`
   extensions available
 
+### Version compatibility
+
+- Console images (`consoleVersion`): `4.123.0` or later
+- [thoras](../thoras/README.md) chart on each tenant cluster: `5.4.0` or later
+
 ## Upgrading
 
 The chart is pre-1.0 while the value surface settles, so a minor bump
@@ -165,7 +170,7 @@ provider, network policies on.
 
 ```yaml
 # values.yaml
-consoleVersion: "5.1.0"
+consoleVersion: "4.123.0"
 
 imageCredentials:
   secretRef: thoras-console-registry
@@ -254,7 +259,7 @@ by every install that also leaves it empty.
 
 ```yaml
 # values.yaml
-consoleVersion: "5.1.0"
+consoleVersion: "4.123.0"
 
 imageCredentials:
   secretRef: thoras-console-registry

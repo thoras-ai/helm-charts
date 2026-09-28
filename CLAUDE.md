@@ -8,17 +8,19 @@ for those clusters to report into.
 
 This is the official Helm Charts repository for Thoras AI, an ML-powered platform that helps SRE teams view the future of their Kubernetes workloads.
 
-`charts/thoras` installs the complete Thoras platform onto Kubernetes clusters and is the chart the rest of this document describes. `charts/thoras-console` is a separate install running the console dashboard, `console-api`, a config-controller and an optional bundled TimescaleDB. The two charts are independent and may share a namespace, so resource and template names must not collide.
+`charts/thoras` installs the complete Thoras platform onto Kubernetes clusters. `charts/thoras-console` is a separate install running the console dashboard, `console-api`, a config-controller and an optional bundled TimescaleDB. The two charts are independent and may share a namespace, so resource and template names must not collide.
 
 The console exposes two hostnames that are not interchangeable: the dashboard serves browsers and proxies the API for them, while `console-api` has its own Ingress because workload clusters sync to it directly and the dashboard refuses ingest on its browser-facing hostname.
 
-Only `charts/thoras` is published. `release.yml` packages an explicit list rather than discovering `charts/*`, so adding a chart to the release means adding a `helm package` line and widening the version-bump diff scope alongside it.
+Both charts are published, each released when its own `Chart.yaml` version changes. A version bump cuts a release on merge, so it goes in a release PR of its own rather than inside a feature PR. `release.yml` lists the charts explicitly rather than discovering `charts/*`, so adding a chart means adding a version check and a `helm package` line there.
 
 ## Architecture
 
+### `charts/thoras`
+
 The Thoras platform consists of multiple interconnected components deployed as Kubernetes resources:
 
-### Core Components
+#### Core Components
 
 - **Thoras Operator**: Singleton operator managing the platform lifecycle
 - **Thoras API Server V2**: Main API service with configurable resource limits and caching
@@ -28,11 +30,11 @@ The Thoras platform consists of multiple interconnected components deployed as K
 - **Worker**: Background worker for cost refresh, monitors, and reconciliation jobs
 - **Config Controller**: Leader-elected controller that seeds credentials into `thoras-config-controller`, migrates pre-5.0 legacy Secrets, and drives dependency-ordered rollouts when watched Secrets change
 
-### Optional Components
+#### Optional Components
 
 - **Monitor**: Platform monitoring and alerting capabilities
 
-### Custom Resources
+#### Custom Resources
 
 The chart includes Custom Resource Definitions (CRDs) for:
 
@@ -40,15 +42,25 @@ The chart includes Custom Resource Definitions (CRDs) for:
 - Cluster AI Scale Template (`clusteraiscaletemplate.yaml`)
 - DaemonSet Autoscaler (`daemonsetautoscaler.yaml`)
 
+### `charts/thoras-console`
+
+- **Dashboard**: The same `thoras-dashboard-v2` image as the `thoras` chart, served by nginx. It proxies `/api/v1/` to `console-api` for browsers, deny-by-default, and refuses `ingest/` and `hook/`
+- **console-api**: The console API. Serves the dashboard, receives ingest from tenant clusters on its own Ingress, and registers clusters that join with the shared secret. Prometheus metrics on a separate port (9104), off the ingress-published one
+- **Config Controller**: The `config-controller` binary from the `console-api` image. Generates any credential not supplied — local admin password, database password and DSN, cluster-join secret — into `thoras-console-config-controller`, and rolls dependent workloads when they change
+- **Bundled TimescaleDB**: Evaluation-only StatefulSet, the default when no external database is configured. Its volume-template labels must never change: Kubernetes forbids editing them in place, so any change fails the upgrade
+
+Operators sign in with a local admin password by default (`consoleApi.auth.mode: local`), or through OIDC (`oidc`, `both`). Single-organization mode is on by default; cluster self-registration (`consoleApi.clusterJoin`) is off.
+
 ## Common Development Tasks
 
 ### Testing
 
-Run Helm unit tests:
+Run Helm unit tests for both charts, as CI does:
 
 ```bash
 helm plugin install https://github.com/helm-unittest/helm-unittest.git
 helm unittest ./charts/thoras --chart-tests-path ./charts/thoras/tests
+helm unittest ./charts/thoras-console --chart-tests-path ./charts/thoras-console/tests
 ```
 
 Lint both charts, as CI does:
@@ -73,11 +85,23 @@ Install with minimum configuration:
 helm install my-thoras-release thoras/thoras -n thoras --create-namespace -f ./values.yaml
 ```
 
+Install the console from a checkout, with the bundled database and a generated admin password:
+
+```bash
+helm install thoras-console thoras/thoras-console -n thoras-console --create-namespace \
+  --set imageCredentials.password=$(cat thoras_license.txt)
+```
+
 ### Version Management
 
-- Chart version is managed in `charts/thoras/Chart.yaml`
-- App version (thorasVersion) is managed in `charts/thoras/values.yaml`
-- The CI/CD pipeline automatically releases new chart versions when `Chart.yaml` version is bumped
+| Chart | Chart version | App version |
+| --- | --- | --- |
+| `thoras` | `charts/thoras/Chart.yaml` | `thorasVersion` in `charts/thoras/values.yaml` |
+| `thoras-console` | `charts/thoras-console/Chart.yaml` | `consoleVersion` in `charts/thoras-console/values.yaml` (the dashboard tag follows it unless `consoleDashboard.imageTag` is set) |
+
+Both app versions are platform release tags, such as `4.123.0`, and never `thoras` chart versions.
+
+- Merging a `Chart.yaml` version change releases that chart. Bump versions only in a release PR: the chart version, the app version and the README Version and AppVersion badges together, numbered by semver for what changed.
 
 ## File Structure
 
@@ -126,13 +150,20 @@ charts/thoras-console/
 
 ## Configuration
 
-The chart is configured through `values.yaml` with these key sections:
+`charts/thoras` is configured through `values.yaml` with these key sections:
 
 - **Global settings**: Image credentials, resource quotas, logging
 - **Component-specific configs**: Each component has dedicated configuration blocks
 - **RBAC**: Configurable namespace scoping vs cluster-wide permissions
 - **Persistence**: Optional storage configuration for metrics collector
 - **Monitoring**: Slack integration and Prometheus metrics
+
+`charts/thoras-console`'s key sections:
+
+- **`consoleApi.auth`**: Sign-in mode (`local`, `oidc`, `both`) and the OIDC issuer and audiences
+- **`consoleApi.singleOrg`, `consoleApi.clusterJoin`**: The implicit organization, and cluster self-registration (which requires it)
+- **`bundledDatabase` / `externalDatabase`**: Exactly one database; configuring `externalDatabase` switches off the bundled one
+- **`consoleDashboard.ingress`, `consoleApi.ingress`**: The two hostnames — browsers, and tenant-cluster ingest
 
 ## Git Commits
 
@@ -159,8 +190,8 @@ chart, not for the review of the PR that added them.
 
 ## CI/CD Pipeline
 
-- **CI**: Runs Helm unit tests and pre-commit hooks on PRs
-- **Release**: Automatically publishes chart releases when version is bumped in `Chart.yaml`
+- **CI**: Lints and unit-tests both charts, and runs pre-commit hooks on PRs
+- **Release**: Publishes each chart whose `Chart.yaml` version changed in the merged commit. Platform release notes (posted to Slack) are generated only for `thoras` releases
 - Uses GitHub Actions with chart-releaser for automated releases
 
 ## Registry and Images

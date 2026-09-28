@@ -7,10 +7,12 @@ templates:
 tests:
   - it: Runs the config-controller binary out of the console image
     template: config-controller/deployment.yaml
+    set:
+      consoleVersion: 1.2.3
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/console-api:latest
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/console-api:1.2.3
       - equal:
           path: spec.template.spec.containers[0].command
           value: ["/app/config-controller"]

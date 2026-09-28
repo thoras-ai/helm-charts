@@ -13,10 +13,12 @@ tests:
   # the bundle switches on the `console` key in config.json.
   - it: Runs the stock dashboard image
     template: dashboard/deployment.yaml
+    set:
+      consoleVersion: 1.2.3
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:latest
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:1.2.3
 
   - it: Lets the image tag be pinned away from consoleVersion
     template: dashboard/deployment.yaml

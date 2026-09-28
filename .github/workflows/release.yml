@@ -23,22 +23,36 @@ jobs:
         with:
           version: "v3.19.2"
 
-      - name: Determine if we're bumping the version
+      - name: Determine which charts are bumping their version
         shell: bash
         id: version_bump
         run: |
-          # Diff HEAD against pre-merge state and look for version bump.
-          # Scoped to the charts listed in the packaging step below: a bump to
-          # any other chart must not trigger a release.
-          DIFF=$(git diff $(git rev-parse HEAD^1)..HEAD charts/thoras/Chart.yaml)
-          LATEST_HELM=$(echo "$DIFF" | grep -E '^\+version:' | sed 's/^+version: *//' || true)
+          # Diff HEAD against pre-merge state and look for a version bump in each
+          # published chart. Scoped to the charts listed in the packaging step
+          # below: a bump to any other chart must not trigger a release.
+          THORAS_DIFF=$(git diff "$(git rev-parse HEAD^1)..HEAD" charts/thoras/Chart.yaml)
+          LATEST_HELM=$(echo "$THORAS_DIFF" | grep -E '^\+version:' | sed 's/^+version: *//' || true)
           if [ -n "$LATEST_HELM" ]; then
-            PREV_HELM=$(echo "$DIFF" | grep -E '^\-version:' | sed 's/^-version: *//' || true)
-            echo "is_bump=true" >> $GITHUB_OUTPUT
-            echo "latest_helm=$LATEST_HELM" >> $GITHUB_OUTPUT
-            echo "prev_helm=$PREV_HELM" >> $GITHUB_OUTPUT
+            PREV_HELM=$(echo "$THORAS_DIFF" | grep -E '^\-version:' | sed 's/^-version: *//' || true)
+            echo "thoras_bump=true" >> "$GITHUB_OUTPUT"
+            echo "latest_helm=$LATEST_HELM" >> "$GITHUB_OUTPUT"
+            echo "prev_helm=$PREV_HELM" >> "$GITHUB_OUTPUT"
           else
-            echo "is_bump=false" >> $GITHUB_OUTPUT
+            echo "thoras_bump=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          CONSOLE_DIFF=$(git diff "$(git rev-parse HEAD^1)..HEAD" charts/thoras-console/Chart.yaml)
+          LATEST_CONSOLE=$(echo "$CONSOLE_DIFF" | grep -E '^\+version:' | sed 's/^+version: *//' || true)
+          if [ -n "$LATEST_CONSOLE" ]; then
+            echo "console_bump=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "console_bump=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -n "$LATEST_HELM" ] || [ -n "$LATEST_CONSOLE" ]; then
+            echo "is_bump=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_bump=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Configure Git
@@ -51,10 +65,15 @@ jobs:
         if: steps.version_bump.outputs.is_bump == 'true'
         shell: bash
         run: |
-          # chart-releaser otherwise discovers every chart under charts/ and
-          # would publish ones that are not ready. Add a line per chart to
-          # publish, and widen the diff scope above to match.
-          helm package charts/thoras -d .cr-release-packages
+          # Package only the charts whose version moved: chart-releaser uploads
+          # every archive here as its own release. A new chart needs a line here
+          # and a check in the detection step above.
+          if [ "${{ steps.version_bump.outputs.thoras_bump }}" = "true" ]; then
+            helm package charts/thoras -d .cr-release-packages
+          fi
+          if [ "${{ steps.version_bump.outputs.console_bump }}" = "true" ]; then
+            helm package charts/thoras-console -d .cr-release-packages
+          fi
 
       - name: Run chart-releaser
         if: steps.version_bump.outputs.is_bump == 'true'
@@ -66,14 +85,16 @@ jobs:
         with:
           # Upload the packages built above rather than re-discovering charts.
           skip_packaging: true
-          # Packaging is unconditional, so a run where the chart version did not
-          # actually move must not fail on an existing release.
+          # A re-run, or a manual run on a commit already released, must not
+          # fail on the release that exists.
           skip_existing: true
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
+      # Release notes are generated from the thoras chart and thorasVersion, so a
+      # console-only release has none.
       - name: Extract versions for release notes
-        if: steps.version_bump.outputs.is_bump == 'true'
+        if: steps.version_bump.outputs.thoras_bump == 'true'
         id: versions
         shell: bash
         run: |
@@ -91,7 +112,7 @@ jobs:
           echo "prev_app=$PREV_APP" >> $GITHUB_OUTPUT
 
       - name: Trigger release notes generation
-        if: steps.version_bump.outputs.is_bump == 'true'
+        if: steps.version_bump.outputs.thoras_bump == 'true'
         shell: bash
         env:
           PLATFORM_DISPATCH_TOKEN: ${{ secrets.PLATFORM_DISPATCH_TOKEN }}
