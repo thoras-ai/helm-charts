@@ -325,7 +325,10 @@ tests:
           pattern: "skip_provider_button = true"
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
-          pattern: "cookie_secure = false"
+          pattern: "cookie_secure = true"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'cookie_samesite = "lax"'
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
           pattern: 'upstreams = \["http://127.0.0.1:8181"\]'
@@ -340,17 +343,20 @@ tests:
           path: data["oauth2-proxy.cfg"]
           pattern: 'banner = "Sign in to the Thoras Dashboard"'
 
-  - it: Reflects cookieSecure=true in the oauth2-proxy config
+  - it: Reflects cookieSecure=false in the oauth2-proxy config
     templates:
       - dashboard/oauth2-proxy-config-map.yaml
     set:
       thorasDashboard:
         auth:
-          cookieSecure: true
+          cookieSecure: false
     asserts:
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
-          pattern: "cookie_secure = true"
+          pattern: "cookie_secure = false"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'cookie_samesite = "lax"'
 
   - it: Renders an OIDC config under mode oidc
     templates:
@@ -395,6 +401,12 @@ tests:
       - matchRegex:
           path: data["oauth2-proxy.cfg"]
           pattern: "reverse_proxy = true"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: "cookie_secure = true"
+      - matchRegex:
+          path: data["oauth2-proxy.cfg"]
+          pattern: 'cookie_samesite = "lax"'
       # Under OIDC, no htpasswd surface should leak into the config.
       - notMatchRegex:
           path: data["oauth2-proxy.cfg"]
@@ -946,3 +958,61 @@ tests:
               - ports:
                   - port: "443"
                     protocol: TCP
+
+  # -------- NOTES.txt cookie guidance --------
+
+  - it: NOTES.txt says login needs HTTPS when cookieSecure is on
+    template: NOTES.txt
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Dashboard session cookie: Secure"
+      - matchRegex:
+          path: raw
+          pattern: "thorasDashboard.auth.cookieSecure=false"
+
+  - it: NOTES.txt covers the cookie in oidc mode too
+    template: NOTES.txt
+    set:
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            provider: oidc
+            issuerURL: https://acme.okta.com/oauth2/default
+            redirectURL: https://thoras.acme.com/oauth2/callback
+            emailDomains: [acme.com]
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "Dashboard session cookie: Secure"
+
+  - it: NOTES.txt warns when cookieSecure is off
+    template: NOTES.txt
+    set:
+      thorasDashboard:
+        auth:
+          cookieSecure: false
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "WARNING: thorasDashboard.auth.cookieSecure is false"
+      - notMatchRegex:
+          path: raw
+          pattern: "Dashboard session cookie: Secure"
+
+  - it: NOTES.txt omits cookie guidance when auth is disabled
+    template: NOTES.txt
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "session cookie"
+      - notMatchRegex:
+          path: raw
+          pattern: "cookieSecure"
