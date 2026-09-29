@@ -21,10 +21,7 @@ work through the matching section in [Breaking Changes](#breaking-changes).
 
 `thorasDashboard.auth.cookieSecure` now defaults to `true`. oauth2-proxy marks
 the dashboard session cookie Secure in both `htpasswd` and `oidc` modes, so
-browsers send it only over HTTPS. Before 6.0.0 the cookie also travelled over
-plain HTTP, and any plaintext request to the dashboard host, such as a
-bookmarked `http://` link or a redirect, disclosed a session that can pause
-scaling and change scale modes.
+browsers send it only over HTTPS.
 
 The chart also sets `cookie_samesite = "lax"` explicitly. Override it with
 `--cookie-samesite` under `thorasDashboard.auth.extraArgs`.
@@ -34,8 +31,9 @@ The chart also sets `cookie_samesite = "lax"` explicitly. Override it with
 #### Dashboard Served over Plain HTTP
 
 If the dashboard is reached without TLS, the browser drops the Secure cookie
-and sign-in returns to the login page. This affects local and non-TLS
-installs, and `kubectl port-forward` in Safari. To keep the pre-6.0 behavior:
+and sign-in returns to the login page. Chrome and Firefox exempt
+`http://localhost`, so `kubectl port-forward` still works in them; Safari does
+not. To keep the pre-6.0 behavior:
 
 ```yaml
 thorasDashboard:

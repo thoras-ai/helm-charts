@@ -25,8 +25,9 @@ Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
 {{ if and .Values.thorasDashboard.enabled .Values.thorasDashboard.auth.enabled -}}
 {{- if .Values.thorasDashboard.auth.cookieSecure -}}
 Dashboard session cookie: Secure
-  Login works only over HTTPS. Over plain HTTP the browser drops the cookie
-  and sign-in returns to the login page. For local or non-TLS testing, set
+  Over plain HTTP the browser drops the cookie and sign-in returns to the
+  login page. Chrome and Firefox exempt http://localhost, so kubectl
+  port-forward works there; Safari does not. For other non-TLS access, set
   thorasDashboard.auth.cookieSecure=false.
 {{- else -}}
 WARNING: thorasDashboard.auth.cookieSecure is false.
