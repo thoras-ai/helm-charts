@@ -5,7 +5,4 @@ type: application
 
 # App version is managed as consoleVersion in values.yaml, so the image tag can
 # move without a chart bump.
-#
-# Pre-1.0 while the value surface is still settling. The install guide lands in
-# a later release.
-version: 0.7.0
+version: 1.0.0
