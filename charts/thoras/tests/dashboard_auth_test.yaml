@@ -971,7 +971,7 @@ tests:
           path: raw
           pattern: "thorasDashboard.auth.cookieSecure=false"
 
-  - it: NOTES.txt covers the cookie in oidc mode too
+  - it: NOTES.txt covers the cookie in oidc mode
     template: NOTES.txt
     set:
       thorasDashboard:
