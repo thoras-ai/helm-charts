@@ -6,12 +6,51 @@ A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an 
 
 This doc provides detailed upgrade and migration instructions.
 
-## To 5.x
+## To 6.x
 
 All users should read the following [Changes Overview](#changes-overview).
 
 Users with a Thoras deployment that matches any of the following should also
 work through the matching section in [Breaking Changes](#breaking-changes).
+
+- [Serves the dashboard over plain HTTP](#dashboard-served-over-plain-http)
+
+### Changes Overview
+
+#### Dashboard Session Cookie Secure by Default
+
+`thorasDashboard.auth.cookieSecure` now defaults to `true`. oauth2-proxy marks
+the dashboard session cookie Secure in both `htpasswd` and `oidc` modes, so
+browsers send it only over HTTPS. Before 6.0.0 the cookie also travelled over
+plain HTTP, and any plaintext request to the dashboard host, such as a
+bookmarked `http://` link or a redirect, disclosed a session that can pause
+scaling and change scale modes.
+
+The chart also sets `cookie_samesite = "lax"` explicitly. Override it with
+`--cookie-samesite` under `thorasDashboard.auth.extraArgs`.
+
+### Breaking Changes
+
+#### Dashboard Served over Plain HTTP
+
+If the dashboard is reached without TLS, the browser drops the Secure cookie
+and sign-in returns to the login page. This affects local and non-TLS
+installs, and `kubectl port-forward` in Safari. To keep the pre-6.0 behavior:
+
+```yaml
+thorasDashboard:
+  auth:
+    cookieSecure: false
+```
+
+Deployments that terminate TLS at their ingress or gateway need no change.
+
+## To 5.x
+
+All users should read the following [Changes Overview](#changes-overview-1).
+
+Users with a Thoras deployment that matches any of the following should also
+work through the matching section in [Breaking Changes](#breaking-changes-1).
 
 - [Uses a hand-rolled oauth2-proxy sidecar](#migrating-from-the-standalone-oauth2-proxy-sidecar)
 - [Has externally managed authentication in front of the dashboard](#externally-managed-auth)
