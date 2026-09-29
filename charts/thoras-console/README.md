@@ -4,7 +4,7 @@ The Thoras console is where your clusters report in. This Helm chart installs a
 self-hosted [Thoras](https://www.thoras.ai) console onto Kubernetes, as an
 alternative to the hosted console at `console.thoras.ai`.
 
-![Version: 0.7.0](https://img.shields.io/badge/Version-0.7.0-informational?style=flat-square)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![AppVersion: 4.123.0](https://img.shields.io/badge/AppVersion-4.123.0-informational?style=flat-square)
 
 The chart installs the console dashboard, `console-api`, a `config-controller`
 that generates any credential you do not supply, and — for evaluation only — a
@@ -243,15 +243,13 @@ minutes, and its targets appear when you open it. If it doesn't, see
 
 ## Production install
 
-Pin the image version, use a database you manage, sign people in through your
+Pin the chart version, use a database you manage, sign people in through your
 identity provider or a password you control, and turn network policies on.
 
 ### Sample: OIDC
 
 ```yaml
 # values.yaml
-consoleVersion: "4.123.0"
-
 imageCredentials:
   secretRef: thoras-console-registry
 
@@ -332,8 +330,6 @@ shared by every install that also leaves it empty.
 
 ```yaml
 # values.yaml
-consoleVersion: "4.123.0"
-
 imageCredentials:
   secretRef: thoras-console-registry
 
@@ -637,9 +633,14 @@ helm repo update thoras
 helm upgrade thoras-console thoras/thoras-console -n thoras-console --reset-then-reuse-values
 ```
 
-The chart is pre-1.0 while its values settle, so a minor bump (`0.4.0` →
-`0.5.0`) may rename or restructure values. Read the release notes before
-upgrading, and pin the chart version in production.
+The chart follows semantic versioning. A major version may rename or remove
+values, a minor version only adds them, and a patch version only fixes. Read the
+release notes before a major upgrade, and pin the chart version in production
+by passing `--version` to `helm install` and `helm upgrade`.
+
+Each chart version pins the console images it was released with, so upgrading
+the chart upgrades the console. If you set `consoleVersion` yourself, it stays
+where you set it through every upgrade until you change or remove it.
 
 Use `--reset-then-reuse-values`, not `--reuse-values`. A new chart version often
 adds values, and `--reuse-values` keeps the previous release's values *instead
@@ -839,7 +840,7 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 
 | Key                             | Type   | Default                                          | Description                                                |
 | ------------------------------- | ------ | ------------------------------------------------ | ---------------------------------------------------------- |
-| consoleVersion                  | String | latest                                           | Image tag for the console components. Pin this in production |
+| consoleVersion                  | String | 4.123.0                                          | Image tag for the console components. Defaults to the release this chart version ships with |
 | imageCredentials.registry       | String | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                    |
 | imageCredentials.username       | String | \_json_key_base64                                | Container registry username                                |
 | imageCredentials.password       | String | ""                                               | License key. Mutually exclusive with secretRef             |

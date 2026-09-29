@@ -21,6 +21,13 @@ tests:
           path: spec.template.spec.containers[0].command
           value: ["/app/console-api"]
 
+  - it: Pins the console images to a release by default, never latest
+    template: console-api/deployment.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: /console-api:\d+\.\d+\.\d+$
+
   - it: Mounts no ServiceAccount token, having no Kubernetes API to call
     template: console-api/deployment.yaml
     asserts:

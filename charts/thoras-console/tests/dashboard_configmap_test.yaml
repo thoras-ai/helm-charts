@@ -188,6 +188,9 @@ tests:
           path: data["nginx.conf"]
 
   - it: Matches the snapshot
+    set:
+      # Pinned for the same reason as the chart version above.
+      consoleVersion: 1.2.3
     asserts:
       - matchSnapshot:
           path: data["nginx.conf.template"]

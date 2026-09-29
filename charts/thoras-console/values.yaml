@@ -1,6 +1,7 @@
 ---
-# Image tag for the console components.
-consoleVersion: "latest"
+# Image tag for the console components: the platform release this chart version
+# ships with.
+consoleVersion: "4.123.0"
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
