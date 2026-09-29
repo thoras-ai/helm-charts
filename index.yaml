@@ -2728,4 +2728,14 @@ entries:
     urls:
     - https://github.com/thoras-ai/helm-charts/releases/download/thoras-2.0.0/thoras-2.0.0.tgz
     version: 2.0.0
-generated: "2026-09-25T23:23:54.010460208Z"
+  thoras-console:
+  - apiVersion: v2
+    created: "2026-09-29T21:31:02.343635491Z"
+    description: Helm chart to install the Thoras console
+    digest: 333c33aea711d26db702292cd9913d7a42daa3e6093429e6b0405dac23afa8a1
+    name: thoras-console
+    type: application
+    urls:
+    - https://github.com/thoras-ai/helm-charts/releases/download/thoras-console-1.0.0/thoras-console-1.0.0.tgz
+    version: 1.0.0
+generated: "2026-09-29T21:31:02.344012453Z"
