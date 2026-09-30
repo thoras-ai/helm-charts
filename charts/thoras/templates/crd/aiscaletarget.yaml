@@ -1475,6 +1475,14 @@ spec:
                 x-kubernetes-list-type: map
               horizontalSuggestion:
                 properties:
+                  adjustedReplicas:
+                    description: |-
+                      AdjustedReplicas is SuggestedReplicas with the AST's horizontal constraints
+                      applied (clamped to min/max, then snapped to allowedReplicas or multipleOf). It
+                      previews what autonomous mode would apply, for recommendation mode without an
+                      HPA. Omitted until there is enough data to recommend scaling.
+                    format: int32
+                    type: integer
                   currentReplicas:
                     format: int32
                     type: integer
@@ -1525,11 +1533,15 @@ spec:
                   Used to determine when the episode is over.
                 format: date-time
                 type: string
+              lastProcessedHorizontalSuggestionUID:
+                type: string
               lastProcessedSuggestionUID:
                 description: |-
                   LastProcessedSuggestionUID is the SuggestionUID of the last suggestion the operator
                   fully processed (PrepareAction → execute → audit written). Used to prevent reprocessing
                   the same suggestion on every reconcile.
+                type: string
+              lastProcessedVerticalSuggestionUID:
                 type: string
               latestSuggestion:
                 description: LatestSuggestion contains the most recent scaling recommendations
