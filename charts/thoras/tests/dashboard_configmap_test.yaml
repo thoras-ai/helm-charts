@@ -17,12 +17,16 @@ tests:
     set:
       thorasDashboard:
         extras:
-          cluster_name: phantom-assassin
           foo: bar
           feature: true
     asserts:
       - matchSnapshot:
           path: data["nginx.conf.template"]
+  - it: Does not add cluster.name to the dashboard extras
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'cluster_name'
   - it: Should render the nginx config under the nginx.conf.template key
     asserts:
       - exists:
