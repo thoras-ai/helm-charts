@@ -54,6 +54,31 @@ migrate the existing seeded secrets in cluster, no intervention needed.
 If you leverage any of the chart's [Externally Managed Auth](#externally-managed-auth) options,
 config-controller will handle a rolling restart of any Thoras workloads that depend on the secrets when a change is detected.
 
+#### `recreate_resources` values are validated
+
+The AIScaleTarget and ClusterAIScaleTemplate CRDs now accept only `memory` and
+`cpu` in `vertical.update_policy.recreate_resources`. Any other value, such as
+`Memory`, never matched a resource, so pods were never recreated for any
+resource and nothing reported the mistake.
+
+After the upgrade, a create or update that sets another value is rejected with
+`Unsupported value`. Objects already stored with another value are not touched.
+On Kubernetes 1.30 and later, writes that leave the list unchanged still
+succeed; on older clusters every write to such an object fails until the value
+is fixed. Fix the value to `memory` or `cpu` before or after upgrading. Rolling
+back to the previous chart restores the old CRD.
+
+To find affected objects:
+
+```
+kubectl get aiscaletargets,clusteraiscaletemplates -A -o json \
+  | jq -r '.items[]
+    | . as $o
+    | ($o.spec.vertical.update_policy.recreate_resources // $o.spec.template.spec.vertical.update_policy.recreate_resources // []) as $list
+    | select($list | any(. != "memory" and . != "cpu"))
+    | [$o.kind, ($o.metadata.namespace // "-"), $o.metadata.name, ($list | join(","))] | @tsv'
+```
+
 ### Breaking Changes
 
 #### Externally Managed Auth
