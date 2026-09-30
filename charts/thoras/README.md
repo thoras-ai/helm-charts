@@ -180,15 +180,19 @@ kubectl get secret thoras-console-config-controller -n thoras-console \
   -o jsonpath='{.data.cluster-join-secret}' | base64 -d
 ```
 
-then set it on each agent install alongside a name and the console's URL:
+then set it on each agent install alongside a name and the console's ingest address:
 
 ```yaml
 cluster:
   name: production-eu          # required: the console registers the cluster under it
 cloudSync:
-  baseUrl: https://console.example.com
+  baseUrl: https://console-api.example.com
   joinSecret: <the secret>
 ```
+
+The ingest address is `console-api`'s own host, not the dashboard's: the dashboard
+refuses ingest. See the console chart's
+[ingest address](../thoras-console/README.md#the-ingest-address).
 
 config-controller then seeds a stable install ID, calls the console once, and writes the
 cluster key it receives into `thoras-config-controller`. Until that succeeds the
