@@ -74,7 +74,7 @@ To find affected objects:
 kubectl get aiscaletargets,clusteraiscaletemplates -A -o json \
   | jq -r '.items[]
     | . as $o
-    | ($o.spec.vertical.update_policy.recreate_resources // $o.spec.template.spec.vertical.update_policy.recreate_resources // []) as $list
+    | ($o.spec.vertical.update_policy.recreate_resources // $o.spec.template.vertical.update_policy.recreate_resources // []) as $list
     | select($list | any(. != "memory" and . != "cpu"))
     | [$o.kind, ($o.metadata.namespace // "-"), $o.metadata.name, ($list | join(","))] | @tsv'
 ```
