@@ -70,7 +70,8 @@ helm install thoras-console thoras/thoras-console \
   --set imageCredentials.password="$(cat thoras_license.txt)"
 ```
 
-**2. Check the pods.** All four reach `Running`, usually within a minute:
+**2. Check the pods.** All four reach `Running`, usually within a minute once
+their images are on the node:
 
 ```
 kubectl get pods -n thoras-console
@@ -80,13 +81,20 @@ On a fresh install `console-api` and the database briefly show
 `CreateContainerConfigError` while config-controller generates their
 credentials. It clears on its own.
 
+The first install on a node downloads about 3 GB of images, 1.5 GB of it the
+database, and can take several minutes. Until the downloads finish,
+`console-api` keeps showing `CreateContainerConfigError`; that is still
+expected.
+
 **3. Sign in.** Forward the dashboard to your workstation:
 
 ```
 kubectl port-forward -n thoras-console svc/thoras-console-dashboard 8080:80
 ```
 
-Open <http://localhost:8080> and sign in with the generated admin password:
+Open <http://localhost:8080> and sign in with the generated admin password. The
+thoras chart's dashboard is also forwarded to 8080 in its own README, so pick
+another local port for one of them if both run on your workstation.
 
 ```
 kubectl get secret thoras-console-config-controller -n thoras-console \
@@ -205,7 +213,14 @@ consoleApi:
     enabled: true
 ```
 
-and read the generated secret out:
+For an existing install:
+
+```
+helm upgrade thoras-console thoras/thoras-console -n thoras-console \
+  --reset-then-reuse-values --set consoleApi.clusterJoin.enabled=true
+```
+
+Then read the generated secret out:
 
 ```
 kubectl get secret thoras-console-config-controller -n thoras-console \
@@ -213,7 +228,8 @@ kubectl get secret thoras-console-config-controller -n thoras-console \
 ```
 
 Then install each tenant cluster's thoras chart with the join secret and the
-name to register under:
+name to register under. A cluster that already has a key must clear it first:
+see [Moving a cluster from another console](#moving-a-cluster-from-another-console).
 
 ```
 helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
@@ -234,6 +250,71 @@ its own. From then on it sends data with that key, like any other cluster:
 
 Requires `consoleApi.singleOrg.enabled`, the default: a joining cluster presents
 no user identity, so the organization has to be implicit.
+
+### Moving a cluster from another console
+
+A cluster reports to one console only, the one at `cloudSync.baseUrl`. To move
+one here from Thoras' hosted console, or from another self-hosted one, point it
+at this console with a credential from this console.
+
+- **What moves:** the cluster appears here as a new cluster. Its targets and
+  their settings live in the cluster, so they arrive with its first syncs.
+- **What doesn't:** its history — metrics, scaling decisions and savings —
+  stays in the old console. The old entry stops updating; revoke its key or
+  delete it there once the move is done.
+
+First check the cluster meets [Before you connect](#before-you-connect): in
+particular, upgrade its thoras chart to 5.4.0 or later before moving it.
+
+**With a key.** Create the cluster here and copy its key, as in
+[With a key](#with-a-key), then replace the old values:
+
+```
+helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
+  --set cloudSync.baseUrl=https://console-api.example.com \
+  --set cloudSync.clusterKeyID=<key ID> \
+  --set cloudSync.clusterKey=<key> \
+  --set cloudSync.joinSecret=
+```
+
+If the old key came from a Secret (`cloudSync.clusterKeySecretRefName`), put the
+new key in that Secret instead of setting `cloudSync.clusterKey`.
+
+**By joining.** Clear the old key, then join as in
+[Joining by itself](#joining-by-itself):
+
+```
+helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
+  --set cloudSync.baseUrl=https://console-api.example.com \
+  --set cloudSync.clusterKeyID= \
+  --set cloudSync.clusterKey= \
+  --set cloudSync.joinSecret=<join secret> \
+  --set cluster.name=production-eu
+```
+
+A cluster that joined its old console keeps the key that console gave it, and
+never joins again while it has one. Delete that key so it joins here:
+
+```
+kubectl patch secret thoras-config-controller -n thoras --type=json -p \
+  '[{"op":"remove","path":"/data/cloud-sync-cluster-key"},
+    {"op":"remove","path":"/data/cloud-sync-cluster-key-id"}]'
+```
+
+Either way, finish by making the cluster send its targets again. The operator
+records which targets it has sent and may not resend them under a new key, which
+leaves the new cluster's target list empty. Clearing its record is harmless when
+it isn't needed:
+
+```
+kubectl annotate aiscaletargets --all -A thoras.ai/cloud-sync-generation-
+```
+
+For the first sync or two, targets may show "Target workload missing" before
+their usage arrives; that clears on its own.
+
+With GitOps or helmfile, set the same values in your values file rather than
+with `--set`. Moving back is the same steps, pointed at the old console.
 
 ### Checking it works
 
@@ -793,6 +874,10 @@ Check the worker logs on the tenant cluster:
 kubectl logs deploy/thoras-worker -n thoras | grep -i sync
 ```
 
+A rejected sync appears as `failed to flush sync payloads … 401`. The worker
+still logs `cloud sync completed successfully` alongside it, so check the
+console's **Last ingest** rather than that line.
+
 **A tenant cluster never reports, and its worker logs show `403` from nginx.**
 `cloudSync.baseUrl` points at the dashboard address, which refuses ingest by
 design. Point it at the [ingest address](#the-ingest-address).
@@ -807,9 +892,8 @@ agent can't read pod usage. Install metrics-server there; the next sync fills
 the targets in.
 
 **The target list stays empty after moving a tenant cluster to a new key.** The
-agent sends each target once and doesn't send it again for a new key, so the
-new cluster entry never receives them. Clear the marker and they are sent again
-on the next pass:
+operator records which targets it has sent and may not send them again for a
+new key. Clear its record and they are sent again on the next pass:
 
 ```
 kubectl annotate aiscaletargets --all -A thoras.ai/cloud-sync-generation-
