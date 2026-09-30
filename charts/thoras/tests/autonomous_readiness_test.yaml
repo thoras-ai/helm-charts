@@ -1,0 +1,47 @@
+suite: AutonomousReadiness
+templates:
+  - dashboard/nginx-config-map.yaml
+tests:
+  - it: config.json has autonomous readiness off by default
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableAutonomousReadiness": *false[,}]'
+
+  - it: nginx blocks the readiness routes by default
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'auto-ready|forecast_performance/history'
+
+  - it: config.json follows the flag when enabled
+    set:
+      featureFlags:
+        enableAutonomousReadiness: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableAutonomousReadiness": *true[,}]'
+
+  - it: nginx allows the readiness routes when enabled
+    set:
+      featureFlags:
+        enableAutonomousReadiness: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/ast/\[\^/\]\+/auto-ready\(\\\?\|\$\) +1;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/ast/\[\^/\]\+/signals/forecast_performance/history\(\\\?\|\$\) +1;'
+
+  - it: falls back to off when the key is missing from stored values
+    set:
+      featureFlags.enableAutonomousReadiness: null
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableAutonomousReadiness": *false[,}]'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'auto-ready|forecast_performance/history'

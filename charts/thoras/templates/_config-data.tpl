@@ -124,6 +124,10 @@ and their consumers.
         ~*^GET/v1/views/nodes/summary(\?|$)                                       1;
         ~*^GET/v1/pods/[^/]+/[^/]+/logs(\?|$)                                     1;
         ~*^GET/v1/persistent-volumes(\?|$)                                        1;
+        {{- if .Values.featureFlags.enableAutonomousReadiness }}
+        ~*^GET/v1/ast/[^/]+/auto-ready(\?|$)                                      1;
+        ~*^GET/v1/ast/[^/]+/signals/forecast_performance/history(\?|$)            1;
+        {{- end }}
 
 
         # POST — dashboard-initiated mutations
@@ -185,7 +189,7 @@ and their consumers.
 
         location /config.json {
             default_type application/json;
-            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ .Values.featureFlags.enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) .Values.thorasDashboard.extras) }} }';
+            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ .Values.featureFlags.enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) .Values.thorasDashboard.extras) }} }';
         }
 
         location / {
