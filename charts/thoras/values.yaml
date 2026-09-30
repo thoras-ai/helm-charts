@@ -61,6 +61,9 @@ featureFlags:
   # the Logs column on the pod table. Both sides read this single value, since
   # enabling only the dashboard yields a Logs button the API server refuses.
   enablePodLogStreaming: false
+  # When enabled, the dashboard shows the vertical autonomous readiness tab for
+  # observation-mode workloads. The API serves readiness regardless.
+  enableAutonomousReadiness: false
   thorasManageThoras:
     enabled: true
     # Recommendation Mode by default
