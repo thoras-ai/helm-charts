@@ -685,6 +685,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | metricsCollector.persistence.accessMode                         | String  | "ReadWriteOnce"  | The accessMode applied to the PVC                                                            |
 | metricsCollector.podAnnotations                                 | Object  | {}               | Pod Annotations for Thoras metrics collector                                                 |
 | metricsCollector.labels                                         | Object  | {}               | Pod/service labels for Thoras metrics collector                                              |
+| metricsCollector.env                                            | List    | []               | Extra env vars appended to every container in the metrics-collector Deployment               |
 | metricsCollector.timescale.image                                | String  | timescaledb      | Timescale image                                                                              |
 | metricsCollector.timescale.imageTag                             | String  | 2.28.2-pg16      | Timescale image tag                                                                          |
 | metricsCollector.timescale.extensionVersion                     | String  | 2.28.2           | Timescale extension version - should match imageTag                                          |

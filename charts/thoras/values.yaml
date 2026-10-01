@@ -321,6 +321,8 @@ metricsCollector:
     pvcStorageRequestSize: ""
   podAnnotations: {}
   labels: {}
+  # Extra env vars appended to every container in the metrics-collector Deployment
+  env: []
   # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
   # below. minAvailable takes precedence if both are set.
   pdb:
