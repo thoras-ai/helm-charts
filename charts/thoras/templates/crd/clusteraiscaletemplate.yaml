@@ -1409,9 +1409,13 @@ spec:
                             default:
                             - memory
                             description: |-
-                              RecreateResources lists which resource types should trigger pod recreation when changed.
-                              Defaults to ["memory"] if not set.
+                              RecreateResources lists the resources whose changes may recreate pods.
+                              Used when UpdateMode is "recreate" or "in_place_or_recreate".
+                              Defaults to ["memory"] if not set. An empty list also means ["memory"]; it does not disable recreation.
                             items:
+                              enum:
+                              - memory
+                              - cpu
                               type: string
                             type: array
                           update_mode:
