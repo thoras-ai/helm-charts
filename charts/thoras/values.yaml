@@ -69,8 +69,7 @@ featureFlags:
     # Recommendation Mode by default
     mode: "recommendation"
     # When true, the metrics-collector AST follows `mode` above instead of
-    # being pinned to observation mode. Defaults to false since WAL issues
-    # with metrics-collector autonomous mode are still being resolved.
+    # being pinned to observation mode.
     metricsCollectorFollowsMode: true
     updateMode: "in_place_or_recreate"
     db:
