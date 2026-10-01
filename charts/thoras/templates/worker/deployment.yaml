@@ -270,6 +270,16 @@ spec:
             value: {{ .Values.thorasWorker.enableCostAndUsageCollector | ternary "true" "false" | quote }}
           - name: SERVICE_COST_EXPLORER_FILTER
             value: {{ .Values.thorasWorker.costExplorerFilter | quote }}
+          - name: SERVICE_ENABLE_CUR_INGESTION
+            value: {{ .Values.thorasWorker.enableCurIngestion | ternary "true" "false" | quote }}
+          - name: SERVICE_CUR_BUCKET
+            value: {{ .Values.thorasWorker.curBucket | quote }}
+          - name: SERVICE_CUR_PREFIX
+            value: {{ .Values.thorasWorker.curPrefix | quote }}
+          - name: SERVICE_CUR_EXPORT_NAME
+            value: {{ .Values.thorasWorker.curExportName | quote }}
+          - name: SERVICE_CUR_REGION
+            value: {{ .Values.thorasWorker.curRegion | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics
