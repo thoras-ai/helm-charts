@@ -94,6 +94,11 @@ spec:
             mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
         {{- end }}
         {{- end }}
+        {{- if or (include "thoras.globalEnv" .) .Values.metricsCollector.env }}
+        env:
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
+        {{- end }}
         {{- if .Values.metricsCollector.init.resources }}
         resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -158,6 +163,7 @@ spec:
           - name: WAL_RECOVERY_TIMEOUT_SECONDS
             value: {{ .Values.metricsCollector.timescale.walRecovery.timeoutSeconds | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
         {{- if .Values.metricsCollector.timescale.resources }}
         resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -220,6 +226,7 @@ spec:
           - name: "PGDATA"
             value: /var/lib/share/postgresql
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
         {{- if .Values.metricsCollector.timescale.resources }}
         resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -289,6 +296,7 @@ spec:
           - name: PGCONNECT_TIMEOUT
             value: "5"
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
         {{- with ((.Values.metricsCollector.timescale.tls).reload).resources }}
         resources: {{ . | toYaml | nindent 10 }}
         {{- end }}
@@ -378,6 +386,7 @@ spec:
             value: {{ .Values.metricsCollector.blobService.pprof.enabled | quote }}
           {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
         {{- if .Values.metricsCollector.blobService.resources }}
         resources: {{ .Values.metricsCollector.blobService.resources | toYaml | nindent 10 }}
         {{- else }}
