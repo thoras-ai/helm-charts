@@ -20,9 +20,18 @@ Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
 {{- if eq $passwordRef.name "thoras-config-controller" }}
     The Secret appears once config-controller has seeded it.
 {{- end }}
-{{- if .Values.thorasDashboard.auth.cookieSecure }}
-  cookieSecure is enabled: the edge must terminate TLS or login will
-  silently fail.
+{{- end }}
+
+{{ if and .Values.thorasDashboard.enabled .Values.thorasDashboard.auth.enabled -}}
+{{- if .Values.thorasDashboard.auth.cookieSecure -}}
+Dashboard session cookie: Secure
+  Serve the dashboard over TLS. For non-TLS access, set
+  thorasDashboard.auth.cookieSecure=false. See UPGRADE.md > Dashboard
+  Served over Plain HTTP.
+{{- else -}}
+WARNING: thorasDashboard.auth.cookieSecure is false.
+  The session cookie is also sent over plain HTTP. Set it to true once the
+  dashboard is served over TLS.
 {{- end }}
 {{- end }}
 

@@ -45,6 +45,7 @@ and their consumers.
     # and calls the dummy provider, which 401s.
     cookie_secret_file = "/etc/oauth2-proxy/secret/cookie-secret"
     cookie_secure = {{ $auth.cookieSecure }}
+    cookie_samesite = "lax"
     reverse_proxy = true
     silence_ping_logging = true
     banner = "Sign in to the Thoras Dashboard"
@@ -61,6 +62,7 @@ and their consumers.
     cookie_secret_file = "/etc/oauth2-proxy/secret/cookie-secret"
     email_domains = [{{ range $i, $d := $auth.oidc.emailDomains }}{{ if $i }}, {{ end }}{{ $d | quote }}{{ end }}]
     cookie_secure = {{ $auth.cookieSecure }}
+    cookie_samesite = "lax"
     reverse_proxy = true
     silence_ping_logging = true
     skip_provider_button = {{ $auth.oidc.skipProviderButton }}
