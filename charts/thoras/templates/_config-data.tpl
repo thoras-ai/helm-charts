@@ -124,6 +124,7 @@ and their consumers.
         ~*^GET/v1/views/nodes/summary(\?|$)                                       1;
         ~*^GET/v1/pods/[^/]+/[^/]+/logs(\?|$)                                     1;
         ~*^GET/v1/persistent-volumes(\?|$)                                        1;
+        ~*^GET/v1/cost/daily(\?|$)                                                1;
         {{- if .Values.featureFlags.enableAutonomousReadiness }}
         ~*^GET/v1/ast/[^/]+/auto-ready(\?|$)                                      1;
         ~*^GET/v1/ast/[^/]+/signals/forecast_performance/history(\?|$)            1;
