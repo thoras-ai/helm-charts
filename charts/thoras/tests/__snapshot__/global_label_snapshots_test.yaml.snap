@@ -2136,6 +2136,16 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_COST_EXPLORER_FILTER
                   value: ""
+                - name: SERVICE_ENABLE_CUR_INGESTION
+                  value: "false"
+                - name: SERVICE_CUR_BUCKET
+                  value: ""
+                - name: SERVICE_CUR_PREFIX
+                  value: ""
+                - name: SERVICE_CUR_EXPORT_NAME
+                  value: ""
+                - name: SERVICE_CUR_REGION
+                  value: ""
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
