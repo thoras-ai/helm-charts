@@ -575,6 +575,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                            |
 | featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs |
 | featureFlags.enableAutonomousReadiness         | Boolean | false   | If true, the dashboard shows the vertical autonomous readiness tab              |
+| featureFlags.enableIdleSpend                   | Boolean | false   | If true, the dashboard shows the idle spend card on the cost tab                |
 
 ### NetworkPolicy
 

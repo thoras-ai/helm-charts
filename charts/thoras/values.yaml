@@ -64,6 +64,9 @@ featureFlags:
   # When enabled, the dashboard shows the vertical autonomous readiness tab for
   # observation-mode workloads. The API serves readiness regardless.
   enableAutonomousReadiness: false
+  # When enabled, the dashboard shows the idle spend card on the cost breakdown
+  # tab and nginx allows its API route.
+  enableIdleSpend: false
   thorasManageThoras:
     enabled: true
     # Recommendation Mode by default

@@ -1,0 +1,44 @@
+suite: IdleSpend
+templates:
+  - dashboard/nginx-config-map.yaml
+tests:
+  - it: config.json has idle spend off by default
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableIdleSpend": *false[,}]'
+
+  - it: nginx blocks the idle spend route by default
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'views/cost/idle'
+
+  - it: config.json follows the flag when enabled
+    set:
+      featureFlags:
+        enableIdleSpend: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableIdleSpend": *true[,}]'
+
+  - it: nginx allows the idle spend route when enabled
+    set:
+      featureFlags:
+        enableIdleSpend: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/views/cost/idle\(\\\?\|\$\) +1;'
+
+  - it: falls back to off when the key is missing from stored values
+    set:
+      featureFlags.enableIdleSpend: null
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableIdleSpend": *false[,}]'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'views/cost/idle'
