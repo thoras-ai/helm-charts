@@ -554,6 +554,11 @@ thorasWorker:
   # Cost allocation tag identifying this cluster's spend, as TAG_KEY=TAG_VALUE.
   # Empty resolves the tag from node labels.
   costExplorerFilter: ""
+  # Hourly AWS Cost Explorer collection, for the hourly cost graph. Uses the same
+  # IRSA role and filter as above, and needs "Cost and usage data for all AWS
+  # services at hourly granularity" enabled in Cost Explorer preferences, which
+  # AWS charges for. Without it each run logs a warning and stores nothing.
+  enableHourlyCostCollector: false
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it

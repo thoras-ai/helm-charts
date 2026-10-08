@@ -766,6 +766,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                               |
 | thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. Requires an IRSA role granting `ce:GetCostAndUsage`                   |
 | thorasWorker.costExplorerFilter                      | String  | ""            | Cost allocation tag identifying this cluster's spend, as `TAG_KEY=TAG_VALUE`. Empty resolves the tag from node labels                |
+| thorasWorker.enableHourlyCostCollector               | Boolean | false         | Enable hourly AWS Cost Explorer collection for the hourly cost graph. Needs hourly granularity for all AWS services enabled in Cost Explorer preferences, which AWS charges for |
 
 ### Thoras Config Controller
 

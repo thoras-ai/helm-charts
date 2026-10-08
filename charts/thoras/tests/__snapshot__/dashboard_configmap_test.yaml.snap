@@ -54,6 +54,7 @@ Should default to v2 port:
           ~*^GET/v1/pods/[^/]+/[^/]+/logs(\?|$)                                     1;
           ~*^GET/v1/persistent-volumes(\?|$)                                        1;
           ~*^GET/v1/cost/daily(\?|$)                                                1;
+          ~*^GET/v1/cost/hourly(\?|$)                                               1;
 
 
           # POST — dashboard-initiated mutations
@@ -174,6 +175,7 @@ should set extras in config.json:
           ~*^GET/v1/pods/[^/]+/[^/]+/logs(\?|$)                                     1;
           ~*^GET/v1/persistent-volumes(\?|$)                                        1;
           ~*^GET/v1/cost/daily(\?|$)                                                1;
+          ~*^GET/v1/cost/hourly(\?|$)                                               1;
 
 
           # POST — dashboard-initiated mutations
