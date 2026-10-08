@@ -978,3 +978,7 @@ utilizationThresholds:
   overprovisioned: 60
   underprovisioned: 92
   idle: 5
+
+# -- Extra Kubernetes manifests to deploy with the release. Each entry is an
+# object or a string; both are rendered through `tpl`.
+extraObjects: []

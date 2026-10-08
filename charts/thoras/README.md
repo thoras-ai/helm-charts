@@ -524,6 +524,22 @@ enabled, the chart opens broad egress on port `443` so oauth2-proxy
 can reach the IdP; tighten with a layered `CiliumNetworkPolicy` scoped
 by `toFQDNs`, or manage egress out-of-band.
 
+### Extra objects
+
+`extraObjects` deploys arbitrary manifests alongside Thoras, e.g. an
+`ExternalSecret` for the license key or a `PodMonitor`. Entries are
+rendered through `tpl`, so they can reference release values:
+
+```yaml
+extraObjects:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: "{{ .Release.Name }}-extra"
+    data:
+      cluster: "{{ .Values.cluster.name }}"
+```
+
 ## Values
 
 ### Global
@@ -540,6 +556,7 @@ by `toFQDNs`, or manage egress out-of-band.
 | resourceQuota.jobs                        | Number  | 200                                              | Maximum number of jobs allowed                                                                                                                                                                                                                                                                                                                                  |
 | logLevel                                  | String  | info                                             | Default log level                                                                                                                                                                                                                                                                                                                                               |
 | env                                       | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                                                                                                                                                                                                                                                                 |
+| extraObjects                              | list    | []                                               | Extra Kubernetes manifests deployed with the release. Entries may be objects or strings and are rendered through `tpl`. See [Extra objects](#extra-objects). |
 | slackWebhookUrl                           | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                                                                                                                                                                                                                                                                |
 | slackErrorsEnabled                        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                                                                                                                                                                                                                    |
 | cloudSync.clusterKeyID                    | String  | ""                                               | Identity of cluster sync key. Cloud sync is disabled if not specified                                                                                                                                                                                                                                                                                           |
