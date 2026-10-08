@@ -712,10 +712,9 @@ thorasDashboard:
     # Fields under the unused mode's block are silently ignored.
     mode: htpasswd
     imageTag: v7.15.4-alpine
-    # Marks session cookies as Secure. Enabling requires TLS at the edge and
-    # breaks Safari when reaching the dashboard through kubectl port-forward.
-    # Recommended in production: enable this and terminate TLS at the edge.
-    cookieSecure: false
+    # Marks session cookies as Secure. Requires TLS at the edge; set to false
+    # for non-TLS access.
+    cookieSecure: true
     # oauth2-proxy sidecar resources.
     resources:
       limits:

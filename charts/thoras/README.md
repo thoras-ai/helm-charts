@@ -17,6 +17,12 @@ A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an 
 
 Detailed upgrade procedures found [here](./UPGRADE.md).
 
+### [To 6.x](./UPGRADE.md#to-6x)
+
+- **Dashboard session cookie is Secure by default.** Serve the dashboard
+  over TLS, or see
+  [Dashboard Served over Plain HTTP](./UPGRADE.md#dashboard-served-over-plain-http).
+
 ### [To 5.x](./UPGRADE.md#to-5x)
 
 - **Dashboard now requires authentication.** Fronted by an oauth2-proxy
@@ -80,7 +86,9 @@ Port-forward the dashboard Service to your workstation:
 kubectl port-forward -n thoras svc/thoras-dashboard 8080:80
 ```
 
-Then open <http://localhost:8080>. Sign in with:
+Then open <http://localhost:8080> in Chrome or Firefox. Safari drops the
+Secure session cookie over plain HTTP, so sign-in fails there unless
+`thorasDashboard.auth.cookieSecure` is set to `false`. Sign in with:
 
 - **Username**: `thoras` (`thorasDashboard.auth.htpasswd.username`)
 - **Password**: seeded by config-controller into the
@@ -403,9 +411,9 @@ kubectl create secret generic oauth2-proxy-secrets -n <namespace> \
 The `redirectURL` must exactly match the redirect URI registered on the IdP
 application.
 
-**NOTE:** `thorasDashboard.auth.cookieSecure` defaults to `false` so `kubectl
-  port-forward` works (Safari drops Secure cookies over plain HTTP).
-Set it to `true` in production; it requires TLS at the edge.
+**NOTE:** `thorasDashboard.auth.cookieSecure` defaults to `true`, which
+requires TLS at the edge. Set it to `false` for non-TLS access. See
+[Dashboard Served over Plain HTTP](UPGRADE.md#dashboard-served-over-plain-http).
 
 ##### Actor attribution and audit events
 
@@ -799,7 +807,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasDashboard.service.externalIPs                          | List    | nil                          | Service externalIPs                                                                                                                                                                                                                                                                                                                                                                                         |
 | thorasDashboard.auth.enabled                                 | Bool    | true                         | Fronts the dashboard with an oauth2-proxy sidecar. Disable to run your own auth                                                                                                                                                                                                                                                                                                                             |
 | thorasDashboard.auth.mode                                    | String  | htpasswd                     | `htpasswd` (chart-managed username+password) or `oidc` (OIDC via your IdP). Fields under the unused mode's block are silently ignored                                                                                                                                                                                                                                                                       |
-| thorasDashboard.auth.cookieSecure                            | Bool    | false                        | Marks session cookies as Secure. Recommended enabled in production. Requires TLS at the edge and breaks Safari via `kubectl port-forward`. Applies to both modes                                                                                                                                                                                                                                            |
+| thorasDashboard.auth.cookieSecure                            | Bool    | true                         | Marks session cookies as Secure. Requires TLS at the edge; set `false` for non-TLS access. Applies to both modes                                                                                                                                                                                                                                                                                            |
 | thorasDashboard.auth.imageTag                                | String  | v7.15.4-alpine               | oauth2-proxy sidecar image tag. Applies to both modes                                                                                                                                                                                                                                                                                                                                                       |
 | thorasDashboard.auth.resources                               | Object  | see values.yaml              | oauth2-proxy sidecar resources                                                                                                                                                                                                                                                                                                                                                                              |
 | thorasDashboard.auth.extraArgs                               | List    | []                           | Extra flags appended to the sidecar's `args` verbatim. Applies to both modes. Flags here override any equivalent directive in the chart-generated `oauth2-proxy.cfg`                                                                                                                                                                                                                                        |
