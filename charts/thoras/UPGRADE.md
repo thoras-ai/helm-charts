@@ -146,7 +146,8 @@ Under `networkPolicy.flavor: cilium`, egress is scoped by identity, and
 `toEntities: [kube-apiserver]` does not cover the internet. Cloud sync
 (`cloudSync.baseUrl`) and Slack notifications (`slackWebhookUrl`) need an
 explicit rule on the components that use them (api-server-v2, worker, operator
-for cloud sync; those plus collector and config-controller for Slack):
+for cloud sync, plus config-controller when `cloudSync.joinSecret` is set; those
+plus collector and config-controller for Slack):
 
 ```yaml
 thorasWorker:
