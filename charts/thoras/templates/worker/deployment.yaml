@@ -270,6 +270,8 @@ spec:
             value: {{ .Values.thorasWorker.enableCostAndUsageCollector | ternary "true" "false" | quote }}
           - name: SERVICE_COST_EXPLORER_FILTER
             value: {{ .Values.thorasWorker.costExplorerFilter | quote }}
+          - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
+            value: {{ .Values.thorasWorker.enableHourlyCostCollector | ternary "true" "false" | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics

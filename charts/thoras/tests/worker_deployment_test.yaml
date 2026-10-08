@@ -172,3 +172,16 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_FILTER')].value
           value: "aws:eks:cluster-name=prod"
+  - it: Should disable hourly cost collection by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_HOURLY_COST_COLLECTOR')].value
+          value: "false"
+  - it: Should enable hourly cost collection
+    set:
+      thorasWorker:
+        enableHourlyCostCollector: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_HOURLY_COST_COLLECTOR')].value
+          value: "true"
