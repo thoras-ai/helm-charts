@@ -94,12 +94,12 @@ helm install thoras-console thoras/thoras-console -n thoras-console --create-nam
 
 ### Version Management
 
-| Chart | Chart version | App version |
-| --- | --- | --- |
-| `thoras` | `charts/thoras/Chart.yaml` | `thorasVersion` in `charts/thoras/values.yaml` |
+| Chart            | Chart version                      | App version                                                                                                                      |
+| ---------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `thoras`         | `charts/thoras/Chart.yaml`         | `thorasVersion` in `charts/thoras/values.yaml`                                                                                   |
 | `thoras-console` | `charts/thoras-console/Chart.yaml` | `consoleVersion` in `charts/thoras-console/values.yaml` (the dashboard tag follows it unless `consoleDashboard.imageTag` is set) |
 
-Both app versions are platform release tags, such as `4.123.0`, and never `thoras` chart versions.
+Both app versions are platform release tags, such as `4.124.0`, and never `thoras` chart versions.
 
 - Merging a `Chart.yaml` version change releases that chart. Bump versions only in a release PR: the chart version, the app version and the README Version and AppVersion badges together, numbered by semver for what changed.
 
