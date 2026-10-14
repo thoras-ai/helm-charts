@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.124.0"
+thorasVersion: "4.127.0"
 cluster:
   name: ""
 
