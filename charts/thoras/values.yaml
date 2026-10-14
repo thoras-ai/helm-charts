@@ -816,6 +816,10 @@ thorasDashboard:
       - thoras.local
     path: /
     pathType: PathPrefix
+  # When true, hides all write-capable UI features (onboarding, scaling pause,
+  # mode switching) so the dashboard is view-only. Individual extras can still
+  # override specific features when read_only is true.
+  read_only: false
   extras:
     show_savings: true
     cost_analysis: true
