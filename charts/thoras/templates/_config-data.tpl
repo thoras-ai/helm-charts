@@ -194,7 +194,14 @@ and their consumers.
 
         location /config.json {
             default_type application/json;
-            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ .Values.featureFlags.enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}, "enableIdleSpend": {{ .Values.featureFlags.enableIdleSpend | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) .Values.thorasDashboard.extras) }} }';
+            {{- $extras := .Values.thorasDashboard.extras -}}
+            {{- $enableUpdateScaleModeApi := .Values.featureFlags.enableUpdateScaleModeApi -}}
+            {{- if .Values.thorasDashboard.read_only -}}
+              {{- $_ := set $extras "disable_onboarding" true -}}
+              {{- $_ := set $extras "enable_scaling_pause" false -}}
+              {{- $enableUpdateScaleModeApi = false -}}
+            {{- end }}
+            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ $enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}, "enableIdleSpend": {{ .Values.featureFlags.enableIdleSpend | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) $extras) }} }';
         }
 
         location / {

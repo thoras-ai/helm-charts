@@ -95,3 +95,41 @@ tests:
       - notMatchRegex:
           path: data["nginx.conf.template"]
           pattern: '\$http_x_forwarded_email'
+
+  - it: read_only true injects disable_onboarding and disables scaling_pause and scale mode in config.json
+    set:
+      thorasDashboard:
+        read_only: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"disable_onboarding":true'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enable_scaling_pause":false'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableUpdateScaleModeApi": false'
+
+  - it: read_only true overrides explicit extras values
+    set:
+      thorasDashboard:
+        read_only: true
+        extras:
+          enable_scaling_pause: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enable_scaling_pause":false'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"disable_onboarding":true'
+
+  - it: read_only false does not inject onboarding override
+    set:
+      thorasDashboard:
+        read_only: false
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"disable_onboarding"'
