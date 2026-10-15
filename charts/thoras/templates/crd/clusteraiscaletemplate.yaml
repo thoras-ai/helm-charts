@@ -132,6 +132,11 @@ spec:
               template:
                 description: Template defines the AIScaleTarget spec to apply
                 properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations to propagate onto created AIScaleTargets.
+                    type: object
                   horizontal:
                     properties:
                       additional_metrics:
