@@ -277,6 +277,8 @@ thorasApiServerV2:
 
 All components support `<component>.useGlobalAffinity` (default: `true`) and `<component>.affinity` fields.
 
+The chart's hook Jobs (webhook cert-gen, pre-delete, post-upgrade) follow `thorasOperator`: they get the global affinity when `thorasOperator.useGlobalAffinity` is `true`, merged with `thorasOperator.affinity`. They skip the operator's default anti-affinity.
+
 **Note:** `metricsCollector` and `thorasForecast` ship optional built-in anti-affinity rules to avoid co-location. These are opt-in: `featureFlags.enableForecastCollectorAntiAffinity` (default `false`) keeps the collector and forecast worker on separate nodes; `thorasForecast.enableSelfAntiAffinity` (default `false`) spreads forecast-worker replicas. When enabled they merge with global/component settings.
 
 ### Example Thoras Monitor Configuration
