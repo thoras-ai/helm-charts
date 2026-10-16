@@ -49,5 +49,11 @@ spec:
         command: ["/app/operator", "post-upgrade"]
         env:
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
-        resources: {}
+        {{- if .Values.thorasOperator.postUpgradeHook.resources }}
+        resources: {{ .Values.thorasOperator.postUpgradeHook.resources | toYaml | nindent 10 }}
+        {{- else }}
+        resources:
+          limits: {{ .Values.thorasOperator.postUpgradeHook.limits | toYaml | nindent 12 }}
+          requests: {{ .Values.thorasOperator.postUpgradeHook.requests | toYaml | nindent 12 }}
+        {{- end }}
 {{- end }}
