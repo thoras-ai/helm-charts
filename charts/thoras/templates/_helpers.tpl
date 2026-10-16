@@ -874,11 +874,12 @@ topologySpreadConstraints:
 {{- end }}
 
 {{/*
-Scheduling constraints for the chart's hook jobs (webhook cert-gen, pre-delete).
-Global nodeSelector and tolerations always apply, as they do on the deployments -
-affinity alone cannot place a hook on a tainted node pool. Global affinity applies
-only when the operator opts into it. The jobs are one-shot, so they carry neither a
-default nor a component-specific affinity.
+Scheduling constraints for the chart's hook jobs (webhook cert-gen, pre-delete,
+post-upgrade). Global nodeSelector and tolerations always apply, as they do on the
+deployments - affinity alone cannot place a hook on a tainted node pool. Affinity
+merges global (when the operator opts in) with thorasOperator.affinity, as on the
+operator deployment. The jobs are one-shot, so they skip the operator's default
+self anti-affinity.
 Usage:
   {{- with (include "thoras.hookJobScheduling" . | trim) }}
   {{- . | nindent 6 }}
@@ -893,11 +894,14 @@ nodeSelector:
 tolerations:
 {{- toYaml . | nindent 2 }}
 {{- end }}
+{{- $globalAffinity := dict }}
 {{- if .Values.thorasOperator.useGlobalAffinity }}
-{{- with .Values.affinity }}
+{{- $globalAffinity = .Values.affinity | default dict | deepCopy }}
+{{- end }}
+{{- $componentAffinity := .Values.thorasOperator.affinity | default dict | deepCopy }}
+{{- with mustMerge dict $globalAffinity $componentAffinity }}
 affinity:
 {{- toYaml . | nindent 2 }}
-{{- end }}
 {{- end }}
 {{- end }}
 

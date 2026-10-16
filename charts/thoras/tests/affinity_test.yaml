@@ -505,12 +505,23 @@ tests:
           path: spec.template.spec.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
           value: timescaledb
 
-  # Hook jobs: global affinity only, gated on the operator opt-in
+  # Hook jobs: global (gated on the operator opt-in) merged with the operator affinity
+  - it: hook jobs have no affinity by default
+    templates:
+      - operator/webhooks-certgen-create.yaml
+      - operator/webhooks-certgen-patch.yaml
+      - operator/pre-delete-hook.yaml
+      - operator/post-upgrade-hook.yaml
+    asserts:
+      - isNull:
+          path: spec.template.spec.affinity
+
   - it: hook jobs get global affinity
     templates:
       - operator/webhooks-certgen-create.yaml
       - operator/webhooks-certgen-patch.yaml
       - operator/pre-delete-hook.yaml
+      - operator/post-upgrade-hook.yaml
     set:
       affinity:
         nodeAffinity:
@@ -526,11 +537,12 @@ tests:
           path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
           value: node-pool
 
-  - it: hook jobs have no affinity when the operator opts out
+  - it: hook jobs have no affinity when the operator opts out and sets none
     templates:
       - operator/webhooks-certgen-create.yaml
       - operator/webhooks-certgen-patch.yaml
       - operator/pre-delete-hook.yaml
+      - operator/post-upgrade-hook.yaml
     set:
       thorasOperator:
         useGlobalAffinity: false
@@ -547,11 +559,12 @@ tests:
       - isNull:
           path: spec.template.spec.affinity
 
-  - it: hook jobs get neither the operator default nor its component affinity
+  - it: hook jobs get the operator affinity but not its default anti-affinity
     templates:
       - operator/webhooks-certgen-create.yaml
       - operator/webhooks-certgen-patch.yaml
       - operator/pre-delete-hook.yaml
+      - operator/post-upgrade-hook.yaml
     set:
       thorasOperator:
         affinity:
@@ -565,5 +578,78 @@ tests:
                   - co-locate-with
               topologyKey: kubernetes.io/hostname
     asserts:
+      - equal:
+          path: spec.template.spec.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          value: co-locate-with
       - isNull:
-          path: spec.template.spec.affinity
+          path: spec.template.spec.affinity.podAntiAffinity
+
+  - it: hook jobs merge global and operator affinity
+    templates:
+      - operator/webhooks-certgen-create.yaml
+      - operator/webhooks-certgen-patch.yaml
+      - operator/pre-delete-hook.yaml
+      - operator/post-upgrade-hook.yaml
+    set:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-pool
+                operator: In
+                values:
+                - standard-pool
+      thorasOperator:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - co-locate-with
+              topologyKey: kubernetes.io/hostname
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-pool
+      - equal:
+          path: spec.template.spec.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]
+          value: co-locate-with
+
+  - it: hook jobs keep the operator affinity when the operator opts out of global
+    templates:
+      - operator/webhooks-certgen-create.yaml
+      - operator/webhooks-certgen-patch.yaml
+      - operator/pre-delete-hook.yaml
+      - operator/post-upgrade-hook.yaml
+    set:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - global-only
+            topologyKey: kubernetes.io/hostname
+      thorasOperator:
+        useGlobalAffinity: false
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: node-pool
+                  operator: In
+                  values:
+                  - operator-pool
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
+          value: operator-pool
+      - isNull:
+          path: spec.template.spec.affinity.podAffinity
