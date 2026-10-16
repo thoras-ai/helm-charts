@@ -583,8 +583,9 @@ spec:
                     properties:
                       forecast_blocks:
                         default: 15m0s
-                        description: Time duration for how far into the future Thoras
-                          should forecast into.
+                        description: |-
+                          Time duration for how far into the future Thoras should forecast into.
+                          Must be in minutes or hours (e.g. 15m, 4h); seconds are rejected.
                         type: string
                         x-kubernetes-int-or-string: true
                       forecast_buffer_percentage:
@@ -675,6 +676,10 @@ spec:
                     - message: forecastInterval must be less than or equal to forecastBlocks
                       rule: '!has(self.forecast_interval) || !has(self.forecast_blocks)
                         || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
+                    - message: forecastBlocks must be in minutes or hours, e.g. 15m
+                        or 4h
+                      rule: '!has(self.forecast_blocks) || (string(self.forecast_blocks).matches(''^([0-9]+h)?([0-9]+m)?(0s)?$'')
+                        && string(self.forecast_blocks).matches(''[hm]''))'
                     - message: percentile_value is required when mode is percentile
                       rule: '!has(self.mode) || self.mode != ''percentile'' || has(self.percentile_value)'
                     - message: percentile_value can only be set when mode is percentile
@@ -796,8 +801,9 @@ spec:
                 properties:
                   forecast_blocks:
                     default: 15m0s
-                    description: Time duration for how far into the future Thoras
-                      should forecast into.
+                    description: |-
+                      Time duration for how far into the future Thoras should forecast into.
+                      Must be in minutes or hours (e.g. 15m, 4h); seconds are rejected.
                     type: string
                     x-kubernetes-int-or-string: true
                   forecast_buffer_percentage:
@@ -884,6 +890,10 @@ spec:
                 - message: forecastInterval must be less than or equal to forecastBlocks
                   rule: '!has(self.forecast_interval) || !has(self.forecast_blocks)
                     || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
+                - message: forecastBlocks must be in minutes or hours, e.g. 15m or
+                    4h
+                  rule: '!has(self.forecast_blocks) || (string(self.forecast_blocks).matches(''^([0-9]+h)?([0-9]+m)?(0s)?$'')
+                    && string(self.forecast_blocks).matches(''[hm]''))'
                 - message: percentile_value is required when mode is percentile
                   rule: '!has(self.mode) || self.mode != ''percentile'' || has(self.percentile_value)'
                 - message: percentile_value can only be set when mode is percentile
@@ -1168,8 +1178,9 @@ spec:
                     properties:
                       forecast_blocks:
                         default: 15m0s
-                        description: Time duration for how far into the future Thoras
-                          should forecast into.
+                        description: |-
+                          Time duration for how far into the future Thoras should forecast into.
+                          Must be in minutes or hours (e.g. 15m, 4h); seconds are rejected.
                         type: string
                         x-kubernetes-int-or-string: true
                       forecast_buffer_percentage:
@@ -1260,6 +1271,10 @@ spec:
                     - message: forecastInterval must be less than or equal to forecastBlocks
                       rule: '!has(self.forecast_interval) || !has(self.forecast_blocks)
                         || duration(self.forecast_interval) <= duration(self.forecast_blocks)'
+                    - message: forecastBlocks must be in minutes or hours, e.g. 15m
+                        or 4h
+                      rule: '!has(self.forecast_blocks) || (string(self.forecast_blocks).matches(''^([0-9]+h)?([0-9]+m)?(0s)?$'')
+                        && string(self.forecast_blocks).matches(''[hm]''))'
                     - message: percentile_value is required when mode is percentile
                       rule: '!has(self.mode) || self.mode != ''percentile'' || has(self.percentile_value)'
                     - message: percentile_value can only be set when mode is percentile
@@ -1788,10 +1803,11 @@ spec:
                 x-kubernetes-preserve-unknown-fields: true
               oomKilledContainers:
                 description: |-
-                  OOMKilledContainers is the set of container names that had OOM kills in the most recent
-                  collection cycle. Replaced on every cycle: set to containers with kills when OOMs are
-                  observed, cleared when no kills are observed. The operator uses this to scope memory
-                  adjustments to only containers that actually OOMed.
+                  OOMKilledContainers is the cumulative set of container names that had OOM kills during
+                  the current OOM episode. New kills are unioned in on each collection cycle. The list
+                  persists while OOMDetected is True and is cleared when the episode ends (OOMDetected
+                  flips to False after oomResetInterval elapses with no new kills). The operator uses
+                  this to scope memory adjustments to only containers that actually OOMed.
                 items:
                   type: string
                 type: array
