@@ -593,6 +593,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs |
 | featureFlags.enableAutonomousReadiness         | Boolean | false   | If true, the dashboard shows the vertical autonomous readiness tab              |
 | featureFlags.enableIdleSpend                   | Boolean | false   | If true, the dashboard shows the idle spend card on the cost tab                |
+| featureFlags.enableCostAlerts                  | Boolean | false   | If true, the worker checks cost alert rules hourly and posts to `slackWebhookUrl` when a day, week or month's cost goes above a rule's threshold, and the dashboard shows an Alerts tab for managing the rules. Rules on estimated cost work on any install; rules on billed cost need `thorasWorker.enableCostAndUsageCollector` and the `cluster_daily_cost` dashboard extra |
 
 ### NetworkPolicy
 

@@ -67,6 +67,13 @@ featureFlags:
   # When enabled, the dashboard shows the idle spend card on the cost breakdown
   # tab and nginx allows its API route.
   enableIdleSpend: false
+  # When enabled, the worker checks cost alert rules hourly and posts to the
+  # Slack webhook (slackWebhookUrl) when a period's cost goes above a rule's
+  # threshold, and the dashboard shows an Alerts tab for managing the rules.
+  # Rules on estimated cost work on any install; rules on billed cost need
+  # thorasWorker.enableCostAndUsageCollector and the cluster_daily_cost
+  # dashboard extra. read_only hides rule editing.
+  enableCostAlerts: false
   thorasManageThoras:
     enabled: true
     # Recommendation Mode by default
