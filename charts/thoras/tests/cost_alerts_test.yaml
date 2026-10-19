@@ -1,0 +1,90 @@
+suite: CostAlerts
+templates:
+  - dashboard/nginx-config-map.yaml
+  - worker/deployment.yaml
+tests:
+  - it: is off by default in config.json, nginx and the worker
+    asserts:
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableCostAlerts": *false[,}]'
+      - template: dashboard/nginx-config-map.yaml
+        notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'cost-alerts'
+      - template: worker/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_COST_ALERTS')].value
+          value: "false"
+
+  - it: turns on config.json, the worker and every route when enabled
+    set:
+      featureFlags:
+        enableCostAlerts: true
+    asserts:
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableCostAlerts": *true[,}]'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/cost-alerts\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/cost-alerts\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'PUT/v1/cost-alerts/\[\^/\]\+\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'DELETE/v1/cost-alerts/\[\^/\]\+\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/cost-alerts/\[\^/\]\+/test\(\\\?\|\$\) +1;'
+      - template: worker/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_COST_ALERTS')].value
+          value: "true"
+
+  - it: read-only allows listing but no writes, and hides editing
+    set:
+      featureFlags:
+        enableCostAlerts: true
+      thorasDashboard:
+        read_only: true
+    asserts:
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/cost-alerts\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '(POST|PUT|DELETE)/v1/cost-alerts'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"cost_alerts_edit":false'
+
+  - it: falls back to off when the key is missing from stored values
+    set:
+      featureFlags.enableCostAlerts: null
+    asserts:
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableCostAlerts": *false[,}]'
+      - template: dashboard/nginx-config-map.yaml
+        notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'cost-alerts'
+      - template: worker/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_COST_ALERTS')].value
+          value: "false"

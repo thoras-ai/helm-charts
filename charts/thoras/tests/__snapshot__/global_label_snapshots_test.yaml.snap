@@ -1150,7 +1150,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
-            checksum/config: 1756811032adb9f9d3919a811b622c19a4bf3d3f0d1385f74f4fc8b09c739cbd
+            checksum/config: 5cd77d51b21d92bd92dc2f664bcabacc9721a957de29f9a61f2131c1aeaebab3
           labels:
             app: thoras-dashboard
             app.kubernetes.io/name: thoras
@@ -2137,6 +2137,8 @@ Default matches snapshot:
                 - name: SERVICE_COST_EXPLORER_FILTER
                   value: ""
                 - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
+                  value: "false"
+                - name: SERVICE_ENABLE_COST_ALERTS
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
