@@ -99,6 +99,7 @@ and their consumers.
         ~*^GET/v1/ast/[^/]+/[^/]+/pods(\?|$)                                      1;
         ~*^GET/v1/ast/[^/]+/[^/]+/metrics/current(\?|$)                           1;
         ~*^GET/v1/ast/[^/]+/[^/]+/suggestions(\?|$)                               1;
+        ~*^GET/v1/ast/[^/]+/[^/]+/utilization/daily(\?|$)                         1;
         ~*^GET/v1/cost-savings/settings(\?|$)                                     1;
         ~*^GET/v1/export(\?|$)                                                    1;
         ~*^GET/v1/instance-costs/current(\?|$)                                    1;
