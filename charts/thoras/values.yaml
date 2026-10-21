@@ -209,6 +209,25 @@ thorasOperator:
     # Requires thorasVersion 4.120.0 or newer; earlier images have no
     # `post-upgrade` subcommand and the Job will fail.
     enabled: true
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Used if resources is empty
+    limits:
+      memory: 256Mi
+    # Used if resources is empty
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  preDeleteHook:
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Used if resources is empty
+    limits:
+      memory: 256Mi
+    # Used if resources is empty
+    requests:
+      cpu: 50m
+      memory: 128Mi
   # Overrides for the global `postgresql` connection-pool settings. Any field
   # left unset falls back to the corresponding `postgresql` default.
   postgresql:
@@ -272,6 +291,15 @@ thorasOperator:
   # Webhook certificate generation configuration
   webhookCertGen:
     imageTag: v1.4.4
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Used if resources is empty
+    limits:
+      memory: 50Mi
+    # Used if resources is empty
+    requests:
+      cpu: 10m
+      memory: 20Mi
     # When enabled, cert-manager provisions the thoras-tls-certs secret and
     # injects the CA bundle into the webhook configurations. The bundled
     # kube-webhook-certgen Jobs (and their RBAC/NetworkPolicy/registry secret)

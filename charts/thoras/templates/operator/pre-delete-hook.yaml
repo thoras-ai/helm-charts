@@ -40,4 +40,11 @@ spec:
         command: ["/app/operator", "uninstall"]
         env:
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
-        resources: {}
+        {{- $preDeleteHook := .Values.thorasOperator.preDeleteHook | default dict }}
+        {{- if $preDeleteHook.resources }}
+        resources: {{ $preDeleteHook.resources | toYaml | nindent 10 }}
+        {{- else }}
+        resources:
+          limits: {{ $preDeleteHook.limits | default dict | toYaml | nindent 12 }}
+          requests: {{ $preDeleteHook.requests | default dict | toYaml | nindent 12 }}
+        {{- end }}

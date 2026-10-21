@@ -41,6 +41,39 @@ tests:
           path: spec.ttlSecondsAfterFinished
           value: 300
 
+  - it: Sets default resource requests and limits
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+
+  - it: Can override resources block
+    set:
+      thorasOperator:
+        postUpgradeHook:
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+
   - it: is not rendered when disabled
     set:
       thorasOperator:

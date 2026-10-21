@@ -55,6 +55,13 @@ spec:
             runAsUser: 65532
             seccompProfile:
               type: RuntimeDefault
+          {{- if .Values.thorasOperator.webhookCertGen.resources }}
+          resources: {{ .Values.thorasOperator.webhookCertGen.resources | toYaml | nindent 12 }}
+          {{- else }}
+          resources:
+            limits: {{ .Values.thorasOperator.webhookCertGen.limits | toYaml | nindent 14 }}
+            requests: {{ .Values.thorasOperator.webhookCertGen.requests | toYaml | nindent 14 }}
+          {{- end }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -111,4 +118,11 @@ spec:
             runAsUser: 65532
             seccompProfile:
               type: RuntimeDefault
+          {{- if .Values.thorasOperator.webhookCertGen.resources }}
+          resources: {{ .Values.thorasOperator.webhookCertGen.resources | toYaml | nindent 12 }}
+          {{- else }}
+          resources:
+            limits: {{ .Values.thorasOperator.webhookCertGen.limits | toYaml | nindent 14 }}
+            requests: {{ .Values.thorasOperator.webhookCertGen.requests | toYaml | nindent 14 }}
+          {{- end }}
 {{- end }}
