@@ -1,0 +1,97 @@
+{{- if and .Values.networkPolicy.enabled (.Values.thorasMcp).enabled }}
+{{- $flavor := include "thoras.networkPolicyFlavor" . }}
+{{- if eq $flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-mcp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: thoras-mcp
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all ingress from pods within the same namespace
+  - from:
+    - podSelector: {}
+  # MCP clients can run anywhere, so the server port is open to all sources.
+  # Narrow it with thorasMcp.extraIngressRules and a stricter policy of your own.
+  - ports:
+    - port: {{ .Values.thorasMcp.containerPort }}
+      protocol: TCP
+  {{- with .Values.thorasMcp.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  # Allow all egress to pods within the same namespace
+  - to:
+    - podSelector: {}
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  {{- with .Values.thorasMcp.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- else if eq $flavor "cilium" }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-mcp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: thoras-mcp
+  ingress:
+  # Allow all ingress from endpoints within the same namespace
+  - fromEndpoints:
+    - {}
+  # MCP clients can run anywhere, so the server port is open to all sources.
+  # Narrow it with thorasMcp.extraIngressRules and a stricter policy of your own.
+  - fromEntities:
+    - all
+    toPorts:
+    - ports:
+      - port: "{{ .Values.thorasMcp.containerPort }}"
+        protocol: TCP
+  {{- with .Values.thorasMcp.extraIngressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  egress:
+  # Allow all egress to endpoints within the same namespace
+  - toEndpoints:
+    - {}
+  # Allow DNS resolution
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: "*"
+  {{- with .Values.thorasMcp.extraEgressRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}

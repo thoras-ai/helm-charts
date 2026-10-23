@@ -167,6 +167,7 @@ Almost every secret/credential is configured via the chart one of three ways, in
 | Slack webhook              | `slackWebhookUrlSecretRef{Name,Key}`                                        | `slackWebhookUrl`                            |
 | Cloud-sync cluster key     | `cloudSync.clusterKeySecretRef{Name,Key}`                                   | `cloudSync.clusterKey`                       |
 | Cloud-sync join secret     | `cloudSync.joinSecretSecretRef{Name,Key}`                                   | `cloudSync.joinSecret`                       |
+| MCP client token           | `thorasMcp.auth.existingSecret.{secretName,secretKey}`                      | `thorasMcp.auth.token`                       |
 | Dashboard OIDC credentials | `thorasDashboard.auth.oidc.existingSecret.*`                                | — (never chart-managed)                      |
 
 ### Registering a cluster automatically
@@ -503,6 +504,48 @@ Default `thorasDashboard.gatewayAPI.hostnames` value:
 hostnames:
   - thoras.local
 ```
+
+### Thoras MCP Server
+
+The MCP server lets MCP clients, such as AI assistants, work with Thoras: list
+scale targets and their suggestions, and check utilization and costs. In
+`read-write` mode they can also switch scale modes, pause scaling and enroll
+workloads. It serves Streamable HTTP at `/mcp` on the `thoras-mcp` Service and
+calls the Thoras API server inside the cluster. It is off by default.
+
+```yaml
+# values.yaml
+thorasMcp:
+  enabled: true
+  # read-only (default), or read-write to also allow changes
+  mode: read-only
+```
+
+When turning it on for an existing release, upgrade with
+`--reset-then-reuse-values` rather than `--reuse-values`, so the new
+`thorasMcp` defaults are applied.
+
+Clients authenticate with a bearer token, which config-controller generates
+unless you set `thorasMcp.auth.token` or `thorasMcp.auth.existingSecret` (see
+[Secrets](#secrets)). Read the generated one with:
+
+```bash
+kubectl get secret thoras-config-controller -n thoras \
+  -o jsonpath='{.data.mcp-auth-token}' | base64 -d
+```
+
+To try it from your machine, port-forward the Service and point your MCP
+client at `http://localhost:8080/mcp` with the header
+`Authorization: Bearer <token>`. The server has no OAuth flow, so the client
+must send the header itself.
+
+```bash
+kubectl port-forward svc/thoras-mcp -n thoras 8080:80
+```
+
+To reach it from outside the cluster, put your own Ingress or Gateway in front
+of the Service. With `networkPolicy.enabled`, the server port accepts traffic
+from any source; narrow it with `thorasMcp.extraIngressRules`.
 
 ### NetworkPolicy
 
@@ -861,3 +904,32 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | -------------------- | ------ | ------- | --------------------------------- |
 | thorasMonitor.labels | Object | {}      | Pod labels for Thoras monitor     |
 | thorasMonitor.config | String | ""      | Thoras Monitor configuration yaml |
+
+### Thoras MCP Server
+
+| Key                                      | Type    | Default         | Description                                                                                 |
+| ---------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------------------------- |
+| thorasMcp.enabled                        | Boolean | false           | Runs the Thoras MCP server                                                                  |
+| thorasMcp.mode                           | String  | read-only       | `read-only`, or `read-write` to also expose the tools that change cluster state             |
+| thorasMcp.auth.token                     | String  | ""              | Client bearer token, pinned in `thoras-helm-values`. Seeded by config-controller when empty |
+| thorasMcp.auth.existingSecret.secretName | String  | ""              | Secret holding the client token. Mutually exclusive with `thorasMcp.auth.token`             |
+| thorasMcp.auth.existingSecret.secretKey  | String  | mcp-auth-token  | Key of the client token in that Secret                                                      |
+| thorasMcp.imageTag                       | String  | Nil             | Overrides `thorasVersion` for the MCP server image                                          |
+| thorasMcp.serviceAccount.name            | String  | thoras-mcp      | Service account name for the MCP server pod                                                 |
+| thorasMcp.containerPort                  | Number  | 8080            | MCP server port                                                                             |
+| thorasMcp.host                           | String  | "::"            | Address the MCP server binds to                                                             |
+| thorasMcp.port                           | Number  | 80              | MCP server service port                                                                     |
+| thorasMcp.service.annotations            | Object  | {}              | Annotations for the MCP server service                                                      |
+| thorasMcp.replicas                       | Number  | 1               | Replica count. The server is stateless                                                      |
+| thorasMcp.podAnnotations                 | Object  | {}              | Pod annotations for the MCP server                                                          |
+| thorasMcp.labels                         | Object  | {}              | Pod/service labels for the MCP server                                                       |
+| thorasMcp.pdb.enabled                    | Boolean | true            | Creates a PodDisruptionBudget (`maxUnavailable: 1` unless set)                              |
+| thorasMcp.resources                      | Object  | See values.yaml | Resources block for the MCP server container                                                |
+| thorasMcp.logLevel                       | String  | Nil             | Logging level                                                                               |
+| thorasMcp.requestTimeout                 | String  | ""              | Timeout for each Thoras API request, such as `30s`. Empty keeps the server's default        |
+| thorasMcp.useGlobalAffinity              | Boolean | true            | Applies the global affinity rules                                                           |
+| thorasMcp.affinity                       | Object  | {}              | Component-specific affinity                                                                 |
+| thorasMcp.priorityClassName              | String  | ""              | Component-specific priorityClassName                                                        |
+| thorasMcp.topologySpreadConstraints      | List    | []              | Component-specific topologySpreadConstraints                                                |
+| thorasMcp.extraIngressRules              | List    | []              | Extra ingress rules appended to the MCP server's network policy                             |
+| thorasMcp.extraEgressRules               | List    | []              | Extra egress rules appended to the MCP server's network policy                              |

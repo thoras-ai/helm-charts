@@ -6,6 +6,7 @@ templates:
   - dashboard/pdb.yaml
   - forecast-worker/pdb.yaml
   - collector/pdb.yaml
+  - mcp/pdb.yaml
 tests:
   ############################
   # Default behavior
@@ -152,3 +153,40 @@ tests:
           value: 0
       - notExists:
           path: spec.maxUnavailable
+
+  ############################
+  # MCP server
+  ############################
+  - it: mcp PDB is not rendered while the MCP server is off
+    template: mcp/pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: mcp PDB renders with maxUnavailable 1 when the MCP server is on
+    template: mcp/pdb.yaml
+    set:
+      thorasMcp:
+        enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - notExists:
+          path: spec.minAvailable
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: thoras-mcp
+
+  - it: mcp PDB is not rendered when disabled
+    template: mcp/pdb.yaml
+    set:
+      thorasMcp:
+        enabled: true
+        pdb:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

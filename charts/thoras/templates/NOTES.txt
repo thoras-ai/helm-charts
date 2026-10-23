@@ -26,6 +26,20 @@ Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
 {{- end }}
 {{- end }}
 
+{{ if (.Values.thorasMcp).enabled -}}
+MCP server: ENABLED ({{ .Values.thorasMcp.mode }}), Streamable HTTP at /mcp on the thoras-mcp Service
+  Clients send Authorization: Bearer <token>. Token:
+{{- $tokenRef := include "thoras.secretRef" (dict "root" . "name" "mcp-auth-token") | fromYaml }}
+    kubectl get secret {{ $tokenRef.name }} -n {{ .Release.Namespace }} \
+      -o jsonpath='{.data.{{ $tokenRef.key }}}' | base64 -d
+{{- if eq $tokenRef.name "thoras-config-controller" }}
+    The Secret appears once config-controller has seeded it.
+{{- end }}
+  Try it locally:
+    kubectl port-forward svc/thoras-mcp -n {{ .Release.Namespace }} 8080:{{ .Values.thorasMcp.port }}
+    then point your MCP client at http://localhost:8080/mcp
+{{- end }}
+
 {{ if and .Values.thorasConfigController.enabled .Release.IsInstall -}}
 Config controller: seeding any credential you did not supply.
   Workload pods report CreateContainerConfigError until the

@@ -972,6 +972,64 @@ thorasForecast:
   extraEgressRules: []
   extraIngressRules: []
 
+thorasMcp:
+  # Runs the Thoras MCP server, which lets MCP clients such as AI assistants
+  # work with Thoras over Streamable HTTP at /mcp on the thoras-mcp Service.
+  # Clients send the token below as `Authorization: Bearer <token>`.
+  enabled: false
+  # read-only, or read-write to also expose the tools that change cluster
+  # state: scale modes, pausing scaling, and enrolling workloads.
+  mode: read-only
+  auth:
+    # Bearer token MCP clients must send. Seeded by config-controller when
+    # empty. Set a value to pin it in `thoras-helm-values` instead;
+    # thorasMcp.auth.existingSecret takes precedence over both. When a pinned
+    # value changes, config-controller rolls the MCP server automatically. See
+    # README > "Rotating secrets".
+    token: ""
+    # Point at a pre-existing Secret you manage. Mutually exclusive with
+    # thorasMcp.auth.token.
+    existingSecret:
+      secretName: ""
+      secretKey: mcp-auth-token
+  serviceAccount:
+    name: thoras-mcp
+  containerPort: 8080
+  # Address the server binds to. Defaults to the dual-stack wildcard so it's
+  # reachable on both IPv4-only and IPv6-only clusters.
+  host: "::"
+  port: 80
+  service:
+    annotations: {}
+  replicas: 1
+  podAnnotations: {}
+  labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+    # minAvailable:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  logLevel: ""
+  # Timeout for each api-server request, such as "30s". Empty keeps the server's default.
+  requestTimeout: ""
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
+  topologySpreadConstraints: []
+  extraEgressRules: []
+  extraIngressRules: []
+
 # K8s client max queries per second
 queriesPerSecond: "50"
 
