@@ -9,8 +9,16 @@ metadata:
   annotations:
     "helm.sh/hook": pre-delete
     "helm.sh/hook-weight": "0"
-    "helm.sh/hook-delete-policy": hook-succeeded
+    # before-hook-creation clears a previously failed job so the next uninstall
+    # can retry rather than colliding with it.
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
+  # Safety nets: without these, a wedged uninstall step blocks `helm uninstall`
+  # indefinitely. The Go code force-strips finalizers after a 5-minute grace
+  # period; activeDeadlineSeconds is a hard backstop in case the code itself hangs.
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 300
   template:
     metadata:
       name: {{ .Release.Name }}
