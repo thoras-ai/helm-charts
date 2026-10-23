@@ -19,6 +19,21 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
+  - it: Should mount the system config so the worker honours the scaling pause
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: system-config
+            configMap:
+              name: thoras-operator-system-config
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: system-config
+            mountPath: /app/system-config.yaml
+            subPath: system-config.yaml
+            readOnly: true
   - it: Should carry only the config checksum when all other conditions are false
     set:
       thorasWorker:

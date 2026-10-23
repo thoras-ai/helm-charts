@@ -2183,6 +2183,10 @@ Default matches snapshot:
                   name: monitor-config
                   readOnly: true
                   subPath: config.yaml
+                - mountPath: /app/system-config.yaml
+                  name: system-config
+                  readOnly: true
+                  subPath: system-config.yaml
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
@@ -2193,6 +2197,9 @@ Default matches snapshot:
             - configMap:
                 name: thoras-monitor-config
               name: monitor-config
+            - configMap:
+                name: thoras-operator-system-config
+              name: system-config
   37: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole

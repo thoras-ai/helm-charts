@@ -44,6 +44,9 @@ spec:
       - name: monitor-config
         configMap:
           name: thoras-monitor-config
+      - name: system-config
+        configMap:
+          name: thoras-operator-system-config
       {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 6 }}{{- end }}
       containers:
       - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
@@ -310,6 +313,10 @@ spec:
         - name: monitor-config
           mountPath: /app/config.yaml
           subPath: config.yaml
+          readOnly: true
+        - name: system-config
+          mountPath: /app/system-config.yaml
+          subPath: system-config.yaml
           readOnly: true
         {{- with include "thoras.timescaleCaVolumeMount" . }}{{- . | nindent 8 }}{{- end }}
       {{- with .Values.nodeSelector }}
