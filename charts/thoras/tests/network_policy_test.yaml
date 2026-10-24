@@ -532,3 +532,68 @@ tests:
       - notFailedTemplate: {}
       - hasDocuments:
           count: 0
+
+  # --- Operator lifecycle hooks ---
+
+  - it: Operator hook policy selects the hook job pods (kubernetes)
+    template: operator/hooks-network-policy.yaml
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+      - equal:
+          path: spec.podSelector.matchLabels
+          value:
+            app.kubernetes.io/component: operator-hook
+      - contains:
+          path: spec.egress
+          content:
+            ports:
+            - port: 443
+              protocol: TCP
+            - port: 6443
+              protocol: TCP
+
+  - it: Operator hook policy selects the hook job pods (cilium)
+    template: operator/hooks-network-policy.yaml
+    set:
+      networkPolicy:
+        flavor: cilium
+    asserts:
+      - isKind:
+          of: CiliumNetworkPolicy
+      - equal:
+          path: spec.endpointSelector.matchLabels
+          value:
+            app.kubernetes.io/component: operator-hook
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+            - kube-apiserver
+
+  # Must not be a hook: it has to exist before post-upgrade hooks run and still
+  # be present when pre-delete hooks run.
+  - it: Operator hook policy is a regular resource, not a hook
+    template: operator/hooks-network-policy.yaml
+    asserts:
+      - notExists:
+          path: metadata.annotations["helm.sh/hook"]
+
+  - it: Operator hook policy does not render when networkPolicy is disabled
+    template: operator/hooks-network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # Pods the hook policy is meant to cover must actually carry its selector label.
+  - it: Operator hook jobs carry the label the hook policy selects on
+    templates:
+      - operator/post-upgrade-hook.yaml
+      - operator/pre-delete-hook.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: operator-hook

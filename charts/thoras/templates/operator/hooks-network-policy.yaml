@@ -1,0 +1,71 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $flavor := include "thoras.networkPolicyFlavor" . }}
+{{- /*
+Covers the operator's lifecycle hook Jobs (post-upgrade, pre-delete). Their pods
+carry neither `app: thoras-operator` nor the certgen component label, so without
+this policy they are unselected and fall to whatever default-deny the cluster
+enforces, and the hook hangs the upgrade/uninstall trying to reach the API.
+
+Deliberately a regular resource, not a hook: it then exists before post-upgrade
+hooks run and is still present when pre-delete hooks run.
+*/}}
+{{- if eq $flavor "kubernetes" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-operator-hooks
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: operator-hook
+  policyTypes:
+  - Egress
+  egress:
+  # Allow access to the Kubernetes API server
+  {{- include "thoras.apiServerEgressRule" . | nindent 2 }}
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+{{- else if eq $flavor "cilium" }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-operator-hooks
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" .) | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: operator-hook
+  egress:
+  # Allow access to the Kubernetes API server
+  - toEntities:
+    - kube-apiserver
+  # Allow DNS resolution
+  - toEndpoints:
+    - matchLabels:
+        k8s:k8s-app: kube-dns
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: ANY
+      rules:
+        dns:
+        - matchPattern: "*"
+{{- end }}
+{{- end }}
