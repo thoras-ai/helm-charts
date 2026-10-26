@@ -96,6 +96,7 @@ and their consumers.
         # GET — reads
         ~*^GET/v1/ast(\?|$)                                                       1;
         ~*^GET/v1/ast/[^/]+/[^/]+(\?|$)                                           1;
+        ~*^GET/v1/ast/[^/]+/[^/]+/actuation-events(/[^/?]+)?(\?|$)                1;
         ~*^GET/v1/ast/[^/]+/[^/]+/pods(\?|$)                                      1;
         ~*^GET/v1/ast/[^/]+/[^/]+/metrics/current(\?|$)                           1;
         ~*^GET/v1/ast/[^/]+/[^/]+/suggestions(\?|$)                               1;
