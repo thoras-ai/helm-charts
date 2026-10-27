@@ -1,0 +1,117 @@
+{{- if (.Values.thorasMcp).enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thoras-mcp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasMcp.labels) | nindent 4 }}
+spec:
+  replicas: {{ .Values.thorasMcp.replicas }}
+  selector:
+    matchLabels:
+      app: thoras-mcp
+  template:
+    metadata:
+      labels:
+        app: thoras-mcp
+        {{- with include "thoras.componentLabels" (dict "root" $ "component" .Values.thorasMcp.labels) }}
+        {{- . | trim | nindent 8 }}
+        {{- end }}
+      {{- with include "thoras.podAnnotations" (dict "root" $ "component" .Values.thorasMcp.podAnnotations) }}
+      annotations:
+        {{- . | trim | nindent 8 }}
+      {{- end }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534 # user: nobody
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ .Values.thorasMcp.serviceAccount.name }}
+      {{- if and .Values.imageCredentials.imagePullSecretInDeployment .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- end }}
+      containers:
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMcp.imageTag }}
+        imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+        name: thoras-mcp
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        command: ["/app/mcp"]
+        env:
+          - name: SERVICE_LOG_LEVEL
+            value: {{ default .Values.logLevel .Values.thorasMcp.logLevel | quote }}
+          - name: SERVICE_TRANSPORT
+            value: http
+          - name: SERVICE_HOST
+            value: {{ .Values.thorasMcp.host | quote }}
+          - name: SERVICE_PORT
+            value: {{ .Values.thorasMcp.containerPort | quote }}
+          - name: SERVICE_MODE
+            value: {{ .Values.thorasMcp.mode | quote }}
+          - name: SERVICE_THORAS_API_BASE_URL
+            value: "http://thoras-api-server-v2"
+          {{- with .Values.thorasMcp.requestTimeout }}
+          - name: SERVICE_REQUEST_TIMEOUT
+            value: {{ . | quote }}
+          {{- end }}
+          {{- $token := include "thoras.secretRef" (dict "root" . "name" "mcp-auth-token") | fromYaml }}
+          - name: SERVICE_HTTP_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ $token.name }}
+                key: {{ $token.key }}
+          {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.thorasMcp.containerPort }}
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 30
+          failureThreshold: 3
+          timeoutSeconds: 2
+        {{- with .Values.thorasMcp.resources }}
+        resources: {{ toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.thorasMcp.useGlobalAffinity }}
+        {{- $globalAffinity := .Values.affinity | default dict | deepCopy }}
+        {{- $componentAffinity := .Values.thorasMcp.affinity | default dict | deepCopy }}
+        {{- $mergedAffinity := mustMerge dict $globalAffinity $componentAffinity }}
+        {{- with $mergedAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- else }}
+        {{- with .Values.thorasMcp.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.thorasMcp.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- include "thoras.topologySpreadConstraints" (dict "root" . "component" .Values.thorasMcp.topologySpreadConstraints) | nindent 6 }}
+{{- end }}

@@ -551,6 +551,19 @@ migrated and generated values are indistinguishable.
 {{- $plan = append $plan (dict "name" "cloud-sync-cluster-key" "mode" "exchange" "secret" "thoras-config-controller" "key" "cloud-sync-cluster-key" "optional" true "exchange" (dict "kind" "console" "field" "token" "installId" "cloud-sync-install-id")) -}}
 {{- end -}}
 
+{{- /* thorasMcp may be missing entirely after `helm upgrade --reuse-values`. */ -}}
+{{- $mcp := .Values.thorasMcp | default dict -}}
+{{- if $mcp.enabled -}}
+{{- $existing := ($mcp.auth).existingSecret | default dict -}}
+{{- if $existing.secretName -}}
+{{- $plan = append $plan (dict "name" "mcp-auth-token" "mode" "existing" "secret" $existing.secretName "key" $existing.secretKey) -}}
+{{- else if ($mcp.auth).token -}}
+{{- $plan = append $plan (dict "name" "mcp-auth-token" "mode" "values" "secret" "thoras-helm-values" "key" "mcp-auth-token" "value" $mcp.auth.token) -}}
+{{- else -}}
+{{- $plan = append $plan (dict "name" "mcp-auth-token" "mode" "seed" "secret" "thoras-config-controller" "key" "mcp-auth-token" "generate" (dict "type" "alphanumeric" "length" 32)) -}}
+{{- end -}}
+{{- end -}}
+
 {{- toYaml $plan -}}
 {{- end -}}
 

@@ -3,6 +3,8 @@ set:
   networkPolicy:
     enabled: true
     flavor: kubernetes
+  thorasMcp:
+    enabled: true
 tests:
   # --- Rendering guards ---
 
@@ -14,6 +16,7 @@ tests:
       - api-server-v2/network-policy.yaml
       - collector/network-policy.yaml
       - forecast-worker/network-policy.yaml
+      - mcp/network-policy.yaml
       - operator/network-policy.yaml
       - operator/webhooks-certgen-network-policy.yaml
     asserts:
@@ -45,6 +48,7 @@ tests:
       - api-server-v2/network-policy.yaml
       - collector/network-policy.yaml
       - forecast-worker/network-policy.yaml
+      - mcp/network-policy.yaml
       - operator/network-policy.yaml
     asserts:
       - isKind:
@@ -238,6 +242,7 @@ tests:
       - api-server-v2/network-policy.yaml
       - collector/network-policy.yaml
       - forecast-worker/network-policy.yaml
+      - mcp/network-policy.yaml
       - operator/network-policy.yaml
     asserts:
       - contains:
@@ -263,6 +268,7 @@ tests:
       - api-server-v2/network-policy.yaml
       - collector/network-policy.yaml
       - forecast-worker/network-policy.yaml
+      - mcp/network-policy.yaml
       - operator/network-policy.yaml
     set:
       networkPolicy:
@@ -303,6 +309,7 @@ tests:
       - api-server-v2/network-policy.yaml
       - collector/network-policy.yaml
       - forecast-worker/network-policy.yaml
+      - mcp/network-policy.yaml
       - operator/network-policy.yaml
     set:
       networkPolicy:
@@ -523,6 +530,7 @@ tests:
       - config-controller/network-policy.yaml
       - dashboard/network-policy.yaml
       - forecast-worker/network-policy.yaml
+      - mcp/network-policy.yaml
       - operator/network-policy.yaml
       - worker/network-policy.yaml
     set:

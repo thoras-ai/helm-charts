@@ -9,6 +9,8 @@ set:
     timescale:
       config:
         enabled: false
+  thorasMcp:
+    enabled: true
 tests:
   - it: forecast-worker has thoras-specific affinities when enabled
     templates:
@@ -121,6 +123,7 @@ tests:
       - api-server-v2/deployment.yaml
       - worker/deployment.yaml
       - dashboard/deployment.yaml
+      - mcp/deployment.yaml
     asserts:
       - isNull:
           path: spec.template.spec.affinity
@@ -206,6 +209,7 @@ tests:
       - api-server-v2/deployment.yaml
       - worker/deployment.yaml
       - dashboard/deployment.yaml
+      - mcp/deployment.yaml
     set:
       affinity:
         nodeAffinity:
@@ -278,6 +282,7 @@ tests:
     templates:
       - api-server-v2/deployment.yaml
       - worker/deployment.yaml
+      - mcp/deployment.yaml
     set:
       thorasOperator:
         useGlobalAffinity: false
@@ -383,6 +388,7 @@ tests:
     templates:
       - api-server-v2/deployment.yaml
       - worker/deployment.yaml
+      - mcp/deployment.yaml
     set:
       affinity:
         nodeAffinity:

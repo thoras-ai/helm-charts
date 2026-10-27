@@ -4,6 +4,7 @@ templates:
   - dashboard/deployment.yaml
   - operator/deployment.yaml
   - worker/deployment.yaml
+  - mcp/deployment.yaml
 set:
   thorasVersion: 1.0.0-alpha
   thorasOperator:
@@ -13,6 +14,9 @@ set:
   thorasApiServerV2:
     replicas: 12
   thorasWorker:
+    replicas: 12
+  thorasMcp:
+    enabled: true
     replicas: 12
 tests:
   - it: Image registry should be correct
