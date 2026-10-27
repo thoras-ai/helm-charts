@@ -670,6 +670,8 @@ The following flags are considered temporary and gate access to specific behavio
 
 | Key                                    | Type    | Default         | Description                                                                                                   |
 | -------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------------------------------------------- |
+| thorasOperator.pauseStateMigration.argocdInstanceLabelKey | string | `"app.kubernetes.io/instance"` | Argo CD instance label key to detach when preserving runtime scaling pause state. Match `application.instanceLabelKey` in `argocd-cm` for custom label tracking. |
+| thorasOperator.pauseStateMigration.resources | object | `{"limits":{"memory":"64Mi"},"requests":{"cpu":"10m","memory":"16Mi"}}` | Resources for the scaling pause state migration hook. |
 | thorasOperator.postUpgradeHook.enabled | Boolean | true            | Runs the operator's post-upgrade migration steps as a Job after each upgrade; requires thorasVersion 4.120.0+ |
 | thorasOperator.serviceAccount.name     | String  | thoras-operator | Service account name for Thoras operator pod                                                                  |
 | thorasOperator.podAnnotations          | Object  | {}              | Pod Annotations for Thoras Operator                                                                           |

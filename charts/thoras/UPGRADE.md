@@ -6,6 +6,57 @@ A major chart version change (like v1.2.3 -> v2.0.0) indicates that there is an 
 
 This doc provides detailed upgrade and migration instructions.
 
+## Scaling pause state during upgrades
+
+Scaling pause state is now owned by the API server rather than the chart. Upgrades
+preserve the existing `thoras-operator-system-config` ConfigMap and its pause
+value. Fresh installations start unpaused; the API server creates the ConfigMap
+when the pause state is first changed.
+
+A Helm `pre-install,pre-upgrade` hook, mapped to an Argo CD `PreSync` hook,
+migrates existing installations before resources are applied or pruned. It only
+patches metadata, retaining the ConfigMap and removing Argo CD tracking metadata.
+It does not change `system-config.yaml`. If migration fails, resolve the hook
+failure and retry the upgrade; do not force ownership of the pause field.
+
+The hook uses the configured operator image, registry credentials, hook scheduling,
+and network policy settings. It needs permission to create its namespaced hook
+resources and to patch this ConfigMap. With Argo CD label tracking, set
+`thorasOperator.pauseStateMigration.argocdInstanceLabelKey` to the value of
+`application.instanceLabelKey` in `argocd-cm` if it differs from
+`app.kubernetes.io/instance`.
+
+Keep hooks enabled for the first upgrade or Argo CD sync. Selective Argo CD syncs
+skip hooks. For a workflow that cannot execute hooks, preserve the live object
+before removing the old chart manifest:
+
+```bash
+kubectl -n thoras annotate configmap thoras-operator-system-config \
+  helm.sh/resource-policy=keep \
+  argocd.argoproj.io/sync-options=Prune=false --overwrite
+```
+
+For Argo CD, also remove its tracking annotation and instance label from the
+ConfigMap before syncing. Substitute the configured label key when using custom
+label tracking:
+
+```bash
+kubectl -n thoras annotate configmap thoras-operator-system-config \
+  argocd.argoproj.io/tracking-id-
+kubectl -n thoras label configmap thoras-operator-system-config \
+  app.kubernetes.io/instance-
+```
+
+These manual steps are only needed when the ConfigMap exists and hooks cannot
+run. Substitute the release namespace for `thoras`. Plain `helm template` emits
+no pause ConfigMap, so applying its output does not reset the pause value.
+
+Rolling back to a chart that still renders `scaling-paused: false` is unsupported:
+Helm may reject the detached resource or overwrite its pause state. Use a chart
+with this fix for subsequent upgrades and rollbacks. The runtime ConfigMap is
+retained across uninstall/reinstall; explicitly remove it if a clean installation
+must start unpaused.
+
 ## To 5.x
 
 All users should read the following [Changes Overview](#changes-overview).

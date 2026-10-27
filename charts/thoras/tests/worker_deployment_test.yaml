@@ -27,12 +27,12 @@ tests:
             name: system-config
             configMap:
               name: thoras-operator-system-config
+              optional: true
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             name: system-config
-            mountPath: /app/system-config.yaml
-            subPath: system-config.yaml
+            mountPath: /app/system-config
             readOnly: true
   - it: Should carry only the config checksum when all other conditions are false
     set:

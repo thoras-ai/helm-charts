@@ -299,6 +299,7 @@ Default matches snapshot:
           - get
           - update
           - patch
+          - create
   8: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding

@@ -973,3 +973,16 @@ Usage: {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 6 }}{{- e
 
 {{/* Loopback port for nginx behind the oauth2-proxy sidecar. */}}
 {{- define "thoras.dashboard.internalNginxPort" -}}8181{{- end -}}
+
+{{/* Hook resources share a name across kinds and must fit the DNS label limit. */}}
+{{- define "thoras.pauseStateMigrationName" -}}
+{{- printf "%s-pause-state-migration" .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/* Argo dependency hooks stay until the next sync so the Job can use them. */}}
+{{- define "thoras.pauseStateMigrationAnnotations" -}}
+helm.sh/hook: pre-install,pre-upgrade
+helm.sh/hook-weight: {{ .weight | quote }}
+helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+argocd.argoproj.io/hook-delete-policy: BeforeHookCreation{{ if .job }},HookSucceeded{{ end }}
+{{- end -}}

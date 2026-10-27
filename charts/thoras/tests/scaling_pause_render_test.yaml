@@ -1,0 +1,14 @@
+suite: Scaling pause renders without runtime state
+templates:
+- '**/*.yaml'
+set:
+  thorasVersion: TEST
+  imageCredentials.secretRef: existing-registry
+tests:
+- it: never renders the runtime pause ConfigMap
+  asserts:
+  - not: true
+    containsDocument:
+      kind: ConfigMap
+      apiVersion: v1
+      name: thoras-operator-system-config

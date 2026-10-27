@@ -196,6 +196,15 @@ rbac:
 
 thorasOperator:
   replicas: 2
+  pauseStateMigration:
+    # Match application.instanceLabelKey in argocd-cm when using label tracking.
+    argocdInstanceLabelKey: app.kubernetes.io/instance
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        memory: 64Mi
   postUpgradeHook:
     # After each `helm upgrade`, runs a Job that executes the operator's
     # post-upgrade steps: one-off migrations that bring cluster state written by
