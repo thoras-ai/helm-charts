@@ -26,9 +26,9 @@ resources and to patch this ConfigMap. With Argo CD label tracking, set
 `application.instanceLabelKey` in `argocd-cm` if it differs from
 `app.kubernetes.io/instance`.
 
-Keep hooks enabled for the first upgrade or Argo CD sync. Selective Argo CD syncs
-skip hooks. For a workflow that cannot execute hooks, preserve the live object
-before removing the old chart manifest:
+The hook preserves the existing ConfigMap during the first Helm upgrade or Argo
+CD sync that removes the old manifest. If hooks are skipped and that operation
+deletes or prunes removed resources, preserve the live object first:
 
 ```bash
 kubectl -n thoras annotate configmap thoras-operator-system-config \
@@ -47,15 +47,16 @@ kubectl -n thoras label configmap thoras-operator-system-config \
   app.kubernetes.io/instance-
 ```
 
-These manual steps are only needed when the ConfigMap exists and hooks cannot
-run. Substitute the release namespace for `thoras`. Plain `helm template` emits
-no pause ConfigMap, so applying its output does not reset the pause value.
+These manual steps apply to existing ConfigMaps when skipping the migration
+hook during removal or pruning. Substitute the release namespace for `thoras`.
+Plain `helm template` emits no pause ConfigMap; applying its output without
+pruning does not reset the pause value.
 
-Rolling back to a chart that still renders `scaling-paused: false` is unsupported:
-Helm may reject the detached resource or overwrite its pause state. Use a chart
-with this fix for subsequent upgrades and rollbacks. The runtime ConfigMap is
-retained across uninstall/reinstall; explicitly remove it if a clean installation
-must start unpaused.
+Older charts still declare `scaling-paused: false`. Restoring that older manifest
+can fail when Helm attempts to manage the runtime ConfigMap again.
+
+The runtime ConfigMap is retained across uninstall/reinstall; explicitly remove
+it if a clean installation must start unpaused.
 
 ## To 5.x
 
