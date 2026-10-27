@@ -743,7 +743,7 @@ Default matches snapshot:
               command:
                 - /bin/sh
                 - -c
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/alpine:3.23.3
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/alpine:3.24.3
               name: fix-dir-ownership
               resources:
                 limits:

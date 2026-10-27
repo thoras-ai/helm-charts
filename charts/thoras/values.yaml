@@ -372,7 +372,7 @@ metricsCollector:
   serviceAccount:
     name: thoras-collector
   init:
-    imageTag: "3.23.3"
+    imageTag: "3.24.3"
     # Specify the complete resources block (takes precedence if set)
     resources: {}
     # Legacy field for backward compatibility (used if resources is empty)
