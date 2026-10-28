@@ -1,0 +1,141 @@
+{{- $name := include "thoras.pauseStateMigrationName" . }}
+{{- if and .Values.imageCredentials.password .Values.imageCredentials.secretRef }}
+{{- fail "Error: Both '.Values.imageCredentials.password' and '.Values.imageCredentials.secretRef' are set, but only one should be defined" }}
+{{- end }}
+{{- if .Values.imageCredentials.password }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+  annotations:
+    {{- include "thoras.pauseStateMigrationAnnotations" (dict "weight" "-30" "job" false) | nindent 4 }}
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{ include "imagePullSecret" . }}
+---
+{{- end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+  annotations:
+    {{- include "thoras.pauseStateMigrationAnnotations" (dict "weight" "-30" "job" false) | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+  annotations:
+    {{- include "thoras.pauseStateMigrationAnnotations" (dict "weight" "-30" "job" false) | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources: [configmaps]
+  resourceNames: [thoras-operator-system-config]
+  verbs: [patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+  annotations:
+    {{- include "thoras.pauseStateMigrationAnnotations" (dict "weight" "-20" "job" false) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+---
+{{- $migration := .Values.thorasOperator.pauseStateMigration | default dict }}
+{{- $trackingLabels := dict "app.kubernetes.io/instance" nil }}
+{{- $_ := set $trackingLabels ($migration.argocdInstanceLabelKey | default "app.kubernetes.io/instance") nil }}
+{{- $annotations := dict "helm.sh/resource-policy" "keep" "argocd.argoproj.io/sync-options" "Prune=false" "argocd.argoproj.io/tracking-id" nil }}
+{{- $patch := dict "metadata" (dict "annotations" $annotations "labels" $trackingLabels) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 4 }}
+  annotations:
+    {{- include "thoras.pauseStateMigrationAnnotations" (dict "weight" "-10" "job" true) | nindent 4 }}
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 120
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasOperator.labels) | nindent 8 }}
+        app.kubernetes.io/component: pause-state-migration
+    spec:
+      serviceAccountName: {{ $name }}
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      {{- with (include "thoras.hookJobScheduling" . | trim) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.thorasOperator.priorityClassName | default .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- if .Values.imageCredentials.secretRef }}
+      imagePullSecrets:
+      - name: {{ .Values.imageCredentials.secretRef }}
+      {{- else if .Values.imageCredentials.password }}
+      imagePullSecrets:
+      - name: {{ $name }}
+      {{- end }}
+      containers:
+      - name: migrate
+        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          {{- toYaml ($migration.resources | default (dict "requests" (dict "cpu" "10m" "memory" "16Mi") "limits" (dict "memory" "64Mi"))) | nindent 10 }}
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MIGRATION_PATCH
+          value: {{ $patch | toJson | quote }}
+        {{- with include "thoras.globalEnv" . }}{{- . | nindent 8 }}{{- end }}
+        command:
+        - sh
+        - -ec
+        - |
+          token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          # Patch metadata only: the pause value belongs to the API server.
+          status=$(curl --silent --show-error --connect-timeout 10 --max-time 30 \
+            --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/merge-patch+json' \
+            -X PATCH --data "$MIGRATION_PATCH" --output /dev/null --write-out '%{http_code}' \
+            "https://kubernetes.default.svc/api/v1/namespaces/$POD_NAMESPACE/configmaps/thoras-operator-system-config")
+          case "$status" in
+            200) echo "Preserved scaling pause configuration" ;;
+            404) echo "No scaling pause configuration to migrate" ;;
+            *) echo "Scaling pause migration failed: HTTP $status" >&2; exit 1 ;;
+          esac
