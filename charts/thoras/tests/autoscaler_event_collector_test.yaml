@@ -1,0 +1,109 @@
+suite: AutoscalerEventCollector
+templates:
+  - worker/deployment.yaml
+  - worker/rbac.yaml
+release:
+  namespace: thoras
+tests:
+  - it: is on by default with a cluster-wide events ClusterRole
+    asserts:
+      - template: worker/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_AUTOSCALER_EVENT_COLLECTOR')].value
+          value: "true"
+      - template: worker/rbac.yaml
+        containsDocument:
+          kind: ClusterRole
+          apiVersion: rbac.authorization.k8s.io/v1
+          name: thoras-worker-autoscaler-events
+          any: true
+      - template: worker/rbac.yaml
+        containsDocument:
+          kind: ClusterRoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          name: thoras-worker-autoscaler-events
+          any: true
+
+  - it: grants only events get/list/watch
+    template: worker/rbac.yaml
+    documentSelector:
+      path: rules[?(@.resources[0] == 'events')]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: thoras-worker-autoscaler-events
+      - equal:
+          path: rules
+          value:
+            - apiGroups: [""]
+              resources: [events]
+              verbs: [get, list, watch]
+
+  - it: binds the worker ServiceAccount
+    template: worker/rbac.yaml
+    documentSelector:
+      path: roleRef.name
+      value: thoras-worker-autoscaler-events
+    asserts:
+      - equal:
+          path: roleRef.kind
+          value: ClusterRole
+      - equal:
+          path: subjects
+          value:
+            - kind: ServiceAccount
+              name: thoras-worker
+              namespace: thoras
+
+  - it: stays cluster-wide when rbac.namespaces is set
+    template: worker/rbac.yaml
+    set:
+      rbac:
+        namespaces:
+          - thoras
+    asserts:
+      - containsDocument:
+          kind: ClusterRole
+          apiVersion: rbac.authorization.k8s.io/v1
+          name: thoras-worker-autoscaler-events
+          any: true
+
+  - it: drops the ClusterRole and turns the worker off when disabled
+    set:
+      featureFlags:
+        enableAutoscalerEventCollector: false
+    asserts:
+      - template: worker/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_AUTOSCALER_EVENT_COLLECTOR')].value
+          value: "false"
+      - template: worker/rbac.yaml
+        not: true
+        containsDocument:
+          kind: ClusterRole
+          apiVersion: rbac.authorization.k8s.io/v1
+          name: thoras-worker-autoscaler-events
+          any: true
+      - template: worker/rbac.yaml
+        not: true
+        containsDocument:
+          kind: ClusterRoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          name: thoras-worker-autoscaler-events
+          any: true
+
+  - it: falls back to off when the key is missing from stored values
+    set:
+      featureFlags.enableAutoscalerEventCollector: null
+    asserts:
+      - template: worker/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_AUTOSCALER_EVENT_COLLECTOR')].value
+          value: "false"
+      - template: worker/rbac.yaml
+        not: true
+        containsDocument:
+          kind: ClusterRole
+          apiVersion: rbac.authorization.k8s.io/v1
+          name: thoras-worker-autoscaler-events
+          any: true

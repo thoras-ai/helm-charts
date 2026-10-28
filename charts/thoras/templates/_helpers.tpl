@@ -112,7 +112,8 @@ podAntiAffinity:
 
 {{/*
 ClusterRole + ClusterRoleBinding for read-only access to cluster-scoped
-resources (nodes, PVs, storageclasses) — a namespaced Role can never grant these.
+resources (nodes, PVs, storageclasses, Karpenter NodePools and NodeClaims) — a
+namespaced Role can never grant these.
 Usage: include "thoras.clusterScopedReadRbac" (dict "root" . "name" "thoras-operator-cluster-scoped"
          "labels" .Values.thorasOperator.labels "serviceAccountName" .Values.thorasOperator.serviceAccount.name)
 */}}
@@ -139,6 +140,15 @@ rules:
   - storage.k8s.io
   resources:
   - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - karpenter.sh
+  resources:
+  - nodepools
+  - nodeclaims
   verbs:
   - get
   - list
@@ -237,14 +247,6 @@ Usage: {{ include "thoras.workloadReadRules" . }}
   - argoproj.io
   resources:
   - rollouts
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - karpenter.sh
-  resources:
-  - nodepools
   verbs:
   - get
   - list

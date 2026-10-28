@@ -264,14 +264,6 @@ Default matches snapshot:
           - list
           - watch
       - apiGroups:
-          - karpenter.sh
-        resources:
-          - nodepools
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
           - metrics.k8s.io
         resources:
           - pods
@@ -434,6 +426,15 @@ Default matches snapshot:
           - storage.k8s.io
         resources:
           - storageclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+          - nodeclaims
         verbs:
           - get
           - list
@@ -1679,6 +1680,15 @@ Default matches snapshot:
           - list
           - watch
       - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+          - nodeclaims
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
           - metrics.k8s.io
         resources:
           - nodes
@@ -1778,14 +1788,6 @@ Default matches snapshot:
           - argoproj.io
         resources:
           - rollouts
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - karpenter.sh
-        resources:
-          - nodepools
         verbs:
           - get
           - list
@@ -2041,6 +2043,8 @@ Default matches snapshot:
                   value: 2m
                 - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
                   value: "true"
+                - name: SERVICE_ENABLE_AUTOSCALER_EVENT_COLLECTOR
+                  value: "true"
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "true"
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
@@ -2286,14 +2290,6 @@ Default matches snapshot:
           - list
           - watch
       - apiGroups:
-          - karpenter.sh
-        resources:
-          - nodepools
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
           - metrics.k8s.io
         resources:
           - pods
@@ -2444,6 +2440,15 @@ Default matches snapshot:
           - list
           - watch
       - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+          - nodeclaims
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
           - metrics.k8s.io
         resources:
           - nodes
@@ -2554,6 +2559,47 @@ Default matches snapshot:
         name: thoras-worker
         namespace: foo
   47: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-autoscaler-events
+      namespace: foo
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - events
+        verbs:
+          - get
+          - list
+          - watch
+  48: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-autoscaler-events
+      namespace: foo
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-worker-autoscaler-events
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: foo
+  49: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -2567,7 +2613,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: foo
-  48: |
+  50: |
     apiVersion: v1
     kind: Service
     metadata:
