@@ -55,6 +55,9 @@ proxy:
 
 featureFlags:
   enableNodeDetailsCollector: true
+  # When enabled, the worker records Karpenter and Cluster Autoscaler events
+  # for node pool insights. Grants the worker cluster-wide read access to Events.
+  enableAutoscalerEventCollector: true
   # When enabled, AST scale mode may be configured via API
   enableUpdateScaleModeApi: false
   # When enabled, the API server serves container logs and the dashboard shows

@@ -33,3 +33,25 @@ tests:
           path: rules
           any: true
           content: {apiGroups: ["*"], resources: ["*"]}
+  - it: Karpenter NodePools and NodeClaims are read through the cluster-scoped ClusterRoles when namespaced
+    templates: &karpenterReaders
+      - api-server-v2/rbac.yaml
+      - operator/rbac.yaml
+      - worker/rbac.yaml
+    documentSelector: &karpenterRule {path: "rules[?(@.apiGroups[0] == 'karpenter.sh')]", matchMany: true}
+    asserts: &karpenterAsserts
+      - equal:
+          path: kind
+          value: ClusterRole
+      - matchRegex:
+          path: metadata.name
+          pattern: -cluster-scoped$
+      - contains:
+          path: rules
+          content: {apiGroups: [karpenter.sh], resources: [nodepools, nodeclaims], verbs: [get, list, watch]}
+  - it: Karpenter NodePools and NodeClaims are read through the cluster-scoped ClusterRoles cluster-wide
+    templates: *karpenterReaders
+    set:
+      rbac.namespaces: null
+    documentSelector: *karpenterRule
+    asserts: *karpenterAsserts
