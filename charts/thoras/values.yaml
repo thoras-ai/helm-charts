@@ -558,7 +558,8 @@ thorasWorker:
   serviceAccount:
     name: thoras-worker
     # Set eks.amazonaws.com/role-arn here to give enableCostAndUsageCollector
-    # an IRSA role. The role needs ce:GetCostAndUsage.
+    # an IRSA role. The role needs ce:GetCostAndUsage, or sts:AssumeRole on
+    # costExplorerRoleArn when that is set.
     annotations: {}
   podAnnotations: {}
   labels: {}
@@ -595,8 +596,9 @@ thorasWorker:
   enableAnalysisEnqueuer: false
   analysisEnqueueInterval: "1h"
   # Nightly AWS Cost Explorer collection. The pod reaches Cost Explorer with
-  # whatever AWS credentials it picks up, so give serviceAccount.annotations an
-  # IRSA role before enabling this. Each query is billed by AWS.
+  # whatever AWS credentials it picks up, so give it an IRSA role
+  # (serviceAccount.annotations) or an EKS Pod Identity association before
+  # enabling this. Each query is billed by AWS.
   enableCostAndUsageCollector: false
   # Cost allocation tag identifying this cluster's spend, as TAG_KEY=TAG_VALUE.
   # Empty resolves the tag from node labels.
@@ -606,6 +608,14 @@ thorasWorker:
   # services at hourly granularity" enabled in Cost Explorer preferences, which
   # AWS charges for. Without it each run logs a warning and stores nothing.
   enableHourlyCostCollector: false
+  # Role the Cost Explorer calls assume, for billing visible only from another
+  # account such as the organization's payer. The worker's own role needs
+  # sts:AssumeRole on it; it must trust that role and allow ce:GetCostAndUsage.
+  # Queries are then limited to this cluster's account. Empty uses the worker's
+  # own credentials.
+  costExplorerRoleArn: ""
+  # External ID the role's trust policy requires, if any.
+  costExplorerRoleExternalId: ""
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it

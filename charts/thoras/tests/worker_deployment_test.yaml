@@ -200,3 +200,35 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_HOURLY_COST_COLLECTOR')].value
           value: "true"
+  - it: Should not assume a Cost Explorer role by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_ARN')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID')].value
+          value: ""
+  - it: Should pass the Cost Explorer role and external ID
+    set:
+      thorasWorker:
+        costExplorerRoleArn: "arn:aws:iam::111122223333:role/billing-reader"
+        costExplorerRoleExternalId: "thoras"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_ARN')].value
+          value: "arn:aws:iam::111122223333:role/billing-reader"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID')].value
+          value: "thoras"
+  # helm upgrade --reuse-values renders against stored values that predate these keys.
+  - it: Should render empty Cost Explorer role values when they are missing from stored values
+    set:
+      thorasWorker.costExplorerRoleArn: null
+      thorasWorker.costExplorerRoleExternalId: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_ARN')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID')].value
+          value: ""
