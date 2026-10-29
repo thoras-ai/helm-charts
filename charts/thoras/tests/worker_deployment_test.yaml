@@ -200,3 +200,34 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_HOURLY_COST_COLLECTOR')].value
           value: "true"
+  - it: Should query Cost Explorer per cluster on the primary billing view by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_MODE')].value
+          value: per-cluster
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_BILLING_VIEW_ARN')].value
+          value: ""
+  - it: Should send Cost Explorer queries through the console in console mode
+    set:
+      thorasWorker:
+        costExplorerMode: console
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_MODE')].value
+          value: console
+  - it: Should read a custom billing view
+    set:
+      thorasWorker:
+        costExplorerBillingViewArn: arn:aws:billing::123456789012:billingview/custom-1
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_BILLING_VIEW_ARN')].value
+          value: arn:aws:billing::123456789012:billingview/custom-1
+  - it: Should reject an unknown Cost Explorer mode
+    set:
+      thorasWorker:
+        costExplorerMode: proxy
+    asserts:
+      - failedTemplate:
+          errorMessage: 'thorasWorker.costExplorerMode must be "per-cluster" or "console", got "proxy"'

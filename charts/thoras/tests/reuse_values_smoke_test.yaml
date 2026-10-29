@@ -60,3 +60,10 @@ tests:
       thorasMcp: null
     asserts:
       - notFailedTemplate: {}
+
+  - it: All templates render when the Cost Explorer mode keys are missing from stored values
+    set:
+      thorasWorker.costExplorerMode: null
+      thorasWorker.costExplorerBillingViewArn: null
+    asserts:
+      - notFailedTemplate: {}

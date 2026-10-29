@@ -1,6 +1,7 @@
 {{- if and .Values.networkPolicy.enabled .Values.consoleApi.enabled }}
 {{- $c := .Values.consoleApi }}
 {{- $oidcMode := or (eq .Values.auth.mode "oidc") (eq .Values.auth.mode "both") }}
+{{- $costExplorer := ($c.costExplorer | default dict).enabled }}
 {{- $external := include "thoras-console.externalDatabaseEnabled" . }}
 {{- $flavor := include "thoras-console.networkPolicyFlavor" . }}
 {{- if eq $flavor "kubernetes" }}
@@ -58,9 +59,9 @@ spec:
     - port: 5432
       protocol: TCP
   {{- end }}
-  {{- if $oidcMode }}
-  # JWKS fetch. IdP hostnames resolve to drifting CIDRs, so this permits any
-  # :443 egress; narrow it with extraEgressRules.
+  {{- if or $oidcMode $costExplorer }}
+  # JWKS fetch and AWS Cost Explorer. Their hostnames resolve to drifting CIDRs,
+  # so this permits any :443 egress; narrow it with extraEgressRules.
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
@@ -124,8 +125,8 @@ spec:
       - port: "5432"
         protocol: TCP
   {{- end }}
-  {{- if $oidcMode }}
-  # console-api fetches JWKS from the identity provider.
+  {{- if or $oidcMode $costExplorer }}
+  # console-api fetches JWKS from the identity provider and calls AWS Cost Explorer.
   - toEntities:
     - world
     toPorts:

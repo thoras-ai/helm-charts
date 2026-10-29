@@ -811,9 +811,11 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | true          | Enable the unified AST utilization monitor                                                                                                                                      |
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                                                                                                                                         |
 | thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                                                                          |
-| thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. Requires an IRSA role granting `ce:GetCostAndUsage`                                                              |
+| thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. In per-cluster mode, requires an IRSA role granting `ce:GetCostAndUsage`                                         |
 | thorasWorker.costExplorerFilter                      | String  | ""            | Cost allocation tag identifying this cluster's spend, as `TAG_KEY=TAG_VALUE`. Empty resolves the tag from node labels                                                           |
 | thorasWorker.enableHourlyCostCollector               | Boolean | false         | Enable hourly AWS Cost Explorer collection for the hourly cost graph. Needs hourly granularity for all AWS services enabled in Cost Explorer preferences, which AWS charges for |
+| thorasWorker.costExplorerMode                        | String  | per-cluster   | `per-cluster` calls Cost Explorer with the worker's AWS credentials. `console` sends each query through the console this cluster syncs to; needs `cloudSync` and a console with `consoleApi.costExplorer.enabled` |
+| thorasWorker.costExplorerBillingViewArn              | String  | ""            | Custom billing view the collectors read in per-cluster mode, such as one shared from the management account. Empty reads the primary view                                       |
 
 ### Thoras Config Controller
 
