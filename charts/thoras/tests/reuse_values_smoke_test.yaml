@@ -60,3 +60,10 @@ tests:
       thorasMcp: null
     asserts:
       - notFailedTemplate: {}
+
+  - it: All templates render when the Cost Explorer role values are missing from stored values
+    set:
+      thorasWorker.costExplorerRoleArn: null
+      thorasWorker.costExplorerRoleExternalId: null
+    asserts:
+      - notFailedTemplate: {}
