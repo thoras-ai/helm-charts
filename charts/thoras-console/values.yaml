@@ -143,6 +143,28 @@ consoleApi:
 
   serviceAccount:
     name: thoras-console-api
+    # Set eks.amazonaws.com/role-arn here to give costExplorer an IRSA role.
+    annotations: {}
+
+  # -- Run Cost Explorer queries for tenant clusters whose worker sets
+  # thorasWorker.costExplorerMode: console. Each query is limited to the
+  # cluster's approved cost allocation tag and account. The pod calls Cost
+  # Explorer with the AWS credentials it picks up, which need
+  # ce:GetCostAndUsage and ce:GetDimensionValues, or sts:AssumeRole on roleArn.
+  costExplorer:
+    enabled: false
+    # Role to assume before calling Cost Explorer, such as one in the payer
+    # account. Empty uses the pod's own credentials.
+    roleArn: ""
+    externalId: ""
+    # Custom billing view set on every query. Empty reads the primary view.
+    billingViewArn: ""
+    # Limits are per replica. Zero is unlimited.
+    clusterRequestsPerMinute: 60
+    clusterBurst: 20
+    # All clusters together, including account lookups.
+    requestsPerMinute: 300
+    burst: 20
 
   service:
     annotations: {}

@@ -558,7 +558,7 @@ thorasWorker:
   serviceAccount:
     name: thoras-worker
     # Set eks.amazonaws.com/role-arn here to give enableCostAndUsageCollector
-    # an IRSA role. The role needs ce:GetCostAndUsage.
+    # an IRSA role in per-cluster mode. The role needs ce:GetCostAndUsage.
     annotations: {}
   podAnnotations: {}
   labels: {}
@@ -606,6 +606,16 @@ thorasWorker:
   # services at hourly granularity" enabled in Cost Explorer preferences, which
   # AWS charges for. Without it each run logs a warning and stores nothing.
   enableHourlyCostCollector: false
+  # Where the cost collectors send Cost Explorer queries. per-cluster calls
+  # Cost Explorer with this pod's AWS credentials. console sends each query
+  # through the console this cluster syncs to, which runs it with its own role,
+  # limited to this cluster's tag and account; it needs cloudSync and a console
+  # with consoleApi.costExplorer.enabled, and no AWS role on this cluster.
+  costExplorerMode: per-cluster
+  # Custom billing view ARN the collectors read in per-cluster mode, such as
+  # one shared from the management account. Empty reads the primary view. In
+  # console mode the console's own setting applies.
+  costExplorerBillingViewArn: ""
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it

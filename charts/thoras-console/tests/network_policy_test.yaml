@@ -195,6 +195,37 @@ tests:
                   - port: "443"
                     protocol: TCP
 
+  - it: Opens HTTPS egress for Cost Explorer in local mode
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.costExplorer.enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+
+  - it: Opens HTTPS egress for Cost Explorer in cilium local mode
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      consoleApi.costExplorer.enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - world
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+
   ############################
   # Kubernetes API egress belongs to the controller alone
   ############################

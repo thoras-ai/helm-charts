@@ -455,3 +455,68 @@ tests:
       - equal:
           path: metadata.labels.release
           value: kube-prometheus-stack
+
+  ############################
+  # Cost Explorer
+  ############################
+  - it: Leaves Cost Explorer off by default
+    template: console-api/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ENABLED')]
+
+  - it: Serves Cost Explorer with the configured role, view and limits
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.costExplorer:
+        enabled: true
+        roleArn: arn:aws:iam::123456789012:role/thoras-cost-explorer
+        externalId: thoras-console
+        billingViewArn: arn:aws:billing::123456789012:billingview/custom-1
+        clusterRequestsPerMinute: 0
+        clusterBurst: 5
+        requestsPerMinute: 120
+        burst: 10
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ENABLED')].value
+          value: "true"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_ARN')].value
+          value: arn:aws:iam::123456789012:role/thoras-cost-explorer
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_EXTERNAL_ID')].value
+          value: thoras-console
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_BILLING_VIEW_ARN')].value
+          value: arn:aws:billing::123456789012:billingview/custom-1
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_CLUSTER_REQUESTS_PER_MINUTE')].value
+          value: "0"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_CLUSTER_BURST')].value
+          value: "5"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_REQUESTS_PER_MINUTE')].value
+          value: "120"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_BURST')].value
+          value: "10"
+
+  - it: Renders without the costExplorer block, as in values stored before it existed
+    template: console-api/deployment.yaml
+    set:
+      consoleApi.costExplorer: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ENABLED')]
+
+  - it: Annotates the ServiceAccount for IRSA
+    template: console-api/service-account.yaml
+    set:
+      consoleApi.serviceAccount.annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/thoras-console
+    asserts:
+      - equal:
+          path: metadata.annotations["eks.amazonaws.com/role-arn"]
+          value: arn:aws:iam::123456789012:role/thoras-console

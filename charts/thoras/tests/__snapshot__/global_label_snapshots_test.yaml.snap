@@ -2149,6 +2149,10 @@ Default matches snapshot:
                   value: ""
                 - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
                   value: "false"
+                - name: SERVICE_COST_EXPLORER_MODE
+                  value: per-cluster
+                - name: SERVICE_COST_EXPLORER_BILLING_VIEW_ARN
+                  value: ""
                 - name: SERVICE_ENABLE_COST_ALERTS
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
