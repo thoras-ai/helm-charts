@@ -2147,6 +2147,10 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_COST_EXPLORER_FILTER
                   value: ""
+                - name: SERVICE_COST_EXPLORER_ROLE_ARN
+                  value: ""
+                - name: SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID
+                  value: ""
                 - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
                   value: "false"
                 - name: SERVICE_ENABLE_COST_ALERTS

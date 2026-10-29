@@ -814,6 +814,8 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. Requires an IRSA role granting `ce:GetCostAndUsage`                                                              |
 | thorasWorker.costExplorerFilter                      | String  | ""            | Cost allocation tag identifying this cluster's spend, as `TAG_KEY=TAG_VALUE`. Empty resolves the tag from node labels                                                           |
 | thorasWorker.enableHourlyCostCollector               | Boolean | false         | Enable hourly AWS Cost Explorer collection for the hourly cost graph. Needs hourly granularity for all AWS services enabled in Cost Explorer preferences, which AWS charges for |
+| thorasWorker.costExplorerRoleArn                     | String  | ""            | Role the Cost Explorer calls assume when billing is only visible from another account, such as the organization's payer. The worker's role needs `sts:AssumeRole` on it, and it needs `ce:GetCostAndUsage`. Queries are then limited to this cluster's account. Empty uses the worker's own credentials |
+| thorasWorker.costExplorerRoleExternalId              | String  | ""            | External ID the role's trust policy requires, if any |
 
 ### Thoras Config Controller
 
