@@ -232,3 +232,118 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID')].value
           value: ""
+  - it: Should not ingest the CUR by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CUR_INGESTION')].value
+          value: "false"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_BUCKET')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_PREFIX')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_EXPORT_NAME')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_ARN')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_EXTERNAL_ID')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_CLUSTER_NAME')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_REGION')].value
+          value: "us-east-1"
+  - it: Should pass the CUR ingestion values
+    set:
+      thorasWorker:
+        enableCurIngestion: true
+        curBucket: "billing-exports"
+        curPrefix: "cur"
+        curExportName: "OrgExport"
+        curRegion: "eu-west-1"
+        curRoleArn: "arn:aws:iam::111122223333:role/cur-reader"
+        curRoleExternalId: "thoras"
+        curClusterName: "prod"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CUR_INGESTION')].value
+          value: "true"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_BUCKET')].value
+          value: "billing-exports"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_PREFIX')].value
+          value: "cur"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_EXPORT_NAME')].value
+          value: "OrgExport"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_REGION')].value
+          value: "eu-west-1"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_ARN')].value
+          value: "arn:aws:iam::111122223333:role/cur-reader"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_EXTERNAL_ID')].value
+          value: "thoras"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_CLUSTER_NAME')].value
+          value: "prod"
+  # helm upgrade --reuse-values renders against stored values that predate these keys.
+  - it: Should render default CUR values when they are missing from stored values
+    set:
+      thorasWorker.enableCurIngestion: null
+      thorasWorker.curBucket: null
+      thorasWorker.curPrefix: null
+      thorasWorker.curExportName: null
+      thorasWorker.curRegion: null
+      thorasWorker.curRoleArn: null
+      thorasWorker.curRoleExternalId: null
+      thorasWorker.curClusterName: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CUR_INGESTION')].value
+          value: "false"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_BUCKET')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_PREFIX')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_EXPORT_NAME')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_ARN')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_EXTERNAL_ID')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_CLUSTER_NAME')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_REGION')].value
+          value: "us-east-1"
+  # Without these the worker would start and crash-loop on its own check.
+  - it: Should fail to render CUR ingestion without a bucket
+    set:
+      thorasWorker:
+        enableCurIngestion: true
+        curExportName: "OrgExport"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Error: 'thorasWorker.enableCurIngestion' is true but 'thorasWorker.curBucket' is empty. Set it to the bucket the CUR export delivers to."
+  - it: Should fail to render CUR ingestion without an export name
+    set:
+      thorasWorker:
+        enableCurIngestion: true
+        curBucket: "billing-exports"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Error: 'thorasWorker.enableCurIngestion' is true but 'thorasWorker.curExportName' is empty. Set it to the CUR export's name."
