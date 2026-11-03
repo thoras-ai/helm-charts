@@ -418,6 +418,47 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
+  - it: Fails when a URL DSN sets sslmode twice
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=disable&sslmode=verify-full"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires externalTimescale.dsn to set sslmode only once, to verify-full"
+
+  - it: Fails when a URL DSN repeats sslmode=verify-full
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=verify-full&sslmode=verify-full"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires externalTimescale.dsn to set sslmode only once, to verify-full"
+
+  - it: Fails when a key/value DSN sets sslmode twice
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "host=db.example.com dbname=thoras sslmode=verify-full sslmode=require"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires externalTimescale.dsn to set sslmode only once, to verify-full"
+
+  - it: Skips the inline DSN check when secretRefName is set, since the Secret's DSN is used
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=disable"
+        secretRefName: tsdb
+        secretRefKey: dsn
+    asserts:
+      - notFailedTemplate: {}
+
   # --- FIPS off ---
 
   - it: Leaves image tags, env and init containers unchanged when off
