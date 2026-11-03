@@ -170,9 +170,10 @@ cloudSync:
 
 # FIPS 140-3 mode. Runs the -fips variant of every Thoras image and the
 # oauth2-proxy FIPS image, and sets GODEBUG=fips140=on on Go containers.
-# Requires thorasDashboard.auth.mode: oidc (or auth disabled), an
-# externalTimescale DSN with sslmode=verify-full, and
-# thorasOperator.webhookCertGen.certManager.enabled. See README > "FIPS mode".
+# Requires OIDC dashboard sign-in (or dashboard auth or the dashboard
+# disabled), externalTimescale with a DSN that sets sslmode=verify-full, and
+# thorasOperator.webhookCertGen.certManager.enabled. Needs -fips images, so
+# thorasVersion must be a release that publishes them. See README > "FIPS mode".
 fips:
   enabled: false
 

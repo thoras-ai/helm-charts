@@ -552,23 +552,37 @@ from any source; narrow it with `thorasMcp.extraIngressRules`.
 `fips.enabled: true` runs FIPS variants of the images. Every Thoras image tag
 gets a `-fips` suffix: `thorasVersion` `4.125.0` pulls `services:4.125.0-fips`,
 and a per-component `imageTag` override such as `4.125.1` becomes
-`4.125.1-fips`. A tag that already ends in `-fips` is used as is. The
-oauth2-proxy sidecar uses `thorasDashboard.auth.fipsImageTag`. Go containers
-(the `services` binaries and oauth2-proxy) get `GODEBUG=fips140=on`. Don't
-override it with `fips140=only`: oauth2-proxy does not start in that mode.
+`4.125.1-fips`. A tag that already ends in `-fips` is used as is. A tag with
+a digest (`4.125.0@sha256:...`) fails the render: a digest can't take the
+suffix and may point at a non-FIPS image. The oauth2-proxy sidecar uses
+`thorasDashboard.auth.fipsImageTag`. Go containers (the `services` binaries
+and oauth2-proxy) get `GODEBUG=fips140=on`. Don't override it with
+`fips140=only`: oauth2-proxy does not start in that mode. A `GODEBUG` set in
+`env` is rendered after the chart's, so the container gets both entries and
+Kubernetes uses yours.
+
+`-fips` images exist from the first release that includes
+thoras-ai/platform#5458 and #5460. `thorasVersion`, and any per-component
+`imageTag`, must be that release or newer. With an older version, the
+`-fips` tag doesn't exist, so the pre-install hook Job fails to pull its
+image and the install fails.
 
 FIPS installs need:
 
 - An external database. The bundled TimescaleDB has no FIPS build, so set
   `externalTimescale` and run the database on your own FIPS platform. The DSN
-  must use `sslmode=verify-full`. The chart checks an inline
-  `externalTimescale.dsn`; a DSN read from a Secret can't be checked at render
-  time, so make sure it sets `sslmode=verify-full` too. The database password
-  must be at least 14 bytes: FIPS mode rejects shorter HMAC keys, and SCRAM
-  uses the password as one.
-- OIDC dashboard sign-in (`thorasDashboard.auth.mode: oidc`), or dashboard
-  auth disabled behind your own. htpasswd mode checks a bcrypt hash, which is
-  not FIPS approved.
+  must set `sslmode=verify-full` exactly once, written as an unquoted
+  parameter with no spaces around `=`: `?sslmode=verify-full` or
+  `&sslmode=verify-full` in a URL, or `sslmode=verify-full` in a key/value
+  DSN. The chart checks an inline `externalTimescale.dsn` when it is the DSN
+  in use; with `secretRefName` set, the Secret's DSN is used instead, and it
+  can't be checked at render time, so make sure it follows the same form. The
+  database password must be at least 14 bytes: FIPS mode rejects shorter HMAC
+  keys, and SCRAM uses the password as one.
+- No htpasswd dashboard sign-in, which checks a bcrypt hash that is not FIPS
+  approved. Use OIDC (`thorasDashboard.auth.mode: oidc`), turn dashboard auth
+  off (`thorasDashboard.auth.enabled: false`) and put your own in front, or
+  turn the dashboard off (`thorasDashboard.enabled: false`).
 - cert-manager for the webhook certificates
   (`thorasOperator.webhookCertGen.certManager.enabled: true`). The
   kube-webhook-certgen Jobs are not used.
@@ -755,9 +769,9 @@ must be pre-installed and managed externally.
 
 ### FIPS
 
-| Key          | Type    | Default | Description                                                                                                                                                    |
-| ------------ | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| fips.enabled | Boolean | false   | Runs the `-fips` image variants and sets `GODEBUG=fips140=on` on Go containers. Requires externalTimescale, OIDC and cert-manager; see [FIPS mode](#fips-mode) |
+| Key          | Type    | Default | Description                                                                                                                                                                           |
+| ------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fips.enabled | Boolean | false   | Runs the `-fips` image variants and sets `GODEBUG=fips140=on` on Go containers. Requires externalTimescale, cert-manager, and no htpasswd dashboard auth; see [FIPS mode](#fips-mode) |
 
 ### Bundled TimescaleDB TLS
 

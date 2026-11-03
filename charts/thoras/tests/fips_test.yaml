@@ -244,9 +244,11 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].name
           value: thoras-blob-api
-      - notMatchRegex:
-          path: spec.template.spec.containers[0].args[0]
-          pattern: "psql|pg_isready"
+      - notExists:
+          path: spec.template.spec.containers[0].args
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/blob-service"]
 
   - it: Renders no metrics-collector with enableNoBlobApiServer
     templates:
@@ -313,6 +315,36 @@ tests:
           path: spec.template.spec.containers[0].readinessProbe.exec.command[0]
           value: curl
 
+  - it: Fails when thorasVersion is a digest
+    templates:
+      - worker/deployment.yaml
+    set:
+      thorasVersion: "4.125.0@sha256:abcd"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled does not support image digests (got \"4.125.0@sha256:abcd\"): a digest can't take the -fips suffix and may point at a non-FIPS image; set a plain tag"
+
+  - it: Fails when a component imageTag is a digest
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        imageTag: "4.125.1-fips@sha256:abcd"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled does not support image digests (got \"4.125.1-fips@sha256:abcd\"): a digest can't take the -fips suffix and may point at a non-FIPS image; set a plain tag"
+
+  - it: Treats fips.enabled given as the string "true" as on
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      fips:
+        enabled: "true"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0-fips
+
   # --- Render failures ---
 
   - it: Fails with htpasswd dashboard auth
@@ -333,6 +365,17 @@ tests:
       thorasDashboard:
         auth:
           enabled: false
+          mode: htpasswd
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Allows htpasswd mode when the dashboard is disabled
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasDashboard:
+        enabled: false
+        auth:
           mode: htpasswd
     asserts:
       - notFailedTemplate: {}
@@ -502,3 +545,44 @@ tests:
         documentSelector:
           path: kind
           value: Job
+
+  - it: Treats fips.enabled given as the string "false" as off
+    set:
+      fips:
+        enabled: "false"
+      externalTimescale:
+        dsn: ""
+      thorasOperator:
+        webhookCertGen:
+          certManager:
+            enabled: false
+      thorasDashboard:
+        auth:
+          mode: htpasswd
+    templates:
+      - thoras-helm-values-secret.yaml
+      - api-server-v2/deployment.yaml
+      - dashboard/deployment.yaml
+    asserts:
+      - notFailedTemplate: {}
+        template: thoras-helm-values-secret.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0"}
+        template: api-server-v2/deployment.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GODEBUG
+          any: true
+        template: api-server-v2/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[?(@.name == 'oauth2-proxy')].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/oauth2-proxy:v7.15.4-alpine"}
+        template: dashboard/deployment.yaml
+
+  - it: Leaves a digest tag untouched when off
+    set:
+      fips:
+        enabled: false
+      thorasVersion: "4.125.0@sha256:abcd"
+    templates:
+      - api-server-v2/deployment.yaml
+    asserts:
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0@sha256:abcd"}

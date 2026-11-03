@@ -993,17 +993,21 @@ argocd.argoproj.io/hook-delete-policy: BeforeHookCreation{{ if .job }},HookSucce
 True when FIPS mode is on ("true" or ""). Nil-safe for --reuse-values.
 */}}
 {{- define "thoras.fipsEnabled" -}}
-{{- if (.Values.fips).enabled -}}true{{- end -}}
+{{- if eq (toString (.Values.fips).enabled) "true" -}}true{{- end -}}
 {{- end -}}
 
 {{/*
 Resolved tag for a Thoras image: the component override, else thorasVersion.
-FIPS mode appends -fips unless the tag already ends in it.
+FIPS mode appends -fips unless the tag already ends in it, and rejects digests.
 Usage: {{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasWorker.imageTag) }}
 */}}
 {{- define "thoras.imageTag" -}}
 {{- $tag := default .root.Values.thorasVersion .tag -}}
-{{- if and (include "thoras.fipsEnabled" .root) (not (hasSuffix "-fips" (toString $tag))) -}}
+{{- $fips := include "thoras.fipsEnabled" .root -}}
+{{- if and $fips (contains "@" (toString $tag)) -}}
+{{- fail (printf "fips.enabled does not support image digests (got %q): a digest can't take the -fips suffix and may point at a non-FIPS image; set a plain tag" (toString $tag)) -}}
+{{- end -}}
+{{- if and $fips (not (hasSuffix "-fips" (toString $tag))) -}}
 {{- printf "%v-fips" $tag -}}
 {{- else -}}
 {{- $tag -}}
