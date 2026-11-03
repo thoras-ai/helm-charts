@@ -547,6 +547,59 @@ To reach it from outside the cluster, put your own Ingress or Gateway in front
 of the Service. With `networkPolicy.enabled`, the server port accepts traffic
 from any source; narrow it with `thorasMcp.extraIngressRules`.
 
+### FIPS mode
+
+`fips.enabled: true` runs FIPS variants of the images. Every Thoras image tag
+gets a `-fips` suffix: `thorasVersion` `4.125.0` pulls `services:4.125.0-fips`,
+and a per-component `imageTag` override such as `4.125.1` becomes
+`4.125.1-fips`. A tag that already ends in `-fips` is used as is. The
+oauth2-proxy sidecar uses `thorasDashboard.auth.fipsImageTag`. Go containers
+(the `services` binaries and oauth2-proxy) get `GODEBUG=fips140=on`. Don't
+override it with `fips140=only`: oauth2-proxy does not start in that mode.
+
+FIPS installs need:
+
+- An external database. The bundled TimescaleDB has no FIPS build, so set
+  `externalTimescale` and run the database on your own FIPS platform. The DSN
+  must use `sslmode=verify-full`. The chart checks an inline
+  `externalTimescale.dsn`; a DSN read from a Secret can't be checked at render
+  time, so make sure it sets `sslmode=verify-full` too. The database password
+  must be at least 14 bytes: FIPS mode rejects shorter HMAC keys, and SCRAM
+  uses the password as one.
+- OIDC dashboard sign-in (`thorasDashboard.auth.mode: oidc`), or dashboard
+  auth disabled behind your own. htpasswd mode checks a bcrypt hash, which is
+  not FIPS approved.
+- cert-manager for the webhook certificates
+  (`thorasOperator.webhookCertGen.certManager.enabled: true`). The
+  kube-webhook-certgen Jobs are not used.
+
+The render fails if any of these is missing. With these settings no
+third-party image except oauth2-proxy runs: no TimescaleDB, `alpine`, `httpd`
+or `kube-webhook-certgen`.
+
+```yaml
+fips:
+  enabled: true
+externalTimescale:
+  secretRefName: thoras-timescale-dsn
+  secretRefKey: dsn # postgres://...?sslmode=verify-full
+thorasOperator:
+  webhookCertGen:
+    certManager:
+      enabled: true
+thorasDashboard:
+  auth:
+    mode: oidc
+    oidc:
+      issuerURL: https://idp.example.com
+      redirectURL: https://thoras.example.com/oauth2/callback
+      existingSecret:
+        secretName: oauth2-proxy-secrets
+```
+
+FIPS mode on the nodes (kernel and OS) is configured on your side; the images
+carry their own validated modules either way.
+
 ### NetworkPolicy
 
 Set `networkPolicy.enabled: true` to render per-component policies.
@@ -699,6 +752,12 @@ must be pre-installed and managed externally.
 | externalTimescale.dsn           | String | ""      | Full postgres DSN including database name, e.g. `postgres://user:pass@host:5432/tsdb?sslmode=require` |
 | externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`). Requires `secretRefKey`      |
 | externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN. Requires `secretRefName`                                    |
+
+### FIPS
+
+| Key          | Type    | Default | Description                                                                                                                                                    |
+| ------------ | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fips.enabled | Boolean | false   | Runs the `-fips` image variants and sets `GODEBUG=fips140=on` on Go containers. Requires externalTimescale, OIDC and cert-manager; see [FIPS mode](#fips-mode) |
 
 ### Bundled TimescaleDB TLS
 
@@ -868,6 +927,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasDashboard.auth.mode                                    | String  | htpasswd                     | `htpasswd` (chart-managed username+password) or `oidc` (OIDC via your IdP). Fields under the unused mode's block are silently ignored                                                                                                                                                                                                                                                                       |
 | thorasDashboard.auth.cookieSecure                            | Bool    | false                        | Marks session cookies as Secure. Recommended enabled in production. Requires TLS at the edge and breaks Safari via `kubectl port-forward`. Applies to both modes                                                                                                                                                                                                                                            |
 | thorasDashboard.auth.imageTag                                | String  | v7.15.4-alpine               | oauth2-proxy sidecar image tag. Applies to both modes                                                                                                                                                                                                                                                                                                                                                       |
+| thorasDashboard.auth.fipsImageTag                            | String  | v7.15.4-fips                 | oauth2-proxy sidecar image tag used instead of `imageTag` when `fips.enabled` is true                                                                                                                                                                                                                                                                                                                       |
 | thorasDashboard.auth.resources                               | Object  | see values.yaml              | oauth2-proxy sidecar resources                                                                                                                                                                                                                                                                                                                                                                              |
 | thorasDashboard.auth.extraArgs                               | List    | []                           | Extra flags appended to the sidecar's `args` verbatim. Applies to both modes. Flags here override any equivalent directive in the chart-generated `oauth2-proxy.cfg`                                                                                                                                                                                                                                        |
 | thorasDashboard.auth.htpasswd.username                       | String  | thoras                       | Login username under `mode: htpasswd`                                                                                                                                                                                                                                                                                                                                                                       |

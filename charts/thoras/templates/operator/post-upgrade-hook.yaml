@@ -40,7 +40,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: thoras-post-upgrade
-        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+        image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasOperator.imageTag) }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
           allowPrivilegeEscalation: false
@@ -48,6 +48,7 @@ spec:
             drop: [ALL]
         command: ["/app/operator", "post-upgrade"]
         env:
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         {{- if .Values.thorasOperator.postUpgradeHook.resources }}
         resources: {{ .Values.thorasOperator.postUpgradeHook.resources | toYaml | nindent 10 }}

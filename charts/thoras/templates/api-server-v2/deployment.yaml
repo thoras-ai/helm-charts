@@ -50,7 +50,7 @@ spec:
           optional: true
       {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 6 }}{{- end }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasApiServerV2.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasApiServerV2.imageTag) }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-api-server-v2
         securityContext:
@@ -165,6 +165,7 @@ spec:
           - name: SERVICE_IDLE_THRESHOLD
             value: {{ .Values.utilizationThresholds.idle | quote }}
           {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         volumeMounts:
           - name: monitor-config

@@ -988,3 +988,35 @@ helm.sh/hook-weight: {{ .weight | quote }}
 helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 argocd.argoproj.io/hook-delete-policy: BeforeHookCreation{{ if .job }},HookSucceeded{{ end }}
 {{- end -}}
+
+{{/*
+True when FIPS mode is on ("true" or ""). Nil-safe for --reuse-values.
+*/}}
+{{- define "thoras.fipsEnabled" -}}
+{{- if (.Values.fips).enabled -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+Resolved tag for a Thoras image: the component override, else thorasVersion.
+FIPS mode appends -fips unless the tag already ends in it.
+Usage: {{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasWorker.imageTag) }}
+*/}}
+{{- define "thoras.imageTag" -}}
+{{- $tag := default .root.Values.thorasVersion .tag -}}
+{{- if and (include "thoras.fipsEnabled" .root) (not (hasSuffix "-fips" (toString $tag))) -}}
+{{- printf "%v-fips" $tag -}}
+{{- else -}}
+{{- $tag -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Env entries for Go containers in FIPS mode, or empty. Rendered before
+thoras.globalEnv so a user-supplied GODEBUG in `env` wins.
+*/}}
+{{- define "thoras.fipsGoEnv" -}}
+{{- if include "thoras.fipsEnabled" . -}}
+- name: GODEBUG
+  value: fips140=on
+{{- end -}}
+{{- end -}}

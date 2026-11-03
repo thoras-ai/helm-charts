@@ -67,3 +67,23 @@ tests:
       thorasWorker.costExplorerRoleExternalId: null
     asserts:
       - notFailedTemplate: {}
+
+  - it: All templates render when the fips block is missing from stored values
+    set:
+      fips: null
+      thorasDashboard.auth.fipsImageTag: null
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when fips is turned on and fipsImageTag is missing from stored values
+    set:
+      fips.enabled: true
+      thorasDashboard.auth.fipsImageTag: null
+      thorasDashboard.auth.mode: oidc
+      thorasDashboard.auth.oidc.existingSecret.secretName: oauth2-proxy-secrets
+      thorasDashboard.auth.oidc.issuerURL: https://idp.example.com
+      thorasDashboard.auth.oidc.redirectURL: https://thoras.example.com/oauth2/callback
+      externalTimescale.dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=verify-full"
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - notFailedTemplate: {}

@@ -64,7 +64,7 @@ spec:
               {{- end }}
         {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 8 }}{{- end }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasOperator.imageTag) }}
         name: thoras-operator
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
@@ -177,6 +177,7 @@ spec:
             value: {{ .Values.featureFlags.enableAstRecordMirroring | ternary "true" "false" | quote }}
           - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
             value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: [
           "/app/operator"

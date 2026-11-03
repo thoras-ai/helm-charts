@@ -1,0 +1,463 @@
+suite: FIPS mode
+set:
+  thorasVersion: "4.125.0"
+  fips:
+    enabled: true
+  externalTimescale:
+    dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=verify-full"
+  thorasOperator:
+    webhookCertGen:
+      certManager:
+        enabled: true
+  thorasDashboard:
+    auth:
+      mode: oidc
+      oidc:
+        issuerURL: https://idp.example.com
+        redirectURL: https://thoras.example.com/oauth2/callback
+        existingSecret:
+          secretName: oauth2-proxy-secrets
+tests:
+  # --- Image tags ---
+
+  - it: Appends -fips to the services image of every Go workload
+    templates:
+      - api-server-v2/deployment.yaml
+      - operator/deployment.yaml
+      - worker/deployment.yaml
+      - config-controller/deployment.yaml
+      - collector/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name != 'oauth2-proxy')].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0-fips
+
+  - it: Appends -fips to the MCP server image
+    templates:
+      - mcp/deployment.yaml
+    set:
+      thorasMcp:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0-fips
+
+  - it: Appends -fips to the operator hook Jobs
+    templates:
+      - operator/post-upgrade-hook.yaml
+      - operator/pre-delete-hook.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0-fips
+
+  - it: Appends -fips to the dashboard and forecast images
+    templates:
+      - dashboard/deployment.yaml
+      - forecast-worker/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:4.125.0-fips
+        template: dashboard/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:4.125.0-fips
+        template: forecast-worker/deployment.yaml
+
+  - it: Appends -fips to per-component imageTag overrides
+    set:
+      thorasApiServerV2: {imageTag: "4.200.0"}
+      thorasOperator: {imageTag: "4.200.1"}
+      thorasWorker: {imageTag: "4.200.2"}
+      thorasConfigController: {imageTag: "4.200.3"}
+      thorasDashboard: {imageTag: "4.200.4"}
+      thorasForecast: {imageTag: "4.200.5"}
+      thorasMcp: {enabled: true, imageTag: "4.200.6"}
+      metricsCollector: {blobService: {imageTag: "4.200.7"}}
+    templates:
+      - api-server-v2/deployment.yaml
+      - operator/deployment.yaml
+      - operator/post-upgrade-hook.yaml
+      - operator/pre-delete-hook.yaml
+      - worker/deployment.yaml
+      - config-controller/deployment.yaml
+      - dashboard/deployment.yaml
+      - forecast-worker/deployment.yaml
+      - mcp/deployment.yaml
+      - collector/deployment.yaml
+    asserts:
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.200.0-fips"}
+        template: api-server-v2/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.200.1-fips"}
+        template: operator/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.200.1-fips"}
+        template: operator/post-upgrade-hook.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.200.1-fips"}
+        template: operator/pre-delete-hook.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.200.2-fips"}
+        template: worker/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.200.3-fips"}
+        template: config-controller/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:4.200.4-fips"}
+        template: dashboard/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:4.200.5-fips"}
+        template: forecast-worker/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.200.6-fips"}
+        template: mcp/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.200.7-fips"}
+        template: collector/deployment.yaml
+
+  - it: Uses a tag that already ends in -fips as is
+    set:
+      thorasVersion: "4.125.0-fips"
+      thorasWorker:
+        imageTag: "4.125.1-fips"
+    templates:
+      - api-server-v2/deployment.yaml
+      - worker/deployment.yaml
+    asserts:
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0-fips"}
+        template: api-server-v2/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.1-fips"}
+        template: worker/deployment.yaml
+
+  - it: Uses the oauth2-proxy FIPS tag
+    templates:
+      - dashboard/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/oauth2-proxy:v7.15.4-fips
+
+  - it: Honors a custom oauth2-proxy fipsImageTag
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        auth:
+          fipsImageTag: v7.16.0-fips
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/oauth2-proxy:v7.16.0-fips
+
+  - it: Falls back to the default oauth2-proxy FIPS tag when the value is missing
+    templates:
+      - dashboard/deployment.yaml
+    set:
+      thorasDashboard:
+        auth:
+          fipsImageTag: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/oauth2-proxy:v7.15.4-fips
+
+  # --- GODEBUG ---
+
+  - it: Sets GODEBUG=fips140=on on every Go container
+    templates:
+      - api-server-v2/deployment.yaml
+      - operator/deployment.yaml
+      - worker/deployment.yaml
+      - config-controller/deployment.yaml
+      - collector/deployment.yaml
+      - operator/post-upgrade-hook.yaml
+      - operator/pre-delete-hook.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GODEBUG
+            value: fips140=on
+
+  - it: Sets GODEBUG=fips140=on on the MCP server
+    templates:
+      - mcp/deployment.yaml
+    set:
+      thorasMcp:
+        enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GODEBUG
+            value: fips140=on
+
+  - it: Sets GODEBUG=fips140=on on oauth2-proxy but not on nginx
+    templates:
+      - dashboard/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'oauth2-proxy')].env
+          content:
+            name: GODEBUG
+            value: fips140=on
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-dashboard')].env
+          content:
+            name: GODEBUG
+          any: true
+
+  - it: Does not set GODEBUG on the forecast worker
+    templates:
+      - forecast-worker/deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GODEBUG
+          any: true
+
+  - it: Puts a GODEBUG from global env after the chart's so it takes effect
+    templates:
+      - api-server-v2/deployment.yaml
+    set:
+      env:
+        - name: GODEBUG
+          value: fips140=only
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GODEBUG
+            value: fips140=on
+      - equal:
+          path: spec.template.spec.containers[0].env[-1:]
+          value:
+            name: GODEBUG
+            value: fips140=only
+
+  # --- Third-party images that FIPS mode removes ---
+
+  - it: Runs only blob-service in the metrics-collector pod
+    templates:
+      - collector/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: thoras-blob-api
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "psql|pg_isready"
+
+  - it: Renders no metrics-collector with enableNoBlobApiServer
+    templates:
+      - collector/deployment.yaml
+    set:
+      featureFlags:
+        enableNoBlobApiServer: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Has no htpasswd init container on the dashboard
+    templates:
+      - dashboard/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+
+  - it: Renders no kube-webhook-certgen Jobs
+    templates:
+      - operator/webhooks-certgen-create.yaml
+      - operator/webhooks-certgen-patch.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Runs blob-service directly, without the shell bootstrap
+    templates:
+      - collector/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/blob-service"]
+      - notExists:
+          path: spec.template.spec.containers[0].args
+
+  - it: Runs the pause-state migration through the operator binary
+    templates:
+      - operator/pause-state-migration.yaml
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0-fips
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/operator", "migrate-pause-state"]
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GODEBUG
+            value: fips140=on
+      - exists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'MIGRATION_PATCH')].value
+
+  - it: Keeps the curl-based dashboard and forecast probes
+    templates:
+      - dashboard/deployment.yaml
+      - forecast-worker/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.exec.command[0]
+          value: curl
+
+  # --- Render failures ---
+
+  - it: Fails with htpasswd dashboard auth
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          mode: htpasswd
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires thorasDashboard.auth.mode=oidc: htpasswd mode uses bcrypt, which is not FIPS approved"
+
+  - it: Allows htpasswd mode when dashboard auth is disabled
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+          mode: htpasswd
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Fails without an external database
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires an external database: set externalTimescale.dsn or externalTimescale.secretRefName/secretRefKey (the bundled TimescaleDB has no FIPS build)"
+
+  - it: Fails without cert-manager
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasOperator:
+        webhookCertGen:
+          certManager:
+            enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires cert-manager for the webhook certificates: set thorasOperator.webhookCertGen.certManager.enabled=true (cert-manager must be installed in the cluster)"
+
+  - it: Fails when an inline DSN uses a weaker sslmode
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=require"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires externalTimescale.dsn to set sslmode=verify-full"
+
+  - it: Fails when an inline DSN has no sslmode
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires externalTimescale.dsn to set sslmode=verify-full"
+
+  - it: Fails when sslmode=verify-full is only a prefix of the value
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=verify-fullx"
+    asserts:
+      - failedTemplate:
+          errorMessage: "fips.enabled requires externalTimescale.dsn to set sslmode=verify-full"
+
+  - it: Accepts sslmode=verify-full among other URL parameters
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?connect_timeout=5&sslmode=verify-full&sslrootcert=/etc/ca.crt"
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Accepts a key/value DSN with sslmode=verify-full
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: "host=db.example.com dbname=thoras user=thoras sslmode=verify-full"
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Accepts a DSN from a Secret without checking it
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      externalTimescale:
+        dsn: ""
+        secretRefName: tsdb
+        secretRefKey: dsn
+    asserts:
+      - notFailedTemplate: {}
+
+  # --- FIPS off ---
+
+  - it: Leaves image tags, env and init containers unchanged when off
+    set:
+      fips:
+        enabled: false
+      thorasDashboard:
+        auth:
+          mode: htpasswd
+    templates:
+      - api-server-v2/deployment.yaml
+      - dashboard/deployment.yaml
+      - forecast-worker/deployment.yaml
+      - collector/deployment.yaml
+      - operator/pause-state-migration.yaml
+    asserts:
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/services:4.125.0"}
+        template: api-server-v2/deployment.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GODEBUG
+          any: true
+        template: api-server-v2/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/thoras-dashboard-v2:4.125.0"}
+        template: dashboard/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[?(@.name == 'oauth2-proxy')].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/oauth2-proxy:v7.15.4-alpine"}
+        template: dashboard/deployment.yaml
+      - equal: {path: "spec.template.spec.initContainers[0].name", value: htpasswd-init}
+        template: dashboard/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].image", value: "us-east4-docker.pkg.dev/thoras-registry/platform/thoras-forecast:4.125.0"}
+        template: forecast-worker/deployment.yaml
+      - equal: {path: "spec.template.spec.initContainers[0].name", value: fix-dir-ownership}
+        template: collector/deployment.yaml
+      - equal: {path: "spec.template.spec.containers[0].command", value: ["/bin/sh", "-c"]}
+        template: collector/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].command[0]
+          value: sh
+        template: operator/pause-state-migration.yaml
+        documentSelector:
+          path: kind
+          value: Job

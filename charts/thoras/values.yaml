@@ -168,6 +168,14 @@ cloudSync:
   joinSecretSecretRefName: ""
   joinSecretSecretRefKey: ""
 
+# FIPS 140-3 mode. Runs the -fips variant of every Thoras image and the
+# oauth2-proxy FIPS image, and sets GODEBUG=fips140=on on Go containers.
+# Requires thorasDashboard.auth.mode: oidc (or auth disabled), an
+# externalTimescale DSN with sslmode=verify-full, and
+# thorasOperator.webhookCertGen.certManager.enabled. See README > "FIPS mode".
+fips:
+  enabled: false
+
 # External TimescaleDB configuration. When set, the chart skips deploying the
 # in-cluster TimescaleDB and configures all components to use the external
 # database instead. The TimescaleDB extension must be pre-installed and managed
@@ -774,6 +782,8 @@ thorasDashboard:
     # Fields under the unused mode's block are silently ignored.
     mode: htpasswd
     imageTag: v7.15.4-alpine
+    # oauth2-proxy tag used instead of imageTag when fips.enabled is true.
+    fipsImageTag: v7.15.4-fips
     # Marks session cookies as Secure. Enabling requires TLS at the edge and
     # breaks Safari when reaching the dashboard through kubectl port-forward.
     # Recommended in production: enable this and terminate TLS at the edge.
