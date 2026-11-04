@@ -5,4 +5,7 @@ type: application
 
 # App version is managed as consoleVersion in values.yaml, so the image tag can
 # move without a chart bump.
+
+# This is the chart version, following Semantic Versioning (https://semver.org/).
+# Merging a change to it publishes the chart, so change it only in a release PR.
 version: 1.0.0
