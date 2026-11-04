@@ -629,9 +629,8 @@ consoleApi:
 ```
 
 The credentials console-api ends up with need `ce:GetCostAndUsage` and
-`ce:GetDimensionValues`. Proxied queries are rate limited per cluster and
-overall, per replica; see `consoleApi.costExplorer` under
-[Values](#console-api).
+`ce:GetDimensionValues`. Proxied queries are rate limited per replica; see
+`consoleApi.costExplorer` under [Values](#console-api).
 
 Console mode needs a `consoleVersion` and each cluster's `thorasVersion` from a
 platform release that has it. Older console images don't serve these queries,
