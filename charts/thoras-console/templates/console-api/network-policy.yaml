@@ -2,6 +2,10 @@
 {{- $c := .Values.consoleApi }}
 {{- $oidcMode := or (eq .Values.auth.mode "oidc") (eq .Values.auth.mode "both") }}
 {{- $costExplorer := ($c.costExplorer | default dict).enabled }}
+{{- $httpsEgressCidrs := $c.httpsEgressCidrs }}
+{{- if kindIs "invalid" $httpsEgressCidrs }}
+{{- $httpsEgressCidrs = list "0.0.0.0/0" }}
+{{- end }}
 {{- $external := include "thoras-console.externalDatabaseEnabled" . }}
 {{- $flavor := include "thoras-console.networkPolicyFlavor" . }}
 {{- if eq $flavor "kubernetes" }}
@@ -51,7 +55,7 @@ spec:
   {{- if $external }}
   # An external database is off-cluster and its address may drift, so this
   # permits any egress on the Postgres default port. The chart cannot parse the
-  # DSN, so another port -- or a narrower CIDR -- needs extraEgressRules.
+  # DSN, so another port needs extraEgressRules, which can only add to this rule.
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
@@ -59,12 +63,15 @@ spec:
     - port: 5432
       protocol: TCP
   {{- end }}
-  {{- if or $oidcMode $costExplorer }}
+  {{- if and (or $oidcMode $costExplorer) $httpsEgressCidrs }}
   # JWKS fetch and AWS Cost Explorer. Their hostnames resolve to drifting CIDRs,
-  # so this permits any :443 egress; narrow it with extraEgressRules.
+  # so this defaults to any :443 egress. Rules only add to each other, so narrow
+  # it with httpsEgressCidrs rather than extraEgressRules.
   - to:
+    {{- range $httpsEgressCidrs }}
     - ipBlock:
-        cidr: 0.0.0.0/0
+        cidr: {{ . }}
+    {{- end }}
     ports:
     - port: 443
       protocol: TCP
@@ -116,8 +123,7 @@ spec:
         dns:
         - matchPattern: "*"
   {{- if $external }}
-  # An external database is off-cluster; narrow this with a layered
-  # CiliumNetworkPolicy using toFQDNs.
+  # An external database is off-cluster, and its address may drift.
   - toEntities:
     - world
     toPorts:
@@ -125,10 +131,15 @@ spec:
       - port: "5432"
         protocol: TCP
   {{- end }}
-  {{- if or $oidcMode $costExplorer }}
+  {{- if and (or $oidcMode $costExplorer) $httpsEgressCidrs }}
   # console-api fetches JWKS from the identity provider and calls AWS Cost Explorer.
+  {{- if has "0.0.0.0/0" $httpsEgressCidrs }}
   - toEntities:
     - world
+  {{- else }}
+  - toCIDR:
+    {{- toYaml $httpsEgressCidrs | nindent 4 }}
+  {{- end }}
     toPorts:
     - ports:
       - port: "443"

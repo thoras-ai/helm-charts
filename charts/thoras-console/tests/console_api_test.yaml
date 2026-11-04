@@ -511,6 +511,27 @@ tests:
       - notExists:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ENABLED')]
 
+  - it: Rolls the pods when the ServiceAccount's annotations change
+    template: console-api/deployment.yaml
+    set:
+      podAnnotations:
+        example: kept
+      consoleApi.serviceAccount.annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/thoras-console
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/service-account-annotations"]
+          pattern: ^[0-9a-f]{64}$
+      - equal:
+          path: spec.template.metadata.annotations.example
+          value: kept
+
+  - it: Adds no pod annotations without ServiceAccount annotations
+    template: console-api/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations
+
   - it: Annotates the ServiceAccount for IRSA
     template: console-api/service-account.yaml
     set:

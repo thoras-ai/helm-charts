@@ -633,6 +633,16 @@ The credentials console-api ends up with need `ce:GetCostAndUsage` and
 overall, per replica; see `consoleApi.costExplorer` under
 [Values](#console-api).
 
+Console mode needs a `consoleVersion` and each cluster's `thorasVersion` from a
+platform release that has it. Older console images don't serve these queries,
+and older workers ignore `costExplorerMode` and keep calling AWS themselves.
+
+With `networkPolicy.enabled`, console-api can reach any IPv4 address on port 443
+so that it can reach AWS. To narrow that, for example to a VPC endpoint for Cost
+Explorer, set `consoleApi.httpsEgressCidrs`. `extraEgressRules` can't narrow it,
+because rules only add to each other. Add `::/0` if you set
+`AWS_USE_DUALSTACK_ENDPOINT`.
+
 ### NetworkPolicy
 
 Set `networkPolicy.enabled: true` to render a policy per component.
@@ -1047,6 +1057,7 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | consoleApi.affinity                          | object | {}                   | Component affinity                                               |
 | consoleApi.priorityClassName                 | String | ""                   | Takes precedence over the global priority class                  |
 | consoleApi.topologySpreadConstraints         | list   | []                   | Replaces the global list when non-empty                          |
+| consoleApi.httpsEgressCidrs                  | list   | ["0.0.0.0/0"]        | CIDRs the NetworkPolicy lets console-api reach on :443 for OIDC and Cost Explorer. Empty opens none |
 | consoleApi.extraEgressRules                  | list   | []                   | Appended verbatim to both NetworkPolicy flavors                  |
 | consoleApi.extraIngressRules                 | list   | []                   | Appended verbatim to both NetworkPolicy flavors                  |
 

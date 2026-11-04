@@ -816,8 +816,8 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasWorker.enableHourlyCostCollector               | Boolean | false         | Enable hourly AWS Cost Explorer collection for the hourly cost graph. Needs hourly granularity for all AWS services enabled in Cost Explorer preferences, which AWS charges for |
 | thorasWorker.costExplorerRoleArn                     | String  | ""            | Role the Cost Explorer calls assume when billing is only visible from another account, such as the organization's payer. The worker's role needs `sts:AssumeRole` on it, and it needs `ce:GetCostAndUsage`. Queries are then limited to this cluster's account. Empty uses the worker's own credentials |
 | thorasWorker.costExplorerRoleExternalId              | String  | ""            | External ID the role's trust policy requires, if any |
-| thorasWorker.costExplorerMode                        | String  | per-cluster   | `per-cluster` calls Cost Explorer with the worker's AWS credentials. `console` sends each query through the console this cluster syncs to; needs `cloudSync` and a console with `consoleApi.costExplorer.enabled` |
-| thorasWorker.costExplorerBillingViewArn              | String  | ""            | Custom billing view the collectors read, such as one shared from the management account. Empty reads the primary view. Per-cluster mode only, like the role values             |
+| thorasWorker.costExplorerMode                        | String  | per-cluster   | `per-cluster` calls Cost Explorer with the worker's AWS credentials. `console` sends each query through the console this cluster syncs to; needs `cloudSync`, a console with `consoleApi.costExplorer.enabled`, and worker and console images from a platform release with console mode; older images ignore this setting |
+| thorasWorker.costExplorerBillingViewArn              | String  | ""            | Custom billing view the collectors read, such as one shared from the management account. Empty reads the primary view. Per-cluster mode only, like the role values. Older worker images ignore this setting |
 
 ### Thoras Config Controller
 

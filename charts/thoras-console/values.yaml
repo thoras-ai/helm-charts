@@ -221,6 +221,10 @@ consoleApi:
   affinity: {}
   priorityClassName: ""
   topologySpreadConstraints: []
+  # -- Where the NetworkPolicy lets console-api reach :443 for OIDC and Cost
+  # Explorer. Empty opens nothing, leaving it to extraEgressRules.
+  httpsEgressCidrs:
+    - 0.0.0.0/0
   extraEgressRules: []
   extraIngressRules: []
 

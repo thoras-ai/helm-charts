@@ -284,9 +284,13 @@ spec:
             value: {{ .Values.thorasWorker.costExplorerRoleExternalId | default "" | quote }}
           - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
             value: {{ .Values.thorasWorker.enableHourlyCostCollector | ternary "true" "false" | quote }}
-          {{- $costExplorerMode := .Values.thorasWorker.costExplorerMode | default "per-cluster" }}
+          {{- /* Not `default`, which would turn false or 0 into a valid mode. */}}
+          {{- $costExplorerMode := .Values.thorasWorker.costExplorerMode }}
+          {{- if kindIs "invalid" $costExplorerMode }}
+          {{- $costExplorerMode = "per-cluster" }}
+          {{- end }}
           {{- if not (has $costExplorerMode (list "per-cluster" "console")) }}
-          {{- fail (printf "thorasWorker.costExplorerMode must be \"per-cluster\" or \"console\", got %q" $costExplorerMode) }}
+          {{- fail (printf "thorasWorker.costExplorerMode must be \"per-cluster\" or \"console\", got %s" (toJson $costExplorerMode)) }}
           {{- end }}
           {{- $w := .Values.thorasWorker }}
           {{- if and (eq $costExplorerMode "console") (or $w.costExplorerRoleArn $w.costExplorerRoleExternalId $w.costExplorerBillingViewArn) }}

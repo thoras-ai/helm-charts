@@ -263,6 +263,20 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: 'thorasWorker.costExplorerMode must be "per-cluster" or "console", got "proxy"'
+  - it: Should reject a Cost Explorer mode that is not a string instead of defaulting it
+    set:
+      thorasWorker:
+        costExplorerMode: false
+    asserts:
+      - failedTemplate:
+          errorMessage: 'thorasWorker.costExplorerMode must be "per-cluster" or "console", got false'
+  - it: Should default a Cost Explorer mode missing from stored values
+    set:
+      thorasWorker.costExplorerMode: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_MODE')].value
+          value: per-cluster
   - it: Should reject per-cluster Cost Explorer settings in console mode
     set:
       thorasWorker:

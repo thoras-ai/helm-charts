@@ -24,9 +24,16 @@ spec:
         {{- with include "thoras-console.componentLabels" (dict "root" $ "component" $c.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- with include "thoras-console.podAnnotations" (dict "root" $ "component" $c.podAnnotations) }}
+      {{- $podAnnotations := include "thoras-console.podAnnotations" (dict "root" $ "component" $c.podAnnotations) | trim }}
+      {{- if or $podAnnotations $c.serviceAccount.annotations }}
       annotations:
-        {{- . | trim | nindent 8 }}
+        {{- with $podAnnotations }}
+        {{- . | nindent 8 }}
+        {{- end }}
+        {{- with $c.serviceAccount.annotations }}
+        {{- /* IRSA injects the role when a pod is created, so a new role needs new pods. */}}
+        checksum/service-account-annotations: {{ toJson . | sha256sum }}
+        {{- end }}
       {{- end }}
     spec:
       securityContext:
