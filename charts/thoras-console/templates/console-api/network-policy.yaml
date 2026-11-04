@@ -133,13 +133,8 @@ spec:
   {{- end }}
   {{- if and (or $oidcMode $costExplorer) $httpsEgressCidrs }}
   # console-api fetches JWKS from the identity provider and calls AWS Cost Explorer.
-  {{- if has "0.0.0.0/0" $httpsEgressCidrs }}
-  - toEntities:
-    - world
-  {{- else }}
   - toCIDR:
     {{- toYaml $httpsEgressCidrs | nindent 4 }}
-  {{- end }}
     toPorts:
     - ports:
       - port: "443"

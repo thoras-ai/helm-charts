@@ -188,8 +188,8 @@ tests:
       - contains:
           path: spec.egress
           content:
-            toEntities:
-              - world
+            toCIDR:
+              - 0.0.0.0/0
             toPorts:
               - ports:
                   - port: "443"
@@ -219,8 +219,8 @@ tests:
       - contains:
           path: spec.egress
           content:
-            toEntities:
-              - world
+            toCIDR:
+              - 0.0.0.0/0
             toPorts:
               - ports:
                   - port: "443"
