@@ -119,10 +119,11 @@ added them.
   `<type>[scope][!]: <description>`, with a type from `feat`, `fix`, `docs`,
   `chore`, `refactor`, `build`, `ci`, `test`. Use the imperative mood, a
   lowercase first letter, no trailing period, and at most 72 characters.
-- PR titles follow the same format. End both the commit subject and the PR
-  title with the `thoras-ai/platform` issue number, as in
-  `feat(worker): add CUR ingestion values (#5419)`; squash-merging uses the PR
-  title as the commit subject.
+- End each commit subject with the `thoras-ai/platform` issue number, as in
+  `feat(worker): add CUR ingestion values (#5419)`.
+- PR titles follow the same format, without the issue number; the PR body
+  links the issue. Squash-merging uses the PR title (the commit subject for a
+  single-commit PR) plus the PR number.
 - The PR body follows `.github/pull_request_template.md` ("What's changing and
   why?"), starting with the issue link: `Closes #N`, or
   `Part of thoras-ai/platform#N` when it pairs with a platform change. Say
