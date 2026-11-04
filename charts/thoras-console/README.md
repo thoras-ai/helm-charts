@@ -1042,8 +1042,6 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | consoleApi.costExplorer.roleArn              | String | ""                   | Role to assume before calling Cost Explorer                      |
 | consoleApi.costExplorer.externalId           | String | ""                   | External ID passed when assuming roleArn                         |
 | consoleApi.costExplorer.billingViewArn       | String | ""                   | Custom billing view set on every query                           |
-| consoleApi.costExplorer.clusterRequestsPerMinute | Number | 60                   | Per cluster, per replica. Zero is unlimited                      |
-| consoleApi.costExplorer.clusterBurst         | Number | 20                   | Per-cluster burst above that rate                                |
 | consoleApi.costExplorer.requestsPerMinute    | Number | 300                  | All clusters, per replica, including account lookups. Zero is unlimited |
 | consoleApi.costExplorer.burst                | Number | 20                   | Overall burst above that rate                                    |
 | consoleApi.service.annotations               | object | {}                   | Annotations on the Service                                       |

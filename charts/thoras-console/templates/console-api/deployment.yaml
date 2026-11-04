@@ -133,7 +133,7 @@ spec:
           - name: SERVICE_COST_EXPLORER_BILLING_VIEW_ARN
             value: {{ $ce.billingViewArn | default "" | quote }}
           {{- /* hasKey, not default: zero means unlimited. */}}
-          {{- range $env, $key := dict "SERVICE_COST_EXPLORER_CLUSTER_REQUESTS_PER_MINUTE" "clusterRequestsPerMinute" "SERVICE_COST_EXPLORER_CLUSTER_BURST" "clusterBurst" "SERVICE_COST_EXPLORER_REQUESTS_PER_MINUTE" "requestsPerMinute" "SERVICE_COST_EXPLORER_BURST" "burst" }}
+          {{- range $env, $key := dict "SERVICE_COST_EXPLORER_REQUESTS_PER_MINUTE" "requestsPerMinute" "SERVICE_COST_EXPLORER_BURST" "burst" }}
           {{- if hasKey $ce $key }}
           - name: {{ $env }}
             value: {{ get $ce $key | quote }}

@@ -473,9 +473,7 @@ tests:
         roleArn: arn:aws:iam::123456789012:role/thoras-cost-explorer
         externalId: thoras-console
         billingViewArn: arn:aws:billing::123456789012:billingview/custom-1
-        clusterRequestsPerMinute: 0
-        clusterBurst: 5
-        requestsPerMinute: 120
+        requestsPerMinute: 0
         burst: 10
     asserts:
       - equal:
@@ -491,14 +489,8 @@ tests:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_BILLING_VIEW_ARN')].value
           value: arn:aws:billing::123456789012:billingview/custom-1
       - equal:
-          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_CLUSTER_REQUESTS_PER_MINUTE')].value
-          value: "0"
-      - equal:
-          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_CLUSTER_BURST')].value
-          value: "5"
-      - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_REQUESTS_PER_MINUTE')].value
-          value: "120"
+          value: "0"
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_BURST')].value
           value: "10"

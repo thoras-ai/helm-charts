@@ -159,10 +159,8 @@ consoleApi:
     externalId: ""
     # Custom billing view set on every query. Empty reads the primary view.
     billingViewArn: ""
-    # Limits are per replica. Zero is unlimited.
-    clusterRequestsPerMinute: 60
-    clusterBurst: 20
-    # All clusters together, including account lookups.
+    # Requests per replica, all clusters together, including account lookups.
+    # Zero is unlimited.
     requestsPerMinute: 300
     burst: 20
 
