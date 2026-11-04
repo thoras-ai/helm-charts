@@ -760,6 +760,10 @@ values, a minor version only adds them, and a patch version only fixes. Read the
 release notes before a major upgrade, and pin the chart version in production
 by passing `--version` to `helm install` and `helm upgrade`.
 
+With the `cilium` NetworkPolicy flavor, console-api's :443 egress now follows
+`consoleApi.httpsEgressCidrs`, which is IPv4-only by default. An IPv6-only
+identity provider needs `::/0` added there.
+
 Each chart version pins the console images it was released with, so upgrading
 the chart upgrades the console. If you set `consoleVersion` yourself, it stays
 where you set it through every upgrade until you change or remove it.

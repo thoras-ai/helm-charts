@@ -51,6 +51,7 @@ tests:
     set:
       thorasWorker.enableCostAndUsageCollector: true
       thorasWorker.costExplorerMode: console
+      cloudSync.clusterKeyID: my-cluster-key-id
     asserts:
       - notContains:
           path: spec.egress
@@ -77,6 +78,67 @@ tests:
                   cidr: 169.254.170.23/32
             ports:
               - port: 80
+                protocol: TCP
+  - it: Opens :443 with a cost collector even when the API server is elsewhere
+    template: worker/network-policy.yaml
+    set:
+      thorasWorker.enableCostAndUsageCollector: true
+      networkPolicy.apiServerPorts: [8443]
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Opens :443 for cloud sync when the API server is elsewhere
+    template: worker/network-policy.yaml
+    set:
+      cloudSync.clusterKeyID: my-cluster-key-id
+      networkPolicy.apiServerPorts: [8443]
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Follows httpsEgressCidrs in the kubernetes flavor
+    template: worker/network-policy.yaml
+    set:
+      thorasWorker.enableCostAndUsageCollector: true
+      thorasWorker.httpsEgressCidrs:
+        - 10.0.0.0/8
+      networkPolicy.apiServerPorts: [8443]
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 10.0.0.0/8
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Opens no :443 rule of its own without a cost collector or cloud sync
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy.apiServerPorts: [8443]
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
                 protocol: TCP
   - it: Keeps the Pod Identity agent closed without a cost collector
     template: worker/network-policy.yaml

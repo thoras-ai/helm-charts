@@ -568,11 +568,12 @@ can reach the IdP; tighten with a layered `CiliumNetworkPolicy` scoped
 by `toFQDNs`, or manage egress out-of-band.
 
 With cost collection or cloud sync on, the worker can reach AWS Cost Explorer
-and the console on port `443`. The `cilium` flavor limits that to
-`thorasWorker.httpsEgressCidrs`; the `kubernetes` flavor already allows port
-`443` for the API server. A per-cluster cost collector can also reach the EKS
-Pod Identity agent at `169.254.170.23:80`. A console on another port needs
-`extraEgressRules`.
+and the console on port `443`, limited to `thorasWorker.httpsEgressCidrs`. Add
+`::/0` for an IPv6 console or dual-stack AWS endpoints. The `kubernetes` flavor's
+`apiServerPorts` allow their ports to any address, `443` by default, so narrowing
+there also means taking `443` out of that list. A per-cluster cost collector or
+CUR ingestion can also reach the EKS Pod Identity agent at `169.254.170.23:80`. A
+console on another port needs `extraEgressRules`.
 
 ### Extra objects
 
@@ -818,12 +819,12 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | true          | Enable the unified AST utilization monitor                                                                                                                                      |
 | thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                                                                                                                                         |
 | thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                                                                          |
-| thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. In per-cluster mode, requires an IRSA role granting `ce:GetCostAndUsage`                                         |
+| thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. In per-cluster mode, requires an IRSA or Pod Identity role granting `ce:GetCostAndUsage`, or `sts:AssumeRole` on `costExplorerRoleArn` when that is set                                         |
 | thorasWorker.costExplorerFilter                      | String  | ""            | Cost allocation tag identifying this cluster's spend, as `TAG_KEY=TAG_VALUE`. Empty resolves the tag from node labels                                                           |
 | thorasWorker.enableHourlyCostCollector               | Boolean | false         | Enable hourly AWS Cost Explorer collection for the hourly cost graph. Needs hourly granularity for all AWS services enabled in Cost Explorer preferences, which AWS charges for |
 | thorasWorker.costExplorerRoleArn                     | String  | ""            | Role the Cost Explorer calls assume when billing is only visible from another account, such as the organization's payer. The worker's role needs `sts:AssumeRole` on it, and it needs `ce:GetCostAndUsage`. Queries are then limited to this cluster's account. Empty uses the worker's own credentials |
 | thorasWorker.costExplorerRoleExternalId              | String  | ""            | External ID the role's trust policy requires, if any |
-| thorasWorker.httpsEgressCidrs                       | list    | ["0.0.0.0/0"] | CIDRs the `cilium` NetworkPolicy lets the worker reach on `443` for Cost Explorer and the console, when it uses either. Empty opens nothing. |
+| thorasWorker.httpsEgressCidrs                       | list    | ["0.0.0.0/0"] | CIDRs the NetworkPolicy lets the worker reach on `443` for Cost Explorer and the console, when it uses either. Empty opens nothing. |
 | thorasWorker.costExplorerMode                        | String  | per-cluster   | `per-cluster` calls Cost Explorer with the worker's AWS credentials. `console` sends each query through the console this cluster syncs to; needs `cloudSync`, a console with `consoleApi.costExplorer.enabled`, and worker and console images from a platform release with console mode; older images ignore this setting |
 | thorasWorker.costExplorerBillingViewArn              | String  | ""            | Custom billing view the collectors read, such as one shared from the management account. Empty reads the primary view. Per-cluster mode only, like the role values. Older worker images ignore this setting |
 | thorasWorker.enableCurIngestion                      | Boolean | false         | Ingest each workload's billed cost every 6h from the organization's AWS CUR 2.0 Data Export (Parquet, hourly, with resource IDs and split cost allocation data). Requires `curBucket` and `curExportName`. With `networkPolicy.enabled`, `thorasWorker.extraEgressRules` must allow HTTPS to S3 and STS |

@@ -315,6 +315,9 @@ spec:
           {{- fail (printf "thorasWorker.costExplorerMode must be \"per-cluster\" or \"console\", got %s" (toJson $costExplorerMode)) }}
           {{- end }}
           {{- $w := .Values.thorasWorker }}
+          {{- if and (eq $costExplorerMode "console") (or $w.enableCostAndUsageCollector $w.enableHourlyCostCollector) (ne (include "thoras.cloudSyncActive" .) "true") }}
+          {{- fail "thorasWorker.costExplorerMode console sends cost queries through the console, so it needs cloud sync: set cloudSync.clusterKeyID or cloudSync.joinSecret" }}
+          {{- end }}
           {{- if and (eq $costExplorerMode "console") (or $w.costExplorerRoleArn $w.costExplorerRoleExternalId $w.costExplorerBillingViewArn) }}
           {{- fail "thorasWorker.costExplorerRoleArn, costExplorerRoleExternalId and costExplorerBillingViewArn apply only to costExplorerMode per-cluster; in console mode the console sets its own" }}
           {{- end }}

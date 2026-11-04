@@ -2,6 +2,7 @@
 {{- $flavor := include "thoras.networkPolicyFlavor" . }}
 {{- $w := .Values.thorasWorker }}
 {{- $costCollector := or $w.enableCostAndUsageCollector $w.enableHourlyCostCollector }}
+{{- $httpsEgress := or $costCollector (eq (include "thoras.cloudSyncActive" .) "true") }}
 {{- $podIdentity := or (and $costCollector (ne ($w.costExplorerMode | default "per-cluster") "console")) $w.enableCurIngestion }}
 {{- $httpsEgressCidrs := $w.httpsEgressCidrs }}
 {{- if kindIs "invalid" $httpsEgressCidrs }}
@@ -48,6 +49,18 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+  {{- if and $httpsEgress $httpsEgressCidrs }}
+  # AWS Cost Explorer and the console. Their addresses drift, so this defaults to
+  # any :443 egress. A console on another port needs extraEgressRules.
+  - to:
+    {{- range $httpsEgressCidrs }}
+    - ipBlock:
+        cidr: {{ . }}
+    {{- end }}
+    ports:
+    - port: 443
+      protocol: TCP
+  {{- end }}
   {{- if $podIdentity }}
   # The EKS Pod Identity agent, where the worker gets its Cost Explorer role.
   - to:
@@ -98,7 +111,7 @@ spec:
       rules:
         dns:
         - matchPattern: "*"
-  {{- if and (or $costCollector (eq (include "thoras.cloudSyncActive" .) "true")) $httpsEgressCidrs }}
+  {{- if and $httpsEgress $httpsEgressCidrs }}
   # AWS Cost Explorer and the console. Their addresses drift, so this defaults to
   # any :443 egress; narrow it with httpsEgressCidrs. A console on another port
   # needs extraEgressRules.
