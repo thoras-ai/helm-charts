@@ -226,6 +226,50 @@ tests:
                   - port: "443"
                     protocol: TCP
 
+  - it: Opens the Pod Identity agent for Cost Explorer
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.costExplorer.enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 169.254.170.23/32
+            ports:
+              - port: 80
+                protocol: TCP
+
+  - it: Opens the Pod Identity agent for Cost Explorer in cilium
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      consoleApi.costExplorer.enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - host
+            toPorts:
+              - ports:
+                  - port: "80"
+                    protocol: TCP
+
+  - it: Keeps the Pod Identity agent closed without Cost Explorer
+    template: console-api/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 169.254.170.23/32
+            ports:
+              - port: 80
+                protocol: TCP
+
   ############################
   # Kubernetes API egress belongs to the controller alone
   ############################

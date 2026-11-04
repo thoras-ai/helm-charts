@@ -642,6 +642,11 @@ thorasWorker:
   priorityClassName: ""
   # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
   topologySpreadConstraints: []
+  # -- Where the cilium NetworkPolicy lets the worker reach :443 for Cost Explorer
+  # and the console, when it uses either. The kubernetes flavor already allows
+  # :443 for the API server. Empty opens nothing, leaving it to extraEgressRules.
+  httpsEgressCidrs:
+    - 0.0.0.0/0
   extraEgressRules: []
   extraIngressRules: []
 

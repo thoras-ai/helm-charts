@@ -129,7 +129,7 @@ spec:
           - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
             value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC_WORKER
-          {{- if (and .Values.cloudSync.baseUrl (or (and .Values.cloudSync.clusterKeyID (ne (include "thoras.cloudSyncJoinConfigured" .) "true")) (eq (include "thoras.clusterAutoJoinActive" .) "true")))}}
+          {{- if eq (include "thoras.cloudSyncActive" .) "true" }}
             value: "true"
           {{- else }}
             value: "false"

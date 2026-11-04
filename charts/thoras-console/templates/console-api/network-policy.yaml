@@ -76,6 +76,15 @@ spec:
     - port: 443
       protocol: TCP
   {{- end }}
+  {{- if $costExplorer }}
+  # The EKS Pod Identity agent, where console-api gets its Cost Explorer role.
+  - to:
+    - ipBlock:
+        cidr: 169.254.170.23/32
+    ports:
+    - port: 80
+      protocol: TCP
+  {{- end }}
   {{- with $c.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -138,6 +147,16 @@ spec:
     toPorts:
     - ports:
       - port: "443"
+        protocol: TCP
+  {{- end }}
+  {{- if $costExplorer }}
+  # The EKS Pod Identity agent, where console-api gets its Cost Explorer role.
+  # Cilium sees its address as the node itself, which toCIDR doesn't match.
+  - toEntities:
+    - host
+    toPorts:
+    - ports:
+      - port: "80"
         protocol: TCP
   {{- end }}
   {{- with $c.extraEgressRules }}

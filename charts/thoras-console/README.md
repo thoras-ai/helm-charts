@@ -641,7 +641,12 @@ With `networkPolicy.enabled`, console-api can reach any IPv4 address on port 443
 so that it can reach AWS. To narrow that, for example to a VPC endpoint for Cost
 Explorer, set `consoleApi.httpsEgressCidrs`. `extraEgressRules` can't narrow it,
 because rules only add to each other. Add `::/0` if you set
-`AWS_USE_DUALSTACK_ENDPOINT`.
+`AWS_USE_DUALSTACK_ENDPOINT`. console-api can also reach the EKS Pod Identity
+agent at `169.254.170.23:80`.
+
+To show billed cost in the console, set
+`consoleDashboard.extras.cluster_daily_cost: true`. The Billed cost tab shows
+what clusters forward with cloud sync on, whichever mode they collect in.
 
 ### NetworkPolicy
 
