@@ -107,29 +107,34 @@ added them.
   and AppVersion badges together, by semver for what changed since the last
   release. Breaking changes need a major bump and an entry in
   `charts/thoras/UPGRADE.md`.
-- `release.yml` publishes each chart whose `version:` line changed. When the
-  same commit changes `thorasVersion`, it first checks that platform release
-  succeeded.
+- When a PR that changes a chart's `version:` line merges, `release.yml`
+  publishes that chart. It compares only the merged commit with its parent, so
+  a version bump reaches `main` only through a PR. When that commit also
+  changes `thorasVersion`, it first checks that platform release succeeded.
   It lists the charts explicitly, so a new chart needs a version check and a
   `helm package` line there.
 
 ## Pull requests and commits
 
-- Commits follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+- Commits follow [Conventional Commits][cc]:
   `<type>[scope][!]: <description>`, with a type from `feat`, `fix`, `docs`,
   `chore`, `refactor`, `build`, `ci`, `test`. Use the imperative mood, a
   lowercase first letter, no trailing period, and at most 72 characters.
 - End each commit subject with the `thoras-ai/platform` issue number, as in
   `feat(worker): add CUR ingestion values (#5419)`.
 - PR titles follow the same format, without the issue number; the PR body
-  links the issue. Squash-merging uses the PR title (the commit subject for a
-  single-commit PR) plus the PR number.
+  links the issue. Squash-merging keeps the commit subject of a single-commit
+  PR but suggests the PR title for a longer one, so add the issue number to
+  that subject before merging.
 - The PR body follows `.github/pull_request_template.md` ("What's changing and
-  why?"), starting with the issue link: `Closes #N`, or
-  `Part of thoras-ai/platform#N` when it pairs with a platform change. Say
-  whether it can merge before the matching platform release; older images
-  ignore `SERVICE_*` variables they don't know.
+  why?"), starting with the platform issue link:
+  `Closes thoras-ai/platform#N`, or `Part of thoras-ai/platform#N` when the
+  issue stays open for other work. Say whether it can merge before the
+  matching platform release; older images ignore `SERVICE_*` variables they
+  don't know.
 - Don't hard-wrap PR text. Request review from `@thoras-ai/engineering`.
+
+[cc]: https://www.conventionalcommits.org/en/v1.0.0/
 
 ## Keep this file current
 
