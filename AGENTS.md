@@ -10,8 +10,8 @@ those clusters report into. User-facing install docs are each chart's
 
 - Never commit to `main`; work on a branch named `<issue-number>-<slug>`.
 - Never bump a chart version in a feature PR. Merging a `version:` change in a
-  `Chart.yaml` publishes that chart, so a version bump goes in a release PR of
-  its own (see Releases).
+  `Chart.yaml` starts a release of that chart, so a version bump goes in a
+  release PR of its own (see Releases).
 - The two charts can share a namespace: resource and template names must not
   collide.
 - Never change the bundled TimescaleDB volume-template labels in
@@ -108,9 +108,9 @@ added them.
   release. Breaking changes need a major bump and an entry in
   `charts/thoras/UPGRADE.md`.
 - When a PR that changes a chart's `version:` line merges, `release.yml`
-  publishes that chart. It compares only the merged commit with its parent, so
-  a version bump reaches `main` only through a PR. When that commit also
-  changes `thorasVersion`, it first checks that platform release succeeded.
+  releases that chart. It compares only the merged commit with its parent, so
+  a version bump reaches `main` only through a PR. If that commit also changes
+  `thorasVersion`, the release stops unless that platform release succeeded.
   It lists the charts explicitly, so a new chart needs a version check and a
   `helm package` line there.
 
