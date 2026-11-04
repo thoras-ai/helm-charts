@@ -1,3 +1,9 @@
+{{- if and .Values.thorasWorker.enableCurIngestion (not .Values.thorasWorker.curBucket) }}
+{{- fail "Error: 'thorasWorker.enableCurIngestion' is true but 'thorasWorker.curBucket' is empty. Set it to the bucket the CUR export delivers to." }}
+{{- end }}
+{{- if and .Values.thorasWorker.enableCurIngestion (not .Values.thorasWorker.curExportName) }}
+{{- fail "Error: 'thorasWorker.enableCurIngestion' is true but 'thorasWorker.curExportName' is empty. Set it to the CUR export's name." }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -282,6 +288,22 @@ spec:
             value: {{ .Values.thorasWorker.costExplorerRoleArn | default "" | quote }}
           - name: SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID
             value: {{ .Values.thorasWorker.costExplorerRoleExternalId | default "" | quote }}
+          - name: SERVICE_ENABLE_CUR_INGESTION
+            value: {{ .Values.thorasWorker.enableCurIngestion | default false | ternary "true" "false" | quote }}
+          - name: SERVICE_CUR_BUCKET
+            value: {{ .Values.thorasWorker.curBucket | default "" | quote }}
+          - name: SERVICE_CUR_PREFIX
+            value: {{ .Values.thorasWorker.curPrefix | default "" | quote }}
+          - name: SERVICE_CUR_EXPORT_NAME
+            value: {{ .Values.thorasWorker.curExportName | default "" | quote }}
+          - name: SERVICE_CUR_REGION
+            value: {{ .Values.thorasWorker.curRegion | default "us-east-1" | quote }}
+          - name: SERVICE_CUR_ROLE_ARN
+            value: {{ .Values.thorasWorker.curRoleArn | default "" | quote }}
+          - name: SERVICE_CUR_ROLE_EXTERNAL_ID
+            value: {{ .Values.thorasWorker.curRoleExternalId | default "" | quote }}
+          - name: SERVICE_CUR_CLUSTER_NAME
+            value: {{ .Values.thorasWorker.curClusterName | default "" | quote }}
           - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
             value: {{ .Values.thorasWorker.enableHourlyCostCollector | ternary "true" "false" | quote }}
           {{- /* Not `default`, which would turn false or 0 into a valid mode. */}}

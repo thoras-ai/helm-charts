@@ -559,7 +559,9 @@ thorasWorker:
     name: thoras-worker
     # Set eks.amazonaws.com/role-arn here to give enableCostAndUsageCollector
     # an IRSA role in per-cluster mode. The role needs ce:GetCostAndUsage, or
-    # sts:AssumeRole on costExplorerRoleArn when that is set.
+    # sts:AssumeRole on costExplorerRoleArn when that is set. For enableCurIngestion
+    # it needs s3:ListBucket and s3:GetObject on the export, or sts:AssumeRole on
+    # curRoleArn when that is set.
     annotations: {}
   podAnnotations: {}
   labels: {}
@@ -627,6 +629,25 @@ thorasWorker:
   # and costExplorerRoleExternalId apply to per-cluster mode only; console mode
   # fails the render with any of them set, as the console sets its own.
   costExplorerBillingViewArn: ""
+  # Ingest each workload's billed cost from the organization's CUR 2.0 export
+  # (Parquet, hourly, with resource IDs and split cost allocation data). With
+  # networkPolicy.enabled, extraEgressRules must allow HTTPS to S3 and STS.
+  enableCurIngestion: false
+  # The export delivers to s3://<curBucket>/<curPrefix>/<curExportName>/;
+  # curBucket and curExportName are required when ingestion is enabled.
+  curBucket: ""
+  curPrefix: ""
+  curExportName: ""
+  curRegion: "us-east-1"
+  # Role S3 reads assume, usually the payer's. The worker's role needs
+  # sts:AssumeRole on it; it must trust that role and allow s3:ListBucket and
+  # s3:GetObject on the export. Empty uses the worker's own credentials.
+  curRoleArn: ""
+  # External ID the role's trust policy requires, if any.
+  curRoleExternalId: ""
+  # EKS cluster name whose rows to ingest. Empty uses the cluster named by
+  # costExplorerFilter when it is an aws:eks:cluster-name tag, then node labels.
+  curClusterName: ""
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it

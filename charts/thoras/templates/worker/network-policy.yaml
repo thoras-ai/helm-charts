@@ -2,7 +2,7 @@
 {{- $flavor := include "thoras.networkPolicyFlavor" . }}
 {{- $w := .Values.thorasWorker }}
 {{- $costCollector := or $w.enableCostAndUsageCollector $w.enableHourlyCostCollector }}
-{{- $podIdentity := and $costCollector (ne ($w.costExplorerMode | default "per-cluster") "console") }}
+{{- $podIdentity := or (and $costCollector (ne ($w.costExplorerMode | default "per-cluster") "console")) $w.enableCurIngestion }}
 {{- $httpsEgressCidrs := $w.httpsEgressCidrs }}
 {{- if kindIs "invalid" $httpsEgressCidrs }}
 {{- $httpsEgressCidrs = list "0.0.0.0/0" }}

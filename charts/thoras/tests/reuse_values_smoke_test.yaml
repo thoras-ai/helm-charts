@@ -74,3 +74,16 @@ tests:
       thorasWorker.costExplorerBillingViewArn: null
     asserts:
       - notFailedTemplate: {}
+
+  - it: All templates render when the CUR ingestion values are missing from stored values
+    set:
+      thorasWorker.enableCurIngestion: null
+      thorasWorker.curBucket: null
+      thorasWorker.curPrefix: null
+      thorasWorker.curExportName: null
+      thorasWorker.curRegion: null
+      thorasWorker.curRoleArn: null
+      thorasWorker.curRoleExternalId: null
+      thorasWorker.curClusterName: null
+    asserts:
+      - notFailedTemplate: {}
