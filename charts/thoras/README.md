@@ -547,6 +547,73 @@ To reach it from outside the cluster, put your own Ingress or Gateway in front
 of the Service. With `networkPolicy.enabled`, the server port accepts traffic
 from any source; narrow it with `thorasMcp.extraIngressRules`.
 
+### FIPS mode
+
+`fips.enabled: true` runs FIPS variants of the images. Every Thoras image tag
+gets a `-fips` suffix: `thorasVersion` `4.125.0` pulls `services:4.125.0-fips`,
+and a per-component `imageTag` override such as `4.125.1` becomes
+`4.125.1-fips`. A tag that already ends in `-fips` is used as is. A tag with
+a digest (`4.125.0@sha256:...`) fails the render: a digest can't take the
+suffix and may point at a non-FIPS image. The oauth2-proxy sidecar uses
+`thorasDashboard.auth.fipsImageTag`. Go containers (the `services` binaries
+and oauth2-proxy) get `GODEBUG=fips140=on`. Don't override it with
+`fips140=only`: oauth2-proxy does not start in that mode. A `GODEBUG` set in
+`env` is rendered after the chart's, so the container gets both entries and
+Kubernetes uses yours.
+
+`-fips` images exist from the first release that includes
+thoras-ai/platform#5458 and #5460. `thorasVersion`, and any per-component
+`imageTag`, must be that release or newer. With an older version, the
+`-fips` tag doesn't exist, so the pre-install hook Job fails to pull its
+image and the install fails.
+
+FIPS installs need:
+
+- An external database. The bundled TimescaleDB has no FIPS build, so set
+  `externalTimescale` and run the database on your own FIPS platform. The DSN
+  must set `sslmode=verify-full` exactly once, written as an unquoted
+  parameter with no spaces around `=`: `?sslmode=verify-full` or
+  `&sslmode=verify-full` in a URL, or `sslmode=verify-full` in a key/value
+  DSN. The chart checks an inline `externalTimescale.dsn` when it is the DSN
+  in use; with `secretRefName` set, the Secret's DSN is used instead, and it
+  can't be checked at render time, so make sure it follows the same form. The
+  database password must be at least 14 bytes: FIPS mode rejects shorter HMAC
+  keys, and SCRAM uses the password as one.
+- No htpasswd dashboard sign-in, which checks a bcrypt hash that is not FIPS
+  approved. Use OIDC (`thorasDashboard.auth.mode: oidc`), turn dashboard auth
+  off (`thorasDashboard.auth.enabled: false`) and put your own in front, or
+  turn the dashboard off (`thorasDashboard.enabled: false`).
+- cert-manager for the webhook certificates
+  (`thorasOperator.webhookCertGen.certManager.enabled: true`). The
+  kube-webhook-certgen Jobs are not used.
+
+The render fails if any of these is missing. With these settings no
+third-party image except oauth2-proxy runs: no TimescaleDB, `alpine`, `httpd`
+or `kube-webhook-certgen`.
+
+```yaml
+fips:
+  enabled: true
+externalTimescale:
+  secretRefName: thoras-timescale-dsn
+  secretRefKey: dsn # postgres://...?sslmode=verify-full
+thorasOperator:
+  webhookCertGen:
+    certManager:
+      enabled: true
+thorasDashboard:
+  auth:
+    mode: oidc
+    oidc:
+      issuerURL: https://idp.example.com
+      redirectURL: https://thoras.example.com/oauth2/callback
+      existingSecret:
+        secretName: oauth2-proxy-secrets
+```
+
+FIPS mode on the nodes (kernel and OS) is configured on your side; the images
+carry their own validated modules either way.
+
 ### NetworkPolicy
 
 Set `networkPolicy.enabled: true` to render per-component policies.
@@ -699,6 +766,12 @@ must be pre-installed and managed externally.
 | externalTimescale.dsn           | String | ""      | Full postgres DSN including database name, e.g. `postgres://user:pass@host:5432/tsdb?sslmode=require` |
 | externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`). Requires `secretRefKey`      |
 | externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN. Requires `secretRefName`                                    |
+
+### FIPS
+
+| Key          | Type    | Default | Description                                                                                                                                                                           |
+| ------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fips.enabled | Boolean | false   | Runs the `-fips` image variants and sets `GODEBUG=fips140=on` on Go containers. Requires externalTimescale, cert-manager, and no htpasswd dashboard auth; see [FIPS mode](#fips-mode) |
 
 ### Bundled TimescaleDB TLS
 
@@ -876,6 +949,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasDashboard.auth.mode                                    | String  | htpasswd                     | `htpasswd` (chart-managed username+password) or `oidc` (OIDC via your IdP). Fields under the unused mode's block are silently ignored                                                                                                                                                                                                                                                                       |
 | thorasDashboard.auth.cookieSecure                            | Bool    | false                        | Marks session cookies as Secure. Recommended enabled in production. Requires TLS at the edge and breaks Safari via `kubectl port-forward`. Applies to both modes                                                                                                                                                                                                                                            |
 | thorasDashboard.auth.imageTag                                | String  | v7.15.4-alpine               | oauth2-proxy sidecar image tag. Applies to both modes                                                                                                                                                                                                                                                                                                                                                       |
+| thorasDashboard.auth.fipsImageTag                            | String  | v7.15.4-fips                 | oauth2-proxy sidecar image tag used instead of `imageTag` when `fips.enabled` is true                                                                                                                                                                                                                                                                                                                       |
 | thorasDashboard.auth.resources                               | Object  | see values.yaml              | oauth2-proxy sidecar resources                                                                                                                                                                                                                                                                                                                                                                              |
 | thorasDashboard.auth.extraArgs                               | List    | []                           | Extra flags appended to the sidecar's `args` verbatim. Applies to both modes. Flags here override any equivalent directive in the chart-generated `oauth2-proxy.cfg`                                                                                                                                                                                                                                        |
 | thorasDashboard.auth.htpasswd.username                       | String  | thoras                       | Login username under `mode: htpasswd`                                                                                                                                                                                                                                                                                                                                                                       |

@@ -56,7 +56,7 @@ spec:
           optional: true
       {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 6 }}{{- end }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasWorker.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasWorker.imageTag) }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-worker
         securityContext:
@@ -308,6 +308,7 @@ spec:
             value: {{ .Values.thorasWorker.enableHourlyCostCollector | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_COST_ALERTS
             value: {{ .Values.featureFlags.enableCostAlerts | default false | ternary "true" "false" | quote }}
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
           - name: http-metrics

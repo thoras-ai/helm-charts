@@ -39,7 +39,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: thoras-delete-asts
-        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+        image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasOperator.imageTag) }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
           allowPrivilegeEscalation: false
@@ -47,6 +47,7 @@ spec:
             drop: [ALL]
         command: ["/app/operator", "uninstall"]
         env:
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         {{- $preDeleteHook := .Values.thorasOperator.preDeleteHook | default dict }}
         {{- if $preDeleteHook.resources }}
