@@ -12,7 +12,6 @@ description: Helm chart to install the Thoras platform
 # pipeline. Library charts do not define any templates and therefore cannot be deployed.
 type: application
 
-# This is the chart version. This version number should be incremented each time you make changes
-# to the chart and its templates, including the app version.
-# Versions are expected to follow Semantic Versioning (https://semver.org/)
+# This is the chart version, following Semantic Versioning (https://semver.org/).
+# Merging a change to it starts a chart release, so change it only in a release PR.
 version: 5.10.1

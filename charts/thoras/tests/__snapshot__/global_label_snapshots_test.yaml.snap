@@ -2151,6 +2151,22 @@ Default matches snapshot:
                   value: ""
                 - name: SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID
                   value: ""
+                - name: SERVICE_ENABLE_CUR_INGESTION
+                  value: "false"
+                - name: SERVICE_CUR_BUCKET
+                  value: ""
+                - name: SERVICE_CUR_PREFIX
+                  value: ""
+                - name: SERVICE_CUR_EXPORT_NAME
+                  value: ""
+                - name: SERVICE_CUR_REGION
+                  value: us-east-1
+                - name: SERVICE_CUR_ROLE_ARN
+                  value: ""
+                - name: SERVICE_CUR_ROLE_EXTERNAL_ID
+                  value: ""
+                - name: SERVICE_CUR_CLUSTER_NAME
+                  value: ""
                 - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
                   value: "false"
                 - name: SERVICE_ENABLE_COST_ALERTS

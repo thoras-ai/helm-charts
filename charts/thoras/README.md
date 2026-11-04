@@ -889,6 +889,14 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasWorker.enableHourlyCostCollector               | Boolean | false         | Enable hourly AWS Cost Explorer collection for the hourly cost graph. Needs hourly granularity for all AWS services enabled in Cost Explorer preferences, which AWS charges for |
 | thorasWorker.costExplorerRoleArn                     | String  | ""            | Role the Cost Explorer calls assume when billing is only visible from another account, such as the organization's payer. The worker's role needs `sts:AssumeRole` on it, and it needs `ce:GetCostAndUsage`. Queries are then limited to this cluster's account. Empty uses the worker's own credentials |
 | thorasWorker.costExplorerRoleExternalId              | String  | ""            | External ID the role's trust policy requires, if any |
+| thorasWorker.enableCurIngestion                      | Boolean | false         | Ingest each workload's billed cost every 6h from the organization's AWS CUR 2.0 Data Export (Parquet, hourly, with resource IDs and split cost allocation data). Requires `curBucket` and `curExportName`. With `networkPolicy.enabled`, `thorasWorker.extraEgressRules` must allow HTTPS to S3 and STS |
+| thorasWorker.curBucket                               | String  | ""            | S3 bucket the CUR export delivers to |
+| thorasWorker.curPrefix                               | String  | ""            | S3 path prefix set on the CUR export, if any |
+| thorasWorker.curExportName                           | String  | ""            | Name of the CUR export |
+| thorasWorker.curRegion                               | String  | "us-east-1"   | Region of `curBucket` |
+| thorasWorker.curRoleArn                              | String  | ""            | Role the CUR reads assume, usually in the payer account that owns the bucket. The worker's role needs `sts:AssumeRole` on it, and it needs `s3:ListBucket` and `s3:GetObject` on the export. Empty uses the worker's own credentials |
+| thorasWorker.curRoleExternalId                       | String  | ""            | External ID the CUR role's trust policy requires, if any |
+| thorasWorker.curClusterName                          | String  | ""            | EKS cluster name whose CUR rows to ingest. Empty uses the cluster named by `costExplorerFilter` when it is an `aws:eks:cluster-name` tag, then node labels |
 
 ### Thoras Config Controller
 

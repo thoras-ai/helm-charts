@@ -875,8 +875,10 @@ kubectl logs deploy/thoras-worker -n thoras | grep -i sync
 ```
 
 A rejected sync appears as `failed to flush sync payloads … 401`. The worker
-still logs `cloud sync completed successfully` alongside it, so check the
-console's **Last ingest** rather than that line.
+also logs `cloud sync to the console is failing`, with the error and how many
+payloads were dropped. Older workers log `cloud sync completed successfully`
+even when the console rejected the data, so on those check the console's
+**Last ingest** rather than that line.
 
 **A tenant cluster never reports, and its worker logs show `403` from nginx.**
 `cloudSync.baseUrl` points at the dashboard address, which refuses ingest by
