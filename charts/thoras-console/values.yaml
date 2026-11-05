@@ -156,12 +156,14 @@ consoleApi:
     # Role to assume before calling Cost Explorer, such as one in the payer
     # account. Empty uses the pod's own credentials.
     roleArn: ""
+    # External ID the role's trust policy requires, sent with every AssumeRole.
     externalId: ""
     # Custom billing view set on every query. Empty reads the primary view.
     billingViewArn: ""
     # Requests per replica, all clusters together, including account lookups.
     # Zero is unlimited.
     requestsPerMinute: 300
+    # Requests allowed at once before the per-minute rate applies.
     burst: 20
 
   service:
