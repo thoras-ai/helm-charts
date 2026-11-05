@@ -24,9 +24,16 @@ spec:
         {{- with include "thoras-console.componentLabels" (dict "root" $ "component" $c.labels) }}
         {{- . | trim | nindent 8 }}
         {{- end }}
-      {{- with include "thoras-console.podAnnotations" (dict "root" $ "component" $c.podAnnotations) }}
+      {{- $podAnnotations := include "thoras-console.podAnnotations" (dict "root" $ "component" $c.podAnnotations) | trim }}
+      {{- if or $podAnnotations $c.serviceAccount.annotations }}
       annotations:
-        {{- . | trim | nindent 8 }}
+        {{- with $podAnnotations }}
+        {{- . | nindent 8 }}
+        {{- end }}
+        {{- with $c.serviceAccount.annotations }}
+        {{- /* IRSA injects the role when a pod is created, so a new role needs new pods. */}}
+        checksum/service-account-annotations: {{ toJson . | sha256sum }}
+        {{- end }}
       {{- end }}
     spec:
       securityContext:
@@ -114,6 +121,24 @@ spec:
           {{- if $c.singleOrg.enabled }}
           - name: SERVICE_SINGLE_ORG_NAME
             value: {{ $c.singleOrg.name | quote }}
+          {{- end }}
+          {{- $ce := $c.costExplorer | default dict }}
+          {{- if $ce.enabled }}
+          - name: SERVICE_COST_EXPLORER_ENABLED
+            value: "true"
+          - name: SERVICE_COST_EXPLORER_ROLE_ARN
+            value: {{ $ce.roleArn | default "" | quote }}
+          - name: SERVICE_COST_EXPLORER_EXTERNAL_ID
+            value: {{ $ce.externalId | default "" | quote }}
+          - name: SERVICE_COST_EXPLORER_BILLING_VIEW_ARN
+            value: {{ $ce.billingViewArn | default "" | quote }}
+          {{- /* hasKey, not default: zero means unlimited. */}}
+          {{- range $env, $key := dict "SERVICE_COST_EXPLORER_REQUESTS_PER_MINUTE" "requestsPerMinute" "SERVICE_COST_EXPLORER_BURST" "burst" }}
+          {{- if hasKey $ce $key }}
+          - name: {{ $env }}
+            value: {{ get $ce $key | quote }}
+          {{- end }}
+          {{- end }}
           {{- end }}
           {{- with include "thoras-console.webhookEnv" . }}{{- . | nindent 10 }}{{- end }}
           - name: SERVICE_SLACK_ERRORS_ENABLED

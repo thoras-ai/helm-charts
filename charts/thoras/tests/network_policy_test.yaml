@@ -32,6 +32,214 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: Opens the Pod Identity agent for a per-cluster cost collector
+    template: worker/network-policy.yaml
+    set:
+      thorasWorker.enableCostAndUsageCollector: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 169.254.170.23/32
+            ports:
+              - port: 80
+                protocol: TCP
+  - it: Keeps the Pod Identity agent closed in console mode, which holds no AWS role
+    template: worker/network-policy.yaml
+    set:
+      thorasWorker.enableCostAndUsageCollector: true
+      thorasWorker.costExplorerMode: console
+      cloudSync.clusterKeyID: my-cluster-key-id
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 169.254.170.23/32
+            ports:
+              - port: 80
+                protocol: TCP
+  - it: Opens the Pod Identity agent for CUR ingestion, in console mode too
+    template: worker/network-policy.yaml
+    set:
+      thorasWorker.costExplorerMode: console
+      thorasWorker.enableCurIngestion: true
+      thorasWorker.curBucket: billing-exports
+      thorasWorker.curExportName: OrgExport
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 169.254.170.23/32
+            ports:
+              - port: 80
+                protocol: TCP
+  - it: Opens :443 with a cost collector even when the API server is elsewhere
+    template: worker/network-policy.yaml
+    set:
+      thorasWorker.enableCostAndUsageCollector: true
+      networkPolicy.apiServerPorts: [8443]
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Opens :443 for cloud sync when the API server is elsewhere
+    template: worker/network-policy.yaml
+    set:
+      cloudSync.clusterKeyID: my-cluster-key-id
+      networkPolicy.apiServerPorts: [8443]
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Follows httpsEgressCidrs in the kubernetes flavor
+    template: worker/network-policy.yaml
+    set:
+      thorasWorker.enableCostAndUsageCollector: true
+      thorasWorker.httpsEgressCidrs:
+        - 10.0.0.0/8
+      networkPolicy.apiServerPorts: [8443]
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 10.0.0.0/8
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Opens no :443 rule of its own without a cost collector or cloud sync
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy.apiServerPorts: [8443]
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Keeps the Pod Identity agent closed without a cost collector
+    template: worker/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 169.254.170.23/32
+            ports:
+              - port: 80
+                protocol: TCP
+  - it: Opens AWS and the agent in cilium for a per-cluster cost collector
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      thorasWorker.enableHourlyCostCollector: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 0.0.0.0/0
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - host
+            toPorts:
+              - ports:
+                  - port: "80"
+                    protocol: TCP
+  - it: Opens the console in cilium for cloud sync
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      cloudSync.clusterKeyID: my-cluster-key-id
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 0.0.0.0/0
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+      - notContains:
+          path: spec.egress
+          content:
+            toEntities:
+              - host
+            toPorts:
+              - ports:
+                  - port: "80"
+                    protocol: TCP
+  - it: Keeps :443 closed in cilium without cost collection or cloud sync
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 0.0.0.0/0
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+  - it: Narrows the worker's cilium :443 egress with httpsEgressCidrs
+    template: worker/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      thorasWorker.enableCostAndUsageCollector: true
+      thorasWorker.httpsEgressCidrs:
+        - 10.0.0.0/8
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 10.0.0.0/8
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+      - notContains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 0.0.0.0/0
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
   - it: Does not render worker policy when worker is disabled
     template: worker/network-policy.yaml
     set:

@@ -188,16 +188,167 @@ tests:
       - contains:
           path: spec.egress
           content:
-            toEntities:
-              - world
+            toCIDR:
+              - 0.0.0.0/0
             toPorts:
               - ports:
                   - port: "443"
                     protocol: TCP
 
+  - it: Opens HTTPS egress for Cost Explorer in local mode
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.costExplorer.enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+
+  - it: Opens HTTPS egress for Cost Explorer in cilium local mode
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      consoleApi.costExplorer.enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 0.0.0.0/0
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+
+  - it: Opens the Pod Identity agent for Cost Explorer
+    template: console-api/network-policy.yaml
+    set:
+      consoleApi.costExplorer.enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 169.254.170.23/32
+            ports:
+              - port: 80
+                protocol: TCP
+
+  - it: Opens the Pod Identity agent for Cost Explorer in cilium
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      consoleApi.costExplorer.enabled: true
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toEntities:
+              - host
+            toPorts:
+              - ports:
+                  - port: "80"
+                    protocol: TCP
+
+  - it: Keeps the Pod Identity agent closed without Cost Explorer
+    template: console-api/network-policy.yaml
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 169.254.170.23/32
+            ports:
+              - port: 80
+                protocol: TCP
+
   ############################
   # Kubernetes API egress belongs to the controller alone
   ############################
+  - it: Replaces the open HTTPS rule with httpsEgressCidrs
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.enabled: true
+      consoleApi.costExplorer.enabled: true
+      consoleApi.httpsEgressCidrs: [10.1.0.0/16, 10.2.0.0/16]
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 10.1.0.0/16
+              - ipBlock:
+                  cidr: 10.2.0.0/16
+            ports:
+              - port: 443
+                protocol: TCP
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Replaces the open HTTPS rule with httpsEgressCidrs in cilium too
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.flavor: cilium
+      consoleApi.costExplorer.enabled: true
+      consoleApi.httpsEgressCidrs: [10.1.0.0/16]
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            toCIDR:
+              - 10.1.0.0/16
+            toPorts:
+              - ports:
+                  - port: "443"
+                    protocol: TCP
+  - it: Opens no HTTPS rule when httpsEgressCidrs is empty
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.enabled: true
+      consoleApi.costExplorer.enabled: true
+      consoleApi.httpsEgressCidrs: []
+    asserts:
+      - notContains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
+  - it: Keeps the open HTTPS rule when httpsEgressCidrs is missing from stored values
+    template: console-api/network-policy.yaml
+    set:
+      networkPolicy.enabled: true
+      consoleApi.costExplorer.enabled: true
+      consoleApi.httpsEgressCidrs: null
+    asserts:
+      - contains:
+          path: spec.egress
+          content:
+            to:
+              - ipBlock:
+                  cidr: 0.0.0.0/0
+            ports:
+              - port: 443
+                protocol: TCP
   - it: Gives console-api no API-server egress, since it makes no API calls
     template: console-api/network-policy.yaml
     asserts:

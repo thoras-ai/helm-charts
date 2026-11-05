@@ -567,9 +567,9 @@ thorasWorker:
   serviceAccount:
     name: thoras-worker
     # Set eks.amazonaws.com/role-arn here to give enableCostAndUsageCollector
-    # an IRSA role. The role needs ce:GetCostAndUsage, or sts:AssumeRole on
-    # costExplorerRoleArn when that is set. For enableCurIngestion it needs
-    # s3:ListBucket and s3:GetObject on the export, or sts:AssumeRole on
+    # an IRSA role in per-cluster mode. The role needs ce:GetCostAndUsage, or
+    # sts:AssumeRole on costExplorerRoleArn when that is set. For enableCurIngestion
+    # it needs s3:ListBucket and s3:GetObject on the export, or sts:AssumeRole on
     # curRoleArn when that is set.
     annotations: {}
   podAnnotations: {}
@@ -627,6 +627,17 @@ thorasWorker:
   costExplorerRoleArn: ""
   # External ID the role's trust policy requires, if any.
   costExplorerRoleExternalId: ""
+  # Where the cost collectors send Cost Explorer queries. per-cluster calls
+  # Cost Explorer with this pod's AWS credentials. console sends each query
+  # through the console this cluster syncs to, which runs it with its own role,
+  # limited to this cluster's tag and account; it needs cloudSync and a console
+  # with consoleApi.costExplorer.enabled, and no AWS role on this cluster.
+  costExplorerMode: per-cluster
+  # Custom billing view ARN the collectors read, such as one shared from the
+  # management account. Empty reads the primary view. This, costExplorerRoleArn
+  # and costExplorerRoleExternalId apply to per-cluster mode only; console mode
+  # fails the render with any of them set, as the console sets its own.
+  costExplorerBillingViewArn: ""
   # Ingest each workload's billed cost from the organization's CUR 2.0 export
   # (Parquet, hourly, with resource IDs and split cost allocation data). With
   # networkPolicy.enabled, extraEgressRules must allow HTTPS to S3 and STS.
@@ -661,6 +672,13 @@ thorasWorker:
   priorityClassName: ""
   # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
   topologySpreadConstraints: []
+  # -- Where the NetworkPolicy lets the worker reach :443 for Cost Explorer and the
+  # console, when it uses either. Add ::/0 for an IPv6 console or dual-stack AWS
+  # endpoints. Empty opens nothing, leaving it to extraEgressRules. The kubernetes
+  # flavor's apiServerPorts allow their ports to any address, 443 by default, so
+  # narrowing this there also takes 443 out of apiServerPorts.
+  httpsEgressCidrs:
+    - 0.0.0.0/0
   extraEgressRules: []
   extraIngressRules: []
 

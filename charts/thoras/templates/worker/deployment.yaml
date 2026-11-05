@@ -135,7 +135,7 @@ spec:
           - name: SERVICE_ENABLE_PROMETHEUS_METRIC_SCRAPING
             value: {{ .Values.featureFlags.enablePrometheusMetricScraping | quote }}
           - name: SERVICE_ENABLE_CLOUD_SYNC_WORKER
-          {{- if (and .Values.cloudSync.baseUrl (or (and .Values.cloudSync.clusterKeyID (ne (include "thoras.cloudSyncJoinConfigured" .) "true")) (eq (include "thoras.clusterAutoJoinActive" .) "true")))}}
+          {{- if eq (include "thoras.cloudSyncActive" .) "true" }}
             value: "true"
           {{- else }}
             value: "false"
@@ -306,6 +306,25 @@ spec:
             value: {{ .Values.thorasWorker.curClusterName | default "" | quote }}
           - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
             value: {{ .Values.thorasWorker.enableHourlyCostCollector | ternary "true" "false" | quote }}
+          {{- /* Not `default`, which would turn false or 0 into a valid mode. */}}
+          {{- $costExplorerMode := .Values.thorasWorker.costExplorerMode }}
+          {{- if kindIs "invalid" $costExplorerMode }}
+          {{- $costExplorerMode = "per-cluster" }}
+          {{- end }}
+          {{- if not (has $costExplorerMode (list "per-cluster" "console")) }}
+          {{- fail (printf "thorasWorker.costExplorerMode must be \"per-cluster\" or \"console\", got %s" (toJson $costExplorerMode)) }}
+          {{- end }}
+          {{- $w := .Values.thorasWorker }}
+          {{- if and (eq $costExplorerMode "console") (or $w.enableCostAndUsageCollector $w.enableHourlyCostCollector) (ne (include "thoras.cloudSyncActive" .) "true") }}
+          {{- fail "thorasWorker.costExplorerMode console sends cost queries through the console, so it needs cloud sync: set cloudSync.clusterKeyID or cloudSync.joinSecret" }}
+          {{- end }}
+          {{- if and (eq $costExplorerMode "console") (or $w.costExplorerRoleArn $w.costExplorerRoleExternalId $w.costExplorerBillingViewArn) }}
+          {{- fail "thorasWorker.costExplorerRoleArn, costExplorerRoleExternalId and costExplorerBillingViewArn apply only to costExplorerMode per-cluster; in console mode the console sets its own" }}
+          {{- end }}
+          - name: SERVICE_COST_EXPLORER_MODE
+            value: {{ $costExplorerMode | quote }}
+          - name: SERVICE_COST_EXPLORER_BILLING_VIEW_ARN
+            value: {{ .Values.thorasWorker.costExplorerBillingViewArn | default "" | quote }}
           - name: SERVICE_ENABLE_COST_ALERTS
             value: {{ .Values.featureFlags.enableCostAlerts | default false | ternary "true" "false" | quote }}
           {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}

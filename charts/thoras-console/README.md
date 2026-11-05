@@ -608,6 +608,45 @@ fetched from the address you give.
   `scope` string claim. Okta puts them in an `scp` list instead, and Dex can't
   issue custom scopes, so every call would return 403.
 
+### AWS Cost Explorer
+
+A tenant cluster whose worker sets `thorasWorker.costExplorerMode: console`
+sends its Cost Explorer queries here instead of calling AWS itself, so only the
+console needs an AWS role. console-api limits each query to the cluster's
+approved cost allocation tag and the account that tag bills to. The first tag a
+cluster reports is approved automatically; a later change waits for approval.
+
+```yaml
+consoleApi:
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111111111111:role/thoras-console
+  costExplorer:
+    enabled: true
+    # Optional: assume a role in the payer account before each call.
+    roleArn: arn:aws:iam::222222222222:role/thoras-cost-explorer
+    externalId: thoras-console
+```
+
+The credentials console-api ends up with need `ce:GetCostAndUsage` and
+`ce:GetDimensionValues`. Proxied queries are rate limited per replica; see
+`consoleApi.costExplorer` under [Values](#console-api).
+
+Console mode needs a `consoleVersion` and each cluster's `thorasVersion` from a
+platform release that has it. Older console images don't serve these queries,
+and older workers ignore `costExplorerMode` and keep calling AWS themselves.
+
+With `networkPolicy.enabled`, console-api can reach any IPv4 address on port 443
+so that it can reach AWS. To narrow that, for example to a VPC endpoint for Cost
+Explorer, set `consoleApi.httpsEgressCidrs`. `extraEgressRules` can't narrow it,
+because rules only add to each other. Add `::/0` if you set
+`AWS_USE_DUALSTACK_ENDPOINT`. console-api can also reach the EKS Pod Identity
+agent at `169.254.170.23:80`.
+
+To show billed cost in the console, set
+`consoleDashboard.extras.cluster_daily_cost: true`. The Billed cost tab shows
+what clusters forward with cloud sync on, whichever mode they collect in.
+
 ### NetworkPolicy
 
 Set `networkPolicy.enabled: true` to render a policy per component.
@@ -644,7 +683,8 @@ name a host whose address may change:
 
 - port 5432 to any address, from `console-api`, when the database is external
 - port 443 to any address, from `console-api`, in `oidc` or `both` mode, to fetch
-  the provider's signing keys
+  the provider's signing keys, and with `consoleApi.costExplorer.enabled`, to
+  reach AWS
 
 Every component accepts `extraIngressRules` and `extraEgressRules`, appended
 verbatim to both flavors. That is where to narrow the two rules above to a CIDR,
@@ -718,6 +758,10 @@ The chart follows semantic versioning. A major version may rename or remove
 values, a minor version only adds them, and a patch version only fixes. Read the
 release notes before a major upgrade, and pin the chart version in production
 by passing `--version` to `helm install` and `helm upgrade`.
+
+With the `cilium` NetworkPolicy flavor, console-api's :443 egress now follows
+`consoleApi.httpsEgressCidrs`, which is IPv4-only by default. An IPv6-only
+identity provider needs `::/0` added there.
 
 Each chart version pins the console images it was released with, so upgrading
 the chart upgrades the console. If you set `consoleVersion` yourself, it stays
@@ -992,6 +1036,13 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | consoleApi.gatewayAPI.path                   | String | /                    | Path to match                                                    |
 | consoleApi.gatewayAPI.pathType               | String | PathPrefix           | Match type                                                       |
 | consoleApi.serviceAccount.name               | String | thoras-console-api   | ServiceAccount name                                              |
+| consoleApi.serviceAccount.annotations        | object | {}                   | ServiceAccount annotations, e.g. `eks.amazonaws.com/role-arn`    |
+| consoleApi.costExplorer.enabled              | Bool   | false                | Run Cost Explorer queries for clusters in console mode           |
+| consoleApi.costExplorer.roleArn              | String | ""                   | Role to assume before calling Cost Explorer                      |
+| consoleApi.costExplorer.externalId           | String | ""                   | External ID passed when assuming roleArn                         |
+| consoleApi.costExplorer.billingViewArn       | String | ""                   | Custom billing view set on every query                           |
+| consoleApi.costExplorer.requestsPerMinute    | Number | 300                  | All clusters, per replica, including account lookups. Zero is unlimited |
+| consoleApi.costExplorer.burst                | Number | 20                   | Overall burst above that rate                                    |
 | consoleApi.service.annotations               | object | {}                   | Annotations on the Service                                       |
 | consoleApi.labels                            | object | {}                   | Component labels                                                 |
 | consoleApi.podAnnotations                    | object | {}                   | Component pod annotations                                        |
@@ -1012,6 +1063,7 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | consoleApi.affinity                          | object | {}                   | Component affinity                                               |
 | consoleApi.priorityClassName                 | String | ""                   | Takes precedence over the global priority class                  |
 | consoleApi.topologySpreadConstraints         | list   | []                   | Replaces the global list when non-empty                          |
+| consoleApi.httpsEgressCidrs                  | list   | ["0.0.0.0/0"]        | CIDRs the NetworkPolicy lets console-api reach on :443 for OIDC and Cost Explorer. Empty opens none |
 | consoleApi.extraEgressRules                  | list   | []                   | Appended verbatim to both NetworkPolicy flavors                  |
 | consoleApi.extraIngressRules                 | list   | []                   | Appended verbatim to both NetworkPolicy flavors                  |
 

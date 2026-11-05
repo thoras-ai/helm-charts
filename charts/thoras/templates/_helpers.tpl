@@ -361,6 +361,15 @@ falling through every branch and emitting no policy at all.
 {{- end -}}
 
 {{/*
+"true" when the worker syncs to the console.
+*/}}
+{{- define "thoras.cloudSyncActive" -}}
+{{- if and .Values.cloudSync.baseUrl (or (and .Values.cloudSync.clusterKeyID (ne (include "thoras.cloudSyncJoinConfigured" .) "true")) (eq (include "thoras.clusterAutoJoinActive" .) "true")) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
 Egress rule allowing components to reach the Kubernetes API server, for the
 "kubernetes" NetworkPolicy flavor.
 
