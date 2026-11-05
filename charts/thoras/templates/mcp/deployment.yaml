@@ -35,7 +35,7 @@ spec:
       - name: {{ .Values.imageCredentials.secretRef }}
       {{- end }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasMcp.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasMcp.imageTag) }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-mcp
         securityContext:
@@ -67,6 +67,7 @@ spec:
                 name: {{ $token.name }}
                 key: {{ $token.key }}
           {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:
         - name: http

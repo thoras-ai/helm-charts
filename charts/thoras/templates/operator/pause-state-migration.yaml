@@ -106,7 +106,7 @@ spec:
       {{- end }}
       containers:
       - name: migrate
-        image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+        image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasOperator.imageTag) }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         securityContext:
           allowPrivilegeEscalation: false
@@ -122,7 +122,12 @@ spec:
               fieldPath: metadata.namespace
         - name: MIGRATION_PATCH
           value: {{ $patch | toJson | quote }}
+        {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 8 }}{{- end }}
         {{- with include "thoras.globalEnv" . }}{{- . | nindent 8 }}{{- end }}
+        {{- if include "thoras.fipsEnabled" . }}
+        {{- /* The FIPS services image has no curl. */}}
+        command: ["/app/operator", "migrate-pause-state"]
+        {{- else }}
         command:
         - sh
         - -ec
@@ -139,3 +144,4 @@ spec:
             404) echo "No scaling pause configuration to migrate" ;;
             *) echo "Scaling pause migration failed: HTTP $status" >&2; exit 1 ;;
           esac
+        {{- end }}
