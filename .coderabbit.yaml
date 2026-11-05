@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# This file replaces CodeRabbit's UI settings for this repo; keys not set here use CodeRabbit's defaults.
+reviews:
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
