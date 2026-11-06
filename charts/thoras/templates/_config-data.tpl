@@ -128,6 +128,10 @@ and their consumers.
         ~*^GET/v1/persistent-volumes(\?|$)                                        1;
         ~*^GET/v1/cost/daily(\?|$)                                                1;
         ~*^GET/v1/cost/hourly(\?|$)                                               1;
+        ~*^GET/v1/cost/asts(\?|$)                                                 1;
+        ~*^GET/v1/cost/asts/daily(\?|$)                                           1;
+        ~*^GET/v1/cost/asts/hourly(\?|$)                                          1;
+        ~*^GET/v1/cost/cur/status(\?|$)                                           1;
         {{- if .Values.featureFlags.enableAutonomousReadiness }}
         ~*^GET/v1/ast/[^/]+/auto-ready(\?|$)                                      1;
         ~*^GET/v1/ast/[^/]+/signals/forecast_performance/history(\?|$)            1;
