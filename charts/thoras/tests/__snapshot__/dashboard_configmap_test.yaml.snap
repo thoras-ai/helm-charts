@@ -57,6 +57,10 @@ Should default to v2 port:
           ~*^GET/v1/persistent-volumes(\?|$)                                        1;
           ~*^GET/v1/cost/daily(\?|$)                                                1;
           ~*^GET/v1/cost/hourly(\?|$)                                               1;
+          ~*^GET/v1/cost/asts(\?|$)                                                 1;
+          ~*^GET/v1/cost/asts/daily(\?|$)                                           1;
+          ~*^GET/v1/cost/asts/hourly(\?|$)                                          1;
+          ~*^GET/v1/cost/cur/status(\?|$)                                           1;
 
 
           # POST — dashboard-initiated mutations
@@ -180,6 +184,10 @@ should set extras in config.json:
           ~*^GET/v1/persistent-volumes(\?|$)                                        1;
           ~*^GET/v1/cost/daily(\?|$)                                                1;
           ~*^GET/v1/cost/hourly(\?|$)                                               1;
+          ~*^GET/v1/cost/asts(\?|$)                                                 1;
+          ~*^GET/v1/cost/asts/daily(\?|$)                                           1;
+          ~*^GET/v1/cost/asts/hourly(\?|$)                                          1;
+          ~*^GET/v1/cost/cur/status(\?|$)                                           1;
 
 
           # POST — dashboard-initiated mutations
