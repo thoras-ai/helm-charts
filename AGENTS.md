@@ -22,6 +22,8 @@ those clusters report into. User-facing install docs are each chart's
 
 ## Verify before a PR
 
+What to test and how much is in the [testing guidelines](https://app.notion.com/p/thorasai/Software-Testing-Philosophy-and-Guidelines-453f18a1c5b742d3ac2e4b060d26fe38).
+
 CI (`.github/workflows/ci.yml`) runs Helm v3.19.2 with helm-unittest v1.0.2, on
 both charts:
 
