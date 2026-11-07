@@ -241,8 +241,12 @@ helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
 On its first sync the cluster registers under that name and receives a key of
 its own. From then on it sends data with that key, like any other cluster:
 
-- The join secret is only used to register. Revoking one cluster's key works as
-  usual, and rotating the join secret does not affect clusters already joined.
+- The join secret is only used to register. Rotating it does not affect clusters
+  already joined, and does not cancel keys they hold.
+- A cluster joins once. Once its key has been used or revoked, or the cluster has
+  been deleted, the console refuses that cluster's joins with a 409 until you
+  [allow the rejoin](#allowing-a-rejoin). Before its key is first used, a repeat
+  join succeeds, which covers a lost response.
 - Renaming a cluster in the dashboard sticks: later upgrades don't rename it
   back.
 - Two clusters can't register under the same name. The second is refused until
@@ -250,6 +254,47 @@ its own. From then on it sends data with that key, like any other cluster:
 
 Requires `consoleApi.singleOrg.enabled`, the default: a joining cluster presents
 no user identity, so the organization has to be implicit.
+
+### Removing a cluster whose credentials were stolen
+
+Every joined cluster keeps the join secret and its own install ID, and anyone who
+can read its Secrets has both. Do these in order:
+
+1. [Rotate the join secret](#rotating-secrets) and set the new value on the
+   clusters you keep. Until you do, the secret can still register new clusters.
+2. In the dashboard, open **Keys** for the cluster and **Revoke** every key, or
+   delete the cluster.
+
+The stolen cluster's install ID can't rejoin afterwards, even with the old secret.
+Clusters that have already joined keep working: they send data with their own keys
+and only read the join secret to register.
+
+### Allowing a rejoin
+
+Deleting a cluster's key doesn't make it rejoin the same console: the console
+refuses with a 409 and the cluster stops reporting. If you meant to do it, or you
+are bringing back a deleted cluster, allow one rejoin. If its credentials may have
+been stolen, follow the steps above first, because whoever joins next gets the key.
+
+Read the install ID from the cluster:
+
+```
+kubectl get secret thoras-config-controller -n thoras \
+  -o jsonpath='{.data.cloud-sync-install-id}' | base64 -d; echo
+```
+
+Then clear the block, using a [bearer token](#quick-start) with `write:clusters`
+and your organization's ID:
+
+```
+curl -X DELETE -H "Authorization: Bearer $TOKEN" \
+  https://console-api.example.com/api/v1/organizations/<organization ID>/cluster-join-blocks/<install ID>
+```
+
+A 204 means it can join; a 404 means nothing was blocking it. The cluster joins on
+its next retry and gets a new key, under the same cluster, or a new one if the old
+one was deleted. Revoke any old key still in use first: a key in use blocks the
+install again within a minute. The block returns when the new key is first used.
 
 ### Moving a cluster from another console
 
@@ -293,7 +338,9 @@ helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
 ```
 
 A cluster that joined its old console keeps the key that console gave it, and
-never joins again while it has one. Delete that key so it joins here:
+never joins again while it has one. Delete that key so it joins here. The block is
+per console, so this one accepts it; moving back to the old console later needs
+[a rejoin allowed](#allowing-a-rejoin) there:
 
 ```
 kubectl patch secret thoras-config-controller -n thoras --type=json -p \
@@ -947,7 +994,9 @@ kubectl annotate aiscaletargets --all -A thoras.ai/cloud-sync-generation-
 
 **A cluster that joins by itself never appears in the dashboard.** Read the
 tenant cluster's config-controller logs for `console refused the cluster join`.
-A 401 means the join secret is wrong; a 409 means another cluster already has
+A 401 means the join secret is wrong; a 409 means the cluster's join is
+[blocked](#allowing-a-rejoin), which `console-api` logs as `refused cluster join`,
+or another cluster already has
 that `cluster.name`.
 
 **A restore left clusters missing, or the database unreadable.** It was restored
