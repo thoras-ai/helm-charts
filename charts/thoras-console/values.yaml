@@ -403,6 +403,10 @@ bundledDatabase:
     name: thoras-console-db
 
   labels: {}
+  # -- Pod annotations. On Karpenter, consider `karpenter.sh/do-not-disrupt: "true"`
+  # to stop consolidation and drift from moving the only database replica. See
+  # "Keeping Karpenter from moving the bundled database" in the README for the
+  # trade-offs.
   podAnnotations: {}
 
   useGlobalAffinity: false
