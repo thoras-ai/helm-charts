@@ -358,6 +358,9 @@ thorasDashboard:
     enabled: false
 ```
 
+To limit which workloads can reach the dashboard port, see
+`thorasDashboard.ingressSources` under [NetworkPolicy](#networkpolicy).
+
 This leaves the dashboard reachable in-cluster with no auth in front of it,
 which exposes part of the API it proxies to and subverts `apiClientSecret`.
 Only safe if something external gates every request.
@@ -633,6 +636,44 @@ appended verbatim to both flavors. When dashboard OIDC auth is
 enabled, the chart opens broad egress on port `443` so oauth2-proxy
 can reach the IdP; tighten with a layered `CiliumNetworkPolicy` scoped
 by `toFQDNs`, or manage egress out-of-band.
+
+`thorasDashboard.ingressSources` limits which sources can reach the dashboard
+port. Each entry uses the syntax of `networkPolicy.flavor`. Once set, only the
+listed sources are allowed, including from the release namespace, so include
+whatever fronts the dashboard:
+
+```yaml
+networkPolicy:
+  enabled: true
+thorasDashboard:
+  ingressSources:
+    # networkPolicy.flavor: kubernetes
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+```
+
+```yaml
+networkPolicy:
+  enabled: true
+  flavor: cilium
+thorasDashboard:
+  ingressSources:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: ingress-nginx
+            app.kubernetes.io/name: ingress-nginx
+```
+
+With a `NodePort` or `LoadBalancer` Service, traffic can arrive from node
+addresses, so allow those or set `externalTrafficPolicy: Local` where it
+preserves the client address. The sources apply to `service.targetPort` when it
+is set, and to `containerPort` otherwise. `thorasDashboard.extraIngressRules` is
+still appended to the policy. The policy only takes effect on a CNI that enforces
+it. Setting `ingressSources` without `networkPolicy.enabled` fails the render.
 
 With cost collection or cloud sync on, the worker can reach AWS Cost Explorer
 and the console on port `443`, limited to `thorasWorker.httpsEgressCidrs`. Add
@@ -994,6 +1035,8 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasDashboard.gatewayAPI.pathType                          | String  | PathPrefix                   | Path type for the HTTPRoute                                                                                                                                                                                                                                                                                                                                                                                 |
 | thorasDashboard.slackErrorsEnabled                           | Boolean | false                        | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                                                                                                                                                                                                                                                                |
 | thorasDashboard.logLevel                                     | String  | Nil                          | Logging level                                                                                                                                                                                                                                                                                                                                                                                               |
+| thorasDashboard.read_only                                    | Bool    | false                        | View-only dashboard: hides write-capable UI features, and nginx answers `403` to API routes that change state |
+| thorasDashboard.ingressSources                               | List    | []                           | Sources allowed to reach the dashboard port, in the syntax of `networkPolicy.flavor`. Requires `networkPolicy.enabled`. See [NetworkPolicy](#networkpolicy) |
 | thorasDashboard.extras                                       | Object  | {}                           | Additional values to be injected into the Thoras Dashboard config                                                                                                                                                                                                                                                                                                                                           |
 
 ### Thoras Monitor
