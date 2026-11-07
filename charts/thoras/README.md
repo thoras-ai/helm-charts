@@ -55,8 +55,7 @@ helm repo update thoras
 helm install thoras thoras/thoras \
   --namespace thoras \
   --create-namespace \
-  --set imageCredentials.password="$(cat ./thoras_license.txt)" \
-  --set featureFlags.enableLegacySecretSeeding=false
+  --set imageCredentials.password="$(cat ./thoras_license.txt)"
 ```
 
 ### Verify installation
@@ -101,9 +100,8 @@ lookup above only applies to the default seeded-by-controller path. See
 Argo CD renders manifests without `lookup`, so a small set of chart
 outputs still drifts on every reconcile. To prevent this, do the following:
 
-- Set `featureFlags.enableLegacySecretSeeding: false` (see
-  [Disable Legacy Secret Seeding](#disable-legacy-secret-seeding) for more
-  details).
+- Leave `featureFlags.enableLegacySecretSeeding` at its default of `false` (see
+  [Legacy Secret Seeding](#legacy-secret-seeding) for more details).
 - Tell Argo to ignore these fields in your `Application`'s
   `spec.ignoreDifferences`:
 
@@ -129,11 +127,10 @@ ignoreDifferences:
 
 The following should be done if you use a deployment strategy that uses `helm template`:
 
-### Disable Legacy Secret Seeding
+### Leave Legacy Secret Seeding Off
 
-Set `featureFlags.enableLegacySecretSeeding: false` (see
-[Disable Legacy Secret Seeding](#disable-legacy-secret-seeding) for more
-details).
+Leave `featureFlags.enableLegacySecretSeeding` at its default of `false` (see
+[Legacy Secret Seeding](#legacy-secret-seeding) for more details).
 
 ### Webhook certificates
 
@@ -223,13 +220,18 @@ Notes:
 - Set `thorasConfigController.enableRestartRollouts: false` to have the
   controller log the rollouts it would perform without evicting anything.
 
-### Disable Legacy Secret Seeding
+### Legacy Secret Seeding
 
-Disable legacy secret seeding by setting `featureFlags.enableLegacySecretSeeding: false`.
+Config-controller seeds credentials directly into `thoras-config-controller`. The
+chart renders the pre-5.0 `api-client-secret` and `thoras-timescale-password`
+Secrets only while a live one is still waiting to be migrated, which needs no
+configuration on a `helm upgrade` from 4.x. Run `helm upgrade` once more after
+that migration so the chart stops rendering them.
 
-**NOTE:** if you are upgrading from 4.x, make sure to perform the upgrade
-first, before disabling `featureFlags.enableLegacySecretSeeding`. After the first
-successful upgrade, the secrets will be migrated and you can disable the feature.
+Set `featureFlags.enableLegacySecretSeeding: true` to always render them. An
+upgrade from 4.x needs this for its first sync under Argo CD or `helm template`,
+where the chart cannot see the cluster. See
+[UPGRADE.md](./UPGRADE.md#in-cluster-secret-seeding-and-update-monitoring).
 
 ### Affinity Configuration
 
@@ -703,6 +705,7 @@ The following flags are considered temporary and gate access to specific behavio
 
 | Key                                            | Type    | Default | Description                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------------------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| featureFlags.enableLegacySecretSeeding         | Boolean | false   | If true, always render the pre-5.0 `api-client-secret` and `thoras-timescale-password` Secrets as migration sources. If false, they render only while a live one is waiting to be migrated. Removed in 6.0. See [Legacy Secret Seeding](#legacy-secret-seeding)                                                                                                                |
 | featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                                                                                                                                                                                                                                                                                                                                            |
 | featureFlags.enableAutoscalerEventCollector    | Boolean | true    | If true, the worker stores Karpenter and Cluster Autoscaler events for node pool insights. Grants the worker cluster-wide read access to Events. When upgrading an existing release, use `--reset-then-reuse-values` rather than `--reuse-values` so this default is applied                                                                                                   |
 | featureFlags.enablePgLargeObjectStorage        | Boolean | true    | If true, enables storing blobs as postgres large objects                                                                                                                                                                                                                                                                                                                       |

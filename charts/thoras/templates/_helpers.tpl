@@ -464,10 +464,9 @@ migrated and generated values are indistinguishable.
 {{- else if $ac.secret -}}
 {{- $plan = append $plan (dict "name" "api-client-secret" "mode" "values" "secret" "thoras-helm-values" "key" "api-client-secret" "value" $ac.secret) -}}
 {{- else -}}
-{{- /* migrateFrom is gated on featureFlags.enableLegacySecretSeeding; when off,
-       config-controller seeds a fresh value instead of adopting the legacy Secret. */ -}}
+{{- /* With no legacy Secret left to adopt, config-controller seeds a fresh value. */ -}}
 {{- $mf := list -}}
-{{- if .Values.featureFlags.enableLegacySecretSeeding -}}
+{{- if include "thoras.legacySecretRendered" (dict "root" . "secret" "api-client-secret" "managedKey" "api-client-secret") -}}
 {{- $mf = append $mf (dict "secret" "api-client-secret" "key" "secret") -}}
 {{- end -}}
 {{- $entry := dict "name" "api-client-secret" "mode" "seed" "secret" "thoras-config-controller" "key" "api-client-secret" "generate" (dict "type" "alphanumeric" "length" 32) -}}
@@ -503,9 +502,9 @@ migrated and generated values are indistinguishable.
 {{- end -}}
 
 {{- /* DSN and password are coupled: bundled seeds both, external has no
-       password at all. The seeded DSN embeds the seeded password; when
-       featureFlags.enableLegacySecretSeeding is on, config-controller
-       cross-checks the pair while migrating both from the legacy Secret. */ -}}
+       password at all. The seeded DSN embeds the seeded password; while the
+       legacy Secret is a migration source, config-controller cross-checks the
+       pair as it migrates both. */ -}}
 {{- if $external -}}
 {{- if .Values.externalTimescale.secretRefName -}}
 {{- $plan = append $plan (dict "name" "timescale-dsn" "mode" "existing" "secret" .Values.externalTimescale.secretRefName "key" .Values.externalTimescale.secretRefKey) -}}
@@ -515,7 +514,7 @@ migrated and generated values are indistinguishable.
 {{- else -}}
 {{- $tsPwMf := list -}}
 {{- $tsDsnMf := list -}}
-{{- if .Values.featureFlags.enableLegacySecretSeeding -}}
+{{- if include "thoras.legacySecretRendered" (dict "root" . "secret" "thoras-timescale-password" "managedKey" "timescale-password") -}}
 {{- $tsPwMf = append $tsPwMf (dict "secret" "thoras-timescale-password" "key" "password") -}}
 {{- $tsDsnMf = append $tsDsnMf (dict "secret" "thoras-timescale-password" "key" "host") -}}
 {{- end -}}
@@ -576,6 +575,42 @@ migrated and generated values are indistinguishable.
 {{- end -}}
 
 {{- toYaml $plan -}}
+{{- end -}}
+
+{{/*
+"true" when a pre-5.0 Secret is still on the cluster and config-controller has
+not adopted it yet: it is unannotated and its value is not in the managed
+Secret. Empty otherwise, and always empty where `lookup` is unavailable
+(helm template, Argo CD), which is why those upgrades from 4.x set
+featureFlags.enableLegacySecretSeeding. See UPGRADE.md.
+
+The result is cached on .Release because thoras.secretPlan runs once per
+consumer, and uncached lookups would hit client-side API throttling.
+Usage: include "thoras.legacySecretPending" (dict "root" . "secret" "api-client-secret" "managedKey" "api-client-secret")
+*/}}
+{{- define "thoras.legacySecretPending" -}}
+{{- $release := .root.Release -}}
+{{- $cache := get $release "thorasLegacySecretPending" | default dict -}}
+{{- if not (hasKey $cache .secret) -}}
+{{- $pending := false -}}
+{{- $legacy := lookup "v1" "Secret" $release.Namespace .secret -}}
+{{- if and $legacy (not (hasKey ($legacy.metadata.annotations | default dict) "thoras.ai/migrated-to")) -}}
+{{- $managed := lookup "v1" "Secret" $release.Namespace "thoras-config-controller" -}}
+{{- $pending = not (hasKey ((get $managed "data") | default dict) .managedKey) -}}
+{{- end -}}
+{{- $_ := set $cache .secret $pending -}}
+{{- $_ := set $release "thorasLegacySecretPending" $cache -}}
+{{- end -}}
+{{- if get $cache .secret -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+"true" when the chart renders a pre-5.0 Secret and config-controller migrates
+from it: the flag forces it, otherwise only while its migration is pending.
+Usage: include "thoras.legacySecretRendered" (dict "root" . "secret" "api-client-secret" "managedKey" "api-client-secret")
+*/}}
+{{- define "thoras.legacySecretRendered" -}}
+{{- if .root.Values.featureFlags.enableLegacySecretSeeding -}}true{{- else -}}{{- include "thoras.legacySecretPending" . -}}{{- end -}}
 {{- end -}}
 
 {{/*
