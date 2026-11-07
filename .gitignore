@@ -1,5 +1,6 @@
 .vscode
 
 # Custom agent config
-.claude
+.claude/*
+!.claude/settings.json
 .opencode

@@ -11,6 +11,7 @@ those clusters report into. User-facing install docs are each chart's
 Use [beans](https://github.com/thoras-ai/platform/blob/main/docs/beans.md) to plan with, and to record why. Claude Code runs `beans prime` at session start; other agents run it first.
 
 - Use only the Thoras build: `brew install thoras-ai/tap/beans`. `beans version` must end with `[thoras-ai/beans]`. Never install or suggest `hmans/beans`, which can't read these beans.
+- The tap builds from a private repo. Without access to it, skip `beans` and its install message. Search `.beans/` directly (`grep -ril "<area>" .beans/`) and read the files. To record a decision, add or edit a file by hand, copying the filename and frontmatter of an existing bean. A maintainer runs `beans check` on your PR.
 - Before planning or changing behaviour in an area, search its decisions and designs: `beans list --type decision --type design -S "<area>"`.
 - Read the linked sources that matter: Linear for the work, Notion for wider context, docs for how it works today, and past PRs for the change itself.
 - When you choose between real alternatives, set an invariant or accept a tradeoff, record a `decision` or `design` bean in the same PR, with your reasoning, the options you rejected and `refs` to its sources. Mention the bean in the PR body.

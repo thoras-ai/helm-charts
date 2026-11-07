@@ -10,7 +10,7 @@ tags:
     - namespaced-mode
     - security
 created_at: 2026-11-07T02:18:27Z
-updated_at: 2026-11-07T02:56:40Z
+updated_at: 2026-11-07T07:30:31Z
 decided_at: 2026-10-29
 refs:
     - "pr:thoras-ai/helm-charts#309"
@@ -26,6 +26,8 @@ refs:
     - "code:charts/thoras/templates/operator/rbac.yaml"
     - "code:charts/thoras/templates/_helpers.tpl"
     - "code:charts/thoras/templates/config-controller/rbac.yaml"
+    - "code:charts/thoras/templates/api-server-v2/rbac.yaml"
+    - "code:charts/thoras/templates/worker/rbac.yaml"
 ---
 
 ## Context
@@ -36,7 +38,7 @@ refs:
 - Exceptions get their own grants: the worker reads one named ConfigMap, the api-server keeps `pods/log`, and a release-namespace Role lets the api-server read and write ConfigMaps, not limited by name, for the pause state (#964).
 - `rbac.namespaces` scopes workload reads and sets `SERVICE_WATCH_NAMESPACES`. Grants that a Role can't express stay ClusterRoles in both modes: `*-cluster-scoped` covers Nodes, PVs, StorageClasses and Karpenter NodePools and NodeClaims (#836, #967).
 - The worker reads Events cluster-wide while the collector flag is on, since Node and NodeClaim events are recorded in `default` (#967).
-- The operator's and worker's `thoras.ai` access stays a ClusterRole in both modes.
+- `thoras.ai` access for the operator, worker and api-server stays a ClusterRole and ClusterRoleBinding in both modes. The worker and api-server get all resources and verbs. The operator gets all verbs on a listed set of resources.
 - config-controller is the opposite case: a namespaced Role only, ignoring `rbac.namespaces`, with its informer pinned to the release namespace.
 
 ## Options considered

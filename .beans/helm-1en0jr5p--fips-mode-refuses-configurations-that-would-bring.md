@@ -11,7 +11,7 @@ tags:
     - security
     - compatibility
 created_at: 2026-11-07T02:18:27Z
-updated_at: 2026-11-07T02:56:40Z
+updated_at: 2026-11-07T07:30:31Z
 decided_at: 2026-11-04
 refs:
     - "pr:thoras-ai/helm-charts#970"
@@ -25,7 +25,7 @@ refs:
 `fips.enabled` runs FIPS variants of the Thoras images. Some chart defaults have no approved equivalent: bcrypt in `htpasswd` auth, the bundled TimescaleDB image, `kube-webhook-certgen`, and `alpine` and `curl` helpers.
 
 ## Decision
-FIPS mode is off by default and fails the render rather than falling back. It requires OIDC when dashboard auth is on, `externalTimescale`, cert-manager for webhook certs, and an inline DSN with `sslmode=verify-full` exactly once.
+FIPS mode is off by default and fails the render rather than falling back. It requires OIDC when dashboard auth is on, `externalTimescale`, and cert-manager for webhook certs. The DSN can be inline or come from `externalTimescale.secretRefName` and `secretRefKey`. The chart checks for `sslmode=verify-full` exactly once only on an inline DSN that is in use. `secretRefName` takes precedence over an inline DSN.
 
 - All Thoras image tags go through `thoras.imageTag`, which adds `-fips` unless already present.
 - A digest in FIPS mode fails the render, since it can't take the suffix and may point at a non-FIPS image.

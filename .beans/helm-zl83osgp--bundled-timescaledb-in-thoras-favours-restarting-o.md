@@ -11,7 +11,7 @@ tags:
     - bundled-database
     - upgrade
 created_at: 2026-11-07T02:18:27Z
-updated_at: 2026-11-07T02:56:40Z
+updated_at: 2026-11-07T07:30:31Z
 decided_at: 2026-07-29
 refs:
     - "pr:thoras-ai/helm-charts#377"
@@ -46,7 +46,7 @@ The metrics collector runs TimescaleDB and blob-service in one pod. OOM-induced 
 `walRecovery` shipped off by default (#609); #830's diff turned it on, which its description doesn't mention. A 60 or 120 second window was suggested before 300s was picked in #831; 300s had been the original value.
 
 ## Consequences
-- Default installs lose metrics when the pod moves, and collector rollouts mean database downtime.
+- Default installs keep metrics in an `emptyDir`, so replacing the pod loses them. A collector rollout replaces the pod under `Recreate`, so it means database downtime and data loss. A container restart in the same pod keeps the data.
 - Recovery trades recent data for availability, and setting `walRecovery.enabled: false` means manual recovery.
 - A TimescaleDB bump has to update both values. The README says they should match; no template check enforces it.
 - The tags are `-pg16`. No Postgres major upgrade path is recorded.
