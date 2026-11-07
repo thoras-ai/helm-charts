@@ -2,6 +2,30 @@ suite: Validation
 templates:
   - helm-values-secret.yaml
 tests:
+  - it: Rejects the Cost Explorer proxy without single-org
+    set:
+      consoleApi.costExplorer.enabled: true
+      consoleApi.singleOrg.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "consoleApi.costExplorer.enabled requires consoleApi.singleOrg.enabled: the proxy reads one set of billing data, and a cluster's reported tag does not prove which organization that spend belongs to"
+
+  - it: Accepts the Cost Explorer proxy with single-org
+    set:
+      auth.local.adminPassword: a-long-enough-password
+      consoleApi.costExplorer.enabled: true
+      consoleApi.singleOrg.enabled: true
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Accepts multi-org when the proxy is off, and when stored values have no costExplorer block
+    set:
+      auth.local.adminPassword: a-long-enough-password
+      consoleApi.costExplorer: null
+      consoleApi.singleOrg.enabled: false
+    asserts:
+      - notFailedTemplate: {}
+
   - it: Rejects an unknown auth mode, naming the value it got
     set:
       auth.mode: nonsense
