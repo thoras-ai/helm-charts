@@ -403,7 +403,14 @@ bundledDatabase:
     name: thoras-console-db
 
   labels: {}
-  podAnnotations: {}
+  # -- Keeps Karpenter from moving the only database replica for consolidation or
+  # drift, which would take console-api down until the volume reattaches. Karpenter
+  # also won't evict the pod when it drains the node, so a spot interruption stops
+  # the database uncleanly and an expired node stays up until the pod goes, unless
+  # the NodePool sets terminationGracePeriod. Use on-demand capacity through
+  # affinity for the first. Set the key to null to allow all of it.
+  podAnnotations:
+    karpenter.sh/do-not-disrupt: "true"
 
   useGlobalAffinity: false
   affinity: {}
