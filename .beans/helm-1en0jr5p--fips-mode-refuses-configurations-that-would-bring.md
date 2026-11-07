@@ -11,7 +11,7 @@ tags:
     - security
     - compatibility
 created_at: 2026-11-07T02:18:27Z
-updated_at: 2026-11-07T02:18:27Z
+updated_at: 2026-11-07T02:56:40Z
 decided_at: 2026-11-04
 refs:
     - "pr:thoras-ai/helm-charts#970"
@@ -48,4 +48,4 @@ FIPS mode is off by default and fails the render rather than falling back. It re
 
 ## Provenance
 Stated: #970, checked against `_helpers.tpl` and the guards in `thoras-helm-values-secret.yaml`. Who asked for FIPS isn't recorded.
-Inferred: the "silently pull non-FIPS" consequence, from how tags resolve.
+Inferred: the "silently pull non-FIPS" consequence, from how tags resolve, and calling byte-identical output a compatibility promise; #970 reports the comparison, not a promise.

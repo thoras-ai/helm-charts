@@ -10,7 +10,7 @@ tags:
     - namespaced-mode
     - security
 created_at: 2026-11-07T02:18:27Z
-updated_at: 2026-11-07T02:18:27Z
+updated_at: 2026-11-07T02:56:40Z
 decided_at: 2026-10-29
 refs:
     - "pr:thoras-ai/helm-charts#309"
@@ -19,6 +19,7 @@ refs:
     - "pr:thoras-ai/helm-charts#752"
     - "pr:thoras-ai/helm-charts#836"
     - "pr:thoras-ai/helm-charts#896"
+    - "pr:thoras-ai/helm-charts#964"
     - "pr:thoras-ai/helm-charts#967"
     - "pr:thoras-ai/helm-charts#970"
     - "github:thoras-ai/platform#5026"
@@ -32,10 +33,10 @@ refs:
 
 ## Decision
 - Read access comes from `thoras.workloadReadRules`, listing what Thoras discovers and sizes. Secrets and ConfigMaps are excluded. A test rejects any rule combining wildcard `apiGroups` and `resources`.
-- Exceptions get narrow grants: the worker reads one named ConfigMap, and the api-server keeps `pods/log`.
+- Exceptions get their own grants: the worker reads one named ConfigMap, the api-server keeps `pods/log`, and a release-namespace Role lets the api-server read and write ConfigMaps, not limited by name, for the pause state (#964).
 - `rbac.namespaces` scopes workload reads and sets `SERVICE_WATCH_NAMESPACES`. Grants that a Role can't express stay ClusterRoles in both modes: `*-cluster-scoped` covers Nodes, PVs, StorageClasses and Karpenter NodePools and NodeClaims (#836, #967).
-- Events are read cluster-wide while the collector flag is on, since Node and NodeClaim events are recorded in `default` (#967).
-- The operator's `thoras.ai` access stays a ClusterRole in both modes.
+- The worker reads Events cluster-wide while the collector flag is on, since Node and NodeClaim events are recorded in `default` (#967).
+- The operator's and worker's `thoras.ai` access stays a ClusterRole in both modes.
 - config-controller is the opposite case: a namespaced Role only, ignoring `rbac.namespaces`, with its informer pinned to the release namespace.
 
 ## Options considered

@@ -11,7 +11,7 @@ tags:
     - bundled-database
     - upgrade
 created_at: 2026-11-07T02:18:27Z
-updated_at: 2026-11-07T02:18:27Z
+updated_at: 2026-11-07T02:56:40Z
 decided_at: 2026-07-29
 refs:
     - "pr:thoras-ai/helm-charts#377"
@@ -39,7 +39,7 @@ The metrics collector runs TimescaleDB and blob-service in one pod. OOM-induced 
 - `preStop` runs `pg_ctl stop -m fast` to reduce corruption on restart (#593).
 - An init container always runs the WAL check at startup, and forced reset defaults to on. `walRecovery.enabled` only decides whether a failure may force `pg_resetwal -f`, which discards WAL after the last valid checkpoint (#830).
 - The reset fires only when the startup log matches known corruption signatures; other failures stay as they are for investigation (#831).
-- The startup window is 300s, because a healthy database replaying a lot of WAL could otherwise trip a false reset (#831).
+- The startup window defaults to 300s, because a healthy database replaying a lot of WAL could otherwise trip a false reset (#831).
 - `imageTag` and `extensionVersion` move together, using the official `timescaledb` image rather than `-ha` (#377). `ALTER EXTENSION` began in init containers (#430). The version now goes to the Go services through `SERVICE_TIMESCALE_EXTENSION_VERSION` (#688), and those containers were removed (#726, #747).
 
 ## Options considered

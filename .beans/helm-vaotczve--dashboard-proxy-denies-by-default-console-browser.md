@@ -11,7 +11,7 @@ tags:
     - thoras-console
     - trust-boundary
 created_at: 2026-11-07T02:18:27Z
-updated_at: 2026-11-07T02:18:27Z
+updated_at: 2026-11-07T02:56:40Z
 decided_at: 2026-09-17
 refs:
     - "pr:thoras-ai/helm-charts#760"
@@ -40,7 +40,7 @@ The dashboard's nginx proxied `/v1/` to the api-server with no route filter. #76
 - A dashboard call to a new API route in `thoras` returns 403 under Helm until it's added to `_config-data.tpl`. Many later PRs exist only to do this (for example #798, #848, #953).
 - Two console hostnames mean two DNS records and two certificates on first install, and tenant `cloudSync.baseUrl` must be the ingest address; the dashboard address refuses with 403 (#929).
 - #760 describes the allowlist as raising the floor, not as full RBAC.
-- `thorasDashboard.read_only` hides write features in the dashboard. It leaves the API server flag unchanged, so it is a UI setting (#944).
+- `thorasDashboard.read_only` hides write features in the dashboard and leaves the API server flag unchanged (#944). It also drops the cost-alert write routes from the allowlist, but other write routes, such as the scaling pause, stay allowed.
 
 ## Provenance
 Stated: #760, #914, #929, #944, AGENTS.md, and comments in both config templates.

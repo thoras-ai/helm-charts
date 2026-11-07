@@ -11,7 +11,7 @@ tags:
     - dashboard
     - trust-boundary
 created_at: 2026-11-07T02:18:26Z
-updated_at: 2026-11-07T02:18:26Z
+updated_at: 2026-11-07T02:56:40Z
 decided_at: 2026-09-04
 refs:
     - "pr:thoras-ai/helm-charts#851"
@@ -35,7 +35,7 @@ The dashboard was reachable without sign-in unless a customer added their own pr
 - nginx adds the shared secret as `Authorization: Bearer` server-side through envsubst, so it never reaches the ConfigMap, Helm history or browser (#854).
 - Identity reaches the api-server as `X-Forwarded-Email` and `X-Forwarded-User`, for best-effort audit attribution. When auth is off, nginx strips both, so a client can't supply them (#918).
 - `cookieSecure` defaults to false, because Secure cookies break Safari over `kubectl port-forward` (#869 comment, values comment).
-- `thoras-console` differs: `auth.mode` is `local`, `oidc` or `both`, handled by console-api with no oauth2-proxy. Its OIDC issuer and audiences are required in `oidc` mode, since binary defaults point at the hosted console (#905, #925).
+- `thoras-console` differs: `auth.mode` is `local`, `oidc` or `both`, handled by console-api with no oauth2-proxy. Its OIDC issuer and audiences are required in `oidc` and `both` modes, since binary defaults point at the hosted console (#905, #925).
 
 ## Options considered
 A first version merged as #869 and was reverted the next day (#888, no reason given), before any release included it. It returned in 5.0.0 with #895. Other options weren't recorded.

@@ -11,7 +11,7 @@ tags:
     - bundled-database
     - upgrade
 created_at: 2026-11-07T02:18:27Z
-updated_at: 2026-11-07T02:18:27Z
+updated_at: 2026-11-07T02:56:40Z
 decided_at: 2026-09-16
 refs:
     - "pr:thoras-ai/helm-charts#913"
@@ -38,7 +38,7 @@ Default-on with `verify-full`: rejected for two reasons. The database (`Recreate
 ## Consequences
 - By default, in-cluster database traffic isn't encrypted. #913 asks for this to be recorded in the platform security-review inventory as an opt-in control.
 - The `prefer` step depends on dbmate's lib/pq handling `prefer` correctly; #913 cites platform's pin at v1.12.3, since older lib/pq treated it as `require`.
-- blob-service and forecast-worker don't connect to Postgres, so they aren't part of this.
+- #913 left blob-service and forecast-worker untouched, saying neither connects to Postgres. The blob-service container does run a `psql` bootstrap over localhost with the bundled database, and it gets the DSN under `externalTimescale`.
 - External databases are out of scope here; FIPS mode sets its own `sslmode` rule for them (#970).
 
 ## Provenance
