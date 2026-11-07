@@ -124,6 +124,8 @@ thorasDashboard:
 dashboard's nginx binds `thorasDashboard.containerPort` on all
 interfaces, meaning any workload in the cluster that can reach the `thoras-dashboard` Service
 can access part of the Thoras API without authentication.
+Use `thorasDashboard.ingressSources` to limit which sources can reach that port
+(see NetworkPolicy in the chart README).
 
 #### Migrating from the standalone oauth2-proxy sidecar
 

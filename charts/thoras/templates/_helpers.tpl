@@ -348,6 +348,35 @@ true
 {{- end -}}
 
 {{/*
+thorasDashboard.ingressSources as JSON, validated. A misspelled key could render
+a rule that matches more sources than intended, so keys are checked per flavor.
+*/}}
+{{- define "thoras.dashboard.ingressSources" -}}
+{{- $sources := .Values.thorasDashboard.ingressSources | default list -}}
+{{- if and $sources .Values.thorasDashboard.enabled -}}
+{{- if not .Values.networkPolicy.enabled -}}
+{{- fail "thorasDashboard.ingressSources requires networkPolicy.enabled: true" -}}
+{{- end -}}
+{{- $flavor := include "thoras.networkPolicyFlavor" . -}}
+{{- range $sources -}}
+{{- if not (and (kindIs "map" .) .) -}}
+{{- fail (printf "thorasDashboard.ingressSources entries must be non-empty maps, got %v" .) -}}
+{{- end -}}
+{{- range $key, $_ := . -}}
+{{- if eq $flavor "cilium" -}}
+{{- if not (hasPrefix "from" $key) -}}
+{{- fail (printf "thorasDashboard.ingressSources: %q is not valid with networkPolicy.flavor cilium; use from-fields such as fromEndpoints, fromCIDR or fromEntities" $key) -}}
+{{- end -}}
+{{- else if not (has $key (list "namespaceSelector" "podSelector" "ipBlock")) -}}
+{{- fail (printf "thorasDashboard.ingressSources: %q is not valid with networkPolicy.flavor kubernetes; use namespaceSelector, podSelector or ipBlock" $key) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- toJson $sources -}}
+{{- end -}}
+
+{{/*
 The supported way to read networkPolicy.flavor. Every network-policy template
 branches on the result, so an unknown value fails the render here rather than
 falling through every branch and emitting no policy at all.
