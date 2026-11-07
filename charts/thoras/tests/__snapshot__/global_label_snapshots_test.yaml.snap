@@ -909,7 +909,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
-            checksum/config: bd250c0069393c80399566a679b1f9c58bff60c9f665bf6eccf6e46dc3028f83
+            checksum/config: 434b8ea918adc011871241a9aa506c8514986a0a15585b9a8b3d07645be5d891
             prometheus.io/path: /metrics
             prometheus.io/port: "9103"
             prometheus.io/scrape: "true"
@@ -1033,9 +1033,7 @@ Default matches snapshot:
       - apiGroups:
           - ""
         resourceNames:
-          - api-client-secret
           - thoras-config-controller
-          - thoras-timescale-password
         resources:
           - secrets
         verbs:
