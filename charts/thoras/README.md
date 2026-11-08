@@ -122,7 +122,21 @@ ignoreDifferences:
       - /spec/replicas
     kind: Deployment
     name: thoras-forecast-worker
+  # Until featureFlags.enableLegacySecretSeeding is false, the pre-5.0 Secrets
+  # render with fresh random values on every reconcile. Keep the live data.
+  - jsonPointers:
+      - /data
+    kind: Secret
+    name: api-client-secret
+  - jsonPointers:
+      - /data
+    kind: Secret
+    name: thoras-timescale-password
 ```
+
+Ignoring a difference only changes what Argo compares. Add
+`RespectIgnoreDifferences=true` to the Application's `spec.syncPolicy.syncOptions`
+so a sync leaves those fields alone as well.
 
 ## helm template
 
@@ -132,7 +146,10 @@ The following should be done if you use a deployment strategy that uses `helm te
 
 Set `featureFlags.enableLegacySecretSeeding: false` once `thoras-config-controller`
 carries the migrated keys (see [Legacy Secret Seeding](#legacy-secret-seeding) for
-more details).
+more details). Until then, apply the rendered `api-client-secret` and
+`thoras-timescale-password` only when they do not already exist: without `lookup`
+the chart renders them with fresh random values, and overwriting the live ones
+before config-controller has migrated them changes the credentials in use.
 
 ### Webhook certificates
 
@@ -216,9 +233,11 @@ How you rotate depends on where the value lives:
   consumers.
 - **Pinned in values**: change the value in `values.yaml` and run
   `helm upgrade` and the controller rolls the consumers.
-- **Seeded by config-controller**: remove the key from `thoras-config-controller`
-  and the controller seeds a new value and rolls the consumers. The bundled
-  database password needs the new value set on the database first. See
+- **Seeded by config-controller**: for the API client secret and the dashboard
+  values, remove the key from `thoras-config-controller`; the controller seeds a
+  new value and rolls the consumers. Do not remove the bundled database password
+  key: set a new password on the database, then patch `timescale-password` and
+  `timescale-dsn` together. See
   [UPGRADE.md](./UPGRADE.md#rotating-the-generated-credentials-after-upgrading).
 
 Notes:

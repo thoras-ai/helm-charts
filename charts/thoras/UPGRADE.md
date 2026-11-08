@@ -104,13 +104,28 @@ If you leveraged the Charts secret seeding (default behavior) upgrading to 5.x w
 migrate the existing seeded secrets in cluster, no intervention needed.
 
 Upgrading from 4.x renders the pre-5.0 `api-client-secret` and `thoras-timescale-password`
-Secrets again so config-controller can migrate them, and prints a `MIGRATION PENDING` note
-until `thoras-config-controller` carries the migrated keys.
+Secrets again so config-controller can migrate them. The migration is complete when
+`thoras-config-controller` carries the keys (`api-client-secret` when the API client is enabled,
+`timescale-password` and `timescale-dsn` for the bundled database):
+
+```sh
+kubectl -n thoras get secret thoras-config-controller -o json | jq -r '.data | keys[]'
+```
 
 With Argo CD or `helm template` the chart cannot see the cluster, so it cannot tell that a
-migration is pending. `featureFlags.enableLegacySecretSeeding` therefore stays `true` by default
-through 5.x: the first sync from 4.x renders the Secrets, config-controller migrates them, and
-nothing is pruned before it does.
+migration is pending, and it renders the pre-5.0 Secrets with fresh random values on every
+render. `featureFlags.enableLegacySecretSeeding` therefore stays `true` by default through 5.x,
+so the migration source is never pruned, and the live values must not be overwritten before
+config-controller has read them:
+
+- Argo CD: add `ignoreDifferences` entries for `/data` on both Secrets and
+  `RespectIgnoreDifferences=true` to the Application's `syncOptions` before the upgrade (see the
+  README's ArgoCD section), and keep them until the flag is `false`.
+- `helm template` pipelines: apply the rendered `api-client-secret` and
+  `thoras-timescale-password` only when they do not already exist.
+
+Once the keys are in `thoras-config-controller`, the rendered values no longer matter: nothing
+reads the pre-5.0 Secrets.
 
 Once `thoras-config-controller` carries the migrated keys, set the flag to `false`. On
 `helm upgrade` the chart then renders the Secrets only while a migration is pending; with
@@ -139,19 +154,29 @@ kubectl -n thoras patch secret thoras-config-controller --type=json \
 ```
 
 **Database password** (bundled TimescaleDB): set a new password on the database, then store it
-and the DSN that embeds it in the managed Secret. The two keys must change together.
+and the DSN that embeds it in the managed Secret. The two keys must change together, and the
+database must accept the new password before the Secret changes.
+
+Changing these keys restarts `metrics-collector`, which runs the database. With
+`metricsCollector.persistence.enabled: false` (the default) the database lives on an `emptyDir`,
+so that restart deletes the stored metrics, as any restart of that pod does. Enable persistence
+first if you need to keep them.
 
 ```sh
 NEW_PASSWORD=$(openssl rand -hex 16)
-kubectl -n thoras exec deploy/metrics-collector -c timescaledb -- \
-  psql -U postgres -h localhost -c "ALTER ROLE postgres PASSWORD '${NEW_PASSWORD}'"
-kubectl -n thoras patch secret thoras-config-controller --type=merge \
-  -p "{\"stringData\":{\"timescale-password\":\"${NEW_PASSWORD}\",\"timescale-dsn\":\"postgres://postgres:${NEW_PASSWORD}@timescale:5432\"}}"
+printf "ALTER ROLE postgres PASSWORD '%s';\n" "$NEW_PASSWORD" \
+  | kubectl -n thoras exec -i deploy/metrics-collector -c timescaledb -- \
+      psql -U postgres -h localhost -q -v ON_ERROR_STOP=1 \
+  && kubectl -n thoras patch secret thoras-config-controller --type=merge \
+       -p "{\"stringData\":{\"timescale-password\":\"${NEW_PASSWORD}\",\"timescale-dsn\":\"postgres://postgres:${NEW_PASSWORD}@timescale:5432\"}}"
 ```
 
-Use your own values for the host and port in the DSN if `metricsCollector.timescale.name` or
-`containerPort` is customised. The pre-5.0 `thoras-timescale-password` Secret keeps the old
-value; nothing reads it, and you can delete it.
+The password travels on stdin, so it stays out of the exec request that API audit logs record.
+The patch runs only if the database accepted the new password. If the patch fails after that,
+run it again with the same `NEW_PASSWORD`; the database already has it. Use your own values for
+the host and port in the DSN if `metricsCollector.timescale.name` or `containerPort` is
+customised. The pre-5.0 `thoras-timescale-password` Secret keeps the old value; nothing reads
+it, and you can delete it.
 
 Pinned values (`apiClientSecret.secret`) and externally managed Secrets rotate as described in
 the README under "Rotating secrets".
