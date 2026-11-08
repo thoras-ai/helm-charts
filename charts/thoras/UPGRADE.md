@@ -105,8 +105,9 @@ migrate the existing seeded secrets in cluster, no intervention needed.
 
 Upgrading from 4.x renders the pre-5.0 `api-client-secret` and `thoras-timescale-password`
 Secrets again so config-controller can migrate them. The migration is complete when
-`thoras-config-controller` carries the keys (`api-client-secret` when the API client is enabled,
-`timescale-password` and `timescale-dsn` for the bundled database):
+`thoras-config-controller` carries the keys: `timescale-password` and `timescale-dsn` for the
+bundled database, and `api-client-secret` when the API client is enabled and its value is neither
+pinned in values nor supplied by your own Secret (those two never go through the managed Secret):
 
 ```sh
 kubectl -n thoras get secret thoras-config-controller -o json | jq -r '.data | keys[]'
@@ -159,24 +160,37 @@ database must accept the new password before the Secret changes.
 
 Changing these keys restarts `metrics-collector`, which runs the database. With
 `metricsCollector.persistence.enabled: false` (the default) the database lives on an `emptyDir`,
-so that restart deletes the stored metrics, as any restart of that pod does. Enable persistence
-first if you need to keep them.
+so that restart deletes the stored metrics, as any restart of that pod does. If you need them,
+take a backup first and restore it after the rotation; turning persistence on for an existing
+install does not carry the `emptyDir` data over.
 
 ```sh
-NEW_PASSWORD=$(openssl rand -hex 16)
-printf "ALTER ROLE postgres PASSWORD '%s';\n" "$NEW_PASSWORD" \
-  | kubectl -n thoras exec -i deploy/metrics-collector -c timescaledb -- \
-      psql -U postgres -h localhost -q -v ON_ERROR_STOP=1 \
-  && kubectl -n thoras patch secret thoras-config-controller --type=merge \
-       -p "{\"stringData\":{\"timescale-password\":\"${NEW_PASSWORD}\",\"timescale-dsn\":\"postgres://postgres:${NEW_PASSWORD}@timescale:5432\"}}"
+kubectl -n thoras exec deploy/metrics-collector -c timescaledb -- \
+  pg_dump -U postgres -h localhost -Fc thoras > thoras-metrics.dump
 ```
 
-The password travels on stdin, so it stays out of the exec request that API audit logs record.
-The patch runs only if the database accepted the new password. If the patch fails after that,
-run it again with the same `NEW_PASSWORD`; the database already has it. Use your own values for
-the host and port in the DSN if `metricsCollector.timescale.name` or `containerPort` is
-customised. The pre-5.0 `thoras-timescale-password` Secret keeps the old value; nothing reads
-it, and you can delete it.
+Run the rotation as one script, so the Secret changes only after the database accepted the new
+password. Both values travel on stdin: the password never appears in a process argument, locally
+or in the exec request that API audit logs record.
+
+```sh
+set -e
+NEW_PASSWORD=$(openssl rand -hex 16)
+
+kubectl -n thoras exec -i deploy/metrics-collector -c timescaledb -- \
+  psql -U postgres -h localhost -q -v ON_ERROR_STOP=1 <<SQL
+ALTER ROLE postgres PASSWORD '${NEW_PASSWORD}';
+SQL
+
+kubectl -n thoras patch secret thoras-config-controller --type=merge --patch-file /dev/stdin <<JSON
+{"stringData":{"timescale-password":"${NEW_PASSWORD}","timescale-dsn":"postgres://postgres:${NEW_PASSWORD}@timescale:5432"}}
+JSON
+```
+
+If the patch fails after the database update succeeded, run the patch again with the same
+`NEW_PASSWORD`; the database already has it. Use your own values for the host and port in the DSN
+if `metricsCollector.timescale.name` or `containerPort` is customised. The pre-5.0
+`thoras-timescale-password` Secret keeps the old value; nothing reads it, and you can delete it.
 
 Pinned values (`apiClientSecret.secret`) and externally managed Secrets rotate as described in
 the README under "Rotating secrets".
