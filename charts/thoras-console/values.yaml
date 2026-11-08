@@ -197,7 +197,9 @@ consoleApi:
     name: "Default Organization"
 
   # -- Let tenant clusters register themselves with one shared secret, set as
-  # cloudSync.joinSecret in their thoras chart. Requires singleOrg.
+  # cloudSync.joinSecret in their thoras chart. Requires singleOrg. A cluster
+  # whose key was used or revoked, or that was deleted, needs an operator to allow
+  # its rejoin: see "Allowing a rejoin" in the README.
   clusterJoin:
     enabled: false
     # Minimum 32 characters. Generated when empty.
