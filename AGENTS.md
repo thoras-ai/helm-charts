@@ -147,7 +147,12 @@ added them.
   issue stays open for other work. Say whether it can merge before the
   matching platform release; older images ignore `SERVICE_*` variables they
   don't know.
-- Don't hard-wrap PR text. Request review from `@thoras-ai/engineering`.
+- Don't hard-wrap PR text.
+- CodeRabbit approves a PR it rates at Moderate Merge Risk or lower, and that
+  approval satisfies the required review. It never approves the paths in
+  `.github/CODEOWNERS`, which need a review from
+  `@thoras-ai/engineering-approvers`. Otherwise request review from
+  `@thoras-ai/engineering`.
 
 [cc]: https://www.conventionalcommits.org/en/v1.0.0/
 
