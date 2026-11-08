@@ -169,6 +169,9 @@ kubectl -n thoras exec deploy/metrics-collector -c timescaledb -- \
   pg_dump -U postgres -h localhost -Fc thoras > thoras-metrics.dump
 ```
 
+Restore it with `pg_restore` between `SELECT timescaledb_pre_restore();` and
+`SELECT timescaledb_post_restore();`, as the TimescaleDB backup documentation describes.
+
 Run the rotation as one script, so the Secret changes only after the database accepted the new
 password. Both values travel on stdin: the password never appears in a process argument, locally
 or in the exec request that API audit logs record.
