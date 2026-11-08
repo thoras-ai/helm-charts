@@ -283,18 +283,29 @@ kubectl get secret thoras-config-controller -n thoras \
   -o jsonpath='{.data.cloud-sync-install-id}' | base64 -d; echo
 ```
 
-Then clear the block, using a [bearer token](#quick-start) with `write:clusters`
-and your organization's ID:
+Revoke any old key still in use first: a key in use blocks the install again
+within a minute. Then clear the block, using a [bearer token](#quick-start) with
+`write:clusters` and your organization's ID:
 
 ```
-curl -X DELETE -H "Authorization: Bearer $TOKEN" \
+curl -i -X DELETE -H "Authorization: Bearer $TOKEN" \
   https://console-api.example.com/api/v1/organizations/<organization ID>/cluster-join-blocks/<install ID>
 ```
 
-A 204 means it can join; a 404 means nothing was blocking it. The cluster joins on
-its next retry and gets a new key, under the same cluster, or a new one if the old
-one was deleted. Revoke any old key still in use first: a key in use blocks the
-install again within a minute. The block returns when the new key is first used.
+A 204 means it can join; a 404 means nothing was blocking it.
+
+The cluster still holds the key it was given and never joins while it has one, so
+delete it from the cluster's config-controller Secret:
+
+```
+kubectl patch secret thoras-config-controller -n thoras --type=json -p \
+  '[{"op":"remove","path":"/data/cloud-sync-cluster-key"},
+    {"op":"remove","path":"/data/cloud-sync-cluster-key-id"}]'
+```
+
+The cluster joins on its next reconcile and gets a new key, under the same
+cluster, or a new one if the old one was deleted. The block returns when the new
+key is first used.
 
 ### Moving a cluster from another console
 
