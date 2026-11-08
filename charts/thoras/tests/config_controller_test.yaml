@@ -375,6 +375,9 @@ tests:
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
+    set:
+      featureFlags:
+        enableLegacySecretSeeding: true
     asserts:
       # resourceNames cannot restrict create
       - contains:
@@ -394,13 +397,10 @@ tests:
             resourceNames: [api-client-secret, thoras-config-controller, thoras-timescale-password]
             verbs: ["*"]
 
-  - it: Shrinks the owned-secrets rule to the managed Secret when legacy seeding is disabled
+  - it: Scopes the owned-secrets rule to the managed Secret by default
     templates:
       - config-controller/rbac.yaml
     documentIndex: 0
-    set:
-      featureFlags:
-        enableLegacySecretSeeding: false
     asserts:
       - contains:
           path: rules

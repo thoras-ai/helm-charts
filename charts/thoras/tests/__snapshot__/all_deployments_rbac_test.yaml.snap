@@ -341,9 +341,7 @@ Default matches snapshot:
       - apiGroups:
           - ""
         resourceNames:
-          - api-client-secret
           - thoras-config-controller
-          - thoras-timescale-password
         resources:
           - secrets
         verbs:

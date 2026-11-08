@@ -103,6 +103,22 @@ own auth instead, see [Externally Managed Auth](#externally-managed-auth).
 If you leveraged the Charts secret seeding (default behavior) upgrading to 5.x will automatically
 migrate the existing seeded secrets in cluster, no intervention needed.
 
+Upgrading from 4.x takes two `helm upgrade` runs: the first renders the pre-5.0
+`api-client-secret` and `thoras-timescale-password` Secrets again so config-controller can
+migrate them, and prints a `MIGRATION PENDING` note. Once `thoras-config-controller` carries
+the migrated keys, the second stops rendering them.
+
+With Argo CD or `helm template` the chart cannot see the cluster, so it cannot tell that a
+migration is pending. For an upgrade from 4.x, set `featureFlags.enableLegacySecretSeeding: true`
+for the first sync, confirm `thoras-config-controller` carries the keys, then remove the setting.
+Without it the old Secrets are pruned before they are migrated and a new database password is seeded.
+
+From 5.11, `featureFlags.enableLegacySecretSeeding` defaults to `false`, so new installs
+never create these Secrets. An existing 5.x install that has already migrated
+keeps its credentials on upgrade; the old Secrets stay on the cluster, unused, and can be deleted.
+`helm upgrade --reuse-values` keeps the previous default of `true` until you use
+`--reset-then-reuse-values` or set the flag to `false`.
+
 If you leverage any of the chart's [Externally Managed Auth](#externally-managed-auth) options,
 config-controller will handle a rolling restart of any Thoras workloads that depend on the secrets when a change is detected.
 
