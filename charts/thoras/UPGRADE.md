@@ -119,6 +119,43 @@ Argo CD or `helm template` it stops rendering them, so confirm the keys first. A
 on the cluster, unused, and can be deleted. The default flips in 6.0, when the templates are
 removed.
 
+#### Rotating the generated credentials after upgrading
+
+Helm keeps the values of rendered Secrets in its release history, and the pre-5.0 Secrets stay
+on the cluster after migration. An install that used the chart's default seeding before 5.x
+therefore still has its generated API client secret and database password in earlier release
+revisions, until Helm's history limit (10 revisions by default) prunes them, and in those
+Secrets. Rotate both once the upgrade is healthy. config-controller restarts the workloads that
+use each value, so no manual rollout is needed.
+
+**API client secret** (`apiClientSecret.enabled`, with no pinned or external value): delete the
+pre-5.0 Secret, then remove the key from the managed Secret. config-controller seeds a new value
+on its next tick, within about 30 seconds.
+
+```sh
+kubectl -n thoras delete secret api-client-secret
+kubectl -n thoras patch secret thoras-config-controller --type=json \
+  -p='[{"op":"remove","path":"/data/api-client-secret"}]'
+```
+
+**Database password** (bundled TimescaleDB): set a new password on the database, then store it
+and the DSN that embeds it in the managed Secret. The two keys must change together.
+
+```sh
+NEW_PASSWORD=$(openssl rand -hex 16)
+kubectl -n thoras exec deploy/metrics-collector -c timescaledb -- \
+  psql -U postgres -h localhost -c "ALTER ROLE postgres PASSWORD '${NEW_PASSWORD}'"
+kubectl -n thoras patch secret thoras-config-controller --type=merge \
+  -p "{\"stringData\":{\"timescale-password\":\"${NEW_PASSWORD}\",\"timescale-dsn\":\"postgres://postgres:${NEW_PASSWORD}@timescale:5432\"}}"
+```
+
+Use your own values for the host and port in the DSN if `metricsCollector.timescale.name` or
+`containerPort` is customised. The pre-5.0 `thoras-timescale-password` Secret keeps the old
+value; nothing reads it, and you can delete it.
+
+Pinned values (`apiClientSecret.secret`) and externally managed Secrets rotate as described in
+the README under "Rotating secrets".
+
 If you leverage any of the chart's [Externally Managed Auth](#externally-managed-auth) options,
 config-controller will handle a rolling restart of any Thoras workloads that depend on the secrets when a change is detected.
 

@@ -216,6 +216,10 @@ How you rotate depends on where the value lives:
   consumers.
 - **Pinned in values**: change the value in `values.yaml` and run
   `helm upgrade` and the controller rolls the consumers.
+- **Seeded by config-controller**: remove the key from `thoras-config-controller`
+  and the controller seeds a new value and rolls the consumers. The bundled
+  database password needs the new value set on the database first. See
+  [UPGRADE.md](./UPGRADE.md#rotating-the-generated-credentials-after-upgrading).
 
 Notes:
 
