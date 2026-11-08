@@ -241,8 +241,12 @@ helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
 On its first sync the cluster registers under that name and receives a key of
 its own. From then on it sends data with that key, like any other cluster:
 
-- The join secret is only used to register. Revoking one cluster's key works as
-  usual, and rotating the join secret does not affect clusters already joined.
+- The join secret is only used to register. Rotating it does not affect clusters
+  already joined, and does not cancel keys they hold.
+- A cluster joins once. Once its key has been used or revoked, or the cluster has
+  been deleted, the console refuses that cluster's joins with a 409 until you
+  [allow the rejoin](#allowing-a-rejoin). Before its key is first used, a repeat
+  join succeeds, which covers a lost response.
 - Renaming a cluster in the dashboard sticks: later upgrades don't rename it
   back.
 - Two clusters can't register under the same name. The second is refused until
@@ -250,6 +254,58 @@ its own. From then on it sends data with that key, like any other cluster:
 
 Requires `consoleApi.singleOrg.enabled`, the default: a joining cluster presents
 no user identity, so the organization has to be implicit.
+
+### Removing a cluster whose credentials were stolen
+
+Every joined cluster keeps the join secret and its own install ID, and anyone who
+can read its Secrets has both. Do these in order:
+
+1. [Rotate the join secret](#rotating-secrets) and set the new value on the
+   clusters you keep. Until you do, the secret can still register new clusters.
+2. In the dashboard, open **Keys** for the cluster and **Revoke** every key, or
+   delete the cluster.
+
+The stolen cluster's install ID can't rejoin afterwards, even with the old secret.
+Clusters that have already joined keep working: they send data with their own keys
+and only read the join secret to register.
+
+### Allowing a rejoin
+
+Deleting a cluster's key doesn't make it rejoin the same console: the console
+refuses with a 409 and the cluster stops reporting. If you meant to do it, or you
+are bringing back a deleted cluster, allow one rejoin. If its credentials may have
+been stolen, follow the steps above first, because whoever joins next gets the key.
+
+Read the install ID from the cluster:
+
+```
+kubectl get secret thoras-config-controller -n thoras \
+  -o jsonpath='{.data.cloud-sync-install-id}' | base64 -d; echo
+```
+
+Revoke any old key still in use first: a key in use blocks the install again
+within a minute. Then clear the block, using a [bearer token](#quick-start) with
+`write:clusters` and your organization's ID:
+
+```
+curl -i -X DELETE -H "Authorization: Bearer $TOKEN" \
+  https://console-api.example.com/api/v1/organizations/<organization ID>/cluster-join-blocks/<install ID>
+```
+
+A 204 means it can join; a 404 means nothing was blocking it.
+
+The cluster still holds the key it was given and never joins while it has one, so
+delete it from the cluster's config-controller Secret:
+
+```
+kubectl patch secret thoras-config-controller -n thoras --type=json -p \
+  '[{"op":"remove","path":"/data/cloud-sync-cluster-key"},
+    {"op":"remove","path":"/data/cloud-sync-cluster-key-id"}]'
+```
+
+The cluster joins on its next reconcile and gets a new key, under the same
+cluster, or a new one if the old one was deleted. The block returns when the new
+key is first used.
 
 ### Moving a cluster from another console
 
@@ -293,7 +349,9 @@ helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
 ```
 
 A cluster that joined its old console keeps the key that console gave it, and
-never joins again while it has one. Delete that key so it joins here:
+never joins again while it has one. Delete that key so it joins here. The block is
+per console, so this one accepts it; moving back to the old console later needs
+[a rejoin allowed](#allowing-a-rejoin) there:
 
 ```
 kubectl patch secret thoras-config-controller -n thoras --type=json -p \
@@ -465,6 +523,24 @@ restarting it does not change that. So the database is excluded from
 config-controller's restarts, and regenerating `postgres-password` does not
 change the password it accepts — see [Rotating secrets](#rotating-secrets).
 
+##### Keeping Karpenter from moving the bundled database
+
+The chart doesn't protect the bundled database from Karpenter by default. On a
+Karpenter cluster, consolidation and drift can move the single replica, and
+`console-api` is down until the volume reattaches. To stop this, set:
+
+```yaml
+bundledDatabase:
+  podAnnotations:
+    karpenter.sh/do-not-disrupt: "true"
+```
+
+Setting it restarts the database once, and has these trade-offs:
+
+- Drift no longer moves the database, so its node stays on the old AMI until you replace the node by hand. Restarting the pod alone is not enough.
+- Karpenter won't evict the pod when draining its node, so a spot interruption stops the database uncleanly. Use on-demand capacity through `bundledDatabase.affinity`.
+- A node past `expireAfter` stays up until the pod goes, and can use up the NodePool's disruption budget. Use a NodePool with `expireAfter: Never`, or set `terminationGracePeriod`, which also lets drift move the database.
+
 #### External database
 
 Put the DSN, including the database name, in a Secret and point the chart at
@@ -613,8 +689,33 @@ fetched from the address you give.
 A tenant cluster whose worker sets `thorasWorker.costExplorerMode: console`
 sends its Cost Explorer queries here instead of calling AWS itself, so only the
 console needs an AWS role. console-api limits each query to the cluster's
-approved cost allocation tag and the account that tag bills to. The first tag a
-cluster reports is approved automatically; a later change waits for approval.
+approved cost allocation tag and the account that tag bills to. It requires
+`consoleApi.singleOrg.enabled`, the default; the chart refuses to render without
+it.
+
+A cluster's first report is approved automatically only when the tag is
+`aws:eks:cluster-name` and no other live cluster holds that value. Any other
+first report, such as a `user:team` tag or a second cluster with the same name,
+and any later change wait for approval by a user with `write:clusters`.
+
+A cluster can still claim an EKS name before the real cluster reports it. The
+real cluster then waits for approval, so check who holds a tag before approving
+it. To review approvals and shared tags, and to remove an approval that shouldn't
+have been given:
+
+```bash
+# How each cluster's tag was approved, and which clusters share it.
+curl "$CONSOLE/api/v1/organizations/$ORG_ID/cost-targets" -H "Authorization: Bearer $TOKEN"
+# Removes the approval. Reports from the cluster do not restore it.
+curl -X DELETE "$CONSOLE/api/v1/organizations/$ORG_ID/clusters/$CLUSTER_ID/cost-target/approval" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Where you can, read a custom billing view filtered to your clusters'
+`aws:eks:cluster-name` values rather than to whole accounts, so that the most any
+tag can reach is the spend of those clusters. Set it with
+`consoleApi.costExplorer.billingViewArn`, and update the view when you add a
+cluster.
 
 ```yaml
 consoleApi:
@@ -947,7 +1048,9 @@ kubectl annotate aiscaletargets --all -A thoras.ai/cloud-sync-generation-
 
 **A cluster that joins by itself never appears in the dashboard.** Read the
 tenant cluster's config-controller logs for `console refused the cluster join`.
-A 401 means the join secret is wrong; a 409 means another cluster already has
+A 401 means the join secret is wrong; a 409 means the cluster's join is
+[blocked](#allowing-a-rejoin), which `console-api` logs as `refused cluster join`,
+or another cluster already has
 that `cluster.name`.
 
 **A restore left clusters missing, or the database unreadable.** It was restored
@@ -1037,7 +1140,7 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | consoleApi.gatewayAPI.pathType               | String | PathPrefix           | Match type                                                       |
 | consoleApi.serviceAccount.name               | String | thoras-console-api   | ServiceAccount name                                              |
 | consoleApi.serviceAccount.annotations        | object | {}                   | ServiceAccount annotations, e.g. `eks.amazonaws.com/role-arn`    |
-| consoleApi.costExplorer.enabled              | Bool   | false                | Run Cost Explorer queries for clusters in console mode           |
+| consoleApi.costExplorer.enabled              | Bool   | false                | Run Cost Explorer queries for clusters in console mode. Requires singleOrg |
 | consoleApi.costExplorer.roleArn              | String | ""                   | Role to assume before calling Cost Explorer                      |
 | consoleApi.costExplorer.externalId           | String | ""                   | External ID passed when assuming roleArn                         |
 | consoleApi.costExplorer.billingViewArn       | String | ""                   | Custom billing view set on every query                           |
@@ -1164,7 +1267,7 @@ otherwise the chart fails to render, because nothing else creates the Secret.
 | bundledDatabase.persistence.storageClassName | String | ""                | Empty uses the cluster default                                                                                                                                     |
 | bundledDatabase.serviceAccount.name          | String | thoras-console-db | ServiceAccount name                                                                                                                                                |
 | bundledDatabase.labels                       | object | {}                | Component labels                                                                                                                                                   |
-| bundledDatabase.podAnnotations               | object | {}                | Component pod annotations                                                                                                                                          |
+| bundledDatabase.podAnnotations               | object | {}                | Component pod annotations. See "Keeping Karpenter from moving the bundled database" |
 | bundledDatabase.useGlobalAffinity            | Bool   | false             | Merge the global affinity into this component's                                                                                                                    |
 | bundledDatabase.affinity                     | object | {}                | Component affinity                                                                                                                                                 |
 | bundledDatabase.priorityClassName            | String | ""                | Takes precedence over the global priority class                                                                                                                    |

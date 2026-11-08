@@ -1,6 +1,70 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # This file replaces CodeRabbit's UI settings for this repo; keys not set here use CodeRabbit's defaults.
 reviews:
+  merge_risk_instructions: >-
+    Rate risk by one question: could this change hurt a customer's cluster when
+    they install or upgrade the chart? These charts set what Thoras may do in
+    customers' clusters and how its workloads run there.
+
+    Rate High or Critical when a mistake could: change a CRD, a Role,
+    ClusterRole or binding, a webhook configuration or a NetworkPolicy; change
+    a default in values.yaml that existing installs inherit; rename or remove a
+    value, a resource, a label or a selector so that helm upgrade fails or
+    recreates a workload; or change the release workflow. Pay particular
+    attention to charts/*/templates/crd, the rbac.yaml and webhooks*.yaml
+    templates, values.yaml defaults and .github/workflows/release.yml. Rate
+    these High even when the unit tests pass, unless the change is clearly
+    limited to comments or docs.
+
+    Rate Moderate when an optional feature could render wrongly but a default
+    install keeps working.
+
+    Rate Minimal or Low when rendered manifests do not change: READMEs, value
+    comments, tests that only add cases, and repo tooling.
+
+    Customers can turn on values that are off by default, so rate a change
+    behind one by what it renders once enabled. Size alone does not raise risk.
+  auto_approvals:
+    enabled: true
+    max_merge_risk: moderate
+    allow_author_approval: false
+    overrides:
+      # CodeRabbit withholds every approval if it can't see a team listed here.
+      - teams: ["thoras-ai/engineering-contractors"]
+        enabled: false
+      # Keep in sync with .github/CODEOWNERS.
+      - paths:
+          - ".github/**"
+          - ".coderabbit.yaml"
+          - ".pre-commit-config.yaml"
+          - ".claude/**"
+          - "**/AGENTS.md"
+          - "**/CLAUDE.md"
+          - "charts/*/Chart.yaml"
+          - "charts/*/templates/crd/**"
+          - "charts/*/templates/*/rbac.yaml"
+          - "charts/*/templates/operator/webhooks*.yaml"
+        enabled: false
+  auto_review:
+    # Pausing leaves later commits unreviewed.
+    auto_pause_after_reviewed_commits: 0
+  finishing_touches:
+    docstrings:
+      enabled: false
   pre_merge_checks:
     docstrings:
       mode: "off"
+  path_instructions:
+    - path: "**"
+      instructions: >-
+        Report as a security issue any code a reviewer could miss: content pushed
+        off-screen by long lines or whitespace, encoded or obfuscated payloads, and
+        executable changes unrelated to the pull request's stated purpose.
+chat:
+  allow_non_org_members: false
+knowledge_base:
+  learnings:
+    approval_delay: 7
+  linked_repositories:
+    - repository: thoras-ai/platform
+      instructions: The services these charts deploy; check values, SERVICE_* env vars and CRDs against it.

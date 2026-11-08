@@ -1,0 +1,11 @@
+# Repo memory for decisions and designs. See https://github.com/thoras-ai/platform/blob/main/docs/beans.md
+project:
+  name: helm-charts
+beans:
+  path: .beans
+  prefix: helm-
+  id_length: 8
+  default_status: draft
+  default_type: decision
+agent:
+  enabled: false
