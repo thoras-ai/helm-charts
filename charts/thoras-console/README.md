@@ -660,8 +660,33 @@ fetched from the address you give.
 A tenant cluster whose worker sets `thorasWorker.costExplorerMode: console`
 sends its Cost Explorer queries here instead of calling AWS itself, so only the
 console needs an AWS role. console-api limits each query to the cluster's
-approved cost allocation tag and the account that tag bills to. The first tag a
-cluster reports is approved automatically; a later change waits for approval.
+approved cost allocation tag and the account that tag bills to. It requires
+`consoleApi.singleOrg.enabled`, the default; the chart refuses to render without
+it.
+
+A cluster's first report is approved automatically only when the tag is
+`aws:eks:cluster-name` and no other live cluster holds that value. Any other
+first report, such as a `user:team` tag or a second cluster with the same name,
+and any later change wait for approval by a user with `write:clusters`.
+
+A cluster can still claim an EKS name before the real cluster reports it. The
+real cluster then waits for approval, so check who holds a tag before approving
+it. To review approvals and shared tags, and to remove an approval that shouldn't
+have been given:
+
+```bash
+# How each cluster's tag was approved, and which clusters share it.
+curl "$CONSOLE/api/v1/organizations/$ORG_ID/cost-targets" -H "Authorization: Bearer $TOKEN"
+# Removes the approval. Reports from the cluster do not restore it.
+curl -X DELETE "$CONSOLE/api/v1/organizations/$ORG_ID/clusters/$CLUSTER_ID/cost-target/approval" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Where you can, read a custom billing view filtered to your clusters'
+`aws:eks:cluster-name` values rather than to whole accounts, so that the most any
+tag can reach is the spend of those clusters. Set it with
+`consoleApi.costExplorer.billingViewArn`, and update the view when you add a
+cluster.
 
 ```yaml
 consoleApi:
@@ -1086,7 +1111,7 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | consoleApi.gatewayAPI.pathType               | String | PathPrefix           | Match type                                                       |
 | consoleApi.serviceAccount.name               | String | thoras-console-api   | ServiceAccount name                                              |
 | consoleApi.serviceAccount.annotations        | object | {}                   | ServiceAccount annotations, e.g. `eks.amazonaws.com/role-arn`    |
-| consoleApi.costExplorer.enabled              | Bool   | false                | Run Cost Explorer queries for clusters in console mode           |
+| consoleApi.costExplorer.enabled              | Bool   | false                | Run Cost Explorer queries for clusters in console mode. Requires singleOrg |
 | consoleApi.costExplorer.roleArn              | String | ""                   | Role to assume before calling Cost Explorer                      |
 | consoleApi.costExplorer.externalId           | String | ""                   | External ID passed when assuming roleArn                         |
 | consoleApi.costExplorer.billingViewArn       | String | ""                   | Custom billing view set on every query                           |

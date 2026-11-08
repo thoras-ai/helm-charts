@@ -151,6 +151,7 @@ consoleApi:
   # cluster's approved cost allocation tag and account. The pod calls Cost
   # Explorer with the AWS credentials it picks up, which need
   # ce:GetCostAndUsage and ce:GetDimensionValues, or sts:AssumeRole on roleArn.
+  # Requires singleOrg.
   costExplorer:
     enabled: false
     # Role to assume before calling Cost Explorer, such as one in the payer
