@@ -523,6 +523,24 @@ restarting it does not change that. So the database is excluded from
 config-controller's restarts, and regenerating `postgres-password` does not
 change the password it accepts — see [Rotating secrets](#rotating-secrets).
 
+##### Keeping Karpenter from moving the bundled database
+
+The chart doesn't protect the bundled database from Karpenter by default. On a
+Karpenter cluster, consolidation and drift can move the single replica, and
+`console-api` is down until the volume reattaches. To stop this, set:
+
+```yaml
+bundledDatabase:
+  podAnnotations:
+    karpenter.sh/do-not-disrupt: "true"
+```
+
+Setting it restarts the database once, and has these trade-offs:
+
+- Drift no longer moves the database, so its node stays on the old AMI until you replace the node by hand. Restarting the pod alone is not enough.
+- Karpenter won't evict the pod when draining its node, so a spot interruption stops the database uncleanly. Use on-demand capacity through `bundledDatabase.affinity`.
+- A node past `expireAfter` stays up until the pod goes, and can use up the NodePool's disruption budget. Use a NodePool with `expireAfter: Never`, or set `terminationGracePeriod`, which also lets drift move the database.
+
 #### External database
 
 Put the DSN, including the database name, in a Secret and point the chart at
@@ -1249,7 +1267,7 @@ otherwise the chart fails to render, because nothing else creates the Secret.
 | bundledDatabase.persistence.storageClassName | String | ""                | Empty uses the cluster default                                                                                                                                     |
 | bundledDatabase.serviceAccount.name          | String | thoras-console-db | ServiceAccount name                                                                                                                                                |
 | bundledDatabase.labels                       | object | {}                | Component labels                                                                                                                                                   |
-| bundledDatabase.podAnnotations               | object | {}                | Component pod annotations                                                                                                                                          |
+| bundledDatabase.podAnnotations               | object | {}                | Component pod annotations. See "Keeping Karpenter from moving the bundled database" |
 | bundledDatabase.useGlobalAffinity            | Bool   | false             | Merge the global affinity into this component's                                                                                                                    |
 | bundledDatabase.affinity                     | object | {}                | Component affinity                                                                                                                                                 |
 | bundledDatabase.priorityClassName            | String | ""                | Takes precedence over the global priority class                                                                                                                    |
