@@ -118,10 +118,11 @@ added them.
 
 - App versions are platform release tags such as `4.131.1`, never chart
   versions.
-- A release PR bumps the chart version, the app version and the README Version
-  and AppVersion badges together, by semver for what changed since the last
-  release. Breaking changes need a major bump and an entry in
-  `charts/thoras/UPGRADE.md`.
+- A release PR bumps the chart version and the README Version badge, by semver
+  for what changed since the last release. When it also takes a new platform
+  release, it bumps the app version and the AppVersion badge in the same PR; a
+  chart-only release leaves them unchanged. Breaking changes need a major bump
+  and an entry in `charts/thoras/UPGRADE.md`.
 - When a PR that changes a chart's `version:` line merges, `release.yml`
   releases that chart. It compares only the merged commit with its parent, so
   a version bump reaches `main` only through a PR. If that commit also changes
