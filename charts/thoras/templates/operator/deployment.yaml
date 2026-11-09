@@ -56,11 +56,15 @@ spec:
                 path: tls.crt
               - key: tls.key
                 path: tls.key
+              - key: ca.crt
+                path: ca.crt
               {{- else }}
               - key: cert
                 path: tls.crt
               - key: key
                 path: tls.key
+              - key: ca
+                path: ca.crt
               {{- end }}
         {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 8 }}{{- end }}
       containers:
@@ -74,6 +78,10 @@ spec:
         env:
           - name: SERVICE_SYSTEM_CONFIG_PATH
             value: /app/system-config/system-config.yaml
+          # cert-manager's cainjector owns caBundle in cert-manager mode; the
+          # operator only checks it there.
+          - name: SERVICE_WEBHOOK_CA_INJECT
+            value: {{ (include "thoras.webhookCertManagerEnabled" .) | empty | ternary "true" "false" | quote }}
           {{- with include "thoras.slackEnv" (dict "root" . "prefix" "") }}{{- . | nindent 10 }}{{- end }}
           - name: THORAS_NS
             valueFrom:

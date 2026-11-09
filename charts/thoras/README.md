@@ -71,6 +71,44 @@ On a fresh install the workload pods briefly report
 `CreateContainerConfigError` while they wait for config-controller to
 seed secrets. This resolves itself; no action is needed.
 
+### Recovering from a failed install or upgrade
+
+A failed `helm install` or `helm upgrade` can stop before Helm's
+post-install and post-upgrade hooks run. The operator does not depend on
+those hooks for its admission webhooks: it writes the CA from the
+`thoras-tls-certs` secret into the `caBundle` of `pods.thoras.ai` and
+`validation.thoras.ai` at startup and every 30 seconds. After the secret
+changes, expect the webhooks to be fixed within about 2 minutes (kubelet
+refreshes the mounted secret, then the next check runs).
+
+1. Check the operator logs for what is wrong:
+
+   ```
+   kubectl logs -n thoras deploy/thoras-operator | grep -E "caBundle|CRDs are missing"
+   ```
+
+   - `Patched webhook caBundle`: the webhooks were repaired.
+   - `Webhook caBundle is not valid`: the operator could not fix them. The
+     error says why, for example a missing `ca` key in the secret or an RBAC
+     denial.
+   - `Thoras CRDs are missing`: lists the CRDs that do not exist. The
+     operator waits for them before starting its controllers, and the pod
+     restarts every 5 minutes while it waits because its startup probe
+     fails. The webhooks are still repaired during the wait.
+
+2. The same state is exported as metrics on the operator's metrics port:
+   `thoras_operator_webhook_ca_bundle_valid{configuration,webhook}` and
+   `thoras_operator_crd_installed{crd}`. Both are 1 when healthy. Alert on
+   either being 0 for more than 5 minutes.
+
+3. Re-run the same `helm install` or `helm upgrade` command. This restores
+   missing CRDs and any other resources the failed run did not create.
+
+Prefer cert-manager mode (`thorasOperator.webhookCertGen.certManager.enabled:
+true`) when cert-manager is already in the cluster, and always for GitOps
+deployments that do not run Helm hooks. cert-manager injects the CA
+continuously; the operator then only checks the `caBundle` and reports it.
+
 ### Load the dashboard
 
 Port-forward the dashboard Service to your workstation:
