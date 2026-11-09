@@ -25,6 +25,13 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
+  - it: All templates render when thorasDashboard.ingressSources is missing from stored values
+    set:
+      networkPolicy.enabled: true
+      thorasDashboard.ingressSources: null
+    asserts:
+      - notFailedTemplate: {}
+
   - it: All templates render when enablePodLogStreaming is missing from stored values
     set:
       featureFlags.enablePodLogStreaming: null

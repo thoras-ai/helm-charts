@@ -111,6 +111,48 @@ tests:
           path: data["nginx.conf.template"]
           pattern: '"enableUpdateScaleModeApi": false'
 
+  - it: read_only true refuses the routes that change state and keeps reads
+    set:
+      thorasDashboard:
+        read_only: true
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '(POST/v1/ast/candidates|POST/v1/ast/enroll/all|POST/v1/cost-savings/settings|PATCH/v1/ast|PUT/v1/system/scaling)'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '\^(PUT|PATCH|DELETE)/'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/ast/\[\^/\]\+/metrics/series'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/cost-savings/settings'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/system/status'
+
+  - it: read_only false allows the routes that change state
+    set:
+      thorasDashboard:
+        read_only: false
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/ast/candidates'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/ast/enroll/all'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/cost-savings/settings'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'PATCH/v1/ast'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'PUT/v1/system/scaling'
+
   - it: read_only true overrides explicit extras values
     set:
       thorasDashboard:

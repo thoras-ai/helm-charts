@@ -928,9 +928,10 @@ thorasDashboard:
       - thoras.local
     path: /
     pathType: PathPrefix
-  # When true, hides all write-capable UI features (onboarding, scaling pause,
-  # mode switching) so the dashboard is view-only. Individual extras can still
-  # override specific features when read_only is true.
+  # When true, the dashboard is view-only: it hides write-capable UI features
+  # (onboarding, scaling pause, mode switching, cost alert editing) and nginx
+  # answers 403 to the API routes that change state. Cost settings edits are not
+  # saved, and that page still shows its inputs.
   read_only: false
   extras:
     show_savings: true
@@ -956,6 +957,15 @@ thorasDashboard:
   priorityClassName: ""
   # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
   topologySpreadConstraints: []
+  # Sources allowed to reach the dashboard port. Requires networkPolicy.enabled
+  # and a CNI that enforces the policy. Empty keeps the default policy. When set,
+  # only these sources are allowed, including from the release namespace, so list
+  # whatever fronts the dashboard (ingress controller, gateway, load balancer
+  # addresses). Entries use the syntax of networkPolicy.flavor:
+  #   kubernetes: NetworkPolicy peers (namespaceSelector, podSelector, ipBlock)
+  #   cilium: CiliumNetworkPolicy from-fields (fromEndpoints, fromCIDR, fromEntities)
+  # thorasDashboard.extraIngressRules is still appended to the policy.
+  ingressSources: []
   extraEgressRules: []
   extraIngressRules: []
   extraContainers: []

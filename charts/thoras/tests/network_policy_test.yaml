@@ -393,6 +393,186 @@ tests:
             - port: 8080
               protocol: TCP
 
+  - it: Dashboard kubernetes policy keeps its default ingress without ingressSources
+    template: dashboard/network-policy.yaml
+    asserts:
+      - equal:
+          path: spec.ingress
+          value:
+            - from:
+                - podSelector: {}
+            - ports:
+                - port: 8080
+                  protocol: TCP
+
+  - it: Dashboard kubernetes policy allows only ingressSources on the dashboard port
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+        containerPort: 9090
+        ingressSources:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: ingress-nginx
+          - ipBlock:
+              cidr: 10.0.0.0/8
+    asserts:
+      - equal:
+          path: spec.ingress
+          value:
+            - from:
+                - namespaceSelector:
+                    matchLabels:
+                      kubernetes.io/metadata.name: ingress-nginx
+                - ipBlock:
+                    cidr: 10.0.0.0/8
+              ports:
+                - port: 9090
+                  protocol: TCP
+
+  - it: Dashboard ingressSources apply to the port the Service targets
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        auth:
+          enabled: false
+        service:
+          targetPort: 4180
+        ingressSources:
+          - podSelector:
+              matchLabels:
+                app: client
+    asserts:
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - port: 4180
+              protocol: TCP
+
+  - it: Dashboard extraIngressRules still follow ingressSources
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        ingressSources:
+          - podSelector:
+              matchLabels:
+                app: client
+        extraIngressRules:
+          - from:
+              - podSelector:
+                  matchLabels:
+                    app: scraper
+    asserts:
+      - lengthEqual:
+          path: spec.ingress
+          count: 2
+      - equal:
+          path: spec.ingress[1].from[0].podSelector.matchLabels.app
+          value: scraper
+
+  - it: Dashboard cilium policy keeps its default ingress without ingressSources
+    template: dashboard/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+    asserts:
+      - equal:
+          path: spec.ingress
+          value:
+            - fromEndpoints:
+                - {}
+            - fromEntities:
+                - all
+              toPorts:
+                - ports:
+                    - port: "8080"
+                      protocol: TCP
+
+  - it: Dashboard cilium policy allows only ingressSources on the dashboard port
+    template: dashboard/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      thorasDashboard:
+        ingressSources:
+          - fromEndpoints:
+              - matchLabels:
+                  app: client
+          - fromCIDR:
+              - 10.0.0.0/8
+    asserts:
+      - equal:
+          path: spec.ingress
+          value:
+            - fromEndpoints:
+                - matchLabels:
+                    app: client
+              toPorts:
+                - ports:
+                    - port: "8080"
+                      protocol: TCP
+            - fromCIDR:
+                - 10.0.0.0/8
+              toPorts:
+                - ports:
+                    - port: "8080"
+                      protocol: TCP
+
+  - it: Dashboard ingressSources fail the render without networkPolicy.enabled
+    template: dashboard/network-policy.yaml
+    set:
+      networkPolicy.enabled: false
+      thorasDashboard:
+        ingressSources:
+          - podSelector: {}
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.ingressSources requires networkPolicy.enabled: true"
+
+  - it: Dashboard ingressSources are ignored when the dashboard is disabled
+    template: dashboard/network-policy.yaml
+    set:
+      networkPolicy.enabled: false
+      thorasDashboard:
+        enabled: false
+        ingressSources:
+          - podSelector: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Dashboard ingressSources reject cilium fields under the kubernetes flavor
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        ingressSources:
+          - fromEndpoints:
+              - {}
+    asserts:
+      - failedTemplate:
+          errorPattern: '"fromEndpoints" is not valid with networkPolicy.flavor kubernetes'
+
+  - it: Dashboard ingressSources reject kubernetes fields under the cilium flavor
+    template: dashboard/network-policy.yaml
+    set:
+      networkPolicy.flavor: cilium
+      thorasDashboard:
+        ingressSources:
+          - podSelector: {}
+    asserts:
+      - failedTemplate:
+          errorPattern: '"podSelector" is not valid with networkPolicy.flavor cilium'
+
+  - it: Dashboard ingressSources reject an empty entry
+    template: dashboard/network-policy.yaml
+    set:
+      thorasDashboard:
+        ingressSources:
+          - {}
+    asserts:
+      - failedTemplate:
+          errorPattern: entries must be non-empty maps
+
   - it: Dashboard kubernetes policy opens external HTTPS egress under mode oidc for IdP reachability
     template: dashboard/network-policy.yaml
     set:

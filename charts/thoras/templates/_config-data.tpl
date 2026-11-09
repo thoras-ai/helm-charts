@@ -148,21 +148,25 @@ and their consumers.
         ~*^POST/v1/cost-alerts/[^/]+/test(\?|$)                                   1;
         {{- end }}
         {{- end }}
+        {{- if not .Values.thorasDashboard.read_only }}
 
 
         # POST — dashboard-initiated mutations
         ~*^POST/v1/ast/candidates/[^/]+(\?|$)                                     1;
         ~*^POST/v1/ast/enroll/all(\?|$)                                           1;
         ~*^POST/v1/cost-savings/settings(\?|$)                                    1;
+        {{- end }}
 
         # POST — reads that pass a request body (query payloads, not mutations)
         ~*^POST/v1/ast/[^/]+/metrics/series(\?|$)                                 1;
+        {{- if not .Values.thorasDashboard.read_only }}
 
         # PATCH — scale mode toggle
         ~*^PATCH/v1/ast/[^/]+/[^/]+/mode(\?|$)                                    1;
 
         # PUT — pause/resume system-wide scaling
         ~*^PUT/v1/system/scaling(\?|$)                                            1;
+        {{- end }}
       }
 
       server {
