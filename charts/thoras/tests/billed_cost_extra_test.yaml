@@ -1,0 +1,124 @@
+suite: Billed cost dashboard extra
+templates:
+  - dashboard/nginx-config-map.yaml
+  - NOTES.txt
+tests:
+  # Older dashboard images read only cluster_daily_cost and newer ones only
+  # billed_cost, so config.json carries both whichever key is set.
+  - it: Writes both keys when only billed_cost is set
+    template: dashboard/nginx-config-map.yaml
+    set:
+      thorasDashboard.extras.billed_cost: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"billed_cost":true'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"cluster_daily_cost":true'
+
+  - it: Writes both keys when only the deprecated cluster_daily_cost is set
+    template: dashboard/nginx-config-map.yaml
+    set:
+      thorasDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"billed_cost":true'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"cluster_daily_cost":true'
+
+  - it: Carries false through to both keys
+    template: dashboard/nginx-config-map.yaml
+    set:
+      thorasDashboard.extras.cluster_daily_cost: false
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"billed_cost":false'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"cluster_daily_cost":false'
+
+  - it: Accepts both keys set to the same value
+    template: dashboard/nginx-config-map.yaml
+    set:
+      thorasDashboard.extras.billed_cost: true
+      thorasDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"billed_cost":true'
+
+  - it: Fails when billed_cost and cluster_daily_cost disagree
+    template: dashboard/nginx-config-map.yaml
+    set:
+      thorasDashboard.extras.billed_cost: true
+      thorasDashboard.extras.cluster_daily_cost: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.extras.billed_cost conflicts with the deprecated thorasDashboard.extras.cluster_daily_cost; set only billed_cost"
+
+  # The dashboard reads only booleans, so a quoted "true" is a different value.
+  - it: Fails when the keys hold the same text with different types
+    template: dashboard/nginx-config-map.yaml
+    set:
+      thorasDashboard.extras.billed_cost: "true"
+      thorasDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.extras.billed_cost conflicts with the deprecated thorasDashboard.extras.cluster_daily_cost; set only billed_cost"
+
+  - it: Adds neither key when neither is set
+    template: dashboard/nginx-config-map.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"billed_cost"'
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"cluster_daily_cost"'
+
+  - it: Keeps the read_only overrides alongside the alias
+    template: dashboard/nginx-config-map.yaml
+    set:
+      thorasDashboard.read_only: true
+      thorasDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"billed_cost":true'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"disable_onboarding":true'
+
+  - it: Renders when thorasDashboard.extras is missing from stored values
+    template: dashboard/nginx-config-map.yaml
+    set:
+      thorasDashboard.extras: null
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"extra": \{"cluster_name":'
+
+  - it: Notes the deprecated cluster_daily_cost key
+    template: NOTES.txt
+    set:
+      thorasDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "DEPRECATED: thorasDashboard.extras.cluster_daily_cost"
+      - matchRegex:
+          path: raw
+          pattern: "Rename this key to thorasDashboard.extras.billed_cost"
+
+  - it: Has no deprecation note for billed_cost
+    template: NOTES.txt
+    set:
+      thorasDashboard.extras.billed_cost: true
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "cluster_daily_cost"

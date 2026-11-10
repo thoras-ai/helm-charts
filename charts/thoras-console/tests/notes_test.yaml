@@ -216,3 +216,22 @@ tests:
       - notMatchRegex:
           path: raw
           pattern: "Image pull credentials: NOT CONFIGURED"
+
+  - it: Notes the deprecated cluster_daily_cost dashboard extra
+    set:
+      consoleDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "DEPRECATED: consoleDashboard.extras.cluster_daily_cost"
+      - matchRegex:
+          path: raw
+          pattern: "Rename this key to consoleDashboard.extras.billed_cost"
+
+  - it: Has no deprecation note for billed_cost
+    set:
+      consoleDashboard.extras.billed_cost: true
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "cluster_daily_cost"

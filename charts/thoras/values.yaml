@@ -74,8 +74,8 @@ featureFlags:
   # Slack webhook (slackWebhookUrl) when a period's cost goes above a rule's
   # threshold, and the dashboard shows an Alerts tab for managing the rules.
   # Rules on estimated cost work on any install; rules on billed cost need
-  # thorasWorker.enableCostAndUsageCollector and the cluster_daily_cost
-  # dashboard extra. read_only hides rule editing.
+  # thorasWorker.enableCostAndUsageCollector and the billed_cost dashboard
+  # extra. read_only hides rule editing.
   enableCostAlerts: false
   thorasManageThoras:
     enabled: true

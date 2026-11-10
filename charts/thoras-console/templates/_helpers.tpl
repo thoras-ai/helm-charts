@@ -454,6 +454,26 @@ thoras-console-db
 {{- end -}}
 
 {{/*
+Keep the deprecated cluster_daily_cost dashboard extra working as an alias of
+billed_cost. Older dashboard images read only cluster_daily_cost and newer ones
+only billed_cost, so setting either writes both, whatever image the release
+runs. Edits the map in place.
+*/}}
+{{- define "thoras-console.aliasBilledCostExtra" -}}
+{{- $extras := . -}}
+{{- $hasOld := hasKey $extras "cluster_daily_cost" -}}
+{{- $hasNew := hasKey $extras "billed_cost" -}}
+{{- if and $hasOld $hasNew (ne (toJson (index $extras "cluster_daily_cost")) (toJson (index $extras "billed_cost"))) -}}
+{{- fail "consoleDashboard.extras.billed_cost conflicts with the deprecated consoleDashboard.extras.cluster_daily_cost; set only billed_cost" -}}
+{{- end -}}
+{{- if $hasNew -}}
+{{- $_ := set $extras "cluster_daily_cost" (index $extras "billed_cost") -}}
+{{- else if $hasOld -}}
+{{- $_ := set $extras "billed_cost" (index $extras "cluster_daily_cost") -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Every render-time guard, in one place. Included by the templates that resolve
 a secret ref as well as by helm-values-secret.yaml, so a misconfiguration is
 reported with an actionable message rather than as an unresolved plan entry

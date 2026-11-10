@@ -895,6 +895,26 @@ true
 {{- end -}}
 
 {{/*
+Keep the deprecated cluster_daily_cost dashboard extra working as an alias of
+billed_cost. Older dashboard images read only cluster_daily_cost and newer ones
+only billed_cost, so setting either writes both, whatever image the release
+runs. Edits the map in place.
+*/}}
+{{- define "thoras.aliasBilledCostExtra" -}}
+{{- $extras := . -}}
+{{- $hasOld := hasKey $extras "cluster_daily_cost" -}}
+{{- $hasNew := hasKey $extras "billed_cost" -}}
+{{- if and $hasOld $hasNew (ne (toJson (index $extras "cluster_daily_cost")) (toJson (index $extras "billed_cost"))) -}}
+{{- fail "thorasDashboard.extras.billed_cost conflicts with the deprecated thorasDashboard.extras.cluster_daily_cost; set only billed_cost" -}}
+{{- end -}}
+{{- if $hasNew -}}
+{{- $_ := set $extras "cluster_daily_cost" (index $extras "billed_cost") -}}
+{{- else if $hasOld -}}
+{{- $_ := set $extras "billed_cost" (index $extras "cluster_daily_cost") -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Simple auth env vars injected into every Thoras component. The enable flag is
 always emitted so the components have an explicit "false"; the secret itself is
 only bound when the flag is on. "prefix" is required and must be passed

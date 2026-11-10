@@ -27,12 +27,15 @@ opens with a newline; callers write `data:{{ include ... }}` with no space.
 {{- $_ := set $consoleAuth "audience" $audience }}
 {{- end }}
 {{- end }}
+{{- /* A copy: values must not change between the renders that include this. */}}
+{{- $extras := deepCopy ($dashboard.extras | default dict) }}
+{{- $_ := include "thoras-console.aliasBilledCostExtra" $extras }}
 {{- $config := dict
       "api_base_url" ""
       "version" .Chart.Version
       "platformVersion" .Values.consoleVersion
       "console" (dict "auth" $consoleAuth)
-      "extra" $dashboard.extras }}
+      "extra" $extras }}
   nginx.conf.template: |
     pid /tmp/nginx.pid;
 

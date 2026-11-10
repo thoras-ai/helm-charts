@@ -745,8 +745,9 @@ because rules only add to each other. Add `::/0` if you set
 agent at `169.254.170.23:80`.
 
 To show billed cost in the console, set
-`consoleDashboard.extras.cluster_daily_cost: true`. The Billed cost tab shows
-what clusters forward with cloud sync on, whichever mode they collect in.
+`consoleDashboard.extras.billed_cost: true`. The Billed cost tab shows what
+clusters forward with cloud sync on, whichever mode they collect in. The
+deprecated `cluster_daily_cost` key still works.
 
 ### NetworkPolicy
 

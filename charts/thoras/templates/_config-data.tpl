@@ -213,7 +213,9 @@ and their consumers.
 
         location /config.json {
             default_type application/json;
-            {{- $extras := .Values.thorasDashboard.extras -}}
+            {{- /* A copy: values must not change between the renders that include this. */}}
+            {{- $extras := deepCopy (.Values.thorasDashboard.extras | default dict) -}}
+            {{- $_ := include "thoras.aliasBilledCostExtra" $extras -}}
             {{- $enableUpdateScaleModeApi := .Values.featureFlags.enableUpdateScaleModeApi -}}
             {{- if .Values.thorasDashboard.read_only -}}
               {{- $_ := set $extras "disable_onboarding" true -}}
