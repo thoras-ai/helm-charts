@@ -19,6 +19,21 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.tolerations
+  - it: Should mount the system config so the worker honours the scaling pause
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: system-config
+            configMap:
+              name: thoras-operator-system-config
+              optional: true
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: system-config
+            mountPath: /app/system-config
+            readOnly: true
   - it: Should carry only the config checksum when all other conditions are false
     set:
       thorasWorker:
@@ -172,3 +187,243 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_FILTER')].value
           value: "aws:eks:cluster-name=prod"
+  - it: Should disable hourly cost collection by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_HOURLY_COST_COLLECTOR')].value
+          value: "false"
+  - it: Should enable hourly cost collection
+    set:
+      thorasWorker:
+        enableHourlyCostCollector: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_HOURLY_COST_COLLECTOR')].value
+          value: "true"
+  - it: Should not assume a Cost Explorer role by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_ARN')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID')].value
+          value: ""
+  - it: Should pass the Cost Explorer role and external ID
+    set:
+      thorasWorker:
+        costExplorerRoleArn: "arn:aws:iam::111122223333:role/billing-reader"
+        costExplorerRoleExternalId: "thoras"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_ARN')].value
+          value: "arn:aws:iam::111122223333:role/billing-reader"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID')].value
+          value: "thoras"
+  # helm upgrade --reuse-values renders against stored values that predate these keys.
+  - it: Should render empty Cost Explorer role values when they are missing from stored values
+    set:
+      thorasWorker.costExplorerRoleArn: null
+      thorasWorker.costExplorerRoleExternalId: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_ARN')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID')].value
+          value: ""
+  - it: Should query Cost Explorer per cluster on the primary billing view by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_MODE')].value
+          value: per-cluster
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_BILLING_VIEW_ARN')].value
+          value: ""
+  - it: Should send Cost Explorer queries through the console in console mode
+    set:
+      thorasWorker:
+        costExplorerMode: console
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_MODE')].value
+          value: console
+  - it: Should read a custom billing view
+    set:
+      thorasWorker:
+        costExplorerBillingViewArn: arn:aws:billing::123456789012:billingview/custom-1
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_BILLING_VIEW_ARN')].value
+          value: arn:aws:billing::123456789012:billingview/custom-1
+  - it: Should reject an unknown Cost Explorer mode
+    set:
+      thorasWorker:
+        costExplorerMode: proxy
+    asserts:
+      - failedTemplate:
+          errorMessage: 'thorasWorker.costExplorerMode must be "per-cluster" or "console", got "proxy"'
+  - it: Should reject a Cost Explorer mode that is not a string instead of defaulting it
+    set:
+      thorasWorker:
+        costExplorerMode: false
+    asserts:
+      - failedTemplate:
+          errorMessage: 'thorasWorker.costExplorerMode must be "per-cluster" or "console", got false'
+  - it: Should default a Cost Explorer mode missing from stored values
+    set:
+      thorasWorker.costExplorerMode: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_MODE')].value
+          value: per-cluster
+  - it: Should reject a console-mode cost collector without cloud sync
+    set:
+      thorasWorker:
+        costExplorerMode: console
+        enableCostAndUsageCollector: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasWorker.costExplorerMode console sends cost queries through the console, so it needs cloud sync: set cloudSync.clusterKeyID or cloudSync.joinSecret"
+  - it: Should reject a console-mode hourly collector without cloud sync
+    set:
+      thorasWorker:
+        costExplorerMode: console
+        enableHourlyCostCollector: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasWorker.costExplorerMode console sends cost queries through the console, so it needs cloud sync: set cloudSync.clusterKeyID or cloudSync.joinSecret"
+  - it: Should allow a console-mode cost collector with cloud sync
+    set:
+      cloudSync:
+        clusterKeyID: "my-cluster-key-id"
+      thorasWorker:
+        costExplorerMode: console
+        enableCostAndUsageCollector: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_COST_EXPLORER_MODE')].value
+          value: console
+  - it: Should reject per-cluster Cost Explorer settings in console mode
+    set:
+      thorasWorker:
+        costExplorerMode: console
+        costExplorerRoleArn: "arn:aws:iam::111122223333:role/billing-reader"
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasWorker.costExplorerRoleArn, costExplorerRoleExternalId and costExplorerBillingViewArn apply only to costExplorerMode per-cluster; in console mode the console sets its own"
+  - it: Should not ingest the CUR by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CUR_INGESTION')].value
+          value: "false"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_BUCKET')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_PREFIX')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_EXPORT_NAME')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_ARN')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_EXTERNAL_ID')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_CLUSTER_NAME')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_REGION')].value
+          value: "us-east-1"
+  - it: Should pass the CUR ingestion values
+    set:
+      thorasWorker:
+        enableCurIngestion: true
+        curBucket: "billing-exports"
+        curPrefix: "cur"
+        curExportName: "OrgExport"
+        curRegion: "eu-west-1"
+        curRoleArn: "arn:aws:iam::111122223333:role/cur-reader"
+        curRoleExternalId: "thoras"
+        curClusterName: "prod"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CUR_INGESTION')].value
+          value: "true"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_BUCKET')].value
+          value: "billing-exports"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_PREFIX')].value
+          value: "cur"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_EXPORT_NAME')].value
+          value: "OrgExport"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_REGION')].value
+          value: "eu-west-1"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_ARN')].value
+          value: "arn:aws:iam::111122223333:role/cur-reader"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_EXTERNAL_ID')].value
+          value: "thoras"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_CLUSTER_NAME')].value
+          value: "prod"
+  # helm upgrade --reuse-values renders against stored values that predate these keys.
+  - it: Should render default CUR values when they are missing from stored values
+    set:
+      thorasWorker.enableCurIngestion: null
+      thorasWorker.curBucket: null
+      thorasWorker.curPrefix: null
+      thorasWorker.curExportName: null
+      thorasWorker.curRegion: null
+      thorasWorker.curRoleArn: null
+      thorasWorker.curRoleExternalId: null
+      thorasWorker.curClusterName: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_CUR_INGESTION')].value
+          value: "false"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_BUCKET')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_PREFIX')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_EXPORT_NAME')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_ARN')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_ROLE_EXTERNAL_ID')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_CLUSTER_NAME')].value
+          value: ""
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CUR_REGION')].value
+          value: "us-east-1"
+  # Without these the worker would start and crash-loop on its own check.
+  - it: Should fail to render CUR ingestion without a bucket
+    set:
+      thorasWorker:
+        enableCurIngestion: true
+        curExportName: "OrgExport"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Error: 'thorasWorker.enableCurIngestion' is true but 'thorasWorker.curBucket' is empty. Set it to the bucket the CUR export delivers to."
+  - it: Should fail to render CUR ingestion without an export name
+    set:
+      thorasWorker:
+        enableCurIngestion: true
+        curBucket: "billing-exports"
+    asserts:
+      - failedTemplate:
+          errorMessage: "Error: 'thorasWorker.enableCurIngestion' is true but 'thorasWorker.curExportName' is empty. Set it to the CUR export's name."

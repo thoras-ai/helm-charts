@@ -112,7 +112,7 @@ spec:
             mountPath: /generated
       {{- end }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ default .Values.thorasVersion .Values.thorasDashboard.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-dashboard-v2:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasDashboard.imageTag) }}
         name: thoras-dashboard
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
@@ -185,7 +185,11 @@ spec:
             subPath: nginx.conf.template
       {{- if .Values.thorasDashboard.auth.enabled }}
       - name: oauth2-proxy
+        {{- if include "thoras.fipsEnabled" . }}
+        image: {{ .Values.imageCredentials.registry }}/oauth2-proxy:{{ .Values.thorasDashboard.auth.fipsImageTag | default "v7.15.4-fips" }}
+        {{- else }}
         image: {{ .Values.imageCredentials.registry }}/oauth2-proxy:{{ .Values.thorasDashboard.auth.imageTag }}
+        {{- end }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
           runAsUser: 2000
@@ -208,6 +212,7 @@ spec:
               secretKeyRef:
                 name: {{ $oidcSecret.secretName }}
                 key: {{ $oidcSecret.clientIDKey }}
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
         {{- end }}
         ports:
         - containerPort: {{ .Values.thorasDashboard.containerPort }}

@@ -219,6 +219,9 @@ Unlike the thoras chart there is no `migrateFrom`: this chart has no pre-5.0
 install to adopt values from.
 */}}
 {{- define "thoras-console.secretPlan" -}}
+{{- if and (.Values.consoleApi.costExplorer | default dict).enabled (not .Values.consoleApi.singleOrg.enabled) -}}
+{{- fail "consoleApi.costExplorer.enabled requires consoleApi.singleOrg.enabled: the proxy reads one set of billing data, and a cluster's reported tag does not prove which organization that spend belongs to" -}}
+{{- end -}}
 {{- $auth := .Values.auth -}}
 {{- $local := $auth.local -}}
 {{- $localMode := or (eq $auth.mode "local") (eq $auth.mode "both") -}}

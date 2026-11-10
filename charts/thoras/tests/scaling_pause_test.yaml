@@ -1,0 +1,337 @@
+suite: Scaling pause runtime ownership
+release:
+  name: release
+set:
+  thorasVersion: TEST
+tests:
+- it: operator starts without a ConfigMap and reads the mounted file
+  template: operator/deployment.yaml
+  asserts:
+  - contains:
+      path: spec.template.spec.volumes
+      content:
+        name: system-config
+        configMap:
+          name: thoras-operator-system-config
+          optional: true
+  - contains:
+      path: spec.template.spec.containers[0].volumeMounts
+      content:
+        name: system-config
+        mountPath: /app/system-config
+        readOnly: true
+  - contains:
+      path: spec.template.spec.containers[0].env
+      content:
+        name: SERVICE_SYSTEM_CONFIG_PATH
+        value: /app/system-config/system-config.yaml
+- it: worker starts without a ConfigMap and reads the mounted file
+  template: worker/deployment.yaml
+  asserts:
+  - contains:
+      path: spec.template.spec.volumes
+      content:
+        name: system-config
+        configMap:
+          name: thoras-operator-system-config
+          optional: true
+  - contains:
+      path: spec.template.spec.containers[0].volumeMounts
+      content:
+        name: system-config
+        mountPath: /app/system-config
+        readOnly: true
+  - contains:
+      path: spec.template.spec.containers[0].env
+      content:
+        name: SERVICE_SYSTEM_CONFIG_PATH
+        value: /app/system-config/system-config.yaml
+- it: api-server-v2 starts without a ConfigMap and reads the mounted file
+  template: api-server-v2/deployment.yaml
+  asserts:
+  - contains:
+      path: spec.template.spec.volumes
+      content:
+        name: system-config
+        configMap:
+          name: thoras-operator-system-config
+          optional: true
+  - contains:
+      path: spec.template.spec.containers[0].volumeMounts
+      content:
+        name: system-config
+        mountPath: /app/system-config
+        readOnly: true
+  - contains:
+      path: spec.template.spec.containers[0].env
+      content:
+        name: SERVICE_SYSTEM_CONFIG_PATH
+        value: /app/system-config/system-config.yaml
+- it: API server can create the runtime ConfigMap
+  template: api-server-v2/rbac.yaml
+  documentSelector:
+    path: kind
+    value: Role
+  asserts:
+  - contains:
+      path: rules[1].verbs
+      content: create
+- it: migration precedes Helm apply and Argo sync
+  template: operator/pause-state-migration.yaml
+  documentSelector: &id001
+    path: kind
+    value: Job
+  asserts:
+  - equal:
+      path: metadata.annotations['helm.sh/hook']
+      value: pre-install,pre-upgrade
+  - equal:
+      path: metadata.annotations['helm.sh/hook-weight']
+      value: '-10'
+  - equal:
+      path: metadata.annotations['argocd.argoproj.io/hook-delete-policy']
+      value: BeforeHookCreation,HookSucceeded
+  - equal:
+      path: spec.activeDeadlineSeconds
+      value: 120
+- it: patch retains the object and detaches both default tracking methods
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].env[1].value
+      value: '{"metadata":{"annotations":{"argocd.argoproj.io/sync-options":"Prune=false","argocd.argoproj.io/tracking-id":null,"helm.sh/resource-policy":"keep"},"labels":{"app.kubernetes.io/instance":null}}}'
+- it: patch handles a custom Argo instance label
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  set:
+    thorasOperator.pauseStateMigration.argocdInstanceLabelKey: example.com/instance
+  asserts:
+  - matchRegex:
+      path: spec.template.spec.containers[0].env[1].value
+      pattern: '"example.com/instance":null'
+  - notMatchRegex:
+      path: spec.template.spec.containers[0].env[1].value
+      pattern: '"data"'
+- it: migration uses the configured registry and operator tag
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  set:
+    imageCredentials.registry: example.com/private
+    thorasOperator.imageTag: custom
+    imagePullPolicy: Always
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].image
+      value: example.com/private/services:custom
+  - equal:
+      path: spec.template.spec.containers[0].imagePullPolicy
+      value: Always
+- it: migration falls back to the platform image tag
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  asserts:
+  - matchRegex:
+      path: spec.template.spec.containers[0].image
+      pattern: /services:TEST$
+- it: migration uses an existing pull secret
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  set:
+    imageCredentials.secretRef: existing-registry
+  asserts:
+  - equal:
+      path: spec.template.spec.imagePullSecrets
+      value:
+      - name: existing-registry
+- it: migration uses its hook pull secret with password auth
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  set:
+    imageCredentials.password: test-password
+  asserts:
+  - equal:
+      path: spec.template.spec.imagePullSecrets
+      value:
+      - name: release-pause-state-migration
+- it: hook pull credentials exist before the migration even with cert-manager
+  template: operator/pause-state-migration.yaml
+  documentSelector:
+    path: kind
+    value: Secret
+  set:
+    imageCredentials.password: test-password
+    thorasOperator.webhookCertGen.certManager.enabled: true
+  asserts:
+  - equal:
+      path: type
+      value: kubernetes.io/dockerconfigjson
+  - equal:
+      path: metadata.annotations['helm.sh/hook-weight']
+      value: '-30'
+- it: migration runs without a writable root filesystem
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  asserts:
+  - equal:
+      path: spec.template.spec.securityContext
+      value:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+  - equal:
+      path: spec.template.spec.containers[0].securityContext
+      value:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+          - ALL
+- it: migration permission is limited to patching the pause ConfigMap
+  template: operator/pause-state-migration.yaml
+  documentSelector:
+    path: kind
+    value: Role
+  asserts:
+  - equal:
+      path: rules
+      value:
+      - apiGroups:
+        - ''
+        resources:
+        - configmaps
+        resourceNames:
+        - thoras-operator-system-config
+        verbs:
+        - patch
+- it: ServiceAccount remains available until the Argo Job runs
+  template: operator/pause-state-migration.yaml
+  documentSelector:
+    path: kind
+    value: ServiceAccount
+  asserts:
+  - equal:
+      path: metadata.annotations['argocd.argoproj.io/hook-delete-policy']
+      value: BeforeHookCreation
+- it: Role remains available until the Argo Job runs
+  template: operator/pause-state-migration.yaml
+  documentSelector:
+    path: kind
+    value: Role
+  asserts:
+  - equal:
+      path: metadata.annotations['argocd.argoproj.io/hook-delete-policy']
+      value: BeforeHookCreation
+- it: RoleBinding remains available until the Argo Job runs
+  template: operator/pause-state-migration.yaml
+  documentSelector:
+    path: kind
+    value: RoleBinding
+  asserts:
+  - equal:
+      path: metadata.annotations['argocd.argoproj.io/hook-delete-policy']
+      value: BeforeHookCreation
+- it: migration inherits scheduling and priority
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  set:
+    nodeSelector:
+      pool: thoras
+    tolerations:
+    - key: dedicated
+      operator: Exists
+    thorasOperator.priorityClassName: migration-priority
+  asserts:
+  - equal:
+      path: spec.template.spec.nodeSelector
+      value:
+        pool: thoras
+  - equal:
+      path: spec.template.spec.tolerations
+      value:
+      - key: dedicated
+        operator: Exists
+  - equal:
+      path: spec.template.spec.priorityClassName
+      value: migration-priority
+- it: migration supports resource overrides
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  set:
+    thorasOperator.pauseStateMigration.resources:
+      requests:
+        cpu: 20m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].resources
+      value:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+- it: old reused values without migration settings render safely
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  set:
+    thorasOperator.pauseStateMigration: null
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].resources
+      value:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          memory: 64Mi
+- it: long release names fit Kubernetes naming limits
+  template: operator/pause-state-migration.yaml
+  documentSelector: *id001
+  release:
+    name: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  asserts:
+  - matchRegex:
+      path: metadata.name
+      pattern: ^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$
+- it: migration API egress is created before the Job with cert-manager
+  template: operator/pause-state-migration-network-policy.yaml
+  set:
+    networkPolicy.enabled: true
+    networkPolicy.flavor: kubernetes
+    thorasOperator.webhookCertGen.certManager.enabled: true
+  asserts:
+  - equal:
+      path: kind
+      value: NetworkPolicy
+  - equal:
+      path: metadata.annotations['helm.sh/hook-weight']
+      value: '-20'
+  - equal:
+      path: spec.podSelector.matchLabels
+      value:
+        app.kubernetes.io/component: pause-state-migration
+- it: migration supports Cilium API egress
+  template: operator/pause-state-migration-network-policy.yaml
+  set:
+    networkPolicy.enabled: true
+    networkPolicy.flavor: cilium
+  asserts:
+  - equal:
+      path: kind
+      value: CiliumNetworkPolicy
+  - contains:
+      path: spec.egress
+      content:
+        toEntities:
+        - kube-apiserver
+- it: migration policy is omitted when network policies are disabled
+  template: operator/pause-state-migration-network-policy.yaml
+  set:
+    networkPolicy.enabled: false
+  asserts:
+  - hasDocuments:
+      count: 0

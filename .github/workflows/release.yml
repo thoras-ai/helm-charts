@@ -75,6 +75,38 @@ jobs:
             helm package charts/thoras-console -d .cr-release-packages
           fi
 
+      - name: Verify platform images were released
+        if: steps.version_bump.outputs.thoras_bump == 'true'
+        shell: bash
+        env:
+          PLATFORM_DISPATCH_TOKEN: ${{ secrets.PLATFORM_DISPATCH_TOKEN }}
+        run: |
+          # Check whether thorasVersion changed in this commit.
+          LATEST_APP=$(git diff HEAD^1..HEAD charts/thoras/values.yaml \
+            | grep '^+thorasVersion:' \
+            | sed 's/^+thorasVersion: *"\?\([^"]*\)"\?.*/\1/' || true)
+
+          if [ -z "$LATEST_APP" ]; then
+            echo "thorasVersion unchanged — helm-only release, skipping platform image check"
+            exit 0
+          fi
+
+          echo "Checking that platform 'Release on tag' succeeded for $LATEST_APP ..."
+
+          RESPONSE=$(curl -sf --max-time 30 \
+            -H "Authorization: token $PLATFORM_DISPATCH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/thoras-ai/platform/actions/workflows/release.yaml/runs?event=push&branch=$LATEST_APP&status=success&per_page=1")
+
+          COUNT=$(echo "$RESPONSE" | jq '.total_count')
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::error::No successful 'Release on tag' run found for platform $LATEST_APP. Images may not exist in the registry. Check https://github.com/thoras-ai/platform/actions/workflows/release.yaml before retrying."
+            exit 1
+          fi
+
+          echo "Platform release for $LATEST_APP completed successfully"
+
       - name: Run chart-releaser
         if: steps.version_bump.outputs.is_bump == 'true'
         # Pinned to upstream main HEAD rather than a tag. Under

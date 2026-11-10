@@ -1,7 +1,7 @@
 ---
 # Image tag for the console components: the platform release this chart version
 # ships with.
-consoleVersion: "4.123.0"
+consoleVersion: "4.132.0"
 
 imageCredentials:
   registry: "us-east4-docker.pkg.dev/thoras-registry/platform"
@@ -143,6 +143,29 @@ consoleApi:
 
   serviceAccount:
     name: thoras-console-api
+    # Set eks.amazonaws.com/role-arn here to give costExplorer an IRSA role.
+    annotations: {}
+
+  # -- Run Cost Explorer queries for tenant clusters whose worker sets
+  # thorasWorker.costExplorerMode: console. Each query is limited to the
+  # cluster's approved cost allocation tag and account. The pod calls Cost
+  # Explorer with the AWS credentials it picks up, which need
+  # ce:GetCostAndUsage and ce:GetDimensionValues, or sts:AssumeRole on roleArn.
+  # Requires singleOrg.
+  costExplorer:
+    enabled: false
+    # Role to assume before calling Cost Explorer, such as one in the payer
+    # account. Empty uses the pod's own credentials.
+    roleArn: ""
+    # External ID the role's trust policy requires, sent with every AssumeRole.
+    externalId: ""
+    # Custom billing view set on every query. Empty reads the primary view.
+    billingViewArn: ""
+    # Requests per replica, all clusters together, including account lookups.
+    # Zero is unlimited.
+    requestsPerMinute: 300
+    # Requests allowed at once before the per-minute rate applies.
+    burst: 20
 
   service:
     annotations: {}
@@ -175,7 +198,9 @@ consoleApi:
     name: "Default Organization"
 
   # -- Let tenant clusters register themselves with one shared secret, set as
-  # cloudSync.joinSecret in their thoras chart. Requires singleOrg.
+  # cloudSync.joinSecret in their thoras chart. Requires singleOrg. A cluster
+  # whose key was used or revoked, or that was deleted, needs an operator to allow
+  # its rejoin: see "Allowing a rejoin" in the README.
   clusterJoin:
     enabled: false
     # Minimum 32 characters. Generated when empty.
@@ -199,6 +224,10 @@ consoleApi:
   affinity: {}
   priorityClassName: ""
   topologySpreadConstraints: []
+  # -- Where the NetworkPolicy lets console-api reach :443 for OIDC and Cost
+  # Explorer. Empty opens nothing, leaving it to extraEgressRules.
+  httpsEgressCidrs:
+    - 0.0.0.0/0
   extraEgressRules: []
   extraIngressRules: []
 
@@ -377,6 +406,10 @@ bundledDatabase:
     name: thoras-console-db
 
   labels: {}
+  # -- Pod annotations. On Karpenter, consider `karpenter.sh/do-not-disrupt: "true"`
+  # to stop consolidation and drift from moving the only database replica. See
+  # "Keeping Karpenter from moving the bundled database" in the README for the
+  # trade-offs.
   podAnnotations: {}
 
   useGlobalAffinity: false

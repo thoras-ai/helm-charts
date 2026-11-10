@@ -1,0 +1,44 @@
+suite: FIPS mode, whole chart
+templates:
+  - "**/*.yaml"
+tests:
+  - it: Renders every template with a valid FIPS configuration
+    set:
+      fips:
+        enabled: true
+      externalTimescale:
+        dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=verify-full"
+      thorasOperator:
+        webhookCertGen:
+          certManager:
+            enabled: true
+      thorasMcp:
+        enabled: true
+      networkPolicy:
+        enabled: true
+      thorasDashboard:
+        auth:
+          mode: oidc
+          oidc:
+            issuerURL: https://idp.example.com
+            redirectURL: https://thoras.example.com/oauth2/callback
+            existingSecret:
+              secretName: oauth2-proxy-secrets
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Skips the FIPS checks when off
+    set:
+      fips:
+        enabled: false
+      externalTimescale:
+        dsn: ""
+      thorasOperator:
+        webhookCertGen:
+          certManager:
+            enabled: false
+      thorasDashboard:
+        auth:
+          mode: htpasswd
+    asserts:
+      - notFailedTemplate: {}

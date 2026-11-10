@@ -241,3 +241,118 @@ tests:
               memory: "1Gi"
               cpu: "1"
               hugepages-1Gi: "2Gi"
+  - it: fix-dir-ownership has no env block when nothing injects env
+    template: collector/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].env
+  - it: metricsCollector.env is appended to every collector container
+    set:
+      metricsCollector:
+        timescale:
+          tls:
+            enabled: true
+        env:
+          - name: LOCAL_VAR
+            value: "local-value"
+          - name: FROM_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: my-secret
+                key: my-key
+    template: collector/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].env
+          content:
+            name: FROM_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: my-secret
+                key: my-key
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == 'reset-wal-on-startup')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'timescale-tls-reload')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+  - it: Top-level env and metricsCollector.env both apply
+    set:
+      env:
+        - name: GLOBAL_VAR
+          value: "global-value"
+      metricsCollector:
+        env:
+          - name: LOCAL_VAR
+            value: "local-value"
+    template: collector/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].env
+          content:
+            name: GLOBAL_VAR
+            value: "global-value"
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'timescaledb')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].env
+          content:
+            name: GLOBAL_VAR
+            value: "global-value"
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+  - it: metricsCollector.env still applies when the bundled timescaledb is replaced by an external one
+    set:
+      externalTimescale:
+        dsn: "postgres://user:pass@ext-db:5432/tsdb"
+      metricsCollector:
+        env:
+          - name: LOCAL_VAR
+            value: "local-value"
+    template: collector/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == 'fix-dir-ownership')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-blob-api')].env
+          content:
+            name: LOCAL_VAR
+            value: "local-value"
+      - notContains:
+          path: spec.template.spec.containers
+          content:
+            name: timescaledb
+          any: true
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: reset-wal-on-startup
+          any: true

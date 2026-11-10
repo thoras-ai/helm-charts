@@ -5,10 +5,13 @@ templates:
   - operator/service.yaml
   - worker/service.yaml
   - forecast-worker/service.yaml
+  - mcp/service.yaml
 set:
   thorasForecast:
     prometheus:
       enabled: true
+  thorasMcp:
+    enabled: true
 tests:
   - it: No annotations by default
     asserts:
@@ -60,3 +63,15 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
+  - it: MCP server service supports annotations
+    templates:
+      - mcp/service.yaml
+    set:
+      thorasMcp:
+        service:
+          annotations:
+            test-annotation: test-value
+    asserts:
+      - equal:
+          path: metadata.annotations["test-annotation"]
+          value: test-value

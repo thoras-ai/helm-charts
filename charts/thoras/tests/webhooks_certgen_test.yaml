@@ -70,6 +70,41 @@ tests:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
 
+  - it: Sets default resource requests and limits
+    template: operator/webhooks-certgen-create.yaml
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+            limits:
+              memory: 50Mi
+
+  - it: Can override resources block
+    template: operator/webhooks-certgen-create.yaml
+    set:
+      thorasOperator:
+        webhookCertGen:
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+
   ############################
   # Patch Jobs Tests
   ############################
@@ -163,6 +198,43 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].image
           pattern: kube-webhook-certgen:v2.0.0$
+
+  - it: Patch jobs set default resource requests and limits
+    template: operator/webhooks-certgen-patch.yaml
+    documentIndex: 0
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+            limits:
+              memory: 50Mi
+
+  - it: Patch jobs can override resources block
+    template: operator/webhooks-certgen-patch.yaml
+    documentIndex: 0
+    set:
+      thorasOperator:
+        webhookCertGen:
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
 
   ############################
   # cert-manager mode

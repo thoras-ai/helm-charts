@@ -1,0 +1,79 @@
+suite: Extra objects
+templates:
+  - extra-objects.yaml
+tests:
+  - it: Renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Renders object entries with templated values
+    set:
+      extraObjects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: "{{ .Release.Name }}-extra"
+            namespace: "{{ .Release.Namespace }}"
+          data:
+            foo: bar
+    release:
+      name: my-release
+      namespace: thoras
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: my-release-extra
+      - equal:
+          path: metadata.namespace
+          value: thoras
+      - equal:
+          path: data.foo
+          value: bar
+
+  - it: Renders string entries with templated values
+    set:
+      cluster:
+        name: prod-east
+      extraObjects:
+        - |
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: {{ .Release.Name }}-extra
+          stringData:
+            cluster: {{ .Values.cluster.name | quote }}
+    release:
+      name: my-release
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: my-release-extra
+      - equal:
+          path: stringData.cluster
+          value: prod-east
+
+  - it: Renders one document per entry
+    set:
+      extraObjects:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: one
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: two
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: two
+        documentIndex: 1

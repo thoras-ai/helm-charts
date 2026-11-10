@@ -26,6 +26,20 @@ Dashboard authentication: ENABLED (oauth2-proxy + htpasswd)
 {{- end }}
 {{- end }}
 
+{{ if (.Values.thorasMcp).enabled -}}
+MCP server: ENABLED ({{ .Values.thorasMcp.mode }}), Streamable HTTP at /mcp on the thoras-mcp Service
+  Clients send Authorization: Bearer <token>. Token:
+{{- $tokenRef := include "thoras.secretRef" (dict "root" . "name" "mcp-auth-token") | fromYaml }}
+    kubectl get secret {{ $tokenRef.name }} -n {{ .Release.Namespace }} \
+      -o jsonpath='{.data.{{ $tokenRef.key }}}' | base64 -d
+{{- if eq $tokenRef.name "thoras-config-controller" }}
+    The Secret appears once config-controller has seeded it.
+{{- end }}
+  Try it locally:
+    kubectl port-forward svc/thoras-mcp -n {{ .Release.Namespace }} 8080:{{ .Values.thorasMcp.port }}
+    then point your MCP client at http://localhost:8080/mcp
+{{- end }}
+
 {{ if and .Values.thorasConfigController.enabled .Release.IsInstall -}}
 Config controller: seeding any credential you did not supply.
   Workload pods report CreateContainerConfigError until the
@@ -67,9 +81,16 @@ DEPRECATED: featureFlags.enableSimpleAuthSecret
 {{- end }}
 
 {{ if .Values.featureFlags.enableLegacySecretSeeding -}}
-DEPRECATED: featureFlags.enableLegacySecretSeeding
+LEGACY SECRET SEEDING: pre-5.0 Secrets
   The api-client-secret and thoras-timescale-password Secrets are rendered
-  only so config-controller can migrate them. The flag and the Secrets are
-  removed in chart 6.0. See UPGRADE.md > In Cluster Secret Seeding and
-  Update Monitoring.
+  only so config-controller can migrate them. Once thoras-config-controller
+  carries the migrated keys, set featureFlags.enableLegacySecretSeeding=false
+  to stop rendering them. The flag and the Secrets are removed in chart 6.0.
+  See UPGRADE.md > In Cluster Secret Seeding and Update Monitoring.
+{{- else if or (include "thoras.legacySecretRendered" (dict "root" . "secret" "api-client-secret" "managedKey" "api-client-secret")) (include "thoras.legacySecretRendered" (dict "root" . "secret" "thoras-timescale-password" "managedKey" "timescale-password")) -}}
+MIGRATION PENDING: pre-5.0 Secrets
+  config-controller is migrating the api-client-secret or
+  thoras-timescale-password Secret. Run helm upgrade again once it has
+  finished so the chart stops rendering them. See UPGRADE.md > In Cluster
+  Secret Seeding and Update Monitoring.
 {{- end }}

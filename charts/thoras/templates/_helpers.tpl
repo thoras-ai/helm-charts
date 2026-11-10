@@ -112,7 +112,8 @@ podAntiAffinity:
 
 {{/*
 ClusterRole + ClusterRoleBinding for read-only access to cluster-scoped
-resources (nodes, PVs, storageclasses) — a namespaced Role can never grant these.
+resources (nodes, PVs, storageclasses, Karpenter NodePools and NodeClaims) — a
+namespaced Role can never grant these.
 Usage: include "thoras.clusterScopedReadRbac" (dict "root" . "name" "thoras-operator-cluster-scoped"
          "labels" .Values.thorasOperator.labels "serviceAccountName" .Values.thorasOperator.serviceAccount.name)
 */}}
@@ -139,6 +140,15 @@ rules:
   - storage.k8s.io
   resources:
   - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - karpenter.sh
+  resources:
+  - nodepools
+  - nodeclaims
   verbs:
   - get
   - list
@@ -242,14 +252,6 @@ Usage: {{ include "thoras.workloadReadRules" . }}
   - list
   - watch
 - apiGroups:
-  - karpenter.sh
-  resources:
-  - nodepools
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
   - metrics.k8s.io
   resources:
   - pods
@@ -346,6 +348,35 @@ true
 {{- end -}}
 
 {{/*
+thorasDashboard.ingressSources as JSON, validated. A misspelled key could render
+a rule that matches more sources than intended, so keys are checked per flavor.
+*/}}
+{{- define "thoras.dashboard.ingressSources" -}}
+{{- $sources := .Values.thorasDashboard.ingressSources | default list -}}
+{{- if and $sources .Values.thorasDashboard.enabled -}}
+{{- if not .Values.networkPolicy.enabled -}}
+{{- fail "thorasDashboard.ingressSources requires networkPolicy.enabled: true" -}}
+{{- end -}}
+{{- $flavor := include "thoras.networkPolicyFlavor" . -}}
+{{- range $sources -}}
+{{- if not (and (kindIs "map" .) .) -}}
+{{- fail (printf "thorasDashboard.ingressSources entries must be non-empty maps, got %v" .) -}}
+{{- end -}}
+{{- range $key, $_ := . -}}
+{{- if eq $flavor "cilium" -}}
+{{- if not (hasPrefix "from" $key) -}}
+{{- fail (printf "thorasDashboard.ingressSources: %q is not valid with networkPolicy.flavor cilium; use from-fields such as fromEndpoints, fromCIDR or fromEntities" $key) -}}
+{{- end -}}
+{{- else if not (has $key (list "namespaceSelector" "podSelector" "ipBlock")) -}}
+{{- fail (printf "thorasDashboard.ingressSources: %q is not valid with networkPolicy.flavor kubernetes; use namespaceSelector, podSelector or ipBlock" $key) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- toJson $sources -}}
+{{- end -}}
+
+{{/*
 The supported way to read networkPolicy.flavor. Every network-policy template
 branches on the result, so an unknown value fails the render here rather than
 falling through every branch and emitting no policy at all.
@@ -356,6 +387,15 @@ falling through every branch and emitting no policy at all.
 {{- fail (printf "networkPolicy.flavor must be either \"kubernetes\" or \"cilium\", got %q" $flavor) -}}
 {{- end -}}
 {{- $flavor -}}
+{{- end -}}
+
+{{/*
+"true" when the worker syncs to the console.
+*/}}
+{{- define "thoras.cloudSyncActive" -}}
+{{- if and .Values.cloudSync.baseUrl (or (and .Values.cloudSync.clusterKeyID (ne (include "thoras.cloudSyncJoinConfigured" .) "true")) (eq (include "thoras.clusterAutoJoinActive" .) "true")) -}}
+true
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -453,10 +493,9 @@ migrated and generated values are indistinguishable.
 {{- else if $ac.secret -}}
 {{- $plan = append $plan (dict "name" "api-client-secret" "mode" "values" "secret" "thoras-helm-values" "key" "api-client-secret" "value" $ac.secret) -}}
 {{- else -}}
-{{- /* migrateFrom is gated on featureFlags.enableLegacySecretSeeding; when off,
-       config-controller seeds a fresh value instead of adopting the legacy Secret. */ -}}
+{{- /* With no legacy Secret left to adopt, config-controller seeds a fresh value. */ -}}
 {{- $mf := list -}}
-{{- if .Values.featureFlags.enableLegacySecretSeeding -}}
+{{- if include "thoras.legacySecretRendered" (dict "root" . "secret" "api-client-secret" "managedKey" "api-client-secret") -}}
 {{- $mf = append $mf (dict "secret" "api-client-secret" "key" "secret") -}}
 {{- end -}}
 {{- $entry := dict "name" "api-client-secret" "mode" "seed" "secret" "thoras-config-controller" "key" "api-client-secret" "generate" (dict "type" "alphanumeric" "length" 32) -}}
@@ -492,9 +531,9 @@ migrated and generated values are indistinguishable.
 {{- end -}}
 
 {{- /* DSN and password are coupled: bundled seeds both, external has no
-       password at all. The seeded DSN embeds the seeded password; when
-       featureFlags.enableLegacySecretSeeding is on, config-controller
-       cross-checks the pair while migrating both from the legacy Secret. */ -}}
+       password at all. The seeded DSN embeds the seeded password; while the
+       legacy Secret is a migration source, config-controller cross-checks the
+       pair as it migrates both. */ -}}
 {{- if $external -}}
 {{- if .Values.externalTimescale.secretRefName -}}
 {{- $plan = append $plan (dict "name" "timescale-dsn" "mode" "existing" "secret" .Values.externalTimescale.secretRefName "key" .Values.externalTimescale.secretRefKey) -}}
@@ -504,7 +543,7 @@ migrated and generated values are indistinguishable.
 {{- else -}}
 {{- $tsPwMf := list -}}
 {{- $tsDsnMf := list -}}
-{{- if .Values.featureFlags.enableLegacySecretSeeding -}}
+{{- if include "thoras.legacySecretRendered" (dict "root" . "secret" "thoras-timescale-password" "managedKey" "timescale-password") -}}
 {{- $tsPwMf = append $tsPwMf (dict "secret" "thoras-timescale-password" "key" "password") -}}
 {{- $tsDsnMf = append $tsDsnMf (dict "secret" "thoras-timescale-password" "key" "host") -}}
 {{- end -}}
@@ -551,7 +590,56 @@ migrated and generated values are indistinguishable.
 {{- $plan = append $plan (dict "name" "cloud-sync-cluster-key" "mode" "exchange" "secret" "thoras-config-controller" "key" "cloud-sync-cluster-key" "optional" true "exchange" (dict "kind" "console" "field" "token" "installId" "cloud-sync-install-id")) -}}
 {{- end -}}
 
+{{- /* thorasMcp may be missing entirely after `helm upgrade --reuse-values`. */ -}}
+{{- $mcp := .Values.thorasMcp | default dict -}}
+{{- if $mcp.enabled -}}
+{{- $existing := ($mcp.auth).existingSecret | default dict -}}
+{{- if $existing.secretName -}}
+{{- $plan = append $plan (dict "name" "mcp-auth-token" "mode" "existing" "secret" $existing.secretName "key" $existing.secretKey) -}}
+{{- else if ($mcp.auth).token -}}
+{{- $plan = append $plan (dict "name" "mcp-auth-token" "mode" "values" "secret" "thoras-helm-values" "key" "mcp-auth-token" "value" $mcp.auth.token) -}}
+{{- else -}}
+{{- $plan = append $plan (dict "name" "mcp-auth-token" "mode" "seed" "secret" "thoras-config-controller" "key" "mcp-auth-token" "generate" (dict "type" "alphanumeric" "length" 32)) -}}
+{{- end -}}
+{{- end -}}
+
 {{- toYaml $plan -}}
+{{- end -}}
+
+{{/*
+"true" when a pre-5.0 Secret is still on the cluster and config-controller has
+not adopted it yet: it is unannotated and its value is not in the managed
+Secret. Empty otherwise, and always empty where `lookup` is unavailable
+(helm template, Argo CD), which is why those upgrades from 4.x set
+featureFlags.enableLegacySecretSeeding. See UPGRADE.md.
+
+The result is cached on .Release because thoras.secretPlan runs once per
+consumer, and uncached lookups would hit client-side API throttling.
+Usage: include "thoras.legacySecretPending" (dict "root" . "secret" "api-client-secret" "managedKey" "api-client-secret")
+*/}}
+{{- define "thoras.legacySecretPending" -}}
+{{- $release := .root.Release -}}
+{{- $cache := get $release "thorasLegacySecretPending" | default dict -}}
+{{- if not (hasKey $cache .secret) -}}
+{{- $pending := false -}}
+{{- $legacy := lookup "v1" "Secret" $release.Namespace .secret -}}
+{{- if and $legacy (not (hasKey ($legacy.metadata.annotations | default dict) "thoras.ai/migrated-to")) -}}
+{{- $managed := lookup "v1" "Secret" $release.Namespace "thoras-config-controller" -}}
+{{- $pending = not (hasKey ((get $managed "data") | default dict) .managedKey) -}}
+{{- end -}}
+{{- $_ := set $cache .secret $pending -}}
+{{- $_ := set $release "thorasLegacySecretPending" $cache -}}
+{{- end -}}
+{{- if get $cache .secret -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+"true" when the chart renders a pre-5.0 Secret and config-controller migrates
+from it: the flag forces it, otherwise only while its migration is pending.
+Usage: include "thoras.legacySecretRendered" (dict "root" . "secret" "api-client-secret" "managedKey" "api-client-secret")
+*/}}
+{{- define "thoras.legacySecretRendered" -}}
+{{- if .root.Values.featureFlags.enableLegacySecretSeeding -}}true{{- else -}}{{- include "thoras.legacySecretPending" . -}}{{- end -}}
 {{- end -}}
 
 {{/*
@@ -960,3 +1048,52 @@ Usage: {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 6 }}{{- e
 
 {{/* Loopback port for nginx behind the oauth2-proxy sidecar. */}}
 {{- define "thoras.dashboard.internalNginxPort" -}}8181{{- end -}}
+
+{{/* Hook resources share a name across kinds and must fit the DNS label limit. */}}
+{{- define "thoras.pauseStateMigrationName" -}}
+{{- printf "%s-pause-state-migration" .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/* Argo dependency hooks stay until the next sync so the Job can use them. */}}
+{{- define "thoras.pauseStateMigrationAnnotations" -}}
+helm.sh/hook: pre-install,pre-upgrade
+helm.sh/hook-weight: {{ .weight | quote }}
+helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+argocd.argoproj.io/hook-delete-policy: BeforeHookCreation{{ if .job }},HookSucceeded{{ end }}
+{{- end -}}
+
+{{/*
+True when FIPS mode is on ("true" or ""). Nil-safe for --reuse-values.
+*/}}
+{{- define "thoras.fipsEnabled" -}}
+{{- if eq (toString (.Values.fips).enabled) "true" -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+Resolved tag for a Thoras image: the component override, else thorasVersion.
+FIPS mode appends -fips unless the tag already ends in it, and rejects digests.
+Usage: {{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasWorker.imageTag) }}
+*/}}
+{{- define "thoras.imageTag" -}}
+{{- $tag := default .root.Values.thorasVersion .tag -}}
+{{- $fips := include "thoras.fipsEnabled" .root -}}
+{{- if and $fips (contains "@" (toString $tag)) -}}
+{{- fail (printf "fips.enabled does not support image digests (got %q): a digest can't take the -fips suffix and may point at a non-FIPS image; set a plain tag" (toString $tag)) -}}
+{{- end -}}
+{{- if and $fips (not (hasSuffix "-fips" (toString $tag))) -}}
+{{- printf "%v-fips" $tag -}}
+{{- else -}}
+{{- $tag -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Env entries for Go containers in FIPS mode, or empty. Rendered before
+thoras.globalEnv so a user-supplied GODEBUG in `env` wins.
+*/}}
+{{- define "thoras.fipsGoEnv" -}}
+{{- if include "thoras.fipsEnabled" . -}}
+- name: GODEBUG
+  value: fips140=on
+{{- end -}}
+{{- end -}}

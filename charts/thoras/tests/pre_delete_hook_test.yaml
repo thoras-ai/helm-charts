@@ -1,0 +1,71 @@
+suite: Pre-delete hook
+templates:
+  - operator/pre-delete-hook.yaml
+tests:
+  - it: renders as a pre-delete hook
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.name
+          value: thoras-pre-delete-hook
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-delete
+
+  - it: runs the uninstall cleanup step
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/operator", "uninstall"]
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: thoras-operator
+
+  - it: Sets default resource requests and limits
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+
+  - it: Can override resources block
+    set:
+      thorasOperator:
+        preDeleteHook:
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+
+  - it: Does not panic when upgrading from a release that predates this block
+    # `helm upgrade --reuse-values` carries forward only what the prior release
+    # stored; a release installed before preDeleteHook existed has no such key
+    # at all, not an empty one, so a direct .preDeleteHook.resources traversal
+    # panics on the nil parent.
+    set:
+      thorasOperator.preDeleteHook: null
+    asserts:
+      - isKind:
+          of: Job
+      - exists:
+          path: spec.template.spec.containers[0].resources.limits
+      - exists:
+          path: spec.template.spec.containers[0].resources.requests

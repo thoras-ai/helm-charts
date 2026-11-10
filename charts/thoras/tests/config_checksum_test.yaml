@@ -115,11 +115,8 @@ tests:
           path: spec.template.metadata.annotations['checksum/config']
           pattern: ^[0-9a-f]{64}$
 
-  - it: Operator has no checksum despite mounting a chart ConfigMap
-    # thoras-operator-system-config is deliberately exempt. Its chart content is
-    # static, so a hash over it would be a constant that never rolls anything.
-    # The value is written at runtime by the api-server, which restarts the
-    # operator itself rather than relying on a template annotation.
+  - it: Operator has no checksum for the runtime pause ConfigMap
+    # The API server owns the pause ConfigMap and restarts its consumers.
     templates:
       - operator/deployment.yaml
     asserts:

@@ -25,6 +25,23 @@ tests:
           path: spec.template.spec.containers[0].image
           value: us-east4-docker.pkg.dev/thoras-registry/platform/timescaledb:2.28.2-pg16
 
+  - it: Leaves Karpenter disruption alone by default
+    template: database/statefulset.yaml
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["karpenter.sh/do-not-disrupt"]
+
+  - it: Renders the Karpenter annotation when opted in
+    template: database/statefulset.yaml
+    set:
+      bundledDatabase:
+        podAnnotations:
+          karpenter.sh/do-not-disrupt: "true"
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["karpenter.sh/do-not-disrupt"]
+          value: "true"
+
   ############################
   # AC 7: configuring an external database removes every bundled resource
   ############################

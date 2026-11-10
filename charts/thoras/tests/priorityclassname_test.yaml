@@ -3,6 +3,8 @@ set:
   thorasForecast:
     worker:
       enabled: true
+  thorasMcp:
+    enabled: true
 tests:
   - it: no priorityClassName set by default
     templates:
@@ -12,6 +14,7 @@ tests:
       - dashboard/deployment.yaml
       - collector/deployment.yaml
       - forecast-worker/deployment.yaml
+      - mcp/deployment.yaml
     asserts:
       - isNull:
           path: spec.template.spec.priorityClassName
@@ -24,6 +27,7 @@ tests:
       - dashboard/deployment.yaml
       - collector/deployment.yaml
       - forecast-worker/deployment.yaml
+      - mcp/deployment.yaml
     set:
       priorityClassName: global-priority
     asserts:

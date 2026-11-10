@@ -1,0 +1,379 @@
+suite: MCP server
+set:
+  thorasMcp:
+    enabled: true
+tests:
+  - it: Renders nothing when disabled
+    templates:
+      - mcp/deployment.yaml
+      - mcp/service.yaml
+      - mcp/service-account.yaml
+      - mcp/pdb.yaml
+      - mcp/network-policy.yaml
+    set:
+      thorasMcp:
+        enabled: false
+      networkPolicy:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: Runs the MCP binary from the services image over HTTP
+    templates:
+      - mcp/deployment.yaml
+    set:
+      thorasMcp:
+        imageTag: TEST
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: thoras-mcp
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["/app/mcp"]
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_TRANSPORT
+            value: http
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_HOST
+            value: "::"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_PORT
+            value: "8080"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_MODE
+            value: read-only
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_THORAS_API_BASE_URL
+            value: http://thoras-api-server-v2
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_REQUEST_TIMEOUT
+          any: true
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /healthz
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /healthz
+
+  - it: Passes read-write mode and the request timeout
+    templates:
+      - mcp/deployment.yaml
+    set:
+      thorasMcp:
+        mode: read-write
+        requestTimeout: 45s
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_MODE
+            value: read-write
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_REQUEST_TIMEOUT
+            value: 45s
+
+  - it: Sends the api client secret like the other api-server clients
+    templates:
+      - mcp/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_SIMPLE_AUTH_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: thoras-config-controller
+                key: api-client-secret
+
+  # ---- Client token: seeded, pinned in values, or read from an existing Secret ----
+
+  - it: Reads a seeded client token by default
+    templates:
+      - mcp/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_HTTP_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: thoras-config-controller
+                key: mcp-auth-token
+
+  - it: Seeds the client token through config-controller when unset
+    templates:
+      - config-controller/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["config-controller.yaml"]
+          pattern: "- name: mcp-auth-token\n    source: seed"
+
+  - it: Seeds no client token when disabled
+    templates:
+      - config-controller/configmap.yaml
+    set:
+      thorasMcp:
+        enabled: false
+    asserts:
+      - notMatchRegex:
+          path: data["config-controller.yaml"]
+          pattern: mcp-auth-token
+
+  - it: Stores a pinned client token in thoras-helm-values
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasDashboard:
+        enabled: false
+      thorasMcp:
+        auth:
+          token: hunter2
+    asserts:
+      - equal:
+          path: data["mcp-auth-token"]
+          # base64 of "hunter2"
+          value: aHVudGVyMg==
+
+  - it: Reads a pinned client token from thoras-helm-values
+    templates:
+      - mcp/deployment.yaml
+    set:
+      thorasMcp:
+        auth:
+          token: hunter2
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_HTTP_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: thoras-helm-values
+                key: mcp-auth-token
+
+  - it: Reads the client token from an existing Secret
+    templates:
+      - mcp/deployment.yaml
+    set:
+      thorasMcp:
+        auth:
+          existingSecret:
+            secretName: my-mcp-token
+            secretKey: token
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_HTTP_AUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: my-mcp-token
+                key: token
+
+  - it: Fails when both a pinned token and an existing Secret are set
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasMcp:
+        auth:
+          token: hunter2
+          existingSecret:
+            secretName: my-mcp-token
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasMcp.auth.token and thorasMcp.auth.existingSecret.secretName are mutually exclusive"
+
+  - it: Fails when an existing Secret has no key
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasMcp:
+        auth:
+          existingSecret:
+            secretName: my-mcp-token
+            secretKey: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasMcp.auth.existingSecret.secretKey is required when secretName is set"
+
+  - it: Fails on an unknown mode
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasMcp:
+        mode: admin
+    asserts:
+      - failedTemplate:
+          errorMessage: 'thorasMcp.mode must be either "read-only" or "read-write", got "admin"'
+
+  - it: Fails when the client token would be seeded with config-controller off
+    templates:
+      - thoras-helm-values-secret.yaml
+    set:
+      thorasConfigController:
+        enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasConfigController.enabled is false but these values would have to be seeded by it: api-client-secret, dashboard-auth-password, dashboard-auth-cookie-secret, timescale-password, timescale-dsn, mcp-auth-token. Pin them in values, point them at existing Secrets, or re-enable the controller."
+
+  # ---- Service, labels, disruption budget and network policy ----
+
+  - it: Serves the MCP port on the thoras-mcp Service
+    templates:
+      - mcp/service.yaml
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: thoras-mcp
+      - equal:
+          path: spec.ports[0]
+          value:
+            name: http
+            port: 80
+            protocol: TCP
+            targetPort: 8080
+      - equal:
+          path: spec.selector
+          value:
+            app: thoras-mcp
+
+  - it: Applies global labels to every resource
+    templates:
+      - mcp/deployment.yaml
+      - mcp/service.yaml
+      - mcp/service-account.yaml
+    set:
+      labels:
+        globalLabel: globalValue
+    asserts:
+      - equal:
+          path: metadata.labels.globalLabel
+          value: globalValue
+
+  - it: Creates a PodDisruptionBudget
+    templates:
+      - mcp/pdb.yaml
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: metadata.name
+          value: thoras-mcp
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+
+  - it: Opens the MCP port to clients outside the namespace
+    templates:
+      - mcp/network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+      - contains:
+          path: spec.ingress
+          content:
+            ports:
+              - port: 8080
+                protocol: TCP
+
+  - it: Opens the MCP port to clients outside the namespace with Cilium
+    templates:
+      - mcp/network-policy.yaml
+    set:
+      networkPolicy:
+        enabled: true
+        flavor: cilium
+    asserts:
+      - isKind:
+          of: CiliumNetworkPolicy
+      - contains:
+          path: spec.ingress
+          content:
+            fromEntities:
+              - all
+            toPorts:
+              - ports:
+                  - port: "8080"
+                    protocol: TCP
+
+  # ---- Install notes ----
+
+  - it: Shows how to read the seeded client token in the install notes
+    templates:
+      - NOTES.txt
+    set:
+      thorasDashboard:
+        enabled: false
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "MCP server: ENABLED \\(read-only\\)"
+      - matchRegex:
+          path: raw
+          pattern: "kubectl get secret thoras-config-controller -n \\S+ \\\\\n      -o jsonpath='\\{.data.mcp-auth-token\\}' \\| base64 -d"
+      - matchRegex:
+          path: raw
+          pattern: "The Secret appears once config-controller has seeded it"
+      - matchRegex:
+          path: raw
+          pattern: "kubectl port-forward svc/thoras-mcp -n \\S+ 8080:80"
+
+  - it: Points the install notes at an existing Secret
+    templates:
+      - NOTES.txt
+    set:
+      thorasDashboard:
+        enabled: false
+      thorasMcp:
+        mode: read-write
+        auth:
+          existingSecret:
+            secretName: my-mcp-token
+            secretKey: token
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "MCP server: ENABLED \\(read-write\\)"
+      - matchRegex:
+          path: raw
+          pattern: "kubectl get secret my-mcp-token -n \\S+ \\\\\n      -o jsonpath='\\{.data.token\\}' \\| base64 -d"
+      - notMatchRegex:
+          path: raw
+          pattern: "The Secret appears once config-controller has seeded it"
+
+  - it: Leaves the MCP server out of the install notes when disabled
+    templates:
+      - NOTES.txt
+    set:
+      thorasMcp:
+        enabled: false
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "MCP server"

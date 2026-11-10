@@ -3,12 +3,15 @@ set:
   thorasForecast:
     worker:
       enabled: true
+  thorasMcp:
+    enabled: true
 tests:
   - it: no topologySpreadConstraints by default for components without a default
     templates:
       - dashboard/deployment.yaml
       - collector/deployment.yaml
       - forecast-worker/deployment.yaml
+      - mcp/deployment.yaml
       - worker/deployment.yaml
     asserts:
       - isNull:
@@ -150,6 +153,7 @@ tests:
       - dashboard/deployment.yaml
       - collector/deployment.yaml
       - forecast-worker/deployment.yaml
+      - mcp/deployment.yaml
     set:
       topologySpreadConstraints:
         - maxSkew: 1

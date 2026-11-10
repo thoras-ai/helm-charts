@@ -73,7 +73,13 @@ spec:
         - name: timescale-data
           emptyDir: {}
       {{- end }}
+      {{- $fips := include "thoras.fipsEnabled" . }}
+      {{- if or (not $fips) (not (include "thoras.externalTimescaleEnabled" .)) }}
       initContainers:
+      {{- end }}
+      {{- /* Skipped under FIPS: the volume is an emptyDir there and blob-service
+             creates its own directory, so no non-FIPS image is needed. */}}
+      {{- if not $fips }}
       - name: fix-dir-ownership
         image: {{ .Values.imageCredentials.registry }}/alpine:{{ .Values.metricsCollector.init.imageTag }}
         securityContext:
@@ -94,6 +100,11 @@ spec:
             mkdir -p /var/lib/share/postgresql /var/lib/share/blobs
         {{- end }}
         {{- end }}
+        {{- if or (include "thoras.globalEnv" .) .Values.metricsCollector.env }}
+        env:
+          {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
+        {{- end }}
         {{- if .Values.metricsCollector.init.resources }}
         resources: {{ .Values.metricsCollector.init.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -107,6 +118,7 @@ spec:
             name: elastic-search-data
       {{- else }}
             name: timescale-data
+      {{- end }}
       {{- end }}
       {{- if not (include "thoras.externalTimescaleEnabled" .) }}
       - name: reset-wal-on-startup
@@ -158,6 +170,7 @@ spec:
           - name: WAL_RECOVERY_TIMEOUT_SECONDS
             value: {{ .Values.metricsCollector.timescale.walRecovery.timeoutSeconds | quote }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
         {{- if .Values.metricsCollector.timescale.resources }}
         resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -220,6 +233,7 @@ spec:
           - name: "PGDATA"
             value: /var/lib/share/postgresql
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
         {{- if .Values.metricsCollector.timescale.resources }}
         resources: {{ .Values.metricsCollector.timescale.resources | toYaml | nindent 10 }}
         {{- else }}
@@ -289,6 +303,7 @@ spec:
           - name: PGCONNECT_TIMEOUT
             value: "5"
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
         {{- with ((.Values.metricsCollector.timescale.tls).reload).resources }}
         resources: {{ . | toYaml | nindent 10 }}
         {{- end }}
@@ -299,13 +314,18 @@ spec:
       {{- end }}
       {{- end }}
       {{- if not .Values.featureFlags.enableNoBlobApiServer }}
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.metricsCollector.blobService.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.metricsCollector.blobService.imageTag) }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-blob-api
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
+        {{- if $fips }}
+        {{- /* The FIPS services image has no psql or pg_isready, and FIPS
+               requires externalTimescale, so the bootstrap script is moot. */}}
+        command: ["/app/blob-service"]
+        {{- else }}
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -339,6 +359,7 @@ spec:
         {{- end }}
 
             exec ./blob-service
+        {{- end }}
         env:
           - name: SERVICE_CLUSTER_NAME
             value: "{{ .Values.cluster.name }}"
@@ -377,7 +398,9 @@ spec:
           - name: SERVICE_ENABLE_PPROF
             value: {{ .Values.metricsCollector.blobService.pprof.enabled | quote }}
           {{- include "thoras.simpleAuthEnv" (dict "root" . "prefix" "SERVICE_") | nindent 10 }}
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
+          {{- with .Values.metricsCollector.env }}{{- toYaml . | nindent 10 }}{{- end }}
         {{- if .Values.metricsCollector.blobService.resources }}
         resources: {{ .Values.metricsCollector.blobService.resources | toYaml | nindent 10 }}
         {{- else }}

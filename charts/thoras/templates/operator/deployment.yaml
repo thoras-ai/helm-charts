@@ -45,6 +45,7 @@ spec:
         - name: system-config
           configMap:
             name: thoras-operator-system-config
+            optional: true
         - name: tls
           secret:
             defaultMode: 420
@@ -63,7 +64,7 @@ spec:
               {{- end }}
         {{- with include "thoras.timescaleCaVolume" . }}{{- . | nindent 8 }}{{- end }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/services:{{ default .Values.thorasVersion .Values.thorasOperator.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/services:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasOperator.imageTag) }}
         name: thoras-operator
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         securityContext:
@@ -71,6 +72,8 @@ spec:
           capabilities:
             drop: [ALL]
         env:
+          - name: SERVICE_SYSTEM_CONFIG_PATH
+            value: /app/system-config/system-config.yaml
           {{- with include "thoras.slackEnv" (dict "root" . "prefix" "") }}{{- . | nindent 10 }}{{- end }}
           - name: THORAS_NS
             valueFrom:
@@ -100,6 +103,10 @@ spec:
           {{- end }}
           - name: SERVICE_PORT
             value: {{ .Values.thorasOperator.prometheus.port | quote }}
+          - name: SERVICE_CHART_VERSION
+            value: {{ .Chart.Version | quote }}
+          - name: SERVICE_PLATFORM_VERSION
+            value: {{ .Values.thorasVersion | quote }}
           {{- with .Values.rbac.namespaces }}
           - name: SERVICE_WATCH_NAMESPACES
             value: {{ join "," . | quote }}
@@ -174,14 +181,14 @@ spec:
             value: {{ .Values.featureFlags.enableAstRecordMirroring | ternary "true" "false" | quote }}
           - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
             value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
+          {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: [
           "/app/operator"
         ]
         volumeMounts:
           - name: system-config
-            mountPath: /app/system-config.yaml
-            subPath: system-config.yaml
+            mountPath: /app/system-config
             readOnly: true
           - name: tls
             mountPath: /tmp/k8s-webhook-server/serving-certs
