@@ -87,6 +87,12 @@ Database: EXTERNAL
   The timescaledb and citext extensions must be available. Stock Postgres will
   not work: the console migrations create hypertables and continuous aggregates.
 {{- end }}
+{{- if hasKey (.Values.consoleDashboard.extras | default dict) "cluster_daily_cost" }}
+
+DEPRECATED: consoleDashboard.extras.cluster_daily_cost
+  Rename this key to consoleDashboard.extras.billed_cost in your values file.
+  The old key still works.
+{{- end }}
 {{- if not (or .Values.imageCredentials.password .Values.imageCredentials.secretRef) }}
 
 Image pull credentials: NOT CONFIGURED

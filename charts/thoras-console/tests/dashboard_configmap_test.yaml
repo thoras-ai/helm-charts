@@ -126,6 +126,49 @@ tests:
           path: data["nginx.conf.template"]
           pattern: '"extra":\{"demo_mode":true\}'
 
+  # Older dashboard images read only cluster_daily_cost and newer ones only
+  # billed_cost, so config.json carries both whichever key is set.
+  - it: Writes both billed cost keys when only billed_cost is set
+    set:
+      consoleDashboard.extras.billed_cost: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"extra":\{"billed_cost":true,"cluster_daily_cost":true\}'
+
+  - it: Writes both billed cost keys when only the deprecated cluster_daily_cost is set
+    set:
+      consoleDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"extra":\{"billed_cost":true,"cluster_daily_cost":true\}'
+
+  - it: Accepts both billed cost keys set to the same value
+    set:
+      consoleDashboard.extras.billed_cost: false
+      consoleDashboard.extras.cluster_daily_cost: false
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"extra":\{"billed_cost":false,"cluster_daily_cost":false\}'
+
+  - it: Fails when billed_cost and cluster_daily_cost disagree
+    set:
+      consoleDashboard.extras.billed_cost: false
+      consoleDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "consoleDashboard.extras.billed_cost conflicts with the deprecated consoleDashboard.extras.cluster_daily_cost; set only billed_cost"
+
+  - it: Renders when consoleDashboard.extras is missing from stored values
+    set:
+      consoleDashboard.extras: null
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"extra":\{\}'
+
   ############################
   # Route allowlist
   ############################

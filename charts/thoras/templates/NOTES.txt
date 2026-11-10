@@ -79,6 +79,14 @@ DEPRECATED: featureFlags.enableSimpleAuthSecret
   Rename this field to apiClientSecret.enabled in your values file. The
   legacy field still works but will be removed in a future chart release.
 {{- end }}
+{{- /* Opens with its blank line inside the conditional, so it adds nothing
+       to the notes when the old key is unset. */}}
+{{- if hasKey (.Values.thorasDashboard.extras | default dict) "cluster_daily_cost" }}
+
+DEPRECATED: thorasDashboard.extras.cluster_daily_cost
+  Rename this key to thorasDashboard.extras.billed_cost in your values file.
+  The old key still works.
+{{- end }}
 
 {{ if .Values.featureFlags.enableLegacySecretSeeding -}}
 LEGACY SECRET SEEDING: pre-5.0 Secrets
