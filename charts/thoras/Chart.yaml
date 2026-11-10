@@ -14,4 +14,4 @@ type: application
 
 # This is the chart version, following Semantic Versioning (https://semver.org/).
 # Merging a change to it starts a chart release, so change it only in a release PR.
-version: 5.12.0
+version: 5.13.0

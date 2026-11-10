@@ -4,7 +4,7 @@ The Thoras console is where your clusters report in. This Helm chart installs a
 self-hosted [Thoras](https://www.thoras.ai) console onto Kubernetes, as an
 alternative to the hosted console at `console.thoras.ai`.
 
-![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![AppVersion: 4.132.0](https://img.shields.io/badge/AppVersion-4.132.0-informational?style=flat-square)
+![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational?style=flat-square) ![AppVersion: 4.132.0](https://img.shields.io/badge/AppVersion-4.132.0-informational?style=flat-square)
 
 The chart installs the console dashboard, `console-api`, a `config-controller`
 that generates any credential you do not supply, and — for evaluation only — a
