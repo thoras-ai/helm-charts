@@ -167,3 +167,39 @@ subjects:
   name: {{ .Values.thorasWorker.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 {{- end }}
+{{- if .Values.featureFlags.enableAutoscalerEventCollector }}
+{{- /* Cluster-wide even with rbac.namespaces: Node and NodeClaim events are recorded in `default`. */}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: thoras-worker-autoscaler-events
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: thoras-worker-autoscaler-events
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasWorker.labels) | nindent 4 }}
+roleRef:
+  kind: ClusterRole
+  name: thoras-worker-autoscaler-events
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.thorasWorker.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

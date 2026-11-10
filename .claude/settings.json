@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if ! command -v beans >/dev/null 2>&1; then echo \"beans is not installed. Run: brew install thoras-ai/tap/beans\"; elif beans version | grep -q \"thoras-ai/beans\"; then beans prime; else echo \"This beans binary is not the Thoras build and cannot read this repo's decisions. Do not use it. Ask the user to replace hmans/beans: https://github.com/thoras-ai/beans#installation\"; fi"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v beans >/dev/null 2>&1 && beans version | grep -q \"thoras-ai/beans\"; then beans prime; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

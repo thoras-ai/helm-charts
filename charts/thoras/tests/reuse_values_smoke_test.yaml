@@ -19,6 +19,19 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
+  - it: All templates render when enableLegacySecretSeeding is missing from stored values
+    set:
+      featureFlags.enableLegacySecretSeeding: null
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when thorasDashboard.ingressSources is missing from stored values
+    set:
+      networkPolicy.enabled: true
+      thorasDashboard.ingressSources: null
+    asserts:
+      - notFailedTemplate: {}
+
   - it: All templates render when enablePodLogStreaming is missing from stored values
     set:
       featureFlags.enablePodLogStreaming: null
@@ -37,6 +50,12 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
+  - it: All templates render when enableAutoscalerEventCollector is missing from stored values
+    set:
+      featureFlags.enableAutoscalerEventCollector: null
+    asserts:
+      - notFailedTemplate: {}
+
   - it: All templates render when the timescale tls block is missing from stored values
     set:
       metricsCollector.timescale.tls: null
@@ -46,5 +65,58 @@ tests:
   - it: All templates render when the postUpgradeHook block is missing from stored values
     set:
       thorasOperator.postUpgradeHook: null
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when the thorasMcp block is missing from stored values
+    set:
+      thorasMcp: null
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when the Cost Explorer role values are missing from stored values
+    set:
+      thorasWorker.costExplorerRoleArn: null
+      thorasWorker.costExplorerRoleExternalId: null
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when the Cost Explorer mode keys are missing from stored values
+    set:
+      thorasWorker.costExplorerMode: null
+      thorasWorker.costExplorerBillingViewArn: null
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when the fips block is missing from stored values
+    set:
+      fips: null
+      thorasDashboard.auth.fipsImageTag: null
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when fips is turned on and fipsImageTag is missing from stored values
+    set:
+      fips.enabled: true
+      thorasDashboard.auth.fipsImageTag: null
+      thorasDashboard.auth.mode: oidc
+      thorasDashboard.auth.oidc.existingSecret.secretName: oauth2-proxy-secrets
+      thorasDashboard.auth.oidc.issuerURL: https://idp.example.com
+      thorasDashboard.auth.oidc.redirectURL: https://thoras.example.com/oauth2/callback
+      externalTimescale.dsn: "postgres://thoras:averylongpassword@db.example.com:5432/thoras?sslmode=verify-full"
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: All templates render when the CUR ingestion values are missing from stored values
+    set:
+      thorasWorker.enableCurIngestion: null
+      thorasWorker.curBucket: null
+      thorasWorker.curPrefix: null
+      thorasWorker.curExportName: null
+      thorasWorker.curRegion: null
+      thorasWorker.curRoleArn: null
+      thorasWorker.curRoleExternalId: null
+      thorasWorker.curClusterName: null
     asserts:
       - notFailedTemplate: {}

@@ -96,9 +96,11 @@ and their consumers.
         # GET — reads
         ~*^GET/v1/ast(\?|$)                                                       1;
         ~*^GET/v1/ast/[^/]+/[^/]+(\?|$)                                           1;
+        ~*^GET/v1/ast/[^/]+/[^/]+/actuation-events(/[^/?]+)?(\?|$)                1;
         ~*^GET/v1/ast/[^/]+/[^/]+/pods(\?|$)                                      1;
         ~*^GET/v1/ast/[^/]+/[^/]+/metrics/current(\?|$)                           1;
         ~*^GET/v1/ast/[^/]+/[^/]+/suggestions(\?|$)                               1;
+        ~*^GET/v1/ast/[^/]+/[^/]+/utilization/daily(\?|$)                         1;
         ~*^GET/v1/cost-savings/settings(\?|$)                                     1;
         ~*^GET/v1/export(\?|$)                                                    1;
         ~*^GET/v1/instance-costs/current(\?|$)                                    1;
@@ -125,6 +127,11 @@ and their consumers.
         ~*^GET/v1/pods/[^/]+/[^/]+/logs(\?|$)                                     1;
         ~*^GET/v1/persistent-volumes(\?|$)                                        1;
         ~*^GET/v1/cost/daily(\?|$)                                                1;
+        ~*^GET/v1/cost/hourly(\?|$)                                               1;
+        ~*^GET/v1/cost/asts(\?|$)                                                 1;
+        ~*^GET/v1/cost/asts/daily(\?|$)                                           1;
+        ~*^GET/v1/cost/asts/hourly(\?|$)                                          1;
+        ~*^GET/v1/cost/cur/status(\?|$)                                           1;
         {{- if .Values.featureFlags.enableAutonomousReadiness }}
         ~*^GET/v1/ast/[^/]+/auto-ready(\?|$)                                      1;
         ~*^GET/v1/ast/[^/]+/signals/forecast_performance/history(\?|$)            1;
@@ -132,21 +139,34 @@ and their consumers.
         {{- if .Values.featureFlags.enableIdleSpend }}
         ~*^GET/v1/views/cost/idle(\?|$)                                           1;
         {{- end }}
+        {{- if .Values.featureFlags.enableCostAlerts }}
+        ~*^GET/v1/cost-alerts(\?|$)                                               1;
+        {{- if not .Values.thorasDashboard.read_only }}
+        ~*^POST/v1/cost-alerts(\?|$)                                              1;
+        ~*^PUT/v1/cost-alerts/[^/]+(\?|$)                                         1;
+        ~*^DELETE/v1/cost-alerts/[^/]+(\?|$)                                      1;
+        ~*^POST/v1/cost-alerts/[^/]+/test(\?|$)                                   1;
+        {{- end }}
+        {{- end }}
+        {{- if not .Values.thorasDashboard.read_only }}
 
 
         # POST — dashboard-initiated mutations
         ~*^POST/v1/ast/candidates/[^/]+(\?|$)                                     1;
         ~*^POST/v1/ast/enroll/all(\?|$)                                           1;
         ~*^POST/v1/cost-savings/settings(\?|$)                                    1;
+        {{- end }}
 
         # POST — reads that pass a request body (query payloads, not mutations)
         ~*^POST/v1/ast/[^/]+/metrics/series(\?|$)                                 1;
+        {{- if not .Values.thorasDashboard.read_only }}
 
         # PATCH — scale mode toggle
         ~*^PATCH/v1/ast/[^/]+/[^/]+/mode(\?|$)                                    1;
 
         # PUT — pause/resume system-wide scaling
         ~*^PUT/v1/system/scaling(\?|$)                                            1;
+        {{- end }}
       }
 
       server {
@@ -193,7 +213,17 @@ and their consumers.
 
         location /config.json {
             default_type application/json;
-            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ .Values.featureFlags.enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}, "enableIdleSpend": {{ .Values.featureFlags.enableIdleSpend | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) .Values.thorasDashboard.extras) }} }';
+            {{- /* A copy: values must not change between the renders that include this. */}}
+            {{- $extras := deepCopy (.Values.thorasDashboard.extras | default dict) -}}
+            {{- $_ := include "thoras.aliasBilledCostExtra" $extras -}}
+            {{- $enableUpdateScaleModeApi := .Values.featureFlags.enableUpdateScaleModeApi -}}
+            {{- if .Values.thorasDashboard.read_only -}}
+              {{- $_ := set $extras "disable_onboarding" true -}}
+              {{- $_ := set $extras "enable_scaling_pause" false -}}
+              {{- $_ := set $extras "cost_alerts_edit" false -}}
+              {{- $enableUpdateScaleModeApi = false -}}
+            {{- end }}
+            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ $enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}, "enableIdleSpend": {{ .Values.featureFlags.enableIdleSpend | default false }}, "enableCostAlerts": {{ .Values.featureFlags.enableCostAlerts | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) $extras) }} }';
         }
 
         location / {

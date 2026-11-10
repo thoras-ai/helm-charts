@@ -219,6 +219,9 @@ Unlike the thoras chart there is no `migrateFrom`: this chart has no pre-5.0
 install to adopt values from.
 */}}
 {{- define "thoras-console.secretPlan" -}}
+{{- if and (.Values.consoleApi.costExplorer | default dict).enabled (not .Values.consoleApi.singleOrg.enabled) -}}
+{{- fail "consoleApi.costExplorer.enabled requires consoleApi.singleOrg.enabled: the proxy reads one set of billing data, and a cluster's reported tag does not prove which organization that spend belongs to" -}}
+{{- end -}}
 {{- $auth := .Values.auth -}}
 {{- $local := $auth.local -}}
 {{- $localMode := or (eq $auth.mode "local") (eq $auth.mode "both") -}}
@@ -448,6 +451,26 @@ both the StatefulSet's required serviceName and the host in the generated DSN.
 */}}
 {{- define "thoras-console.databaseServiceName" -}}
 thoras-console-db
+{{- end -}}
+
+{{/*
+Keep the deprecated cluster_daily_cost dashboard extra working as an alias of
+billed_cost. Older dashboard images read only cluster_daily_cost and newer ones
+only billed_cost, so setting either writes both, whatever image the release
+runs. Edits the map in place.
+*/}}
+{{- define "thoras-console.aliasBilledCostExtra" -}}
+{{- $extras := . -}}
+{{- $hasOld := hasKey $extras "cluster_daily_cost" -}}
+{{- $hasNew := hasKey $extras "billed_cost" -}}
+{{- if and $hasOld $hasNew (ne (toJson (index $extras "cluster_daily_cost")) (toJson (index $extras "billed_cost"))) -}}
+{{- fail "consoleDashboard.extras.billed_cost conflicts with the deprecated consoleDashboard.extras.cluster_daily_cost; set only billed_cost" -}}
+{{- end -}}
+{{- if $hasNew -}}
+{{- $_ := set $extras "cluster_daily_cost" (index $extras "billed_cost") -}}
+{{- else if $hasOld -}}
+{{- $_ := set $extras "billed_cost" (index $extras "cluster_daily_cost") -}}
+{{- end -}}
 {{- end -}}
 
 {{/*

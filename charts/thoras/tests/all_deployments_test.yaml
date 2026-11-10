@@ -8,6 +8,8 @@ set:
       enabled: true
   thorasSlmAgent:
     enabled: true
+  thorasMcp:
+    enabled: true
 tests:
   - it: Object type correct
     asserts:

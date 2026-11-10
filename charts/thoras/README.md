@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 5.5.0](https://img.shields.io/badge/Version-5.5.0-informational?style=flat-square) ![AppVersion: 4.123.0](https://img.shields.io/badge/AppVersion-4.123.0-informational?style=flat-square)
+![Version: 5.12.0](https://img.shields.io/badge/Version-5.12.0-informational?style=flat-square) ![AppVersion: 4.132.0](https://img.shields.io/badge/AppVersion-4.132.0-informational?style=flat-square)
 
 ## Requirements
 
@@ -55,8 +55,7 @@ helm repo update thoras
 helm install thoras thoras/thoras \
   --namespace thoras \
   --create-namespace \
-  --set imageCredentials.password="$(cat ./thoras_license.txt)" \
-  --set featureFlags.enableLegacySecretSeeding=false
+  --set imageCredentials.password="$(cat ./thoras_license.txt)"
 ```
 
 ### Verify installation
@@ -101,9 +100,9 @@ lookup above only applies to the default seeded-by-controller path. See
 Argo CD renders manifests without `lookup`, so a small set of chart
 outputs still drifts on every reconcile. To prevent this, do the following:
 
-- Set `featureFlags.enableLegacySecretSeeding: false` (see
-  [Disable Legacy Secret Seeding](#disable-legacy-secret-seeding) for more
-  details).
+- Set `featureFlags.enableLegacySecretSeeding: false` once
+  `thoras-config-controller` carries the migrated keys (see
+  [Legacy Secret Seeding](#legacy-secret-seeding) for more details).
 - Tell Argo to ignore these fields in your `Application`'s
   `spec.ignoreDifferences`:
 
@@ -123,17 +122,34 @@ ignoreDifferences:
       - /spec/replicas
     kind: Deployment
     name: thoras-forecast-worker
+  # Until featureFlags.enableLegacySecretSeeding is false, the pre-5.0 Secrets
+  # render with fresh random values on every reconcile. Keep the live data.
+  - jsonPointers:
+      - /data
+    kind: Secret
+    name: api-client-secret
+  - jsonPointers:
+      - /data
+    kind: Secret
+    name: thoras-timescale-password
 ```
+
+Ignoring a difference only changes what Argo compares. Add
+`RespectIgnoreDifferences=true` to the Application's `spec.syncPolicy.syncOptions`
+so a sync leaves those fields alone as well.
 
 ## helm template
 
 The following should be done if you use a deployment strategy that uses `helm template`:
 
-### Disable Legacy Secret Seeding
+### Turn Legacy Secret Seeding Off After Migration
 
-Set `featureFlags.enableLegacySecretSeeding: false` (see
-[Disable Legacy Secret Seeding](#disable-legacy-secret-seeding) for more
-details).
+Set `featureFlags.enableLegacySecretSeeding: false` once `thoras-config-controller`
+carries the migrated keys (see [Legacy Secret Seeding](#legacy-secret-seeding) for
+more details). Until then, apply the rendered `api-client-secret` and
+`thoras-timescale-password` only when they do not already exist: without `lookup`
+the chart renders them with fresh random values, and overwriting the live ones
+before config-controller has migrated them changes the credentials in use.
 
 ### Webhook certificates
 
@@ -167,6 +183,7 @@ Almost every secret/credential is configured via the chart one of three ways, in
 | Slack webhook              | `slackWebhookUrlSecretRef{Name,Key}`                                        | `slackWebhookUrl`                            |
 | Cloud-sync cluster key     | `cloudSync.clusterKeySecretRef{Name,Key}`                                   | `cloudSync.clusterKey`                       |
 | Cloud-sync join secret     | `cloudSync.joinSecretSecretRef{Name,Key}`                                   | `cloudSync.joinSecret`                       |
+| MCP client token           | `thorasMcp.auth.existingSecret.{secretName,secretKey}`                      | `thorasMcp.auth.token`                       |
 | Dashboard OIDC credentials | `thorasDashboard.auth.oidc.existingSecret.*`                                | — (never chart-managed)                      |
 
 ### Registering a cluster automatically
@@ -184,7 +201,7 @@ then set it on each agent install alongside a name and the console's ingest addr
 
 ```yaml
 cluster:
-  name: production-eu          # required: the console registers the cluster under it
+  name: production-eu # required: the console registers the cluster under it
 cloudSync:
   baseUrl: https://console-api.example.com
   joinSecret: <the secret>
@@ -216,19 +233,32 @@ How you rotate depends on where the value lives:
   consumers.
 - **Pinned in values**: change the value in `values.yaml` and run
   `helm upgrade` and the controller rolls the consumers.
+- **Seeded by config-controller**: for the API client secret and the dashboard
+  values, remove the key from `thoras-config-controller`; the controller seeds a
+  new value and rolls the consumers. Do not remove the bundled database password
+  key: set a new password on the database, then patch `timescale-password` and
+  `timescale-dsn` together. See
+  [UPGRADE.md](./UPGRADE.md#rotating-the-generated-credentials-after-upgrading).
 
 Notes:
 
 - Set `thorasConfigController.enableRestartRollouts: false` to have the
   controller log the rollouts it would perform without evicting anything.
 
-### Disable Legacy Secret Seeding
+### Legacy Secret Seeding
 
-Disable legacy secret seeding by setting `featureFlags.enableLegacySecretSeeding: false`.
+Config-controller seeds credentials directly into `thoras-config-controller`. By
+default the chart still renders the pre-5.0 `api-client-secret` and
+`thoras-timescale-password` Secrets as migration sources, so an upgrade from 4.x
+keeps its credentials whatever renders the chart. Nothing consumes them.
 
-**NOTE:** if you are upgrading from 4.x, make sure to perform the upgrade
-first, before disabling `featureFlags.enableLegacySecretSeeding`. After the first
-successful upgrade, the secrets will be migrated and you can disable the feature.
+Once `thoras-config-controller` carries the migrated keys, set
+`featureFlags.enableLegacySecretSeeding: false`. On `helm upgrade` the chart then
+renders them only while a migration is still pending; under Argo CD or
+`helm template`, where the chart cannot see the cluster, it stops rendering them,
+so confirm the keys first. The default flips in 6.0, when the templates are
+removed. See
+[UPGRADE.md](./UPGRADE.md#in-cluster-secret-seeding-and-update-monitoring).
 
 ### Affinity Configuration
 
@@ -356,6 +386,9 @@ thorasDashboard:
   auth:
     enabled: false
 ```
+
+To limit which workloads can reach the dashboard port, see
+`thorasDashboard.ingressSources` under [NetworkPolicy](#networkpolicy).
 
 This leaves the dashboard reachable in-cluster with no auth in front of it,
 which exposes part of the API it proxies to and subverts `apiClientSecret`.
@@ -504,6 +537,115 @@ hostnames:
   - thoras.local
 ```
 
+### Thoras MCP Server
+
+The MCP server lets MCP clients, such as AI assistants, work with Thoras: list
+scale targets and their suggestions, and check utilization and costs. In
+`read-write` mode they can also switch scale modes, pause scaling and enroll
+workloads. It serves Streamable HTTP at `/mcp` on the `thoras-mcp` Service and
+calls the Thoras API server inside the cluster. It is off by default.
+
+```yaml
+# values.yaml
+thorasMcp:
+  enabled: true
+  # read-only (default), or read-write to also allow changes
+  mode: read-only
+```
+
+When turning it on for an existing release, upgrade with
+`--reset-then-reuse-values` rather than `--reuse-values`, so the new
+`thorasMcp` defaults are applied.
+
+Clients authenticate with a bearer token, which config-controller generates
+unless you set `thorasMcp.auth.token` or `thorasMcp.auth.existingSecret` (see
+[Secrets](#secrets)). Read the generated one with:
+
+```bash
+kubectl get secret thoras-config-controller -n thoras \
+  -o jsonpath='{.data.mcp-auth-token}' | base64 -d
+```
+
+To try it from your machine, port-forward the Service and point your MCP
+client at `http://localhost:8080/mcp` with the header
+`Authorization: Bearer <token>`. The server has no OAuth flow, so the client
+must send the header itself.
+
+```bash
+kubectl port-forward svc/thoras-mcp -n thoras 8080:80
+```
+
+To reach it from outside the cluster, put your own Ingress or Gateway in front
+of the Service. With `networkPolicy.enabled`, the server port accepts traffic
+from any source; narrow it with `thorasMcp.extraIngressRules`.
+
+### FIPS mode
+
+`fips.enabled: true` runs FIPS variants of the images. Every Thoras image tag
+gets a `-fips` suffix: `thorasVersion` `4.125.0` pulls `services:4.125.0-fips`,
+and a per-component `imageTag` override such as `4.125.1` becomes
+`4.125.1-fips`. A tag that already ends in `-fips` is used as is. A tag with
+a digest (`4.125.0@sha256:...`) fails the render: a digest can't take the
+suffix and may point at a non-FIPS image. The oauth2-proxy sidecar uses
+`thorasDashboard.auth.fipsImageTag`. Go containers (the `services` binaries
+and oauth2-proxy) get `GODEBUG=fips140=on`. Don't override it with
+`fips140=only`: oauth2-proxy does not start in that mode. A `GODEBUG` set in
+`env` is rendered after the chart's, so the container gets both entries and
+Kubernetes uses yours.
+
+`-fips` images exist from the first release that includes
+thoras-ai/platform#5458 and #5460. `thorasVersion`, and any per-component
+`imageTag`, must be that release or newer. With an older version, the
+`-fips` tag doesn't exist, so the pre-install hook Job fails to pull its
+image and the install fails.
+
+FIPS installs need:
+
+- An external database. The bundled TimescaleDB has no FIPS build, so set
+  `externalTimescale` and run the database on your own FIPS platform. The DSN
+  must set `sslmode=verify-full` exactly once, written as an unquoted
+  parameter with no spaces around `=`: `?sslmode=verify-full` or
+  `&sslmode=verify-full` in a URL, or `sslmode=verify-full` in a key/value
+  DSN. The chart checks an inline `externalTimescale.dsn` when it is the DSN
+  in use; with `secretRefName` set, the Secret's DSN is used instead, and it
+  can't be checked at render time, so make sure it follows the same form. The
+  database password must be at least 14 bytes: FIPS mode rejects shorter HMAC
+  keys, and SCRAM uses the password as one.
+- No htpasswd dashboard sign-in, which checks a bcrypt hash that is not FIPS
+  approved. Use OIDC (`thorasDashboard.auth.mode: oidc`), turn dashboard auth
+  off (`thorasDashboard.auth.enabled: false`) and put your own in front, or
+  turn the dashboard off (`thorasDashboard.enabled: false`).
+- cert-manager for the webhook certificates
+  (`thorasOperator.webhookCertGen.certManager.enabled: true`). The
+  kube-webhook-certgen Jobs are not used.
+
+The render fails if any of these is missing. With these settings no
+third-party image except oauth2-proxy runs: no TimescaleDB, `alpine`, `httpd`
+or `kube-webhook-certgen`.
+
+```yaml
+fips:
+  enabled: true
+externalTimescale:
+  secretRefName: thoras-timescale-dsn
+  secretRefKey: dsn # postgres://...?sslmode=verify-full
+thorasOperator:
+  webhookCertGen:
+    certManager:
+      enabled: true
+thorasDashboard:
+  auth:
+    mode: oidc
+    oidc:
+      issuerURL: https://idp.example.com
+      redirectURL: https://thoras.example.com/oauth2/callback
+      existingSecret:
+        secretName: oauth2-proxy-secrets
+```
+
+FIPS mode on the nodes (kernel and OS) is configured on your side; the images
+carry their own validated modules either way.
+
 ### NetworkPolicy
 
 Set `networkPolicy.enabled: true` to render per-component policies.
@@ -524,65 +666,131 @@ enabled, the chart opens broad egress on port `443` so oauth2-proxy
 can reach the IdP; tighten with a layered `CiliumNetworkPolicy` scoped
 by `toFQDNs`, or manage egress out-of-band.
 
+`thorasDashboard.ingressSources` limits which sources can reach the dashboard
+port. Each entry uses the syntax of `networkPolicy.flavor`. Once set, only the
+listed sources are allowed, including from the release namespace, so include
+whatever fronts the dashboard:
+
+```yaml
+networkPolicy:
+  enabled: true
+thorasDashboard:
+  ingressSources:
+    # networkPolicy.flavor: kubernetes
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+```
+
+```yaml
+networkPolicy:
+  enabled: true
+  flavor: cilium
+thorasDashboard:
+  ingressSources:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: ingress-nginx
+            app.kubernetes.io/name: ingress-nginx
+```
+
+With a `NodePort` or `LoadBalancer` Service, traffic can arrive from node
+addresses, so allow those or set `externalTrafficPolicy: Local` where it
+preserves the client address. The sources apply to `service.targetPort` when it
+is set, and to `containerPort` otherwise. `thorasDashboard.extraIngressRules` is
+still appended to the policy. The policy only takes effect on a CNI that enforces
+it. Setting `ingressSources` without `networkPolicy.enabled` fails the render.
+
+With cost collection or cloud sync on, the worker can reach AWS Cost Explorer
+and the console on port `443`, limited to `thorasWorker.httpsEgressCidrs`. Add
+`::/0` for an IPv6 console or dual-stack AWS endpoints. The `kubernetes` flavor's
+`apiServerPorts` allow their ports to any address, `443` by default, so narrowing
+there also means taking `443` out of that list. A per-cluster cost collector or
+CUR ingestion can also reach the EKS Pod Identity agent at `169.254.170.23:80`. A
+console on another port needs `extraEgressRules`.
+
+### Extra objects
+
+`extraObjects` deploys arbitrary manifests alongside Thoras, e.g. an
+`ExternalSecret` for the license key or a `PodMonitor`. Entries are
+rendered through `tpl`, so they can reference release values:
+
+```yaml
+extraObjects:
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: "{{ .Release.Name }}-extra"
+    data:
+      cluster: "{{ .Values.cluster.name }}"
+```
+
 ## Values
 
 ### Global
 
-| Key                                       | Type    | Default                                          | Description                                                                                                                                                                                                                                                                                                                                                     |
-| ----------------------------------------- | ------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                             | String  | 4.123.0                                          | Thoras app version                                                                                                                                                                                                                                                                                                                                              |
-| imageCredentials.registry                 | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                                                                                                                                                                                                                                                         |
-| imageCredentials.username                 | String  | \_json_key_base64                                | Container registry username                                                                                                                                                                                                                                                                                                                                     |
-| imageCredentials.password                 | String  | ""                                               | Container registry auth string                                                                                                                                                                                                                                                                                                                                  |
-| resourceQuota.enabled                     | Bool    | false                                            | Enables resource quotas within Thoras                                                                                                                                                                                                                                                                                                                           |
-| resourceQuota.pods                        | Number  | 200                                              | Maximum number of pods allowed                                                                                                                                                                                                                                                                                                                                  |
-| resourceQuota.cronjobs                    | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                                                                                                                                                                                                                                                              |
-| resourceQuota.jobs                        | Number  | 200                                              | Maximum number of jobs allowed                                                                                                                                                                                                                                                                                                                                  |
-| logLevel                                  | String  | info                                             | Default log level                                                                                                                                                                                                                                                                                                                                               |
-| env                                       | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                                                                                                                                                                                                                                                                 |
-| slackWebhookUrl                           | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                                                                                                                                                                                                                                                                |
-| slackErrorsEnabled                        | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                                                                                                                                                                                                                    |
-| cloudSync.clusterKeyID                    | String  | ""                                               | Identity of cluster sync key. Cloud sync is disabled if not specified                                                                                                                                                                                                                                                                                           |
-| cloudSync.clusterKey                      | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                                                                                                                                                                                                                                                               |
-| cloudSync.baseUrl                         | String  | "https://console.thoras.ai"                      | Console base URL. A self-hosted install **must** override this; the default points at Thoras' hosted console and nothing can detect a wrong value.                                                                                                                                                                                                              |
-| cloudSync.joinSecret                      | String  | ""                                               | Register this cluster with the console instead of pinning a key. Requires `cluster.name`. Setting it alongside a cluster key disables cloud sync.                                                                                                                                                                                                                |
-| cloudSync.joinSecretSecretRefName         | String  | ""                                               | Read the join secret from a Secret you manage. Both this and the key field are required.                                                                                                                                                                                                                                                                        |
-| cloudSync.joinSecretSecretRefKey          | String  | ""                                               | Data key holding the join secret.                                                                                                                                                                                                                                                                                                                               |
-| thorasConfigController.enableClusterAutoJoin | Bool | null                                             | Unset derives auto-join from `cloudSync.joinSecret`. Set `false` to stop the outbound call without removing the secret.                                                                                                                                                                                                                                          |
-| queriesPerSecond                          | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                                                                                                                                                                                                                                                                        |
-| nodeSelector                              | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                                                                                                                                                                                                                                                              |
-| tolerations                               | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                                                                                                                                                                                                                                                                |
-| affinity                                  | Object  | {}                                               | Global affinity rules applied to all components (components opt-in by default via useGlobalAffinity)                                                                                                                                                                                                                                                            |
-| rbac.namespaces                           | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead                                                                                                                                                                                                                                            |
-| costRefreshBatching.enabled               | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                                                                                                                                                                                                                                                              |
-| costRefreshBatching.batchSize             | Number  | 200                                              | Number of AST costs to refresh per batch                                                                                                                                                                                                                                                                                                                        |
-| costRefreshBatching.maxConcurrency        | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                                                                                                                                                                                                                                                           |
-| apiClientSecret.enabled                   | Boolean | true                                             | If true, components authenticate to the API server with a shared bearer token                                                                                                                                                                                                                                                                                   |
-| apiClientSecret.secret                    | String  | ""                                               | Shared secret components send to the API server when `apiClientSecret.enabled` is true. Seeded by config-controller if empty. Setting a value overrides any existing value on the next `helm upgrade`. Config-controller rolls consumer workloads automatically (see [rotating secrets](#rotating-secrets)). `apiClientSecret.existingSecret` takes precedence. |
-| apiClientSecret.existingSecret.secretName | String  | ""                                               | Read the API-client secret from this pre-existing externally managed secret. Required key documented below                                                                                                                                                                                                                                                      |
-| apiClientSecret.existingSecret.secretKey  | String  | api-client-secret                                | Key in `apiClientSecret.existingSecret.secretName` that holds the value.                                                                                                                                                                                                                                                                                        |
+| Key                                          | Type    | Default                                          | Description                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------------- | ------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| thorasVersion                                | String  | 4.132.0                                          | Thoras app version                                                                                                                                                                                                                                                                                                                                              |
+| imageCredentials.registry                    | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                                                                                                                                                                                                                                                         |
+| imageCredentials.username                    | String  | \_json_key_base64                                | Container registry username                                                                                                                                                                                                                                                                                                                                     |
+| imageCredentials.password                    | String  | ""                                               | Container registry auth string                                                                                                                                                                                                                                                                                                                                  |
+| resourceQuota.enabled                        | Bool    | false                                            | Enables resource quotas within Thoras                                                                                                                                                                                                                                                                                                                           |
+| resourceQuota.pods                           | Number  | 200                                              | Maximum number of pods allowed                                                                                                                                                                                                                                                                                                                                  |
+| resourceQuota.cronjobs                       | Number  | 200                                              | Maximum number of cronjobs allowed                                                                                                                                                                                                                                                                                                                              |
+| resourceQuota.jobs                           | Number  | 200                                              | Maximum number of jobs allowed                                                                                                                                                                                                                                                                                                                                  |
+| logLevel                                     | String  | info                                             | Default log level                                                                                                                                                                                                                                                                                                                                               |
+| env                                          | list    | []                                               | Additional environment variables that will be passed onto all Thoras components                                                                                                                                                                                                                                                                                 |
+| extraObjects                                 | list    | []                                               | Extra Kubernetes manifests deployed with the release. Entries may be objects or strings and are rendered through `tpl`. See [Extra objects](#extra-objects).                                                                                                                                                                                                    |
+| slackWebhookUrl                              | String  | ""                                               | Slack Webhook URL destination for notifications.                                                                                                                                                                                                                                                                                                                |
+| slackErrorsEnabled                           | Boolean | false                                            | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                                                                                                                                                                                                                    |
+| cloudSync.clusterKeyID                       | String  | ""                                               | Identity of cluster sync key. Cloud sync is disabled if not specified                                                                                                                                                                                                                                                                                           |
+| cloudSync.clusterKey                         | String  | ""                                               | Unique key identifying this cluster to the cloud.                                                                                                                                                                                                                                                                                                               |
+| cloudSync.baseUrl                            | String  | "https://console.thoras.ai"                      | Console base URL. A self-hosted install **must** override this; the default points at Thoras' hosted console and nothing can detect a wrong value.                                                                                                                                                                                                              |
+| cloudSync.joinSecret                         | String  | ""                                               | Register this cluster with the console instead of pinning a key. Requires `cluster.name`. Setting it alongside a cluster key disables cloud sync.                                                                                                                                                                                                               |
+| cloudSync.joinSecretSecretRefName            | String  | ""                                               | Read the join secret from a Secret you manage. Both this and the key field are required.                                                                                                                                                                                                                                                                        |
+| cloudSync.joinSecretSecretRefKey             | String  | ""                                               | Data key holding the join secret.                                                                                                                                                                                                                                                                                                                               |
+| thorasConfigController.enableClusterAutoJoin | Bool    | null                                             | Unset derives auto-join from `cloudSync.joinSecret`. Set `false` to stop the outbound call without removing the secret.                                                                                                                                                                                                                                         |
+| queriesPerSecond                             | String  | "50"                                             | Sets a maximum threshold for K8s API qps                                                                                                                                                                                                                                                                                                                        |
+| nodeSelector                                 | Object  | {}                                               | Node selectors to designate specific nodes to run Thoras workloads                                                                                                                                                                                                                                                                                              |
+| tolerations                                  | Array   | []                                               | Node taint tolerations to be used for to set up Thoras workloads                                                                                                                                                                                                                                                                                                |
+| affinity                                     | Object  | {}                                               | Global affinity rules applied to all components (components opt-in by default via useGlobalAffinity)                                                                                                                                                                                                                                                            |
+| rbac.namespaces                              | Array   | []                                               | List of namespaces used to scope Roles+Bindings for the Thoras apps. If undefined, ClusterRoles will be used instead                                                                                                                                                                                                                                            |
+| costRefreshBatching.enabled                  | Boolean | true                                             | Enables refreshing cost data in concurrent batches                                                                                                                                                                                                                                                                                                              |
+| costRefreshBatching.batchSize                | Number  | 200                                              | Number of AST costs to refresh per batch                                                                                                                                                                                                                                                                                                                        |
+| costRefreshBatching.maxConcurrency           | Number  | 5                                                | Number of concurrent AST cost refresh batches to process concurrently                                                                                                                                                                                                                                                                                           |
+| apiClientSecret.enabled                      | Boolean | true                                             | If true, components authenticate to the API server with a shared bearer token                                                                                                                                                                                                                                                                                   |
+| apiClientSecret.secret                       | String  | ""                                               | Shared secret components send to the API server when `apiClientSecret.enabled` is true. Seeded by config-controller if empty. Setting a value overrides any existing value on the next `helm upgrade`. Config-controller rolls consumer workloads automatically (see [rotating secrets](#rotating-secrets)). `apiClientSecret.existingSecret` takes precedence. |
+| apiClientSecret.existingSecret.secretName    | String  | ""                                               | Read the API-client secret from this pre-existing externally managed secret. Required key documented below                                                                                                                                                                                                                                                      |
+| apiClientSecret.existingSecret.secretKey     | String  | api-client-secret                                | Key in `apiClientSecret.existingSecret.secretName` that holds the value.                                                                                                                                                                                                                                                                                        |
 
 ### Feature Flags
 
 The following flags are considered temporary and gate access to specific behaviors that still undergoing testing before general availability.
 
-| Key                                            | Type    | Default | Description                                                                     |
-| ---------------------------------------------- | ------- | ------- | ------------------------------------------------------------------------------- |
-| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                                             |
-| featureFlags.enablePgLargeObjectStorage        | Boolean | true    | If true, enables storing blobs as postgres large objects                        |
-| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations                                  |
-| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations                       |
-| featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                            |
-| featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs |
-| featureFlags.enableAutonomousReadiness         | Boolean | false   | If true, the dashboard shows the vertical autonomous readiness tab              |
-| featureFlags.enableIdleSpend                   | Boolean | false   | If true, the dashboard shows the idle spend card on the cost tab                |
+| Key                                            | Type    | Default | Description                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| featureFlags.enableLegacySecretSeeding         | Boolean | true    | If true (the default through 5.x), always render the pre-5.0 `api-client-secret` and `thoras-timescale-password` Secrets as migration sources. If false, they render only while a live one is waiting to be migrated, which only `helm upgrade` can detect. Removed in 6.0. See [Legacy Secret Seeding](#legacy-secret-seeding)                                                                                                                |
+| featureFlags.enableNodeDetailsCollector        | Boolean | true    | Collection of node detail snapshots                                                                                                                                                                                                                                                                                                                                            |
+| featureFlags.enableAutoscalerEventCollector    | Boolean | true    | If true, the worker stores Karpenter and Cluster Autoscaler events for node pool insights. Grants the worker cluster-wide read access to Events. When upgrading an existing release, use `--reset-then-reuse-values` rather than `--reuse-values` so this default is applied                                                                                                   |
+| featureFlags.enablePgLargeObjectStorage        | Boolean | true    | If true, enables storing blobs as postgres large objects                                                                                                                                                                                                                                                                                                                       |
+| featureFlags.enableInformersStripManagedFields | Boolean | true    | If true, enables informer memory optimizations                                                                                                                                                                                                                                                                                                                                 |
+| featureFlags.enableTypedInformers              | Boolean | true    | If true, enables additional informer memory optimizations                                                                                                                                                                                                                                                                                                                      |
+| featureFlags.enableAstRecordMirroring          | Boolean | true    | If true, ASTs are mirrored to the database component                                                                                                                                                                                                                                                                                                                           |
+| featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs                                                                                                                                                                                                                                                                                                |
+| featureFlags.enableAutonomousReadiness         | Boolean | false   | If true, the dashboard shows the vertical autonomous readiness tab                                                                                                                                                                                                                                                                                                             |
+| featureFlags.enableIdleSpend                   | Boolean | false   | If true, the dashboard shows the idle spend card on the cost tab                                                                                                                                                                                                                                                                                                               |
+| featureFlags.enableCostAlerts                  | Boolean | false   | If true, the worker checks cost alert rules hourly and posts to `slackWebhookUrl` when a day, week or month's cost goes above a rule's threshold, and the dashboard shows an Alerts tab for managing the rules. Rules on estimated cost work on any install; rules on billed cost need `thorasWorker.enableCostAndUsageCollector` and the `billed_cost` dashboard extra        |
 
 ### NetworkPolicy
 
 | Key                          | Type     | Default     | Description                                                                                                                                                                  |
 | ---------------------------- | -------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | networkPolicy.enabled        | Boolean  | false       | Render per-component network policies                                                                                                                                        |
-| networkPolicy.flavor         | String   | kubernetes  | `kubernetes` renders `networking.k8s.io/v1` `NetworkPolicy`; `cilium` renders `CiliumNetworkPolicy` (`cilium.io/v2`). Any other value fails the render                        |
+| networkPolicy.flavor         | String   | kubernetes  | `kubernetes` renders `networking.k8s.io/v1` `NetworkPolicy`; `cilium` renders `CiliumNetworkPolicy` (`cilium.io/v2`). Any other value fails the render                       |
 | networkPolicy.apiServerPorts | []Number | [443, 6443] | Ports the API server actually listens on (post-DNAT). Used by the `kubernetes` flavor to allow egress to the API. Ignored by the `cilium` flavor. Empty list omits the rule. |
 
 ### Thoras Forecast
@@ -607,22 +815,24 @@ The following flags are considered temporary and gate access to specific behavio
 
 ### Thoras Operator
 
-| Key                                    | Type    | Default         | Description                                                                                                   |
-| -------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------------------------------------------- |
-| thorasOperator.postUpgradeHook.enabled | Boolean | true            | Runs the operator's post-upgrade migration steps as a Job after each upgrade; requires thorasVersion 4.120.0+ |
-| thorasOperator.serviceAccount.name     | String  | thoras-operator | Service account name for Thoras operator pod                                                                  |
-| thorasOperator.podAnnotations          | Object  | {}              | Pod Annotations for Thoras Operator                                                                           |
-| thorasOperator.labels                  | Object  | {}              | Pod/service labels for Thoras Operator                                                                        |
-| thorasOperator.resources               | Object  | {}              | Specify the resources block. Takes precedence if set.                                                         |
-| thorasOperator.limits.memory           | String  | 4Gi             | Legacy field for setting Thoras Operator memory limit                                                         |
-| thorasOperator.requests.cpu            | String  | 100m            | Legacy field for setting Thoras Operator CPU request                                                          |
-| thorasOperator.requests.memory         | String  | 1Gi             | Legacy field for setting Thoras Operator memory request                                                       |
-| thorasOperator.slackErrorsEnabled      | Boolean | false           | Determines if error-level logs are sent to `slackWebHookUrl`                                                  |
-| thorasOperator.logLevel                | String  | Nil             | Logging level                                                                                                 |
-| thorasOperator.queriesPerSecond        | String  | "50"            | Sets a maximum threshold for K8s API qps                                                                      |
-| thorasOperator.prometheus.enabled      | Boolean | true            | Enables a prometheus metric exporter                                                                          |
-| thorasOperator.prometheus.port         | Number  | 9101            | Port for the prometheus metric exporter                                                                       |
-| thorasOperator.pprof.enabled           | Boolean | false           | Enable pprof endpoint.                                                                                        |
+| Key                                                       | Type    | Default                                                                 | Description                                                                                                                                                      |
+| --------------------------------------------------------- | ------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| thorasOperator.pauseStateMigration.argocdInstanceLabelKey | String  | `"app.kubernetes.io/instance"`                                          | Argo CD instance label key to detach when preserving runtime scaling pause state. Match `application.instanceLabelKey` in `argocd-cm` for custom label tracking. |
+| thorasOperator.pauseStateMigration.resources              | Object  | `{"limits":{"memory":"64Mi"},"requests":{"cpu":"10m","memory":"16Mi"}}` | Resources for the scaling pause state migration hook.                                                                                                            |
+| thorasOperator.postUpgradeHook.enabled                    | Boolean | true                                                                    | Runs the operator's post-upgrade migration steps as a Job after each upgrade; requires thorasVersion 4.120.0+                                                    |
+| thorasOperator.serviceAccount.name                        | String  | thoras-operator                                                         | Service account name for Thoras operator pod                                                                                                                     |
+| thorasOperator.podAnnotations                             | Object  | {}                                                                      | Pod Annotations for Thoras Operator                                                                                                                              |
+| thorasOperator.labels                                     | Object  | {}                                                                      | Pod/service labels for Thoras Operator                                                                                                                           |
+| thorasOperator.resources                                  | Object  | {}                                                                      | Specify the resources block. Takes precedence if set.                                                                                                            |
+| thorasOperator.limits.memory                              | String  | 4Gi                                                                     | Legacy field for setting Thoras Operator memory limit                                                                                                            |
+| thorasOperator.requests.cpu                               | String  | 100m                                                                    | Legacy field for setting Thoras Operator CPU request                                                                                                             |
+| thorasOperator.requests.memory                            | String  | 1Gi                                                                     | Legacy field for setting Thoras Operator memory request                                                                                                          |
+| thorasOperator.slackErrorsEnabled                         | Boolean | false                                                                   | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                     |
+| thorasOperator.logLevel                                   | String  | Nil                                                                     | Logging level                                                                                                                                                    |
+| thorasOperator.queriesPerSecond                           | String  | "50"                                                                    | Sets a maximum threshold for K8s API qps                                                                                                                         |
+| thorasOperator.prometheus.enabled                         | Boolean | true                                                                    | Enables a prometheus metric exporter                                                                                                                             |
+| thorasOperator.prometheus.port                            | Number  | 9101                                                                    | Port for the prometheus metric exporter                                                                                                                          |
+| thorasOperator.pprof.enabled                              | Boolean | false                                                                   | Enable pprof endpoint.                                                                                                                                           |
 
 ### External TimescaleDB
 
@@ -635,6 +845,12 @@ must be pre-installed and managed externally.
 | externalTimescale.dsn           | String | ""      | Full postgres DSN including database name, e.g. `postgres://user:pass@host:5432/tsdb?sslmode=require` |
 | externalTimescale.secretRefName | String | ""      | Name of a pre-existing Secret containing the DSN (alternative to `dsn`). Requires `secretRefKey`      |
 | externalTimescale.secretRefKey  | String | ""      | Key within the Secret that holds the DSN. Requires `secretRefName`                                    |
+
+### FIPS
+
+| Key          | Type    | Default | Description                                                                                                                                                                           |
+| ------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fips.enabled | Boolean | false   | Runs the `-fips` image variants and sets `GODEBUG=fips140=on` on Go containers. Requires externalTimescale, cert-manager, and no htpasswd dashboard auth; see [FIPS mode](#fips-mode) |
 
 ### Bundled TimescaleDB TLS
 
@@ -725,30 +941,44 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 
 ### Thoras Worker
 
-| Key                                                  | Type    | Default       | Description                                                                                                                          |
-| ---------------------------------------------------- | ------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| thorasWorker.serviceAccount.name                     | String  | thoras-worker | Service account name for Thoras worker pod                                                                                           |
-| thorasWorker.serviceAccount.annotations              | Object  | {}            | Annotations for the worker service account, e.g. `eks.amazonaws.com/role-arn` for IRSA                                               |
-| thorasWorker.podAnnotations                          | Object  | {}            | Pod Annotations for Thoras worker                                                                                                    |
-| thorasWorker.labels                                  | Object  | {}            | Pod/service labels for Thoras worker                                                                                                 |
-| thorasWorker.resources                               | Object  | {}            | Specify the resources block. Takes precedence if set.                                                                                |
-| thorasWorker.limits.memory                           | String  | 4Gi           | Legacy field for setting Thoras Worker memory limit                                                                                  |
-| thorasWorker.requests.cpu                            | String  | 128m          | Legacy field for setting Thoras Worker CPU request                                                                                   |
-| thorasWorker.requests.memory                         | String  | 1Gi           | Legacy field for setting Thoras Worker memory request                                                                                |
-| thorasWorker.slackErrorsEnabled                      | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl`                                                                         |
-| thorasWorker.forecastRescueMaxAttempts               | Number  | 3             | Times a stuck forecast may be fast-tracked to the head of the queue before it falls back to its normal schedule; -1 disables the cap |
-| thorasWorker.logLevel                                | String  | Nil           | Logging level                                                                                                                        |
-| thorasWorker.queriesPerSecond                        | String  | "50"          | Sets a maximum threshold for K8s API qps                                                                                             |
-| thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                                                                                                 |
-| thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                                                                                              |
-| thorasWorker.enableMetricIntegrityWorker             | Boolean | true          | Enable metric integrity worker                                                                                                       |
-| thorasWorker.enableDeploymentMonitorWorker           | Boolean | true          | Enable deployment monitor worker                                                                                                     |
-| thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction                                                                                      |
-| thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | true          | Enable the unified AST utilization monitor                                                                                           |
-| thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                                                                                              |
-| thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                               |
-| thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. Requires an IRSA role granting `ce:GetCostAndUsage`                   |
-| thorasWorker.costExplorerFilter                      | String  | ""            | Cost allocation tag identifying this cluster's spend, as `TAG_KEY=TAG_VALUE`. Empty resolves the tag from node labels                |
+| Key                                                  | Type    | Default       | Description                                                                                                                                                                     |
+| ---------------------------------------------------- | ------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| thorasWorker.serviceAccount.name                     | String  | thoras-worker | Service account name for Thoras worker pod                                                                                                                                      |
+| thorasWorker.serviceAccount.annotations              | Object  | {}            | Annotations for the worker service account, e.g. `eks.amazonaws.com/role-arn` for IRSA                                                                                          |
+| thorasWorker.podAnnotations                          | Object  | {}            | Pod Annotations for Thoras worker                                                                                                                                               |
+| thorasWorker.labels                                  | Object  | {}            | Pod/service labels for Thoras worker                                                                                                                                            |
+| thorasWorker.resources                               | Object  | {}            | Specify the resources block. Takes precedence if set.                                                                                                                           |
+| thorasWorker.limits.memory                           | String  | 4Gi           | Legacy field for setting Thoras Worker memory limit                                                                                                                             |
+| thorasWorker.requests.cpu                            | String  | 128m          | Legacy field for setting Thoras Worker CPU request                                                                                                                              |
+| thorasWorker.requests.memory                         | String  | 1Gi           | Legacy field for setting Thoras Worker memory request                                                                                                                           |
+| thorasWorker.slackErrorsEnabled                      | Boolean | false         | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                                    |
+| thorasWorker.forecastRescueMaxAttempts               | Number  | 3             | Times a stuck forecast may be fast-tracked to the head of the queue before it falls back to its normal schedule; -1 disables the cap                                            |
+| thorasWorker.logLevel                                | String  | Nil           | Logging level                                                                                                                                                                   |
+| thorasWorker.queriesPerSecond                        | String  | "50"          | Sets a maximum threshold for K8s API qps                                                                                                                                        |
+| thorasWorker.prometheus.enabled                      | Boolean | true          | Enables a prometheus metric exporter                                                                                                                                            |
+| thorasWorker.prometheus.port                         | Number  | 9102          | Port for the prometheus metric exporter                                                                                                                                         |
+| thorasWorker.enableMetricIntegrityWorker             | Boolean | true          | Enable metric integrity worker                                                                                                                                                  |
+| thorasWorker.enableDeploymentMonitorWorker           | Boolean | true          | Enable deployment monitor worker                                                                                                                                                |
+| thorasWorker.maxTimeseriesMetricCacheSizeMb          | Number  | 1000          | Configure cache size that triggers LRU eviction                                                                                                                                 |
+| thorasWorker.enableUnifiedAstUtilizationMonitor      | Boolean | true          | Enable the unified AST utilization monitor                                                                                                                                      |
+| thorasWorker.enableAstViewCacheStateReconcilerWorker | Boolean | true          | Enable view cache state reconciler jobs                                                                                                                                         |
+| thorasWorker.pprof.enabled                           | Boolean | false         | Enable pprof endpoint.                                                                                                                                                          |
+| thorasWorker.enableCostAndUsageCollector             | Boolean | false         | Enable the nightly AWS Cost Explorer cost and usage collector. In per-cluster mode, requires an IRSA or Pod Identity role granting `ce:GetCostAndUsage`, or `sts:AssumeRole` on `costExplorerRoleArn` when that is set                                         |
+| thorasWorker.costExplorerFilter                      | String  | ""            | Cost allocation tag identifying this cluster's spend, as `TAG_KEY=TAG_VALUE`. Empty resolves the tag from node labels                                                           |
+| thorasWorker.enableHourlyCostCollector               | Boolean | false         | Enable hourly AWS Cost Explorer collection for the hourly cost graph. Needs hourly granularity for all AWS services enabled in Cost Explorer preferences, which AWS charges for |
+| thorasWorker.costExplorerRoleArn                     | String  | ""            | Role the Cost Explorer calls assume when billing is only visible from another account, such as the organization's payer. The worker's role needs `sts:AssumeRole` on it, and it needs `ce:GetCostAndUsage`. Queries are then limited to this cluster's account. Empty uses the worker's own credentials |
+| thorasWorker.costExplorerRoleExternalId              | String  | ""            | External ID the role's trust policy requires, if any |
+| thorasWorker.httpsEgressCidrs                       | list    | ["0.0.0.0/0"] | CIDRs the NetworkPolicy lets the worker reach on `443` for Cost Explorer and the console, when it uses either. Empty opens nothing. |
+| thorasWorker.costExplorerMode                        | String  | per-cluster   | `per-cluster` calls Cost Explorer with the worker's AWS credentials. `console` sends each query through the console this cluster syncs to; needs `cloudSync`, a console with `consoleApi.costExplorer.enabled`, and worker and console images from a platform release with console mode; older images ignore this setting |
+| thorasWorker.costExplorerBillingViewArn              | String  | ""            | Custom billing view the collectors read, such as one shared from the management account. Empty reads the primary view. Per-cluster mode only, like the role values. Older worker images ignore this setting |
+| thorasWorker.enableCurIngestion                      | Boolean | false         | Ingest each workload's billed cost every 6h from the organization's AWS CUR 2.0 Data Export (Parquet, hourly, with resource IDs and split cost allocation data). Requires `curBucket` and `curExportName`. With `networkPolicy.enabled`, `thorasWorker.extraEgressRules` must allow HTTPS to S3 and STS |
+| thorasWorker.curBucket                               | String  | ""            | S3 bucket the CUR export delivers to |
+| thorasWorker.curPrefix                               | String  | ""            | S3 path prefix set on the CUR export, if any |
+| thorasWorker.curExportName                           | String  | ""            | Name of the CUR export |
+| thorasWorker.curRegion                               | String  | "us-east-1"   | Region of `curBucket` |
+| thorasWorker.curRoleArn                              | String  | ""            | Role the CUR reads assume, usually in the payer account that owns the bucket. The worker's role needs `sts:AssumeRole` on it, and it needs `s3:ListBucket` and `s3:GetObject` on the export. Empty uses the worker's own credentials |
+| thorasWorker.curRoleExternalId                       | String  | ""            | External ID the CUR role's trust policy requires, if any |
+| thorasWorker.curClusterName                          | String  | ""            | EKS cluster name whose CUR rows to ingest. Empty uses the cluster named by `costExplorerFilter` when it is an `aws:eks:cluster-name` tag, then node labels |
 
 ### Thoras Config Controller
 
@@ -801,6 +1031,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasDashboard.auth.mode                                    | String  | htpasswd                     | `htpasswd` (chart-managed username+password) or `oidc` (OIDC via your IdP). Fields under the unused mode's block are silently ignored                                                                                                                                                                                                                                                                       |
 | thorasDashboard.auth.cookieSecure                            | Bool    | false                        | Marks session cookies as Secure. Recommended enabled in production. Requires TLS at the edge and breaks Safari via `kubectl port-forward`. Applies to both modes                                                                                                                                                                                                                                            |
 | thorasDashboard.auth.imageTag                                | String  | v7.15.4-alpine               | oauth2-proxy sidecar image tag. Applies to both modes                                                                                                                                                                                                                                                                                                                                                       |
+| thorasDashboard.auth.fipsImageTag                            | String  | v7.15.4-fips                 | oauth2-proxy sidecar image tag used instead of `imageTag` when `fips.enabled` is true                                                                                                                                                                                                                                                                                                                       |
 | thorasDashboard.auth.resources                               | Object  | see values.yaml              | oauth2-proxy sidecar resources                                                                                                                                                                                                                                                                                                                                                                              |
 | thorasDashboard.auth.extraArgs                               | List    | []                           | Extra flags appended to the sidecar's `args` verbatim. Applies to both modes. Flags here override any equivalent directive in the chart-generated `oauth2-proxy.cfg`                                                                                                                                                                                                                                        |
 | thorasDashboard.auth.htpasswd.username                       | String  | thoras                       | Login username under `mode: htpasswd`                                                                                                                                                                                                                                                                                                                                                                       |
@@ -834,6 +1065,8 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasDashboard.gatewayAPI.pathType                          | String  | PathPrefix                   | Path type for the HTTPRoute                                                                                                                                                                                                                                                                                                                                                                                 |
 | thorasDashboard.slackErrorsEnabled                           | Boolean | false                        | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                                                                                                                                                                                                                                                                |
 | thorasDashboard.logLevel                                     | String  | Nil                          | Logging level                                                                                                                                                                                                                                                                                                                                                                                               |
+| thorasDashboard.read_only                                    | Bool    | false                        | View-only dashboard: hides write-capable UI features, and nginx answers `403` to API routes that change state |
+| thorasDashboard.ingressSources                               | List    | []                           | Sources allowed to reach the dashboard port, in the syntax of `networkPolicy.flavor`. Requires `networkPolicy.enabled`. See [NetworkPolicy](#networkpolicy) |
 | thorasDashboard.extras                                       | Object  | {}                           | Additional values to be injected into the Thoras Dashboard config                                                                                                                                                                                                                                                                                                                                           |
 
 ### Thoras Monitor
@@ -842,3 +1075,32 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | -------------------- | ------ | ------- | --------------------------------- |
 | thorasMonitor.labels | Object | {}      | Pod labels for Thoras monitor     |
 | thorasMonitor.config | String | ""      | Thoras Monitor configuration yaml |
+
+### Thoras MCP Server
+
+| Key                                      | Type    | Default         | Description                                                                                 |
+| ---------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------------------------- |
+| thorasMcp.enabled                        | Boolean | false           | Runs the Thoras MCP server                                                                  |
+| thorasMcp.mode                           | String  | read-only       | `read-only`, or `read-write` to also expose the tools that change cluster state             |
+| thorasMcp.auth.token                     | String  | ""              | Client bearer token, pinned in `thoras-helm-values`. Seeded by config-controller when empty |
+| thorasMcp.auth.existingSecret.secretName | String  | ""              | Secret holding the client token. Mutually exclusive with `thorasMcp.auth.token`             |
+| thorasMcp.auth.existingSecret.secretKey  | String  | mcp-auth-token  | Key of the client token in that Secret                                                      |
+| thorasMcp.imageTag                       | String  | Nil             | Overrides `thorasVersion` for the MCP server image                                          |
+| thorasMcp.serviceAccount.name            | String  | thoras-mcp      | Service account name for the MCP server pod                                                 |
+| thorasMcp.containerPort                  | Number  | 8080            | MCP server port                                                                             |
+| thorasMcp.host                           | String  | "::"            | Address the MCP server binds to                                                             |
+| thorasMcp.port                           | Number  | 80              | MCP server service port                                                                     |
+| thorasMcp.service.annotations            | Object  | {}              | Annotations for the MCP server service                                                      |
+| thorasMcp.replicas                       | Number  | 1               | Replica count. The server is stateless                                                      |
+| thorasMcp.podAnnotations                 | Object  | {}              | Pod annotations for the MCP server                                                          |
+| thorasMcp.labels                         | Object  | {}              | Pod/service labels for the MCP server                                                       |
+| thorasMcp.pdb.enabled                    | Boolean | true            | Creates a PodDisruptionBudget (`maxUnavailable: 1` unless set)                              |
+| thorasMcp.resources                      | Object  | See values.yaml | Resources block for the MCP server container                                                |
+| thorasMcp.logLevel                       | String  | Nil             | Logging level                                                                               |
+| thorasMcp.requestTimeout                 | String  | ""              | Timeout for each Thoras API request, such as `30s`. Empty keeps the server's default        |
+| thorasMcp.useGlobalAffinity              | Boolean | true            | Applies the global affinity rules                                                           |
+| thorasMcp.affinity                       | Object  | {}              | Component-specific affinity                                                                 |
+| thorasMcp.priorityClassName              | String  | ""              | Component-specific priorityClassName                                                        |
+| thorasMcp.topologySpreadConstraints      | List    | []              | Component-specific topologySpreadConstraints                                                |
+| thorasMcp.extraIngressRules              | List    | []              | Extra ingress rules appended to the MCP server's network policy                             |
+| thorasMcp.extraEgressRules               | List    | []              | Extra egress rules appended to the MCP server's network policy                              |

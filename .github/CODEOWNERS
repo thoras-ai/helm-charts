@@ -1,0 +1,20 @@
+# Only these paths require a person. Keep them in sync with the auto_approvals overrides in .coderabbit.yaml.
+# Members of child teams count as members here, so keep engineering-contractors un-nested.
+
+# CI, the release workflow, the review rules and the hooks developers run
+/.github/ @thoras-ai/engineering-approvers
+/.coderabbit.yaml @thoras-ai/engineering-approvers
+/.pre-commit-config.yaml @thoras-ai/engineering-approvers
+
+# Instructions that coding agents follow
+/.claude/ @thoras-ai/engineering-approvers
+AGENTS.md @thoras-ai/engineering-approvers
+CLAUDE.md @thoras-ai/engineering-approvers
+
+# Merging a version change here cuts a release
+/charts/*/Chart.yaml @thoras-ai/engineering-approvers
+
+# What Thoras may do in a customer's cluster, and resources Helm cannot upgrade cleanly
+/charts/*/templates/crd/ @thoras-ai/engineering-approvers
+/charts/*/templates/*/rbac.yaml @thoras-ai/engineering-approvers
+/charts/*/templates/operator/webhooks*.yaml @thoras-ai/engineering-approvers

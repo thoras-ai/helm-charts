@@ -1,0 +1,3 @@
+{{- if (.Values.thorasMcp).enabled }}
+{{- include "thoras.pdb" (dict "root" . "pdb" .Values.thorasMcp.pdb "name" "thoras-mcp" "app" "thoras-mcp" "labels" .Values.thorasMcp.labels) }}
+{{- end }}

@@ -32,6 +32,8 @@ Default matches snapshot:
             - command:
                 - /app/api-server
               env:
+                - name: SERVICE_SYSTEM_CONFIG_PATH
+                  value: /app/system-config/system-config.yaml
                 - name: DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
@@ -159,10 +161,9 @@ Default matches snapshot:
                   name: monitor-config
                   readOnly: true
                   subPath: config.yaml
-                - mountPath: /app/system-config.yaml
+                - mountPath: /app/system-config
                   name: system-config
                   readOnly: true
-                  subPath: system-config.yaml
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
@@ -182,6 +183,7 @@ Default matches snapshot:
               name: monitor-config
             - configMap:
                 name: thoras-operator-system-config
+                optional: true
               name: system-config
   2: |
     apiVersion: rbac.authorization.k8s.io/v1
@@ -257,14 +259,6 @@ Default matches snapshot:
           - argoproj.io
         resources:
           - rollouts
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - karpenter.sh
-        resources:
-          - nodepools
         verbs:
           - get
           - list
@@ -437,6 +431,15 @@ Default matches snapshot:
           - list
           - watch
       - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+          - nodeclaims
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
           - metrics.k8s.io
         resources:
           - nodes
@@ -489,6 +492,7 @@ Default matches snapshot:
           - get
           - update
           - patch
+          - create
   9: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
@@ -743,7 +747,7 @@ Default matches snapshot:
               command:
                 - /bin/sh
                 - -c
-              image: us-east4-docker.pkg.dev/thoras-registry/platform/alpine:3.23.3
+              image: us-east4-docker.pkg.dev/thoras-registry/platform/alpine:3.24.3
               name: fix-dir-ownership
               resources:
                 limits:
@@ -1150,7 +1154,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
-            checksum/config: 8f45ddd1e56dc770654c063acba71172a7e4ee2f638008ccaaddc2e61067d6bd
+            checksum/config: c7e3d619b113da34ef5f3973537c9bd318a3de04a157010349586e2a38a83589
           labels:
             app: thoras-dashboard
             app.kubernetes.io/name: thoras
@@ -1457,6 +1461,8 @@ Default matches snapshot:
             - command:
                 - /app/operator
               env:
+                - name: SERVICE_SYSTEM_CONFIG_PATH
+                  value: /app/system-config/system-config.yaml
                 - name: THORAS_NS
                   valueFrom:
                     fieldRef:
@@ -1475,6 +1481,10 @@ Default matches snapshot:
                   value: "50"
                 - name: SERVICE_PORT
                   value: "9101"
+                - name: SERVICE_CHART_VERSION
+                  value: 4.7.0
+                - name: SERVICE_PLATFORM_VERSION
+                  value: TEST
                 - name: SERVICE_ENABLE_FORECAST_QUEUE_STATS
                   value: "false"
                 - name: SERVICE_MIN_LOOKBACK_TO_SCALE
@@ -1565,10 +1575,9 @@ Default matches snapshot:
                 periodSeconds: 5
                 timeoutSeconds: 2
               volumeMounts:
-                - mountPath: /app/system-config.yaml
+                - mountPath: /app/system-config
                   name: system-config
                   readOnly: true
-                  subPath: system-config.yaml
                 - mountPath: /tmp/k8s-webhook-server/serving-certs
                   name: tls
                   readOnly: true
@@ -1588,6 +1597,7 @@ Default matches snapshot:
           volumes:
             - configMap:
                 name: thoras-operator-system-config
+                optional: true
               name: system-config
             - name: tls
               secret:
@@ -1669,6 +1679,15 @@ Default matches snapshot:
           - storage.k8s.io
         resources:
           - storageclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+          - nodeclaims
         verbs:
           - get
           - list
@@ -1773,14 +1792,6 @@ Default matches snapshot:
           - argoproj.io
         resources:
           - rollouts
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - karpenter.sh
-        resources:
-          - nodepools
         verbs:
           - get
           - list
@@ -1969,6 +1980,8 @@ Default matches snapshot:
             - command:
                 - /app/worker
               env:
+                - name: SERVICE_SYSTEM_CONFIG_PATH
+                  value: /app/system-config/system-config.yaml
                 - name: DATABASE_HOST
                   valueFrom:
                     secretKeyRef:
@@ -2033,6 +2046,8 @@ Default matches snapshot:
                 - name: SERVICE_POD_ELIGIBILITY_MIN_RUNNING_TIME
                   value: 2m
                 - name: SERVICE_ENABLE_NODE_DETAILS_COLLECTOR
+                  value: "true"
+                - name: SERVICE_ENABLE_AUTOSCALER_EVENT_COLLECTOR
                   value: "true"
                 - name: SERVICE_ENABLE_CHECK_DATABASE_HEALTH
                   value: "true"
@@ -2136,6 +2151,34 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_COST_EXPLORER_FILTER
                   value: ""
+                - name: SERVICE_COST_EXPLORER_ROLE_ARN
+                  value: ""
+                - name: SERVICE_COST_EXPLORER_ROLE_EXTERNAL_ID
+                  value: ""
+                - name: SERVICE_ENABLE_CUR_INGESTION
+                  value: "false"
+                - name: SERVICE_CUR_BUCKET
+                  value: ""
+                - name: SERVICE_CUR_PREFIX
+                  value: ""
+                - name: SERVICE_CUR_EXPORT_NAME
+                  value: ""
+                - name: SERVICE_CUR_REGION
+                  value: us-east-1
+                - name: SERVICE_CUR_ROLE_ARN
+                  value: ""
+                - name: SERVICE_CUR_ROLE_EXTERNAL_ID
+                  value: ""
+                - name: SERVICE_CUR_CLUSTER_NAME
+                  value: ""
+                - name: SERVICE_ENABLE_HOURLY_COST_COLLECTOR
+                  value: "false"
+                - name: SERVICE_COST_EXPLORER_MODE
+                  value: per-cluster
+                - name: SERVICE_COST_EXPLORER_BILLING_VIEW_ARN
+                  value: ""
+                - name: SERVICE_ENABLE_COST_ALERTS
+                  value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -2179,6 +2222,9 @@ Default matches snapshot:
                   name: monitor-config
                   readOnly: true
                   subPath: config.yaml
+                - mountPath: /app/system-config
+                  name: system-config
+                  readOnly: true
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
@@ -2189,6 +2235,10 @@ Default matches snapshot:
             - configMap:
                 name: thoras-monitor-config
               name: monitor-config
+            - configMap:
+                name: thoras-operator-system-config
+                optional: true
+              name: system-config
   37: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -2263,14 +2313,6 @@ Default matches snapshot:
           - argoproj.io
         resources:
           - rollouts
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - karpenter.sh
-        resources:
-          - nodepools
         verbs:
           - get
           - list
@@ -2426,6 +2468,15 @@ Default matches snapshot:
           - list
           - watch
       - apiGroups:
+          - karpenter.sh
+        resources:
+          - nodepools
+          - nodeclaims
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
           - metrics.k8s.io
         resources:
           - nodes
@@ -2536,6 +2587,47 @@ Default matches snapshot:
         name: thoras-worker
         namespace: foo
   47: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-autoscaler-events
+      namespace: foo
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - events
+        verbs:
+          - get
+          - list
+          - watch
+  48: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-worker-autoscaler-events
+      namespace: foo
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-worker-autoscaler-events
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-worker
+        namespace: foo
+  49: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -2549,7 +2641,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: foo
-  48: |
+  50: |
     apiVersion: v1
     kind: Service
     metadata:

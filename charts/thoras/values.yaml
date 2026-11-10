@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.123.0"
+thorasVersion: "4.132.0"
 cluster:
   name: ""
 
@@ -55,6 +55,9 @@ proxy:
 
 featureFlags:
   enableNodeDetailsCollector: true
+  # When enabled, the worker records Karpenter and Cluster Autoscaler events
+  # for node pool insights. Grants the worker cluster-wide read access to Events.
+  enableAutoscalerEventCollector: true
   # When enabled, AST scale mode may be configured via API
   enableUpdateScaleModeApi: false
   # When enabled, the API server serves container logs and the dashboard shows
@@ -67,13 +70,19 @@ featureFlags:
   # When enabled, the dashboard shows the idle spend card on the cost breakdown
   # tab and nginx allows its API route.
   enableIdleSpend: false
+  # When enabled, the worker checks cost alert rules hourly and posts to the
+  # Slack webhook (slackWebhookUrl) when a period's cost goes above a rule's
+  # threshold, and the dashboard shows an Alerts tab for managing the rules.
+  # Rules on estimated cost work on any install; rules on billed cost need
+  # thorasWorker.enableCostAndUsageCollector and the billed_cost dashboard
+  # extra. read_only hides rule editing.
+  enableCostAlerts: false
   thorasManageThoras:
     enabled: true
     # Recommendation Mode by default
     mode: "recommendation"
     # When true, the metrics-collector AST follows `mode` above instead of
-    # being pinned to observation mode. Defaults to false since WAL issues
-    # with metrics-collector autonomous mode are still being resolved.
+    # being pinned to observation mode.
     metricsCollectorFollowsMode: true
     updateMode: "in_place_or_recreate"
     db:
@@ -92,11 +101,16 @@ featureFlags:
   enableAstRecordMirroring: true
   enableForecastCollectorAntiAffinity: false
   enableMultiDimensional: false
-  # Keep rendering the pre-5.0 `api-client-secret` and `thoras-timescale-password`
+  # Render the pre-5.0 `api-client-secret` and `thoras-timescale-password`
   # Secrets so config-controller can migrate their values into
-  # `thoras-config-controller`. Nothing consumes them. Removed in 6.0, which
-  # is why the templates carry helm.sh/resource-policy: keep. See UPGRADE.md >
-  # In Cluster Secret Seeding and Update Monitoring.
+  # `thoras-config-controller`. Nothing consumes them. Stays on by default
+  # through 5.x so an upgrade from 4.x keeps its migration source whatever
+  # renders the chart. Set to false once `thoras-config-controller` carries the
+  # migrated keys: `helm upgrade` then renders them only while a migration is
+  # pending, and Argo CD or `helm template`, which cannot see the cluster, stop
+  # rendering them. Removed in 6.0, which is why the templates carry
+  # helm.sh/resource-policy: keep. See UPGRADE.md > In Cluster Secret Seeding
+  # and Update Monitoring.
   enableLegacySecretSeeding: true
 
 # Shared secret Thoras components send to the API server. Toggled with
@@ -158,6 +172,15 @@ cloudSync:
   joinSecretSecretRefName: ""
   joinSecretSecretRefKey: ""
 
+# FIPS 140-3 mode. Runs the -fips variant of every Thoras image and the
+# oauth2-proxy FIPS image, and sets GODEBUG=fips140=on on Go containers.
+# Requires OIDC dashboard sign-in (or dashboard auth or the dashboard
+# disabled), externalTimescale with a DSN that sets sslmode=verify-full, and
+# thorasOperator.webhookCertGen.certManager.enabled. Needs -fips images, so
+# thorasVersion must be a release that publishes them. See README > "FIPS mode".
+fips:
+  enabled: false
+
 # External TimescaleDB configuration. When set, the chart skips deploying the
 # in-cluster TimescaleDB and configures all components to use the external
 # database instead. The TimescaleDB extension must be pre-installed and managed
@@ -189,6 +212,15 @@ rbac:
 
 thorasOperator:
   replicas: 2
+  pauseStateMigration:
+    # Match application.instanceLabelKey in argocd-cm when using label tracking.
+    argocdInstanceLabelKey: app.kubernetes.io/instance
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        memory: 64Mi
   postUpgradeHook:
     # After each `helm upgrade`, runs a Job that executes the operator's
     # post-upgrade steps: one-off migrations that bring cluster state written by
@@ -202,6 +234,25 @@ thorasOperator:
     # Requires thorasVersion 4.120.0 or newer; earlier images have no
     # `post-upgrade` subcommand and the Job will fail.
     enabled: true
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Used if resources is empty
+    limits:
+      memory: 256Mi
+    # Used if resources is empty
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  preDeleteHook:
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Used if resources is empty
+    limits:
+      memory: 256Mi
+    # Used if resources is empty
+    requests:
+      cpu: 50m
+      memory: 128Mi
   # Overrides for the global `postgresql` connection-pool settings. Any field
   # left unset falls back to the corresponding `postgresql` default.
   postgresql:
@@ -265,6 +316,15 @@ thorasOperator:
   # Webhook certificate generation configuration
   webhookCertGen:
     imageTag: v1.4.4
+    # Specify the complete resources block (takes precedence if set)
+    resources: {}
+    # Used if resources is empty
+    limits:
+      memory: 50Mi
+    # Used if resources is empty
+    requests:
+      cpu: 10m
+      memory: 20Mi
     # When enabled, cert-manager provisions the thoras-tls-certs secret and
     # injects the CA bundle into the webhook configurations. The bundled
     # kube-webhook-certgen Jobs (and their RBAC/NetworkPolicy/registry secret)
@@ -337,7 +397,7 @@ metricsCollector:
   serviceAccount:
     name: thoras-collector
   init:
-    imageTag: "3.23.3"
+    imageTag: "3.24.3"
     # Specify the complete resources block (takes precedence if set)
     resources: {}
     # Legacy field for backward compatibility (used if resources is empty)
@@ -511,7 +571,10 @@ thorasWorker:
   serviceAccount:
     name: thoras-worker
     # Set eks.amazonaws.com/role-arn here to give enableCostAndUsageCollector
-    # an IRSA role. The role needs ce:GetCostAndUsage.
+    # an IRSA role in per-cluster mode. The role needs ce:GetCostAndUsage, or
+    # sts:AssumeRole on costExplorerRoleArn when that is set. For enableCurIngestion
+    # it needs s3:ListBucket and s3:GetObject on the export, or sts:AssumeRole on
+    # curRoleArn when that is set.
     annotations: {}
   podAnnotations: {}
   labels: {}
@@ -548,12 +611,56 @@ thorasWorker:
   enableAnalysisEnqueuer: false
   analysisEnqueueInterval: "1h"
   # Nightly AWS Cost Explorer collection. The pod reaches Cost Explorer with
-  # whatever AWS credentials it picks up, so give serviceAccount.annotations an
-  # IRSA role before enabling this. Each query is billed by AWS.
+  # whatever AWS credentials it picks up, so give it an IRSA role
+  # (serviceAccount.annotations) or an EKS Pod Identity association before
+  # enabling this. Each query is billed by AWS.
   enableCostAndUsageCollector: false
   # Cost allocation tag identifying this cluster's spend, as TAG_KEY=TAG_VALUE.
   # Empty resolves the tag from node labels.
   costExplorerFilter: ""
+  # Hourly AWS Cost Explorer collection, for the hourly cost graph. Uses the same
+  # IRSA role and filter as above, and needs "Cost and usage data for all AWS
+  # services at hourly granularity" enabled in Cost Explorer preferences, which
+  # AWS charges for. Without it each run logs a warning and stores nothing.
+  enableHourlyCostCollector: false
+  # Role the Cost Explorer calls assume, for billing visible only from another
+  # account such as the organization's payer. The worker's own role needs
+  # sts:AssumeRole on it; it must trust that role and allow ce:GetCostAndUsage.
+  # Queries are then limited to this cluster's account. Empty uses the worker's
+  # own credentials.
+  costExplorerRoleArn: ""
+  # External ID the role's trust policy requires, if any.
+  costExplorerRoleExternalId: ""
+  # Where the cost collectors send Cost Explorer queries. per-cluster calls
+  # Cost Explorer with this pod's AWS credentials. console sends each query
+  # through the console this cluster syncs to, which runs it with its own role,
+  # limited to this cluster's tag and account; it needs cloudSync and a console
+  # with consoleApi.costExplorer.enabled, and no AWS role on this cluster.
+  costExplorerMode: per-cluster
+  # Custom billing view ARN the collectors read, such as one shared from the
+  # management account. Empty reads the primary view. This, costExplorerRoleArn
+  # and costExplorerRoleExternalId apply to per-cluster mode only; console mode
+  # fails the render with any of them set, as the console sets its own.
+  costExplorerBillingViewArn: ""
+  # Ingest each workload's billed cost from the organization's CUR 2.0 export
+  # (Parquet, hourly, with resource IDs and split cost allocation data). With
+  # networkPolicy.enabled, extraEgressRules must allow HTTPS to S3 and STS.
+  enableCurIngestion: false
+  # The export delivers to s3://<curBucket>/<curPrefix>/<curExportName>/;
+  # curBucket and curExportName are required when ingestion is enabled.
+  curBucket: ""
+  curPrefix: ""
+  curExportName: ""
+  curRegion: "us-east-1"
+  # Role S3 reads assume, usually the payer's. The worker's role needs
+  # sts:AssumeRole on it; it must trust that role and allow s3:ListBucket and
+  # s3:GetObject on the export. Empty uses the worker's own credentials.
+  curRoleArn: ""
+  # External ID the role's trust policy requires, if any.
+  curRoleExternalId: ""
+  # EKS cluster name whose rows to ingest. Empty uses the cluster named by
+  # costExplorerFilter when it is an aws:eks:cluster-name tag, then node labels.
+  curClusterName: ""
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it
@@ -569,6 +676,13 @@ thorasWorker:
   priorityClassName: ""
   # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
   topologySpreadConstraints: []
+  # -- Where the NetworkPolicy lets the worker reach :443 for Cost Explorer and the
+  # console, when it uses either. Add ::/0 for an IPv6 console or dual-stack AWS
+  # endpoints. Empty opens nothing, leaving it to extraEgressRules. The kubernetes
+  # flavor's apiServerPorts allow their ports to any address, 443 by default, so
+  # narrowing this there also takes 443 out of apiServerPorts.
+  httpsEgressCidrs:
+    - 0.0.0.0/0
   extraEgressRules: []
   extraIngressRules: []
 
@@ -712,6 +826,8 @@ thorasDashboard:
     # Fields under the unused mode's block are silently ignored.
     mode: htpasswd
     imageTag: v7.15.4-alpine
+    # oauth2-proxy tag used instead of imageTag when fips.enabled is true.
+    fipsImageTag: v7.15.4-fips
     # Marks session cookies as Secure. Enabling requires TLS at the edge and
     # breaks Safari when reaching the dashboard through kubectl port-forward.
     # Recommended in production: enable this and terminate TLS at the edge.
@@ -811,6 +927,11 @@ thorasDashboard:
       - thoras.local
     path: /
     pathType: PathPrefix
+  # When true, the dashboard is view-only: it hides write-capable UI features
+  # (onboarding, scaling pause, mode switching, cost alert editing) and nginx
+  # answers 403 to the API routes that change state. Cost settings edits are not
+  # saved, and that page still shows its inputs.
+  read_only: false
   extras:
     show_savings: true
     cost_analysis: true
@@ -835,6 +956,15 @@ thorasDashboard:
   priorityClassName: ""
   # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
   topologySpreadConstraints: []
+  # Sources allowed to reach the dashboard port. Requires networkPolicy.enabled
+  # and a CNI that enforces the policy. Empty keeps the default policy. When set,
+  # only these sources are allowed, including from the release namespace, so list
+  # whatever fronts the dashboard (ingress controller, gateway, load balancer
+  # addresses). Entries use the syntax of networkPolicy.flavor:
+  #   kubernetes: NetworkPolicy peers (namespaceSelector, podSelector, ipBlock)
+  #   cilium: CiliumNetworkPolicy from-fields (fromEndpoints, fromCIDR, fromEntities)
+  # thorasDashboard.extraIngressRules is still appended to the policy.
+  ingressSources: []
   extraEgressRules: []
   extraIngressRules: []
   extraContainers: []
@@ -928,6 +1058,64 @@ thorasForecast:
   extraEgressRules: []
   extraIngressRules: []
 
+thorasMcp:
+  # Runs the Thoras MCP server, which lets MCP clients such as AI assistants
+  # work with Thoras over Streamable HTTP at /mcp on the thoras-mcp Service.
+  # Clients send the token below as `Authorization: Bearer <token>`.
+  enabled: false
+  # read-only, or read-write to also expose the tools that change cluster
+  # state: scale modes, pausing scaling, and enrolling workloads.
+  mode: read-only
+  auth:
+    # Bearer token MCP clients must send. Seeded by config-controller when
+    # empty. Set a value to pin it in `thoras-helm-values` instead;
+    # thorasMcp.auth.existingSecret takes precedence over both. When a pinned
+    # value changes, config-controller rolls the MCP server automatically. See
+    # README > "Rotating secrets".
+    token: ""
+    # Point at a pre-existing Secret you manage. Mutually exclusive with
+    # thorasMcp.auth.token.
+    existingSecret:
+      secretName: ""
+      secretKey: mcp-auth-token
+  serviceAccount:
+    name: thoras-mcp
+  containerPort: 8080
+  # Address the server binds to. Defaults to the dual-stack wildcard so it's
+  # reachable on both IPv4-only and IPv6-only clusters.
+  host: "::"
+  port: 80
+  service:
+    annotations: {}
+  replicas: 1
+  podAnnotations: {}
+  labels: {}
+  # PodDisruptionBudget. Defaults to maxUnavailable: 1 when neither field is set
+  # below. minAvailable takes precedence if both are set.
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+    # minAvailable:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  logLevel: ""
+  # Timeout for each api-server request, such as "30s". Empty keeps the server's default.
+  requestTimeout: ""
+  # Set to true to apply global affinity rules to this component
+  useGlobalAffinity: true
+  # Component-specific affinity (merged with global if useGlobalAffinity is true)
+  affinity: {}
+  # Component-specific priorityClassName (takes precedence over the global priorityClassName)
+  priorityClassName: ""
+  # Component-specific topologySpreadConstraints (replaces the global list when non-empty)
+  topologySpreadConstraints: []
+  extraEgressRules: []
+  extraIngressRules: []
+
 # K8s client max queries per second
 queriesPerSecond: "50"
 
@@ -978,3 +1166,7 @@ utilizationThresholds:
   overprovisioned: 60
   underprovisioned: 92
   idle: 5
+
+# -- Extra Kubernetes manifests to deploy with the release. Each entry is an
+# object or a string; both are rendered through `tpl`.
+extraObjects: []

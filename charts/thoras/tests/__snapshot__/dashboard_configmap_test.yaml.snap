@@ -25,9 +25,11 @@ Should default to v2 port:
           # GET — reads
           ~*^GET/v1/ast(\?|$)                                                       1;
           ~*^GET/v1/ast/[^/]+/[^/]+(\?|$)                                           1;
+          ~*^GET/v1/ast/[^/]+/[^/]+/actuation-events(/[^/?]+)?(\?|$)                1;
           ~*^GET/v1/ast/[^/]+/[^/]+/pods(\?|$)                                      1;
           ~*^GET/v1/ast/[^/]+/[^/]+/metrics/current(\?|$)                           1;
           ~*^GET/v1/ast/[^/]+/[^/]+/suggestions(\?|$)                               1;
+          ~*^GET/v1/ast/[^/]+/[^/]+/utilization/daily(\?|$)                         1;
           ~*^GET/v1/cost-savings/settings(\?|$)                                     1;
           ~*^GET/v1/export(\?|$)                                                    1;
           ~*^GET/v1/instance-costs/current(\?|$)                                    1;
@@ -54,6 +56,11 @@ Should default to v2 port:
           ~*^GET/v1/pods/[^/]+/[^/]+/logs(\?|$)                                     1;
           ~*^GET/v1/persistent-volumes(\?|$)                                        1;
           ~*^GET/v1/cost/daily(\?|$)                                                1;
+          ~*^GET/v1/cost/hourly(\?|$)                                               1;
+          ~*^GET/v1/cost/asts(\?|$)                                                 1;
+          ~*^GET/v1/cost/asts/daily(\?|$)                                           1;
+          ~*^GET/v1/cost/asts/hourly(\?|$)                                          1;
+          ~*^GET/v1/cost/cur/status(\?|$)                                           1;
 
 
           # POST — dashboard-initiated mutations
@@ -99,7 +106,7 @@ Should default to v2 port:
 
           location /config.json {
               default_type application/json;
-              return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true, "enableUpdateScaleModeApi": false, "enablePodLogStreaming": false, "enableAutonomousReadiness": false, "enableIdleSpend": false}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"enable_change_highlighting":false,"enable_scaling_pause":true,"highlight_cpu_change_above_millicores":50,"highlight_memory_change_above_mib":100,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
+              return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true, "enableUpdateScaleModeApi": false, "enablePodLogStreaming": false, "enableAutonomousReadiness": false, "enableIdleSpend": false, "enableCostAlerts": false}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"enable_change_highlighting":false,"enable_scaling_pause":true,"highlight_cpu_change_above_millicores":50,"highlight_memory_change_above_mib":100,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
           }
 
           location / {
@@ -145,9 +152,11 @@ should set extras in config.json:
           # GET — reads
           ~*^GET/v1/ast(\?|$)                                                       1;
           ~*^GET/v1/ast/[^/]+/[^/]+(\?|$)                                           1;
+          ~*^GET/v1/ast/[^/]+/[^/]+/actuation-events(/[^/?]+)?(\?|$)                1;
           ~*^GET/v1/ast/[^/]+/[^/]+/pods(\?|$)                                      1;
           ~*^GET/v1/ast/[^/]+/[^/]+/metrics/current(\?|$)                           1;
           ~*^GET/v1/ast/[^/]+/[^/]+/suggestions(\?|$)                               1;
+          ~*^GET/v1/ast/[^/]+/[^/]+/utilization/daily(\?|$)                         1;
           ~*^GET/v1/cost-savings/settings(\?|$)                                     1;
           ~*^GET/v1/export(\?|$)                                                    1;
           ~*^GET/v1/instance-costs/current(\?|$)                                    1;
@@ -174,6 +183,11 @@ should set extras in config.json:
           ~*^GET/v1/pods/[^/]+/[^/]+/logs(\?|$)                                     1;
           ~*^GET/v1/persistent-volumes(\?|$)                                        1;
           ~*^GET/v1/cost/daily(\?|$)                                                1;
+          ~*^GET/v1/cost/hourly(\?|$)                                               1;
+          ~*^GET/v1/cost/asts(\?|$)                                                 1;
+          ~*^GET/v1/cost/asts/daily(\?|$)                                           1;
+          ~*^GET/v1/cost/asts/hourly(\?|$)                                          1;
+          ~*^GET/v1/cost/cur/status(\?|$)                                           1;
 
 
           # POST — dashboard-initiated mutations
@@ -219,7 +233,7 @@ should set extras in config.json:
 
           location /config.json {
               default_type application/json;
-              return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true, "enableUpdateScaleModeApi": false, "enablePodLogStreaming": false, "enableAutonomousReadiness": false, "enableIdleSpend": false}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"enable_change_highlighting":false,"enable_scaling_pause":true,"feature":true,"foo":"bar","highlight_cpu_change_above_millicores":50,"highlight_memory_change_above_mib":100,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
+              return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true, "enableUpdateScaleModeApi": false, "enablePodLogStreaming": false, "enableAutonomousReadiness": false, "enableIdleSpend": false, "enableCostAlerts": false}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"enable_change_highlighting":false,"enable_scaling_pause":true,"feature":true,"foo":"bar","highlight_cpu_change_above_millicores":50,"highlight_memory_change_above_mib":100,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
           }
 
           location / {

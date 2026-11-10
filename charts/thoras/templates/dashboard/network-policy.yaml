@@ -1,5 +1,9 @@
+{{- /* Resolved before the guard so sources set without networkPolicy.enabled fail the render. */}}
+{{- $sources := include "thoras.dashboard.ingressSources" . | fromJsonArray }}
 {{- if and .Values.networkPolicy.enabled .Values.thorasDashboard.enabled }}
 {{- $flavor := include "thoras.networkPolicyFlavor" . }}
+{{- /* A Service can target a sidecar instead of containerPort, so the sources apply to the port it targets. */}}
+{{- $sourcePort := .Values.thorasDashboard.service.targetPort | default .Values.thorasDashboard.containerPort }}
 {{- if eq $flavor "kubernetes" }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -16,6 +20,14 @@ spec:
   - Ingress
   - Egress
   ingress:
+  {{- if $sources }}
+  # Only thorasDashboard.ingressSources reach the dashboard port.
+  - from:
+    {{- toYaml $sources | nindent 4 }}
+    ports:
+    - port: {{ $sourcePort }}
+      protocol: TCP
+  {{- else }}
   # Allow all ingress from pods within the same namespace
   - from:
     - podSelector: {}
@@ -25,6 +37,7 @@ spec:
   - ports:
     - port: {{ .Values.thorasDashboard.containerPort }}
       protocol: TCP
+  {{- end }}
   {{- with .Values.thorasDashboard.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -72,6 +85,16 @@ spec:
     matchLabels:
       app: thoras-dashboard
   ingress:
+  {{- if $sources }}
+  # Only thorasDashboard.ingressSources reach the dashboard port.
+  {{- range $sources }}
+  - {{- toYaml . | nindent 4 }}
+    toPorts:
+    - ports:
+      - port: "{{ $sourcePort }}"
+        protocol: TCP
+  {{- end }}
+  {{- else }}
   # Allow all ingress from endpoints within the same namespace
   - fromEndpoints:
     - {}
@@ -84,6 +107,7 @@ spec:
     - ports:
       - port: "{{ .Values.thorasDashboard.containerPort }}"
         protocol: TCP
+  {{- end }}
   {{- with .Values.thorasDashboard.extraIngressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}

@@ -141,10 +141,12 @@ tests:
 
   # --- Collector Secret ---
 
-  - it: Should store external host in secret when host is set
+  - it: Should store external host in secret when legacy seeding is on
     templates:
       - collector/secret.yaml
     set:
+      featureFlags:
+        enableLegacySecretSeeding: true
       externalTimescale:
         dsn: "postgres://user:pass@ext-db:5432/tsdb"
     asserts:

@@ -45,7 +45,7 @@ spec:
       - name: {{ .Values.imageCredentials.secretRef }}
       {{- end }}
       containers:
-      - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ default .Values.thorasVersion .Values.thorasForecast.imageTag }}
+      - image: {{ .Values.imageCredentials.registry }}/thoras-forecast:{{ include "thoras.imageTag" (dict "root" . "tag" .Values.thorasForecast.imageTag) }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         name: thoras-forecast-worker
         securityContext:

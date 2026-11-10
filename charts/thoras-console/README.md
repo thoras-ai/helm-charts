@@ -4,7 +4,7 @@ The Thoras console is where your clusters report in. This Helm chart installs a
 self-hosted [Thoras](https://www.thoras.ai) console onto Kubernetes, as an
 alternative to the hosted console at `console.thoras.ai`.
 
-![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![AppVersion: 4.123.0](https://img.shields.io/badge/AppVersion-4.123.0-informational?style=flat-square)
+![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![AppVersion: 4.132.0](https://img.shields.io/badge/AppVersion-4.132.0-informational?style=flat-square)
 
 The chart installs the console dashboard, `console-api`, a `config-controller`
 that generates any credential you do not supply, and — for evaluation only — a
@@ -241,8 +241,12 @@ helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
 On its first sync the cluster registers under that name and receives a key of
 its own. From then on it sends data with that key, like any other cluster:
 
-- The join secret is only used to register. Revoking one cluster's key works as
-  usual, and rotating the join secret does not affect clusters already joined.
+- The join secret is only used to register. Rotating it does not affect clusters
+  already joined, and does not cancel keys they hold.
+- A cluster joins once. Once its key has been used or revoked, or the cluster has
+  been deleted, the console refuses that cluster's joins with a 409 until you
+  [allow the rejoin](#allowing-a-rejoin). Before its key is first used, a repeat
+  join succeeds, which covers a lost response.
 - Renaming a cluster in the dashboard sticks: later upgrades don't rename it
   back.
 - Two clusters can't register under the same name. The second is refused until
@@ -250,6 +254,58 @@ its own. From then on it sends data with that key, like any other cluster:
 
 Requires `consoleApi.singleOrg.enabled`, the default: a joining cluster presents
 no user identity, so the organization has to be implicit.
+
+### Removing a cluster whose credentials were stolen
+
+Every joined cluster keeps the join secret and its own install ID, and anyone who
+can read its Secrets has both. Do these in order:
+
+1. [Rotate the join secret](#rotating-secrets) and set the new value on the
+   clusters you keep. Until you do, the secret can still register new clusters.
+2. In the dashboard, open **Keys** for the cluster and **Revoke** every key, or
+   delete the cluster.
+
+The stolen cluster's install ID can't rejoin afterwards, even with the old secret.
+Clusters that have already joined keep working: they send data with their own keys
+and only read the join secret to register.
+
+### Allowing a rejoin
+
+Deleting a cluster's key doesn't make it rejoin the same console: the console
+refuses with a 409 and the cluster stops reporting. If you meant to do it, or you
+are bringing back a deleted cluster, allow one rejoin. If its credentials may have
+been stolen, follow the steps above first, because whoever joins next gets the key.
+
+Read the install ID from the cluster:
+
+```
+kubectl get secret thoras-config-controller -n thoras \
+  -o jsonpath='{.data.cloud-sync-install-id}' | base64 -d; echo
+```
+
+Revoke any old key still in use first: a key in use blocks the install again
+within a minute. Then clear the block, using a [bearer token](#quick-start) with
+`write:clusters` and your organization's ID:
+
+```
+curl -i -X DELETE -H "Authorization: Bearer $TOKEN" \
+  https://console-api.example.com/api/v1/organizations/<organization ID>/cluster-join-blocks/<install ID>
+```
+
+A 204 means it can join; a 404 means nothing was blocking it.
+
+The cluster still holds the key it was given and never joins while it has one, so
+delete it from the cluster's config-controller Secret:
+
+```
+kubectl patch secret thoras-config-controller -n thoras --type=json -p \
+  '[{"op":"remove","path":"/data/cloud-sync-cluster-key"},
+    {"op":"remove","path":"/data/cloud-sync-cluster-key-id"}]'
+```
+
+The cluster joins on its next reconcile and gets a new key, under the same
+cluster, or a new one if the old one was deleted. The block returns when the new
+key is first used.
 
 ### Moving a cluster from another console
 
@@ -293,7 +349,9 @@ helm upgrade thoras thoras/thoras -n thoras --reset-then-reuse-values \
 ```
 
 A cluster that joined its old console keeps the key that console gave it, and
-never joins again while it has one. Delete that key so it joins here:
+never joins again while it has one. Delete that key so it joins here. The block is
+per console, so this one accepts it; moving back to the old console later needs
+[a rejoin allowed](#allowing-a-rejoin) there:
 
 ```
 kubectl patch secret thoras-config-controller -n thoras --type=json -p \
@@ -465,6 +523,24 @@ restarting it does not change that. So the database is excluded from
 config-controller's restarts, and regenerating `postgres-password` does not
 change the password it accepts — see [Rotating secrets](#rotating-secrets).
 
+##### Keeping Karpenter from moving the bundled database
+
+The chart doesn't protect the bundled database from Karpenter by default. On a
+Karpenter cluster, consolidation and drift can move the single replica, and
+`console-api` is down until the volume reattaches. To stop this, set:
+
+```yaml
+bundledDatabase:
+  podAnnotations:
+    karpenter.sh/do-not-disrupt: "true"
+```
+
+Setting it restarts the database once, and has these trade-offs:
+
+- Drift no longer moves the database, so its node stays on the old AMI until you replace the node by hand. Restarting the pod alone is not enough.
+- Karpenter won't evict the pod when draining its node, so a spot interruption stops the database uncleanly. Use on-demand capacity through `bundledDatabase.affinity`.
+- A node past `expireAfter` stays up until the pod goes, and can use up the NodePool's disruption budget. Use a NodePool with `expireAfter: Never`, or set `terminationGracePeriod`, which also lets drift move the database.
+
 #### External database
 
 Put the DSN, including the database name, in a Secret and point the chart at
@@ -608,6 +684,71 @@ fetched from the address you give.
   `scope` string claim. Okta puts them in an `scp` list instead, and Dex can't
   issue custom scopes, so every call would return 403.
 
+### AWS Cost Explorer
+
+A tenant cluster whose worker sets `thorasWorker.costExplorerMode: console`
+sends its Cost Explorer queries here instead of calling AWS itself, so only the
+console needs an AWS role. console-api limits each query to the cluster's
+approved cost allocation tag and the account that tag bills to. It requires
+`consoleApi.singleOrg.enabled`, the default; the chart refuses to render without
+it.
+
+A cluster's first report is approved automatically only when the tag is
+`aws:eks:cluster-name` and no other live cluster holds that value. Any other
+first report, such as a `user:team` tag or a second cluster with the same name,
+and any later change wait for approval by a user with `write:clusters`.
+
+A cluster can still claim an EKS name before the real cluster reports it. The
+real cluster then waits for approval, so check who holds a tag before approving
+it. To review approvals and shared tags, and to remove an approval that shouldn't
+have been given:
+
+```bash
+# How each cluster's tag was approved, and which clusters share it.
+curl "$CONSOLE/api/v1/organizations/$ORG_ID/cost-targets" -H "Authorization: Bearer $TOKEN"
+# Removes the approval. Reports from the cluster do not restore it.
+curl -X DELETE "$CONSOLE/api/v1/organizations/$ORG_ID/clusters/$CLUSTER_ID/cost-target/approval" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Where you can, read a custom billing view filtered to your clusters'
+`aws:eks:cluster-name` values rather than to whole accounts, so that the most any
+tag can reach is the spend of those clusters. Set it with
+`consoleApi.costExplorer.billingViewArn`, and update the view when you add a
+cluster.
+
+```yaml
+consoleApi:
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111111111111:role/thoras-console
+  costExplorer:
+    enabled: true
+    # Optional: assume a role in the payer account before each call.
+    roleArn: arn:aws:iam::222222222222:role/thoras-cost-explorer
+    externalId: thoras-console
+```
+
+The credentials console-api ends up with need `ce:GetCostAndUsage` and
+`ce:GetDimensionValues`. Proxied queries are rate limited per replica; see
+`consoleApi.costExplorer` under [Values](#console-api).
+
+Console mode needs a `consoleVersion` and each cluster's `thorasVersion` from a
+platform release that has it. Older console images don't serve these queries,
+and older workers ignore `costExplorerMode` and keep calling AWS themselves.
+
+With `networkPolicy.enabled`, console-api can reach any IPv4 address on port 443
+so that it can reach AWS. To narrow that, for example to a VPC endpoint for Cost
+Explorer, set `consoleApi.httpsEgressCidrs`. `extraEgressRules` can't narrow it,
+because rules only add to each other. Add `::/0` if you set
+`AWS_USE_DUALSTACK_ENDPOINT`. console-api can also reach the EKS Pod Identity
+agent at `169.254.170.23:80`.
+
+To show billed cost in the console, set
+`consoleDashboard.extras.billed_cost: true`. The Billed cost tab shows what
+clusters forward with cloud sync on, whichever mode they collect in. The
+deprecated `cluster_daily_cost` key still works.
+
 ### NetworkPolicy
 
 Set `networkPolicy.enabled: true` to render a policy per component.
@@ -644,7 +785,8 @@ name a host whose address may change:
 
 - port 5432 to any address, from `console-api`, when the database is external
 - port 443 to any address, from `console-api`, in `oidc` or `both` mode, to fetch
-  the provider's signing keys
+  the provider's signing keys, and with `consoleApi.costExplorer.enabled`, to
+  reach AWS
 
 Every component accepts `extraIngressRules` and `extraEgressRules`, appended
 verbatim to both flavors. That is where to narrow the two rules above to a CIDR,
@@ -718,6 +860,10 @@ The chart follows semantic versioning. A major version may rename or remove
 values, a minor version only adds them, and a patch version only fixes. Read the
 release notes before a major upgrade, and pin the chart version in production
 by passing `--version` to `helm install` and `helm upgrade`.
+
+With the `cilium` NetworkPolicy flavor, console-api's :443 egress now follows
+`consoleApi.httpsEgressCidrs`, which is IPv4-only by default. An IPv6-only
+identity provider needs `::/0` added there.
 
 Each chart version pins the console images it was released with, so upgrading
 the chart upgrades the console. If you set `consoleVersion` yourself, it stays
@@ -875,8 +1021,10 @@ kubectl logs deploy/thoras-worker -n thoras | grep -i sync
 ```
 
 A rejected sync appears as `failed to flush sync payloads … 401`. The worker
-still logs `cloud sync completed successfully` alongside it, so check the
-console's **Last ingest** rather than that line.
+also logs `cloud sync to the console is failing`, with the error and how many
+payloads were dropped. Older workers log `cloud sync completed successfully`
+even when the console rejected the data, so on those check the console's
+**Last ingest** rather than that line.
 
 **A tenant cluster never reports, and its worker logs show `403` from nginx.**
 `cloudSync.baseUrl` points at the dashboard address, which refuses ingest by
@@ -901,7 +1049,9 @@ kubectl annotate aiscaletargets --all -A thoras.ai/cloud-sync-generation-
 
 **A cluster that joins by itself never appears in the dashboard.** Read the
 tenant cluster's config-controller logs for `console refused the cluster join`.
-A 401 means the join secret is wrong; a 409 means another cluster already has
+A 401 means the join secret is wrong; a 409 means the cluster's join is
+[blocked](#allowing-a-rejoin), which `console-api` logs as `refused cluster join`,
+or another cluster already has
 that `cluster.name`.
 
 **A restore left clusters missing, or the database unreadable.** It was restored
@@ -924,7 +1074,7 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 
 | Key                             | Type   | Default                                          | Description                                                |
 | ------------------------------- | ------ | ------------------------------------------------ | ---------------------------------------------------------- |
-| consoleVersion                  | String | 4.123.0                                          | Image tag for the console components. Defaults to the release this chart version ships with |
+| consoleVersion                  | String | 4.132.0                                          | Image tag for the console components. Defaults to the release this chart version ships with |
 | imageCredentials.registry       | String | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                    |
 | imageCredentials.username       | String | \_json_key_base64                                | Container registry username                                |
 | imageCredentials.password       | String | ""                                               | License key. Mutually exclusive with secretRef             |
@@ -990,6 +1140,13 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | consoleApi.gatewayAPI.path                   | String | /                    | Path to match                                                    |
 | consoleApi.gatewayAPI.pathType               | String | PathPrefix           | Match type                                                       |
 | consoleApi.serviceAccount.name               | String | thoras-console-api   | ServiceAccount name                                              |
+| consoleApi.serviceAccount.annotations        | object | {}                   | ServiceAccount annotations, e.g. `eks.amazonaws.com/role-arn`    |
+| consoleApi.costExplorer.enabled              | Bool   | false                | Run Cost Explorer queries for clusters in console mode. Requires singleOrg |
+| consoleApi.costExplorer.roleArn              | String | ""                   | Role to assume before calling Cost Explorer                      |
+| consoleApi.costExplorer.externalId           | String | ""                   | External ID passed when assuming roleArn                         |
+| consoleApi.costExplorer.billingViewArn       | String | ""                   | Custom billing view set on every query                           |
+| consoleApi.costExplorer.requestsPerMinute    | Number | 300                  | All clusters, per replica, including account lookups. Zero is unlimited |
+| consoleApi.costExplorer.burst                | Number | 20                   | Overall burst above that rate                                    |
 | consoleApi.service.annotations               | object | {}                   | Annotations on the Service                                       |
 | consoleApi.labels                            | object | {}                   | Component labels                                                 |
 | consoleApi.podAnnotations                    | object | {}                   | Component pod annotations                                        |
@@ -1010,6 +1167,7 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | consoleApi.affinity                          | object | {}                   | Component affinity                                               |
 | consoleApi.priorityClassName                 | String | ""                   | Takes precedence over the global priority class                  |
 | consoleApi.topologySpreadConstraints         | list   | []                   | Replaces the global list when non-empty                          |
+| consoleApi.httpsEgressCidrs                  | list   | ["0.0.0.0/0"]        | CIDRs the NetworkPolicy lets console-api reach on :443 for OIDC and Cost Explorer. Empty opens none |
 | consoleApi.extraEgressRules                  | list   | []                   | Appended verbatim to both NetworkPolicy flavors                  |
 | consoleApi.extraIngressRules                 | list   | []                   | Appended verbatim to both NetworkPolicy flavors                  |
 
@@ -1110,7 +1268,7 @@ otherwise the chart fails to render, because nothing else creates the Secret.
 | bundledDatabase.persistence.storageClassName | String | ""                | Empty uses the cluster default                                                                                                                                     |
 | bundledDatabase.serviceAccount.name          | String | thoras-console-db | ServiceAccount name                                                                                                                                                |
 | bundledDatabase.labels                       | object | {}                | Component labels                                                                                                                                                   |
-| bundledDatabase.podAnnotations               | object | {}                | Component pod annotations                                                                                                                                          |
+| bundledDatabase.podAnnotations               | object | {}                | Component pod annotations. See "Keeping Karpenter from moving the bundled database" |
 | bundledDatabase.useGlobalAffinity            | Bool   | false             | Merge the global affinity into this component's                                                                                                                    |
 | bundledDatabase.affinity                     | object | {}                | Component affinity                                                                                                                                                 |
 | bundledDatabase.priorityClassName            | String | ""                | Takes precedence over the global priority class                                                                                                                    |

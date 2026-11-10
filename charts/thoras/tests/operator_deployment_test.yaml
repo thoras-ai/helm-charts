@@ -126,3 +126,15 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_UNDERPROVISIONED_THRESHOLD')].value
           value: "85"
+  - it: Reports the chart and platform versions
+    set:
+      thorasVersion: "4.130.0"
+    chart:
+      version: "5.9.0"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_CHART_VERSION')].value
+          value: "5.9.0"
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_PLATFORM_VERSION')].value
+          value: "4.130.0"

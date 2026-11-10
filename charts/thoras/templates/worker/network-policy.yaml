@@ -1,5 +1,13 @@
 {{- if and .Values.networkPolicy.enabled .Values.thorasWorker.enabled }}
 {{- $flavor := include "thoras.networkPolicyFlavor" . }}
+{{- $w := .Values.thorasWorker }}
+{{- $costCollector := or $w.enableCostAndUsageCollector $w.enableHourlyCostCollector }}
+{{- $httpsEgress := or $costCollector (eq (include "thoras.cloudSyncActive" .) "true") }}
+{{- $podIdentity := or (and $costCollector (ne ($w.costExplorerMode | default "per-cluster") "console")) $w.enableCurIngestion }}
+{{- $httpsEgressCidrs := $w.httpsEgressCidrs }}
+{{- if kindIs "invalid" $httpsEgressCidrs }}
+{{- $httpsEgressCidrs = list "0.0.0.0/0" }}
+{{- end }}
 {{- if eq $flavor "kubernetes" }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -41,6 +49,27 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
+  {{- if and $httpsEgress $httpsEgressCidrs }}
+  # AWS Cost Explorer and the console. Their addresses drift, so this defaults to
+  # any :443 egress. A console on another port needs extraEgressRules.
+  - to:
+    {{- range $httpsEgressCidrs }}
+    - ipBlock:
+        cidr: {{ . }}
+    {{- end }}
+    ports:
+    - port: 443
+      protocol: TCP
+  {{- end }}
+  {{- if $podIdentity }}
+  # The EKS Pod Identity agent, where the worker gets its Cost Explorer role.
+  - to:
+    - ipBlock:
+        cidr: 169.254.170.23/32
+    ports:
+    - port: 80
+      protocol: TCP
+  {{- end }}
   {{- with .Values.thorasWorker.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
@@ -82,6 +111,27 @@ spec:
       rules:
         dns:
         - matchPattern: "*"
+  {{- if and $httpsEgress $httpsEgressCidrs }}
+  # AWS Cost Explorer and the console. Their addresses drift, so this defaults to
+  # any :443 egress; narrow it with httpsEgressCidrs. A console on another port
+  # needs extraEgressRules.
+  - toCIDR:
+    {{- toYaml $httpsEgressCidrs | nindent 4 }}
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  {{- end }}
+  {{- if $podIdentity }}
+  # The EKS Pod Identity agent, where the worker gets its Cost Explorer role.
+  # Cilium sees its address as the node itself, which toCIDR doesn't match.
+  - toEntities:
+    - host
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+  {{- end }}
   {{- with .Values.thorasWorker.extraEgressRules }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
