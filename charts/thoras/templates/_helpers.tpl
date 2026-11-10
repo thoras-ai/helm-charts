@@ -904,7 +904,7 @@ runs. Edits the map in place.
 {{- $extras := . -}}
 {{- $hasOld := hasKey $extras "cluster_daily_cost" -}}
 {{- $hasNew := hasKey $extras "billed_cost" -}}
-{{- if and $hasOld $hasNew (ne (toString (index $extras "cluster_daily_cost")) (toString (index $extras "billed_cost"))) -}}
+{{- if and $hasOld $hasNew (ne (toJson (index $extras "cluster_daily_cost")) (toJson (index $extras "billed_cost"))) -}}
 {{- fail "thorasDashboard.extras.billed_cost conflicts with the deprecated thorasDashboard.extras.cluster_daily_cost; set only billed_cost" -}}
 {{- end -}}
 {{- if $hasNew -}}

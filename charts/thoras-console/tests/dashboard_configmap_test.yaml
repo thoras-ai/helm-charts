@@ -161,6 +161,15 @@ tests:
       - failedTemplate:
           errorMessage: "consoleDashboard.extras.billed_cost conflicts with the deprecated consoleDashboard.extras.cluster_daily_cost; set only billed_cost"
 
+  # The dashboard reads only booleans, so a quoted "true" is a different value.
+  - it: Fails when the billed cost keys hold the same text with different types
+    set:
+      consoleDashboard.extras.billed_cost: "true"
+      consoleDashboard.extras.cluster_daily_cost: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "consoleDashboard.extras.billed_cost conflicts with the deprecated consoleDashboard.extras.cluster_daily_cost; set only billed_cost"
+
   - it: Renders when consoleDashboard.extras is missing from stored values
     set:
       consoleDashboard.extras: null
