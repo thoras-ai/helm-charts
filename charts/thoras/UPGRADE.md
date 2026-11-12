@@ -66,13 +66,20 @@ The AIScaleTarget and ClusterAIScaleTemplate CRDs now accept only `memory` and
 resource and nothing reported the mistake.
 
 After the upgrade, a create or update that sets another value is rejected with
-`Unsupported value`. Objects already stored with another value are not touched.
-With CRD validation ratcheting, writes that leave the list unchanged still
-succeed. Ratcheting is on by default from Kubernetes 1.30 and cannot be turned
-off from 1.33. Without it (Kubernetes 1.29 and earlier, or 1.30 to 1.32 with the
-`CRDValidationRatcheting` feature gate off), every write to such an object fails
-until the value is fixed. Fix the value to `memory` or `cpu` before or after
-upgrading. Rolling back to the previous chart restores the old CRD.
+`Unsupported value`. This includes the AIScaleTargets a ClusterAIScaleTemplate
+creates: a template that holds another value stops creating them for new or
+re-created workloads, and its `Ready` condition reports the error.
+
+Objects already stored with another value are not touched. With CRD validation
+ratcheting, writes that leave the list unchanged still succeed. Ratcheting is on
+by default from Kubernetes 1.30 and cannot be turned off from 1.33. Without it
+(Kubernetes 1.29 and earlier, or 1.30 to 1.32 with the
+`CRDValidationRatcheting` feature gate off), updates to such an object's spec or
+metadata fail until the value is fixed, including the finalizer removal that
+completes its deletion.
+
+Fix the value to `memory` or `cpu` before or after upgrading. Rolling back to
+the previous chart restores the old CRD.
 
 To find affected objects:
 
