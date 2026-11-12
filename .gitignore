@@ -4,3 +4,5 @@
 .claude/*
 !.claude/settings.json
 .opencode
+
+.idea
