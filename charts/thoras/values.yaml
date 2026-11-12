@@ -73,9 +73,11 @@ featureFlags:
   # When enabled, the worker checks cost alert rules hourly and posts to the
   # Slack webhook (slackWebhookUrl) when a period's cost goes above a rule's
   # threshold, and the dashboard shows an Alerts tab for managing the rules.
-  # Rules on estimated cost work on any install; rules on billed cost need
-  # thorasWorker.enableCostAndUsageCollector and the billed_cost dashboard
-  # extra. read_only hides rule editing.
+  # Rules on estimated cost work on any install. Rules on billed cost need the
+  # billed_cost dashboard extra: on the whole cluster they also need
+  # thorasWorker.enableCostAndUsageCollector, and with a scope they read
+  # thorasWorker.enableCurIngestion's report once it has found the cluster's
+  # pods, and need the collector only until then. read_only hides rule editing.
   enableCostAlerts: false
   thorasManageThoras:
     enabled: true
