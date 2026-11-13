@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 5.12.0](https://img.shields.io/badge/Version-5.12.0-informational?style=flat-square) ![AppVersion: 4.132.0](https://img.shields.io/badge/AppVersion-4.132.0-informational?style=flat-square)
+![Version: 5.13.0](https://img.shields.io/badge/Version-5.13.0-informational?style=flat-square) ![AppVersion: 4.132.0](https://img.shields.io/badge/AppVersion-4.132.0-informational?style=flat-square)
 
 ## Requirements
 
@@ -783,7 +783,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enablePodLogStreaming             | Boolean | false   | If true, the API server streams container logs and the dashboard shows pod logs                                                                                                                                                                                                                                                                                                |
 | featureFlags.enableAutonomousReadiness         | Boolean | false   | If true, the dashboard shows the vertical autonomous readiness tab                                                                                                                                                                                                                                                                                                             |
 | featureFlags.enableIdleSpend                   | Boolean | false   | If true, the dashboard shows the idle spend card on the cost tab                                                                                                                                                                                                                                                                                                               |
-| featureFlags.enableCostAlerts                  | Boolean | false   | If true, the worker checks cost alert rules hourly and posts to `slackWebhookUrl` when a day, week or month's cost goes above a rule's threshold, and the dashboard shows an Alerts tab for managing the rules. Rules on estimated cost work on any install; rules on billed cost need `thorasWorker.enableCostAndUsageCollector` and the `billed_cost` dashboard extra        |
+| featureFlags.enableCostAlerts                  | Boolean | false   | If true, the worker checks cost alert rules hourly and posts to `slackWebhookUrl` when a day, week or month's cost goes above a rule's threshold, and the dashboard shows an Alerts tab for managing the rules. Rules on estimated cost work on any install. Rules on billed cost need the `billed_cost` dashboard extra: on the whole cluster they also need `thorasWorker.enableCostAndUsageCollector`, and with a scope they read the `thorasWorker.enableCurIngestion` report once it has found the cluster's pods, and need the collector only until then |
 
 ### NetworkPolicy
 
