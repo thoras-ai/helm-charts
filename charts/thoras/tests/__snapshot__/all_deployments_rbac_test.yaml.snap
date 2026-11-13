@@ -291,6 +291,9 @@ Default matches snapshot:
         resources:
           - pods
         verbs:
+          - get
+          - list
+          - watch
           - delete
       - apiGroups:
           - ""
@@ -301,6 +304,20 @@ Default matches snapshot:
           - update
           - patch
           - create
+      - apiGroups:
+          - apps
+        resources:
+          - deployments
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - ""
+        resources:
+          - pods/log
+        verbs:
+          - get
   8: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding

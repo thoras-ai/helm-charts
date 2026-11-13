@@ -128,12 +128,20 @@ metadata:
   labels:
     {{- include "thoras.resourceLabels" (dict "root" . "component" .Values.thorasApiServerV2.labels) | nindent 4 }}
 rules:
+# The reads cover the Thoras components themselves, which rbac.namespaces
+# leaves out unless it lists the release namespace.
 - apiGroups: [""]
   resources: ["pods"]
-  verbs: ["delete"]
+  verbs: ["get", "list", "watch", "delete"]
 - apiGroups: [""]
   resources: ["configmaps"]
   verbs: ["get", "update", "patch", "create"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

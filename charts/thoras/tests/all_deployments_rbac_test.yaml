@@ -55,3 +55,25 @@ tests:
       rbac.namespaces: null
     documentSelector: *karpenterRule
     asserts: *karpenterAsserts
+  - it: API server reads its own pods, Deployments and pod logs when the release namespace is not listed
+    template: api-server-v2/rbac.yaml
+    set:
+      rbac.namespaces:
+        - workloads
+    documentSelector: {path: "rules[?(@.resources[0] == 'configmaps')]"}
+    asserts:
+      - equal:
+          path: kind
+          value: Role
+      - equal:
+          path: metadata.namespace
+          value: NAMESPACE
+      - contains:
+          path: rules
+          content: {apiGroups: [""], resources: [pods], verbs: [get, list, watch, delete]}
+      - contains:
+          path: rules
+          content: {apiGroups: [apps], resources: [deployments], verbs: [get, list, watch]}
+      - contains:
+          path: rules
+          content: {apiGroups: [""], resources: [pods/log], verbs: [get]}
