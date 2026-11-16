@@ -181,6 +181,8 @@ spec:
             value: {{ .Values.featureFlags.enableAstRecordMirroring | ternary "true" "false" | quote }}
           - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
             value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_MODEL_GROUPS
+            value: {{ .Values.featureFlags.enableModelGroups | ternary "true" "false" | quote }}
           {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         command: [
