@@ -103,6 +103,8 @@ and their consumers.
         ~*^GET/v1/ast/[^/]+/[^/]+/utilization/daily(\?|$)                         1;
         ~*^GET/v1/cost-savings/settings(\?|$)                                     1;
         ~*^GET/v1/export(\?|$)                                                    1;
+        ~*^GET/v1/exports/[^/]+(\?|$)                                             1;
+        ~*^GET/v1/exports/[^/]+/download(\?|$)                                    1;
         ~*^GET/v1/instance-costs/current(\?|$)                                    1;
         ~*^GET/v1/system/jobs/status(\?|$)                                        1;
         ~*^GET/v1/system/namespaces(\?|$)                                         1;
@@ -159,6 +161,9 @@ and their consumers.
 
         # POST — reads that pass a request body (query payloads, not mutations)
         ~*^POST/v1/ast/[^/]+/metrics/series(\?|$)                                 1;
+
+        # POST — starts a background diagnostics export; changes no cluster state
+        ~*^POST/v1/exports(\?|$)                                                  1;
         {{- if not .Values.thorasDashboard.read_only }}
 
         # PATCH — scale mode toggle
