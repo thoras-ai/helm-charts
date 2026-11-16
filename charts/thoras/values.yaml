@@ -103,6 +103,7 @@ featureFlags:
   enableAstRecordMirroring: true
   enableForecastCollectorAntiAffinity: false
   enableMultiDimensional: false
+  # Enable the grouped forecast engine for ASTs with a shared model group.
   enableModelGroups: false
   # Render the pre-5.0 `api-client-secret` and `thoras-timescale-password`
   # Secrets so config-controller can migrate their values into

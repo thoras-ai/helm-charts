@@ -604,6 +604,13 @@ spec:
                           forecastCron.
                         type: string
                         x-kubernetes-int-or-string: true
+                      group:
+                        description: |-
+                          Shared group identifier. ASTs with the same group share pooled
+                          metric context and suggestions. Typically set via a
+                          ClusterAIScaleTemplate to group identical workloads across
+                          ephemeral namespaces.
+                        type: string
                       metrics:
                         additionalProperties:
                           description: |-
@@ -825,6 +832,13 @@ spec:
                       forecastCron.
                     type: string
                     x-kubernetes-int-or-string: true
+                  group:
+                    description: |-
+                      Shared group identifier. ASTs with the same group share pooled
+                      metric context and suggestions. Typically set via a
+                      ClusterAIScaleTemplate to group identical workloads across
+                      ephemeral namespaces.
+                    type: string
                   metrics:
                     additionalProperties:
                       description: |-
@@ -1211,6 +1225,13 @@ spec:
                           forecastCron.
                         type: string
                         x-kubernetes-int-or-string: true
+                      group:
+                        description: |-
+                          Shared group identifier. ASTs with the same group share pooled
+                          metric context and suggestions. Typically set via a
+                          ClusterAIScaleTemplate to group identical workloads across
+                          ephemeral namespaces.
+                        type: string
                       metrics:
                         additionalProperties:
                           description: |-

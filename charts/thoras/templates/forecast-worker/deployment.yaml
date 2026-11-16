@@ -91,7 +91,7 @@ spec:
           - name: MULTI_DIMENSIONAL_ENABLED
             value: {{ .Values.featureFlags.enableMultiDimensional | ternary "true" "false" | quote }}
           - name: ENABLE_MODEL_GROUPS
-            value: {{ .Values.featureFlags.enableModelGroups | ternary "true" "false" | quote }}
+            value: {{ .Values.featureFlags.enableModelGroups | default false | ternary "true" "false" | quote }}
           - name: AFFINITY_ID
             valueFrom:
               fieldRef:
