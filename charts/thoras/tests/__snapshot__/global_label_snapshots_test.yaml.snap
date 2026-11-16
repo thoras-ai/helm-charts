@@ -1336,6 +1336,8 @@ Default matches snapshot:
                   value: "0"
                 - name: MULTI_DIMENSIONAL_ENABLED
                   value: "false"
+                - name: ENABLE_MODEL_GROUPS
+                  value: "false"
                 - name: AFFINITY_ID
                   valueFrom:
                     fieldRef:
@@ -1548,6 +1550,8 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_AST_RECORD_MIRRORING
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
+                  value: "false"
+                - name: SERVICE_ENABLE_MODEL_GROUPS
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
@@ -2159,6 +2163,8 @@ Default matches snapshot:
                 - name: SERVICE_ENABLE_DISRUPTION_SCHEDULER_WORKER
                   value: "true"
                 - name: SERVICE_MULTI_DIMENSIONAL_ENABLED
+                  value: "false"
+                - name: SERVICE_ENABLE_MODEL_GROUPS
                   value: "false"
                 - name: SERVICE_ENABLE_ANALYSIS_ENQUEUER
                   value: "false"
