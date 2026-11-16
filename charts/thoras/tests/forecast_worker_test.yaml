@@ -364,3 +364,14 @@ tests:
               memory: "1Gi"
               cpu: "1"
               hugepages-1Gi: "2Gi"
+
+  - it: renders ENABLE_MODEL_GROUPS as true when enableModelGroups is true
+    set:
+      featureFlags:
+        enableModelGroups: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == 'thoras-forecast-worker')].env
+          content:
+            name: ENABLE_MODEL_GROUPS
+            value: "true"

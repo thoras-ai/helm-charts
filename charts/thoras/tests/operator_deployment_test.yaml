@@ -138,3 +138,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_PLATFORM_VERSION')].value
           value: "4.130.0"
+
+  - it: renders SERVICE_ENABLE_MODEL_GROUPS as true when enableModelGroups is true
+    set:
+      featureFlags:
+        enableModelGroups: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_ENABLE_MODEL_GROUPS
+            value: "true"

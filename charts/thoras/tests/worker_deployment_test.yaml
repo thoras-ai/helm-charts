@@ -427,3 +427,14 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "Error: 'thorasWorker.enableCurIngestion' is true but 'thorasWorker.curExportName' is empty. Set it to the CUR export's name."
+
+  - it: renders SERVICE_ENABLE_MODEL_GROUPS as true when enableModelGroups is true
+    set:
+      featureFlags:
+        enableModelGroups: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_ENABLE_MODEL_GROUPS
+            value: "true"

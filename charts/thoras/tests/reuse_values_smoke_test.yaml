@@ -120,3 +120,9 @@ tests:
       thorasWorker.curClusterName: null
     asserts:
       - notFailedTemplate: {}
+
+  - it: All templates render when enableModelGroups is missing from stored values
+    set:
+      featureFlags.enableModelGroups: null
+    asserts:
+      - notFailedTemplate: {}
