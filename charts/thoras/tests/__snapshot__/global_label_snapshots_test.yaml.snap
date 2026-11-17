@@ -1482,6 +1482,8 @@ Default matches snapshot:
               env:
                 - name: SERVICE_SYSTEM_CONFIG_PATH
                   value: /app/system-config/system-config.yaml
+                - name: SERVICE_WEBHOOK_CA_INJECT
+                  value: "true"
                 - name: THORAS_NS
                   valueFrom:
                     fieldRef:
@@ -1558,7 +1560,7 @@ Default matches snapshot:
               livenessProbe:
                 failureThreshold: 60
                 httpGet:
-                  path: /readyz
+                  path: /healthz
                   port: http-health
                 periodSeconds: 5
                 timeoutSeconds: 2
@@ -1591,7 +1593,7 @@ Default matches snapshot:
               startupProbe:
                 failureThreshold: 60
                 httpGet:
-                  path: /readyz
+                  path: /healthz
                   port: http-health
                 periodSeconds: 5
                 timeoutSeconds: 2
@@ -1628,6 +1630,8 @@ Default matches snapshot:
                     path: tls.crt
                   - key: key
                     path: tls.key
+                  - key: ca
+                    path: ca.crt
                 secretName: thoras-tls-certs
   28: |
     apiVersion: rbac.authorization.k8s.io/v1
@@ -1930,6 +1934,55 @@ Default matches snapshot:
         name: thoras-operator
         namespace: foo
   34: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator-webhooks
+    rules:
+      - apiGroups:
+          - admissionregistration.k8s.io
+        resourceNames:
+          - pods.thoras.ai
+        resources:
+          - mutatingwebhookconfigurations
+        verbs:
+          - get
+          - patch
+      - apiGroups:
+          - admissionregistration.k8s.io
+        resourceNames:
+          - validation.thoras.ai
+        resources:
+          - validatingwebhookconfigurations
+        verbs:
+          - get
+          - patch
+  35: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: thoras
+        globalLabel: globalValue
+        helm.sh/chart: thoras-4.7.0
+      name: thoras-operator-webhooks
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: thoras-operator-webhooks
+    subjects:
+      - kind: ServiceAccount
+        name: thoras-operator
+        namespace: foo
+  36: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -1943,7 +1996,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-operator
       namespace: foo
-  35: |
+  37: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -1968,7 +2021,7 @@ Default matches snapshot:
           targetPort: 9101
       selector:
         app: thoras-operator
-  36: |
+  38: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -2262,7 +2315,7 @@ Default matches snapshot:
                 name: thoras-operator-system-config
                 optional: true
               name: system-config
-  37: |
+  39: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -2401,7 +2454,7 @@ Default matches snapshot:
           - pods/resize
         verbs:
           - patch
-  38: |
+  40: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2421,7 +2474,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  39: |
+  41: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -2440,7 +2493,7 @@ Default matches snapshot:
           - '*'
         verbs:
           - '*'
-  40: |
+  42: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2460,7 +2513,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  41: |
+  43: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -2505,7 +2558,7 @@ Default matches snapshot:
           - nodes
         verbs:
           - list
-  42: |
+  44: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2525,7 +2578,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  43: |
+  45: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -2546,7 +2599,7 @@ Default matches snapshot:
           - configmaps
         verbs:
           - get
-  44: |
+  46: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -2566,7 +2619,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  45: |
+  47: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
@@ -2589,7 +2642,7 @@ Default matches snapshot:
           - get
           - update
           - patch
-  46: |
+  48: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: RoleBinding
     metadata:
@@ -2609,7 +2662,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  47: |
+  49: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -2630,7 +2683,7 @@ Default matches snapshot:
           - get
           - list
           - watch
-  48: |
+  50: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -2650,7 +2703,7 @@ Default matches snapshot:
       - kind: ServiceAccount
         name: thoras-worker
         namespace: foo
-  49: |
+  51: |
     apiVersion: v1
     imagePullSecrets:
       - name: test-secret-registry
@@ -2664,7 +2717,7 @@ Default matches snapshot:
         helm.sh/chart: thoras-4.7.0
       name: thoras-worker
       namespace: foo
-  50: |
+  52: |
     apiVersion: v1
     kind: Service
     metadata:
