@@ -92,9 +92,12 @@ refreshes the mounted secret, then the next check runs).
      error says why, for example a missing `ca` key in the secret or an RBAC
      denial.
    - `Thoras CRDs are missing`: lists the CRDs that do not exist. The
-     operator waits for them before starting its controllers, and the pod
-     restarts every 5 minutes while it waits because its startup probe
-     fails. The webhooks are still repaired during the wait.
+     operator waits for them before starting its controllers and shows as
+     Running but not Ready while it waits. The webhooks are still repaired
+     during the wait.
+
+   A wrong CA or a missing CRD also fails the operator's readiness probe,
+   so `kubectl get pods -n thoras` shows the operator as `0/1` Ready.
 
 2. The same state is exported as metrics on the operator's metrics port:
    `thoras_operator_webhook_ca_bundle_valid{configuration,webhook}` and

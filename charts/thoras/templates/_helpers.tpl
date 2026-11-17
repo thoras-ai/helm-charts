@@ -962,6 +962,10 @@ spec:
   {{- else }}
   maxUnavailable: 1
   {{- end }}
+  {{- if semverCompare ">=1.27-0" .root.Capabilities.KubeVersion.Version }}
+  # Without this, unready pods block node drains whenever the budget is spent.
+  unhealthyPodEvictionPolicy: AlwaysAllow
+  {{- end }}
   selector:
     matchLabels:
       app: {{ .app }}

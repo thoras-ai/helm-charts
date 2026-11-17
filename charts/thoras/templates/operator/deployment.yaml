@@ -213,7 +213,7 @@ spec:
             containerPort: 8081
         startupProbe:
           httpGet:
-            path: /readyz
+            path: /healthz
             port: http-health
           periodSeconds: 5
           failureThreshold: 60
@@ -227,7 +227,7 @@ spec:
           timeoutSeconds: 2
         livenessProbe:
           httpGet:
-            path: /readyz
+            path: /healthz
             port: http-health
           periodSeconds: 5
           failureThreshold: 60
