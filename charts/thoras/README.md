@@ -104,10 +104,11 @@ refreshes the mounted secret, then the next check runs).
    `thoras_operator_crd_installed{crd}`. Both are 1 when healthy. Alert on
    either being 0 for more than 5 minutes.
 
-3. Run `helm upgrade --install` with the same release name, namespace and
-   values. This restores missing CRDs and any other resources the failed run
-   did not create. A failed `helm install` keeps its release, so repeating
-   `helm install` fails with `cannot reuse a name that is still in use`.
+3. Run `helm upgrade --install` with the same release name, namespace,
+   values and chart `--version` as the failed run. This restores missing
+   CRDs and any other resources the failed run did not create. A failed
+   `helm install` keeps its release, so repeating `helm install` fails with
+   `cannot reuse a name that is still in use`.
 
 Prefer cert-manager mode (`thorasOperator.webhookCertGen.certManager.enabled:
 true`) when cert-manager is already in the cluster, and always for GitOps
