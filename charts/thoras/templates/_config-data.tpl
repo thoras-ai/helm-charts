@@ -87,6 +87,11 @@ and their consumers.
 
       include       /etc/nginx/mime.types;
 
+      # Pod-wide backstop on in-flight API calls; the api-server queues and
+      # caps dashboard requests itself (X-Thoras-Client below).
+      limit_conn_zone $server_name zone=thoras_dashboard_api:1m;
+      limit_conn_status 503;
+
       # Least-privilege allowlist for dashboard -> API calls.
       # Deny by default; only routes the dashboard actually uses are allowed.
       # New dashboard API calls require a matching entry here or they will 403.
@@ -188,7 +193,11 @@ and their consumers.
           if ($thoras_dashboard_api_allowed != 1) {
             return 403;
           }
+          limit_conn thoras_dashboard_api {{ .Values.thorasDashboard.apiMaxConcurrentRequests | int }};
+          error_page 503 @dashboard_api_busy;
           proxy_pass http://thoras-api-server-v2;
+          # Overwrites any client value so the api-server's dashboard limit always applies.
+          proxy_set_header X-Thoras-Client dashboard;
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -209,6 +218,13 @@ and their consumers.
           proxy_set_header X-Forwarded-Email "";
           proxy_set_header X-Forwarded-User "";
           {{- end }}
+        }
+
+        # Only nginx's own limit_conn 503s land here; proxied responses pass through.
+        location @dashboard_api_busy {
+          default_type application/json;
+          add_header Retry-After 1 always;
+          return 503 '{"status":503,"title":"Service Unavailable","detail":"too many concurrent dashboard requests, retry shortly"}';
         }
 
         location /config.json {

@@ -175,3 +175,18 @@ tests:
       - notMatchRegex:
           path: data["nginx.conf.template"]
           pattern: '"disable_onboarding"'
+
+  - it: Tags proxied API calls as dashboard traffic and caps them
+    set:
+      thorasDashboard:
+        apiMaxConcurrentRequests: 5
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'proxy_set_header X-Thoras-Client dashboard;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'limit_conn thoras_dashboard_api 5;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'error_page 503 @dashboard_api_busy;'
