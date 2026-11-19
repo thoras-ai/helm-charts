@@ -329,6 +329,8 @@ spec:
             value: {{ .Values.thorasWorker.costExplorerBillingViewArn | default "" | quote }}
           - name: SERVICE_ENABLE_COST_ALERTS
             value: {{ .Values.featureFlags.enableCostAlerts | default false | ternary "true" "false" | quote }}
+          - name: SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW
+            value: {{ .Values.featureFlags.enableNodeRecommendationsPreview | default false | ternary "true" "false" | quote }}
           {{- with include "thoras.fipsGoEnv" . }}{{- . | nindent 10 }}{{- end }}
           {{- with include "thoras.globalEnv" . }}{{- . | nindent 10 }}{{- end }}
         ports:

@@ -145,6 +145,16 @@ and their consumers.
         {{- if .Values.featureFlags.enableIdleSpend }}
         ~*^GET/v1/views/cost/idle(\?|$)                                           1;
         {{- end }}
+        {{- if .Values.featureFlags.enableNodeRecommendationsPreview }}
+        ~*^GET/v1/node-recommendations(\?|$)                                      1;
+        {{- if not .Values.thorasDashboard.read_only }}
+        ~*^POST/v1/node-recommendations/[^/]+/view(\?|$)                          1;
+        ~*^POST/v1/node-recommendations/[^/]+/how-to(\?|$)                        1;
+        ~*^POST/v1/node-recommendations/[^/]+/defer(\?|$)                         1;
+        ~*^POST/v1/node-recommendations/[^/]+/intentional(\?|$)                   1;
+        ~*^POST/v1/node-recommendations/[^/]+/restore(\?|$)                       1;
+        {{- end }}
+        {{- end }}
         {{- if .Values.featureFlags.enableCostAlerts }}
         ~*^GET/v1/cost-alerts(\?|$)                                               1;
         {{- if not .Values.thorasDashboard.read_only }}
@@ -244,9 +254,10 @@ and their consumers.
               {{- $_ := set $extras "disable_onboarding" true -}}
               {{- $_ := set $extras "enable_scaling_pause" false -}}
               {{- $_ := set $extras "cost_alerts_edit" false -}}
+              {{- $_ := set $extras "node_recommendations_edit" false -}}
               {{- $enableUpdateScaleModeApi = false -}}
             {{- end }}
-            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ $enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}, "enableIdleSpend": {{ .Values.featureFlags.enableIdleSpend | default false }}, "enableCostAlerts": {{ .Values.featureFlags.enableCostAlerts | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) $extras) }} }';
+            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ $enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}, "enableIdleSpend": {{ .Values.featureFlags.enableIdleSpend | default false }}, "enableCostAlerts": {{ .Values.featureFlags.enableCostAlerts | default false }}, "enableNodeRecommendationsPreview": {{ .Values.featureFlags.enableNodeRecommendationsPreview | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) $extras) }} }';
         }
 
         location / {

@@ -97,6 +97,8 @@ Default matches snapshot:
                   value: "false"
                 - name: SERVICE_ENABLE_POD_LOG_STREAMING
                   value: "false"
+                - name: SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW
+                  value: "false"
                 - name: SERVICE_SHOULD_MIGRATE_ON_START
                   value: "true"
                 - name: SERVICE_TIMESCALE_EXTENSION_VERSION
@@ -1171,7 +1173,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
-            checksum/config: c6d406f11ac19083b10fa134bf2496c92285bc7b887e5465e350d93cf91eb9ff
+            checksum/config: 3f421a60e2555f7b0bdbe49bbbcdd175650f5ed25a7254c685c34740a7edc6cb
           labels:
             app: thoras-dashboard
             app.kubernetes.io/name: thoras
@@ -2254,6 +2256,8 @@ Default matches snapshot:
                 - name: SERVICE_COST_EXPLORER_BILLING_VIEW_ARN
                   value: ""
                 - name: SERVICE_ENABLE_COST_ALERTS
+                  value: "false"
+                - name: SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW
                   value: "false"
               image: us-east4-docker.pkg.dev/thoras-registry/platform/services:TEST
               imagePullPolicy: IfNotPresent
