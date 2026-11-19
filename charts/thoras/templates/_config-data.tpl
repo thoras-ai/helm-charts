@@ -109,6 +109,7 @@ and their consumers.
         ~*^GET/v1/cost-savings/settings(\?|$)                                     1;
         ~*^GET/v1/export(\?|$)                                                    1;
         ~*^GET/v1/instance-costs/current(\?|$)                                    1;
+        ~*^GET/v1/savings-preview/export(\?|$)                                    1;
         ~*^GET/v1/system/jobs/status(\?|$)                                        1;
         ~*^GET/v1/system/namespaces(\?|$)                                         1;
         ~*^GET/v1/system/status(\?|$)                                             1;
