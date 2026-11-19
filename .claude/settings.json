@@ -1,4 +1,16 @@
 {
+  "extraKnownMarketplaces": {
+    "thoras": {
+      "source": {
+        "source": "github",
+        "repo": "thoras-ai/skills"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "thoras-skills@thoras": true
+  },
   "hooks": {
     "SessionStart": [
       {

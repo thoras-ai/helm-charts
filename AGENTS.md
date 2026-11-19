@@ -132,6 +132,11 @@ added them.
 
 ## Pull requests and commits
 
+- Agents get an independent review before every push and an adversarial
+  review before asking for review, as in the
+  [`ship` skill](https://github.com/thoras-ai/skills/blob/main/skills/ship/SKILL.md)
+  (`/thoras-skills:ship`; install steps in the
+  [skills README](https://github.com/thoras-ai/skills#install)).
 - Commits follow [Conventional Commits][cc]:
   `<type>[scope][!]: <description>`, with a type from `feat`, `fix`, `docs`,
   `chore`, `refactor`, `build`, `ci`, `test`. Use the imperative mood, a
