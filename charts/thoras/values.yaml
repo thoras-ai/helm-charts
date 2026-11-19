@@ -79,6 +79,11 @@ featureFlags:
   # thorasWorker.enableCurIngestion's report once it has found the cluster's
   # pods, and need the collector only until then. read_only hides rule editing.
   enableCostAlerts: false
+  # Preview. When enabled, the worker finds dead and long-idle nodes and stores
+  # them as node consolidation recommendations, the API server serves them, and
+  # the dashboard shows a Recommendations tab. Cards need the worker to watch
+  # all namespaces.
+  enableNodeRecommendationsPreview: false
   thorasManageThoras:
     enabled: true
     # Recommendation Mode by default

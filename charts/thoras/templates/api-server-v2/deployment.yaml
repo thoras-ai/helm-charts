@@ -150,6 +150,8 @@ spec:
             value: {{ .Values.featureFlags.enableUpdateScaleModeApi | ternary "true" "false" | quote }}
           - name: SERVICE_ENABLE_POD_LOG_STREAMING
             value: {{ .Values.featureFlags.enablePodLogStreaming | default false | quote }}
+          - name: SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW
+            value: {{ .Values.featureFlags.enableNodeRecommendationsPreview | default false | ternary "true" "false" | quote }}
           - name: SERVICE_SHOULD_MIGRATE_ON_START
             value: "true"
           - name: SERVICE_TIMESCALE_EXTENSION_VERSION
