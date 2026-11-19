@@ -44,6 +44,14 @@ tests:
         matchRegex:
           path: data["nginx.conf.template"]
           pattern: 'POST/v1/node-recommendations/\[\^/\]\+/defer\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/node-recommendations/\[\^/\]\+/intentional\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/node-recommendations/\[\^/\]\+/restore\(\\\?\|\$\) +1;'
       - template: worker/deployment.yaml
         equal:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW')].value
@@ -53,7 +61,7 @@ tests:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW')].value
           value: "true"
 
-  - it: read-only allows listing and click tracking but no status changes
+  - it: read-only allows listing only and tells the dashboard to hide actions
     set:
       featureFlags:
         enableNodeRecommendationsPreview: true
@@ -63,8 +71,12 @@ tests:
       - template: dashboard/nginx-config-map.yaml
         matchRegex:
           path: data["nginx.conf.template"]
-          pattern: 'POST/v1/node-recommendations/\[\^/\]\+/view\(\\\?\|\$\) +1;'
+          pattern: 'GET/v1/node-recommendations\(\\\?\|\$\) +1;'
       - template: dashboard/nginx-config-map.yaml
         notMatchRegex:
           path: data["nginx.conf.template"]
-          pattern: 'node-recommendations/\[\^/\]\+/(defer|intentional|restore)'
+          pattern: 'POST/v1/node-recommendations'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"node_recommendations_edit":false'
