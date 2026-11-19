@@ -175,3 +175,38 @@ tests:
       - notMatchRegex:
           path: data["nginx.conf.template"]
           pattern: '"disable_onboarding"'
+
+  - it: Tags proxied API calls as dashboard traffic and caps them
+    set:
+      thorasDashboard:
+        apiMaxConcurrentRequests: 5
+    asserts:
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'proxy_set_header X-Thoras-Client dashboard;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'limit_conn thoras_dashboard_api 5;'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'error_page 503 @dashboard_api_busy;'
+
+  - it: Omits the dashboard API cap when set to 0
+    set:
+      thorasDashboard:
+        apiMaxConcurrentRequests: 0
+    asserts:
+      - notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'limit_conn thoras_dashboard_api'
+      - matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'proxy_set_header X-Thoras-Client dashboard;'
+
+  - it: Rejects a dashboard API cap above nginx's maximum
+    set:
+      thorasDashboard:
+        apiMaxConcurrentRequests: 65536
+    asserts:
+      - failedTemplate:
+          errorMessage: "thorasDashboard.apiMaxConcurrentRequests must be 0 (no cap) or 1-65535"
