@@ -193,8 +193,14 @@ and their consumers.
           if ($thoras_dashboard_api_allowed != 1) {
             return 403;
           }
-          limit_conn thoras_dashboard_api {{ .Values.thorasDashboard.apiMaxConcurrentRequests | int }};
+          {{- $maxApi := .Values.thorasDashboard.apiMaxConcurrentRequests | int }}
+          {{- if or (lt $maxApi 0) (gt $maxApi 65535) }}
+          {{- fail "thorasDashboard.apiMaxConcurrentRequests must be 0 (no cap) or 1-65535" }}
+          {{- end }}
+          {{- if gt $maxApi 0 }}
+          limit_conn thoras_dashboard_api {{ $maxApi }};
           error_page 503 @dashboard_api_busy;
+          {{- end }}
           proxy_pass http://thoras-api-server-v2;
           # Overwrites any client value so the api-server's dashboard limit always applies.
           proxy_set_header X-Thoras-Client dashboard;

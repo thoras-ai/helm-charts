@@ -936,8 +936,10 @@ thorasDashboard:
   # answers 403 to the API routes that change state. Cost settings edits are not
   # saved, and that page still shows its inputs.
   read_only: false
-  # Maximum API calls one dashboard pod forwards at once; more get a 503.
-  # A backstop: the api-server also queues dashboard requests to its own cap.
+  # Maximum API calls one dashboard pod forwards at once; more get a 503. A
+  # backstop, since the api-server also queues dashboard requests to its own
+  # cap. Raise it only if normal pages show 503s. 0 removes the cap; otherwise
+  # 1-65535.
   apiMaxConcurrentRequests: 32
   extras:
     show_savings: true
