@@ -1,0 +1,81 @@
+suite: Operator webhook CA sync
+tests:
+  - it: Mounts the certgen CA and has the operator inject it
+    template: operator/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'tls')].secret.items
+          content:
+            key: ca
+            path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_WEBHOOK_CA_INJECT
+            value: "true"
+
+  - it: Mounts the cert-manager CA and leaves injection to cert-manager
+    template: operator/deployment.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes[?(@.name == 'tls')].secret.items
+          content:
+            key: ca.crt
+            path: ca.crt
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_WEBHOOK_CA_INJECT
+            value: "false"
+
+  - it: Lets the operator get and patch only its own webhook configurations
+    template: operator/rbac.yaml
+    asserts:
+      - equal:
+          path: rules
+          value:
+            - apiGroups: [admissionregistration.k8s.io]
+              resources: [mutatingwebhookconfigurations]
+              resourceNames: [pods.thoras.ai]
+              verbs: [get, patch]
+            - apiGroups: [admissionregistration.k8s.io]
+              resources: [validatingwebhookconfigurations]
+              resourceNames: [validation.thoras.ai]
+              verbs: [get, patch]
+        documentSelector:
+          path: rules[0].resourceNames[0]
+          value: pods.thoras.ai
+      - equal:
+          path: subjects[0].name
+          value: thoras-operator
+        documentSelector:
+          path: roleRef.name
+          value: thoras-operator-webhooks
+
+  - it: Grants only get on the webhook configurations in cert-manager mode
+    template: operator/rbac.yaml
+    set:
+      thorasOperator.webhookCertGen.certManager.enabled: true
+    documentSelector:
+      path: rules[0].resourceNames[0]
+      value: pods.thoras.ai
+    asserts:
+      - equal:
+          path: rules[0].verbs
+          value: [get]
+      - equal:
+          path: rules[1].verbs
+          value: [get]
+
+  - it: Grants the webhook RBAC cluster-wide when RBAC is namespace-scoped
+    template: operator/rbac.yaml
+    set:
+      rbac.namespaces: [team-a]
+    documentSelector:
+      path: rules[0].resourceNames[0]
+      value: pods.thoras.ai
+    asserts:
+      - isKind:
+          of: ClusterRole

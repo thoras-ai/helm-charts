@@ -1,0 +1,82 @@
+suite: NodeRecommendationsPreview
+templates:
+  - dashboard/nginx-config-map.yaml
+  - worker/deployment.yaml
+  - api-server-v2/deployment.yaml
+tests:
+  - it: is off by default in config.json, nginx, the worker and the API server
+    asserts:
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableNodeRecommendationsPreview": *false[,}]'
+      - template: dashboard/nginx-config-map.yaml
+        notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'node-recommendations'
+      - template: worker/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW')].value
+          value: "false"
+      - template: api-server-v2/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW')].value
+          value: "false"
+
+  - it: turns on config.json, both services and every route when enabled
+    set:
+      featureFlags:
+        enableNodeRecommendationsPreview: true
+    asserts:
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"enableNodeRecommendationsPreview": *true[,}]'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/node-recommendations\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/node-recommendations/\[\^/\]\+/how-to\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/node-recommendations/\[\^/\]\+/defer\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/node-recommendations/\[\^/\]\+/intentional\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/node-recommendations/\[\^/\]\+/restore\(\\\?\|\$\) +1;'
+      - template: worker/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW')].value
+          value: "true"
+      - template: api-server-v2/deployment.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_ENABLE_NODE_RECOMMENDATIONS_PREVIEW')].value
+          value: "true"
+
+  - it: read-only allows listing only and tells the dashboard to hide actions
+    set:
+      featureFlags:
+        enableNodeRecommendationsPreview: true
+      thorasDashboard:
+        read_only: true
+    asserts:
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'GET/v1/node-recommendations\(\\\?\|\$\) +1;'
+      - template: dashboard/nginx-config-map.yaml
+        notMatchRegex:
+          path: data["nginx.conf.template"]
+          pattern: 'POST/v1/node-recommendations'
+      - template: dashboard/nginx-config-map.yaml
+        matchRegex:
+          path: data["nginx.conf.template"]
+          pattern: '"node_recommendations_edit":false'

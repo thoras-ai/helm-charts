@@ -4,7 +4,7 @@ Thoras is an ML-powered platform that helps SRE teams view the future of their K
 
 This Helm Chart installs [Thoras](https://www.thoras.ai) onto Kubernetes.
 
-![Version: 5.13.0](https://img.shields.io/badge/Version-5.13.0-informational?style=flat-square) ![AppVersion: 4.132.0](https://img.shields.io/badge/AppVersion-4.132.0-informational?style=flat-square)
+![Version: 5.14.0](https://img.shields.io/badge/Version-5.14.0-informational?style=flat-square) ![AppVersion: 4.133.0](https://img.shields.io/badge/AppVersion-4.133.0-informational?style=flat-square)
 
 ## Requirements
 
@@ -70,6 +70,50 @@ kubectl get pods -n thoras
 On a fresh install the workload pods briefly report
 `CreateContainerConfigError` while they wait for config-controller to
 seed secrets. This resolves itself; no action is needed.
+
+### Recovering from a failed install or upgrade
+
+A failed `helm install` or `helm upgrade` can stop before Helm's
+post-install and post-upgrade hooks run. The operator does not depend on
+those hooks for its admission webhooks: it writes the CA from the
+`thoras-tls-certs` secret into the `caBundle` of `pods.thoras.ai` and
+`validation.thoras.ai` at startup and every 30 seconds. After the secret
+changes, expect the webhooks to be fixed within about 2 minutes (kubelet
+refreshes the mounted secret, then the next check runs).
+
+1. Check the operator logs for what is wrong:
+
+   ```
+   kubectl logs -n thoras deploy/thoras-operator | grep -E "caBundle|CRDs are missing"
+   ```
+
+   - `Patched webhook caBundle`: the webhooks were repaired.
+   - `Webhook caBundle is not valid`: the operator could not fix them. The
+     error says why, for example a missing `ca` key in the secret or an RBAC
+     denial.
+   - `Thoras CRDs are missing`: lists the CRDs that do not exist. The
+     operator waits for them before starting its controllers and shows as
+     Running but not Ready while it waits. The webhooks are still repaired
+     during the wait.
+
+   A wrong CA or a missing CRD also fails the operator's readiness probe,
+   so `kubectl get pods -n thoras` shows the operator as `0/1` Ready.
+
+2. The same state is exported as metrics on the operator's metrics port:
+   `thoras_operator_webhook_ca_bundle_valid{configuration,webhook}` and
+   `thoras_operator_crd_installed{crd}`. Both are 1 when healthy. Alert on
+   either being 0 for more than 5 minutes.
+
+3. Run `helm upgrade --install` with the same release name, namespace,
+   values and chart `--version` as the failed run. This restores missing
+   CRDs and any other resources the failed run did not create. A failed
+   `helm install` keeps its release, so repeating `helm install` fails with
+   `cannot reuse a name that is still in use`.
+
+Prefer cert-manager mode (`thorasOperator.webhookCertGen.certManager.enabled:
+true`) when cert-manager is already in the cluster, and always for GitOps
+deployments that do not run Helm hooks. cert-manager injects the CA
+continuously; the operator then only checks the `caBundle` and reports it.
 
 ### Load the dashboard
 
@@ -734,7 +778,7 @@ extraObjects:
 
 | Key                                          | Type    | Default                                          | Description                                                                                                                                                                                                                                                                                                                                                     |
 | -------------------------------------------- | ------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| thorasVersion                                | String  | 4.132.0                                          | Thoras app version                                                                                                                                                                                                                                                                                                                                              |
+| thorasVersion                                | String  | 4.133.0                                          | Thoras app version                                                                                                                                                                                                                                                                                                                                              |
 | imageCredentials.registry                    | String  | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                                                                                                                                                                                                                                                                                                                         |
 | imageCredentials.username                    | String  | \_json_key_base64                                | Container registry username                                                                                                                                                                                                                                                                                                                                     |
 | imageCredentials.password                    | String  | ""                                               | Container registry auth string                                                                                                                                                                                                                                                                                                                                  |
@@ -785,6 +829,7 @@ The following flags are considered temporary and gate access to specific behavio
 | featureFlags.enableIdleSpend                   | Boolean | false   | If true, the dashboard shows the idle spend card on the cost tab                                                                                                                                                                                                                                                                                                               |
 | featureFlags.enableModelGroups                 | Boolean | false   | If true, enables the grouped forecast engine for ASTs with a shared model group                                                                                                                                                                                                                                                                                                |
 | featureFlags.enableCostAlerts                  | Boolean | false   | If true, the worker checks cost alert rules hourly and posts to `slackWebhookUrl` when a day, week or month's cost goes above a rule's threshold, and the dashboard shows an Alerts tab for managing the rules. Rules on estimated cost work on any install. Rules on billed cost need the `billed_cost` dashboard extra: on the whole cluster they also need `thorasWorker.enableCostAndUsageCollector`, and with a scope they read the `thorasWorker.enableCurIngestion` report once it has found the cluster's pods, and need the collector only until then |
+| featureFlags.enableNodeRecommendationsPreview | Boolean | false   | Preview. If true, the worker stores dead and long-idle nodes as node consolidation recommendations, the API server serves them, and the dashboard shows a Recommendations tab. Cards need the worker to watch all namespaces |
 
 ### NetworkPolicy
 
@@ -1067,6 +1112,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasDashboard.slackErrorsEnabled                           | Boolean | false                        | Determines if error-level logs are sent to `slackWebHookUrl`                                                                                                                                                                                                                                                                                                                                                |
 | thorasDashboard.logLevel                                     | String  | Nil                          | Logging level                                                                                                                                                                                                                                                                                                                                                                                               |
 | thorasDashboard.read_only                                    | Bool    | false                        | View-only dashboard: hides write-capable UI features, and nginx answers `403` to API routes that change state |
+| thorasDashboard.apiMaxConcurrentRequests                     | Int     | 32                           | API calls one dashboard pod forwards at once; more get `503`. `0` removes the cap; otherwise 1-65535. The api-server also queues and caps dashboard requests |
 | thorasDashboard.ingressSources                               | List    | []                           | Sources allowed to reach the dashboard port, in the syntax of `networkPolicy.flavor`. Requires `networkPolicy.enabled`. See [NetworkPolicy](#networkpolicy) |
 | thorasDashboard.extras                                       | Object  | {}                           | Additional values to be injected into the Thoras Dashboard config                                                                                                                                                                                                                                                                                                                                           |
 

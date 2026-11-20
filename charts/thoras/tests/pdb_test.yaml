@@ -190,3 +190,22 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: lets unready pods be evicted on Kubernetes 1.27 and later
+    template: operator/pdb.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 34
+    asserts:
+      - equal:
+          path: spec.unhealthyPodEvictionPolicy
+          value: AlwaysAllow
+
+  - it: omits unhealthyPodEvictionPolicy before Kubernetes 1.27
+    template: operator/pdb.yaml
+    capabilities:
+      majorVersion: 1
+      minorVersion: 26
+    asserts:
+      - notExists:
+          path: spec.unhealthyPodEvictionPolicy

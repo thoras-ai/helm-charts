@@ -16,6 +16,11 @@ Should default to v2 port:
 
         include       /etc/nginx/mime.types;
 
+        # Pod-wide backstop on in-flight API calls; the api-server queues and
+        # caps dashboard requests itself (X-Thoras-Client below).
+        limit_conn_zone $server_name zone=thoras_dashboard_api:1m;
+        limit_conn_status 503;
+
         # Least-privilege allowlist for dashboard -> API calls.
         # Deny by default; only routes the dashboard actually uses are allowed.
         # New dashboard API calls require a matching entry here or they will 403.
@@ -35,6 +40,7 @@ Should default to v2 port:
           ~*^GET/v1/exports/[^/]+(\?|$)                                             1;
           ~*^GET/v1/exports/[^/]+/download(\?|$)                                    1;
           ~*^GET/v1/instance-costs/current(\?|$)                                    1;
+          ~*^GET/v1/savings-preview/export(\?|$)                                    1;
           ~*^GET/v1/system/jobs/status(\?|$)                                        1;
           ~*^GET/v1/system/namespaces(\?|$)                                         1;
           ~*^GET/v1/system/status(\?|$)                                             1;
@@ -95,7 +101,11 @@ Should default to v2 port:
             if ($thoras_dashboard_api_allowed != 1) {
               return 403;
             }
+            limit_conn thoras_dashboard_api 32;
+            error_page 503 @dashboard_api_busy;
             proxy_pass http://thoras-api-server-v2;
+            # Overwrites any client value so the api-server's dashboard limit always applies.
+            proxy_set_header X-Thoras-Client dashboard;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -109,9 +119,16 @@ Should default to v2 port:
             proxy_set_header X-Forwarded-User $http_x_forwarded_user;
           }
 
+          # Only nginx's own limit_conn 503s land here; proxied responses pass through.
+          location @dashboard_api_busy {
+            default_type application/json;
+            add_header Retry-After 1 always;
+            return 503 '{"status":503,"title":"Service Unavailable","detail":"too many concurrent dashboard requests, retry shortly"}';
+          }
+
           location /config.json {
               default_type application/json;
-              return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true, "enableUpdateScaleModeApi": false, "enablePodLogStreaming": false, "enableAutonomousReadiness": false, "enableIdleSpend": false, "enableCostAlerts": false}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"enable_change_highlighting":false,"enable_scaling_pause":true,"highlight_cpu_change_above_millicores":50,"highlight_memory_change_above_mib":100,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
+              return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true, "enableUpdateScaleModeApi": false, "enablePodLogStreaming": false, "enableAutonomousReadiness": false, "enableIdleSpend": false, "enableCostAlerts": false, "enableNodeRecommendationsPreview": false}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"enable_change_highlighting":false,"enable_scaling_pause":true,"highlight_cpu_change_above_millicores":50,"highlight_memory_change_above_mib":100,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
           }
 
           location / {
@@ -148,6 +165,11 @@ should set extras in config.json:
 
         include       /etc/nginx/mime.types;
 
+        # Pod-wide backstop on in-flight API calls; the api-server queues and
+        # caps dashboard requests itself (X-Thoras-Client below).
+        limit_conn_zone $server_name zone=thoras_dashboard_api:1m;
+        limit_conn_status 503;
+
         # Least-privilege allowlist for dashboard -> API calls.
         # Deny by default; only routes the dashboard actually uses are allowed.
         # New dashboard API calls require a matching entry here or they will 403.
@@ -167,6 +189,7 @@ should set extras in config.json:
           ~*^GET/v1/exports/[^/]+(\?|$)                                             1;
           ~*^GET/v1/exports/[^/]+/download(\?|$)                                    1;
           ~*^GET/v1/instance-costs/current(\?|$)                                    1;
+          ~*^GET/v1/savings-preview/export(\?|$)                                    1;
           ~*^GET/v1/system/jobs/status(\?|$)                                        1;
           ~*^GET/v1/system/namespaces(\?|$)                                         1;
           ~*^GET/v1/system/status(\?|$)                                             1;
@@ -227,7 +250,11 @@ should set extras in config.json:
             if ($thoras_dashboard_api_allowed != 1) {
               return 403;
             }
+            limit_conn thoras_dashboard_api 32;
+            error_page 503 @dashboard_api_busy;
             proxy_pass http://thoras-api-server-v2;
+            # Overwrites any client value so the api-server's dashboard limit always applies.
+            proxy_set_header X-Thoras-Client dashboard;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -241,9 +268,16 @@ should set extras in config.json:
             proxy_set_header X-Forwarded-User $http_x_forwarded_user;
           }
 
+          # Only nginx's own limit_conn 503s land here; proxied responses pass through.
+          location @dashboard_api_busy {
+            default_type application/json;
+            add_header Retry-After 1 always;
+            return 503 '{"status":503,"title":"Service Unavailable","detail":"too many concurrent dashboard requests, retry shortly"}';
+          }
+
           location /config.json {
               default_type application/json;
-              return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true, "enableUpdateScaleModeApi": false, "enablePodLogStreaming": false, "enableAutonomousReadiness": false, "enableIdleSpend": false, "enableCostAlerts": false}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"enable_change_highlighting":false,"enable_scaling_pause":true,"feature":true,"foo":"bar","highlight_cpu_change_above_millicores":50,"highlight_memory_change_above_mib":100,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
+              return 200 '{ "api_base_url": "", "version": "4.36.0", "platformVersion": "1.2.3", "featureFlags": {"ignoreNewPods": true, "enableUpdateScaleModeApi": false, "enablePodLogStreaming": false, "enableAutonomousReadiness": false, "enableIdleSpend": false, "enableCostAlerts": false, "enableNodeRecommendationsPreview": false}, "extra": {"cluster_name":"phantom-assassin","cost_analysis":true,"cost_breakdown_v2":true,"cost_simulator":false,"enable_change_highlighting":false,"enable_scaling_pause":true,"feature":true,"foo":"bar","highlight_cpu_change_above_millicores":50,"highlight_memory_change_above_mib":100,"node_overrides":true,"rolling_savings":true,"show_node_details":true,"show_savings":true} }';
           }
 
           location / {

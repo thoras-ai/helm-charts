@@ -1,5 +1,5 @@
 ---
-thorasVersion: "4.132.0"
+thorasVersion: "4.133.0"
 cluster:
   name: ""
 
@@ -79,6 +79,11 @@ featureFlags:
   # thorasWorker.enableCurIngestion's report once it has found the cluster's
   # pods, and need the collector only until then. read_only hides rule editing.
   enableCostAlerts: false
+  # Preview. When enabled, the worker finds dead and long-idle nodes and stores
+  # them as node consolidation recommendations, the API server serves them, and
+  # the dashboard shows a Recommendations tab. Cards need the worker to watch
+  # all namespaces.
+  enableNodeRecommendationsPreview: false
   thorasManageThoras:
     enabled: true
     # Recommendation Mode by default
@@ -936,6 +941,11 @@ thorasDashboard:
   # answers 403 to the API routes that change state. Cost settings edits are not
   # saved, and that page still shows its inputs.
   read_only: false
+  # Maximum API calls one dashboard pod forwards at once; more get a 503. A
+  # backstop, since the api-server also queues dashboard requests to its own
+  # cap. Raise it only if normal pages show 503s. 0 removes the cap; otherwise
+  # 1-65535.
+  apiMaxConcurrentRequests: 32
   extras:
     show_savings: true
     cost_analysis: true

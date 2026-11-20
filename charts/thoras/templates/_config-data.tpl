@@ -87,6 +87,11 @@ and their consumers.
 
       include       /etc/nginx/mime.types;
 
+      # Pod-wide backstop on in-flight API calls; the api-server queues and
+      # caps dashboard requests itself (X-Thoras-Client below).
+      limit_conn_zone $server_name zone=thoras_dashboard_api:1m;
+      limit_conn_status 503;
+
       # Least-privilege allowlist for dashboard -> API calls.
       # Deny by default; only routes the dashboard actually uses are allowed.
       # New dashboard API calls require a matching entry here or they will 403.
@@ -106,6 +111,7 @@ and their consumers.
         ~*^GET/v1/exports/[^/]+(\?|$)                                             1;
         ~*^GET/v1/exports/[^/]+/download(\?|$)                                    1;
         ~*^GET/v1/instance-costs/current(\?|$)                                    1;
+        ~*^GET/v1/savings-preview/export(\?|$)                                    1;
         ~*^GET/v1/system/jobs/status(\?|$)                                        1;
         ~*^GET/v1/system/namespaces(\?|$)                                         1;
         ~*^GET/v1/system/status(\?|$)                                             1;
@@ -140,6 +146,16 @@ and their consumers.
         {{- end }}
         {{- if .Values.featureFlags.enableIdleSpend }}
         ~*^GET/v1/views/cost/idle(\?|$)                                           1;
+        {{- end }}
+        {{- if .Values.featureFlags.enableNodeRecommendationsPreview }}
+        ~*^GET/v1/node-recommendations(\?|$)                                      1;
+        {{- if not .Values.thorasDashboard.read_only }}
+        ~*^POST/v1/node-recommendations/[^/]+/view(\?|$)                          1;
+        ~*^POST/v1/node-recommendations/[^/]+/how-to(\?|$)                        1;
+        ~*^POST/v1/node-recommendations/[^/]+/defer(\?|$)                         1;
+        ~*^POST/v1/node-recommendations/[^/]+/intentional(\?|$)                   1;
+        ~*^POST/v1/node-recommendations/[^/]+/restore(\?|$)                       1;
+        {{- end }}
         {{- end }}
         {{- if .Values.featureFlags.enableCostAlerts }}
         ~*^GET/v1/cost-alerts(\?|$)                                               1;
@@ -193,7 +209,17 @@ and their consumers.
           if ($thoras_dashboard_api_allowed != 1) {
             return 403;
           }
+          {{- $maxApi := .Values.thorasDashboard.apiMaxConcurrentRequests | int }}
+          {{- if or (lt $maxApi 0) (gt $maxApi 65535) }}
+          {{- fail "thorasDashboard.apiMaxConcurrentRequests must be 0 (no cap) or 1-65535" }}
+          {{- end }}
+          {{- if gt $maxApi 0 }}
+          limit_conn thoras_dashboard_api {{ $maxApi }};
+          error_page 503 @dashboard_api_busy;
+          {{- end }}
           proxy_pass http://thoras-api-server-v2;
+          # Overwrites any client value so the api-server's dashboard limit always applies.
+          proxy_set_header X-Thoras-Client dashboard;
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -216,6 +242,13 @@ and their consumers.
           {{- end }}
         }
 
+        # Only nginx's own limit_conn 503s land here; proxied responses pass through.
+        location @dashboard_api_busy {
+          default_type application/json;
+          add_header Retry-After 1 always;
+          return 503 '{"status":503,"title":"Service Unavailable","detail":"too many concurrent dashboard requests, retry shortly"}';
+        }
+
         location /config.json {
             default_type application/json;
             {{- /* A copy: values must not change between the renders that include this. */}}
@@ -226,9 +259,10 @@ and their consumers.
               {{- $_ := set $extras "disable_onboarding" true -}}
               {{- $_ := set $extras "enable_scaling_pause" false -}}
               {{- $_ := set $extras "cost_alerts_edit" false -}}
+              {{- $_ := set $extras "node_recommendations_edit" false -}}
               {{- $enableUpdateScaleModeApi = false -}}
             {{- end }}
-            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ $enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}, "enableIdleSpend": {{ .Values.featureFlags.enableIdleSpend | default false }}, "enableCostAlerts": {{ .Values.featureFlags.enableCostAlerts | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) $extras) }} }';
+            return 200 '{ "api_base_url": "", "version": "{{ .Chart.Version }}", "platformVersion": "{{ .Values.thorasVersion }}", "featureFlags": {"ignoreNewPods": {{ .Values.thorasForecast.ignoreNewPods }}, "enableUpdateScaleModeApi": {{ $enableUpdateScaleModeApi }}, "enablePodLogStreaming": {{ .Values.featureFlags.enablePodLogStreaming | default false }}, "enableAutonomousReadiness": {{ .Values.featureFlags.enableAutonomousReadiness | default false }}, "enableIdleSpend": {{ .Values.featureFlags.enableIdleSpend | default false }}, "enableCostAlerts": {{ .Values.featureFlags.enableCostAlerts | default false }}, "enableNodeRecommendationsPreview": {{ .Values.featureFlags.enableNodeRecommendationsPreview | default false }}}, "extra": {{ toJson (merge (dict "cluster_name" .Values.cluster.name) $extras) }} }';
         }
 
         location / {
