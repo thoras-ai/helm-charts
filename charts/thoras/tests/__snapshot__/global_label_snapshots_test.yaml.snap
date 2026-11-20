@@ -1173,7 +1173,7 @@ Default matches snapshot:
       template:
         metadata:
           annotations:
-            checksum/config: 3f421a60e2555f7b0bdbe49bbbcdd175650f5ed25a7254c685c34740a7edc6cb
+            checksum/config: 6b1f00ecf74790a61fa43945857ac629d675538cb580a0f9fd7c747ca63a0107
           labels:
             app: thoras-dashboard
             app.kubernetes.io/name: thoras
