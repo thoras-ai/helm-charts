@@ -4,7 +4,7 @@ The Thoras console is where your clusters report in. This Helm chart installs a
 self-hosted [Thoras](https://www.thoras.ai) console onto Kubernetes, as an
 alternative to the hosted console at `console.thoras.ai`.
 
-![Version: 1.2.1](https://img.shields.io/badge/Version-1.2.1-informational?style=flat-square) ![AppVersion: 4.133.0](https://img.shields.io/badge/AppVersion-4.133.0-informational?style=flat-square)
+![Version: 1.2.2](https://img.shields.io/badge/Version-1.2.2-informational?style=flat-square) ![AppVersion: 4.134.0](https://img.shields.io/badge/AppVersion-4.134.0-informational?style=flat-square)
 
 The chart installs the console dashboard, `console-api`, a `config-controller`
 that generates any credential you do not supply, and — for evaluation only — a
@@ -1074,7 +1074,7 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 
 | Key                             | Type   | Default                                          | Description                                                |
 | ------------------------------- | ------ | ------------------------------------------------ | ---------------------------------------------------------- |
-| consoleVersion                  | String | 4.133.0                                          | Image tag for the console components. Defaults to the release this chart version ships with |
+| consoleVersion                  | String | 4.134.0                                          | Image tag for the console components. Defaults to the release this chart version ships with |
 | imageCredentials.registry       | String | us-east4-docker.pkg.dev/thoras-registry/platform | Container registry name                                    |
 | imageCredentials.username       | String | \_json_key_base64                                | Container registry username                                |
 | imageCredentials.password       | String | ""                                               | License key. Mutually exclusive with secretRef             |
