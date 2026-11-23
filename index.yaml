@@ -2,6 +2,15 @@ apiVersion: v1
 entries:
   thoras:
   - apiVersion: v2
+    created: "2026-11-23T23:45:53.148912963Z"
+    description: Helm chart to install the Thoras platform
+    digest: e04a805e0e7651b922c5dd51035869e09d082ab7ce53355cd4072e1e9dc5acb0
+    name: thoras
+    type: application
+    urls:
+    - https://github.com/thoras-ai/helm-charts/releases/download/thoras-5.15.0/thoras-5.15.0.tgz
+    version: 5.15.0
+  - apiVersion: v2
     created: "2026-11-19T00:21:57.403209614Z"
     description: Helm chart to install the Thoras platform
     digest: 1fae8b510c4bc9abccf2b1177db555a20d5bcde4da9efcf96ff10922e86cc74f
@@ -2856,6 +2865,15 @@ entries:
     version: 2.0.0
   thoras-console:
   - apiVersion: v2
+    created: "2026-11-23T23:45:53.290229217Z"
+    description: Helm chart to install the Thoras console
+    digest: e4208419165f6614a5071a4a886785688cc4e1ae252399c2af9deffee5c0d8ab
+    name: thoras-console
+    type: application
+    urls:
+    - https://github.com/thoras-ai/helm-charts/releases/download/thoras-console-1.2.2/thoras-console-1.2.2.tgz
+    version: 1.2.2
+  - apiVersion: v2
     created: "2026-11-19T00:21:57.537776562Z"
     description: Helm chart to install the Thoras console
     digest: 2940f0f76c3391480b3ebf70c821c4503b7b0162bffd79dbfc1d644576fe6bd0
@@ -2891,4 +2909,4 @@ entries:
     urls:
     - https://github.com/thoras-ai/helm-charts/releases/download/thoras-console-1.0.0/thoras-console-1.0.0.tgz
     version: 1.0.0
-generated: "2026-11-19T00:21:57.538978383Z"
+generated: "2026-11-23T23:45:53.290893644Z"
