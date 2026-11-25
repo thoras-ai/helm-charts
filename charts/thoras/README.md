@@ -1025,6 +1025,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasWorker.curRoleArn                              | String  | ""            | Role the CUR reads assume, usually in the payer account that owns the bucket. The worker's role needs `sts:AssumeRole` on it, and it needs `s3:ListBucket` and `s3:GetObject` on the export. Empty uses the worker's own credentials |
 | thorasWorker.curRoleExternalId                       | String  | ""            | External ID the CUR role's trust policy requires, if any |
 | thorasWorker.curClusterName                          | String  | ""            | EKS cluster name whose CUR rows to ingest. Empty uses the cluster named by `costExplorerFilter` when it is an `aws:eks:cluster-name` tag, then node labels |
+| thorasWorker.metricCollectionMaxWorkers              | Number  | 100           | Maximum concurrent workers for the `metric_collection` River queue. Lower to reduce DB write pressure on large clusters (~6000+ ASTs) |
 
 ### Thoras Config Controller
 
