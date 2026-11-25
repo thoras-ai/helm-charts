@@ -165,7 +165,7 @@ spec:
           - name: SERVICE_METRIC_COLLECTION_MAX_WORKERS
             value: {{ .Values.thorasWorker.metricCollectionMaxWorkers | default 100 | quote }}
           - name: SERVICE_METRIC_COLLECTION_POOL_THRESHOLD
-            value: {{ .Values.thorasWorker.metricCollectionPoolThreshold | default 0.75 | quote }}
+            value: {{ .Values.thorasWorker.metricCollectionPoolThreshold | default 0 | quote }}
           - name: SERVICE_FORECAST_JOB_TIMEOUT_INTERVAL
             value: {{ .Values.thorasWorker.forecastJobTimeoutInterval | quote }}
           - name: SERVICE_TRAIN_JOB_TIMEOUT_INTERVAL

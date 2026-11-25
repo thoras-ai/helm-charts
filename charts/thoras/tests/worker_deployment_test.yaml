@@ -453,7 +453,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: SERVICE_METRIC_COLLECTION_POOL_THRESHOLD
-            value: "0.75"
+            value: "0"
 
   - it: renders overridden metricCollectionPoolThreshold
     set:

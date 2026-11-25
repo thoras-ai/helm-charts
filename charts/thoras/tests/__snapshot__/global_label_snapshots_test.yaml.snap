@@ -2132,7 +2132,7 @@ Default matches snapshot:
                 - name: SERVICE_METRIC_COLLECTION_MAX_WORKERS
                   value: "100"
                 - name: SERVICE_METRIC_COLLECTION_POOL_THRESHOLD
-                  value: "0.75"
+                  value: "0"
                 - name: SERVICE_FORECAST_JOB_TIMEOUT_INTERVAL
                   value: 2m
                 - name: SERVICE_TRAIN_JOB_TIMEOUT_INTERVAL
