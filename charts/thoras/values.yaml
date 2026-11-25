@@ -670,12 +670,12 @@ thorasWorker:
   # EKS cluster name whose rows to ingest. Empty uses the cluster named by
   # costExplorerFilter when it is an aws:eks:cluster-name tag, then node labels.
   curClusterName: ""
-  # Maximum concurrent workers for the metric_collection River queue. At ~6000+
+  # Maximum concurrent workers for the metric_collection River queue. At ~1000+
   # ASTs, lowering this reduces DB write pressure during collection cycles.
   metricCollectionMaxWorkers: 100
   # Pool utilization ratio (0 < x < 1) above which metric_collection jobs wait
   # for DB connection pool headroom before starting. 0 disables the gate.
-  # Recommended: 0.75 for clusters with ~6000+ ASTs.
+  # Recommended: 0.75 for clusters with ~1000+ ASTs.
   metricCollectionPoolThreshold: 0
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
