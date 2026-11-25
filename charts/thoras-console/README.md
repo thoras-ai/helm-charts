@@ -51,6 +51,8 @@ Three terms are used throughout:
 ### Version compatibility
 
 - Console images (`consoleVersion`): `4.123.0` or later
+- `auth.oidc.caBundle` and HTTPS-only OIDC: console images later than `4.134.0`.
+  Older images ignore the bundle and still accept `http://`.
 - [thoras](../thoras/README.md) chart on each tenant cluster: `5.4.0` or later
 
 ## Quick start
@@ -668,9 +670,11 @@ Set `auth.oidc.jwksUri` only when the issuer URL is unreachable from inside the
 cluster: the `iss` claim stays the browser-facing URL while signing keys are
 fetched from the address you give.
 
-**HTTPS only.** console-api fetches discovery and signing keys over HTTPS with
-a verified certificate, and refuses to start if `auth.oidc.issuer` or
-`auth.oidc.jwksUri` is `http://`. An in-cluster address such as
+**HTTPS only.** console-api images later than `4.134.0` fetch discovery and
+signing keys over HTTPS with a verified certificate, and refuse to start if
+`auth.oidc.issuer` or `auth.oidc.jwksUri` is `http://`. Older images ignore
+`auth.oidc.caBundle`, so set `consoleVersion` to a later image to use it. An
+in-cluster address such as
 `https://keycloak.auth.svc.cluster.local:8443/...` usually has a certificate
 from a private CA. Give console-api that CA through `auth.oidc.caBundle`: a
 ConfigMap or Secret in the console's namespace holding only the CA certificate,
@@ -890,11 +894,11 @@ values, a minor version only adds them, and a patch version only fixes. Read the
 release notes before a major upgrade, and pin the chart version in production
 by passing `--version` to `helm install` and `helm upgrade`.
 
-console-api accepts only `https://` for `auth.oidc.issuer` and
-`auth.oidc.jwksUri`, and does not start with an `http://` one. Before upgrading
-an install that uses OIDC, switch the issuer, and `jwksUri` if set, to HTTPS,
-and set `auth.oidc.caBundle` if the provider's certificate comes from a private
-CA.
+console-api images later than `4.134.0` accept only `https://` for
+`auth.oidc.issuer` and `auth.oidc.jwksUri`, and do not start with an `http://`
+one. Before upgrading an install that uses OIDC to such an image, switch the
+issuer, and `jwksUri` if set, to HTTPS, and set `auth.oidc.caBundle` if the
+provider's certificate comes from a private CA.
 
 With the `cilium` NetworkPolicy flavor, console-api's :443 egress now follows
 `consoleApi.httpsEgressCidrs`, which is IPv4-only by default. An IPv6-only
