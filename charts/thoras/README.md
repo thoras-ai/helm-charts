@@ -1026,6 +1026,7 @@ cmctl renew thoras-timescale-tls -n thoras   # or: kubectl delete secret thoras-
 | thorasWorker.curRoleExternalId                       | String  | ""            | External ID the CUR role's trust policy requires, if any |
 | thorasWorker.curClusterName                          | String  | ""            | EKS cluster name whose CUR rows to ingest. Empty uses the cluster named by `costExplorerFilter` when it is an `aws:eks:cluster-name` tag, then node labels |
 | thorasWorker.metricCollectionMaxWorkers              | Number  | 100           | Maximum concurrent workers for the `metric_collection` River queue. Lower to reduce DB write pressure on large clusters (~6000+ ASTs) |
+| thorasWorker.metricCollectionPoolThreshold           | Number  | 0             | DB pool utilization ratio (0 < x < 1) above which metric collection jobs wait for headroom. 0 disables the gate. Recommended value for large clusters (~6000+ ASTs) is 0.75 |
 
 ### Thoras Config Controller
 
