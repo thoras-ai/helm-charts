@@ -201,6 +201,26 @@ list or, for a single audience or an existing value, a string.
 {{- end -}}
 
 {{/*
+The CA bundle source for OIDC discovery and JWKS, as YAML with kind (secret or
+configMap), name and key; empty when none is set. Values stored by a release
+that predates auth.oidc.caBundle have no such keys, hence the defaults.
+*/}}
+{{- define "thoras-console.oidcCABundle" -}}
+{{- $ca := .Values.auth.oidc.caBundle | default dict -}}
+{{- $secret := $ca.existingSecret | default dict -}}
+{{- $configMap := $ca.existingConfigMap | default dict -}}
+{{- if $secret.secretName -}}
+kind: secret
+name: {{ $secret.secretName | quote }}
+key: {{ $secret.key | quote }}
+{{- else if $configMap.configMapName -}}
+kind: configMap
+name: {{ $configMap.configMapName | quote }}
+key: {{ $configMap.key | quote }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Resolution for every chart-managed credential, one entry per logical value:
 
   mode: existing  read from a Secret the customer manages
@@ -560,6 +580,20 @@ from whichever template Helm happens to render first.
 {{- end -}}
 {{- if and .Values.slack.existingSecret.secretName (not .Values.slack.existingSecret.webhookUrlKey) -}}
 {{- fail "slack.existingSecret.webhookUrlKey is required when secretName is set" -}}
+{{- end -}}
+{{- /* The CA bundle is mounted as a volume, so a half-set or doubled source
+       would otherwise surface only as a pod the API server rejects. */}}
+{{- $caBundle := $auth.oidc.caBundle | default dict -}}
+{{- $caSecret := $caBundle.existingSecret | default dict -}}
+{{- $caConfigMap := $caBundle.existingConfigMap | default dict -}}
+{{- if and $caSecret.secretName $caConfigMap.configMapName -}}
+{{- fail "auth.oidc.caBundle.existingSecret and auth.oidc.caBundle.existingConfigMap are mutually exclusive. Set one source for the CA bundle." -}}
+{{- end -}}
+{{- if and $caSecret.secretName (not $caSecret.key) -}}
+{{- fail "auth.oidc.caBundle.existingSecret.key is required when secretName is set" -}}
+{{- end -}}
+{{- if and $caConfigMap.configMapName (not $caConfigMap.key) -}}
+{{- fail "auth.oidc.caBundle.existingConfigMap.key is required when configMapName is set" -}}
 {{- end -}}
 
 {{- /* A value both set and referenced is ambiguous. The admin password is

@@ -668,6 +668,35 @@ Set `auth.oidc.jwksUri` only when the issuer URL is unreachable from inside the
 cluster: the `iss` claim stays the browser-facing URL while signing keys are
 fetched from the address you give.
 
+**HTTPS only.** console-api fetches discovery and signing keys over HTTPS with
+a verified certificate, and refuses to start if `auth.oidc.issuer` or
+`auth.oidc.jwksUri` is `http://`. An in-cluster address such as
+`https://keycloak.auth.svc.cluster.local:8443/...` usually has a certificate
+from a private CA. Give console-api that CA through `auth.oidc.caBundle`: a
+ConfigMap or Secret in the console's namespace holding only the CA certificate,
+such as one a trust-manager `Bundle` syncs there:
+
+```yaml
+auth:
+  oidc:
+    jwksUri: https://keycloak.auth.svc.cluster.local:8443/realms/thoras/protocol/openid-connect/certs
+    caBundle:
+      existingConfigMap:
+        configMapName: oidc-ca
+        key: ca.crt
+```
+
+Don't copy the provider's cert-manager Secret into the console's namespace: it
+holds the provider's private key too. A missing ConfigMap, Secret or key leaves
+console-api in `ContainerCreating`.
+
+The bundle is added to the system roots for discovery and signing keys only.
+console-api reads it at startup and refuses to start if it holds no
+certificate, so restart console-api after changing the CA. With
+`networkPolicy.enabled`, an in-cluster provider also needs a rule in
+`consoleApi.extraEgressRules` that selects its pods on the port they listen on,
+not the Service port.
+
 **Provider notes.**
 
 - **Auth0.** Define the console's scopes as permissions on the API and grant
@@ -860,6 +889,12 @@ The chart follows semantic versioning. A major version may rename or remove
 values, a minor version only adds them, and a patch version only fixes. Read the
 release notes before a major upgrade, and pin the chart version in production
 by passing `--version` to `helm install` and `helm upgrade`.
+
+console-api accepts only `https://` for `auth.oidc.issuer` and
+`auth.oidc.jwksUri`, and does not start with an `http://` one. Before upgrading
+an install that uses OIDC, switch the issuer, and `jwksUri` if set, to HTTPS,
+and set `auth.oidc.caBundle` if the provider's certificate comes from a private
+CA.
 
 With the `cilium` NetworkPolicy flavor, console-api's :443 egress now follows
 `consoleApi.httpsEgressCidrs`, which is IPv4-only by default. An IPv6-only
@@ -1113,6 +1148,10 @@ kubectl delete pvc data-thoras-console-db-0 -n thoras-console
 | auth.oidc.issuer                      | String | ""                                                        | Required for oidc/both. Must match the iss claim exactly           |
 | auth.oidc.audiences                   | list   | []                                                        | Required for oidc/both. Accepted aud values. A comma-separated string also works |
 | auth.oidc.jwksUri                     | String | ""                                                        | Only when the issuer URL is unreachable from the cluster           |
+| auth.oidc.caBundle.existingSecret.secretName | String | ""                                         | Secret in the release namespace holding a PEM CA bundle trusted for discovery and JWKS |
+| auth.oidc.caBundle.existingSecret.key | String | ca.crt                                                    | Key within that Secret                                             |
+| auth.oidc.caBundle.existingConfigMap.configMapName | String | ""                                   | ConfigMap in the release namespace holding the bundle instead. Mutually exclusive with existingSecret |
+| auth.oidc.caBundle.existingConfigMap.key | String | ca.crt                                                 | Key within that ConfigMap                                          |
 | auth.oidc.client.id                   | String | ""                                                        | The dashboard's OAuth client ID. Required for oidc/both            |
 | auth.oidc.client.scope                | String | openid profile read:* write:clusters write:cluster-tokens | Scopes requested at sign-in. Must be defined on your provider      |
 | auth.oidc.client.audience             | String | ""                                                        | Audience the dashboard requests (Auth0). Defaults to the first of audiences |

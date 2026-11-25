@@ -4,6 +4,7 @@
 {{- $auth := .Values.auth }}
 {{- $localMode := or (eq $auth.mode "local") (eq $auth.mode "both") }}
 {{- $oidcMode := or (eq $auth.mode "oidc") (eq $auth.mode "both") }}
+{{- $oidcCA := include "thoras-console.oidcCABundle" . | fromYaml }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -90,6 +91,10 @@ spec:
           {{- with $auth.oidc.jwksUri }}
           - name: SERVICE_JWT_JWKS_URI
             value: {{ . | quote }}
+          {{- end }}
+          {{- if $oidcCA }}
+          - name: SERVICE_JWT_CA_FILE
+            value: /etc/thoras/oidc-ca/ca.crt
           {{- end }}
           {{- end }}
           {{- if $localMode }}
@@ -179,6 +184,28 @@ spec:
           failureThreshold: 3
           timeoutSeconds: 2
         resources: {{ $c.resources | toYaml | nindent 10 }}
+        {{- if and $oidcMode $oidcCA }}
+        volumeMounts:
+        - name: oidc-ca-bundle
+          mountPath: /etc/thoras/oidc-ca
+          readOnly: true
+        {{- end }}
+      {{- if and $oidcMode $oidcCA }}
+      volumes:
+      - name: oidc-ca-bundle
+        {{- /* items maps the chosen key to one fixed file name, so
+               SERVICE_JWT_CA_FILE never depends on the key. */}}
+        {{- if eq $oidcCA.kind "secret" }}
+        secret:
+          secretName: {{ $oidcCA.name | quote }}
+        {{- else }}
+        configMap:
+          name: {{ $oidcCA.name | quote }}
+        {{- end }}
+          items:
+          - key: {{ $oidcCA.key | quote }}
+            path: ca.crt
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
