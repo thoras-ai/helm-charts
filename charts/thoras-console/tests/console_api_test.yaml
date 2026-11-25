@@ -204,6 +204,131 @@ tests:
       - notExists:
           path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_JWKS_URI')]
 
+  - it: Mounts no OIDC CA bundle by default
+    template: console-api/deployment.yaml
+    set:
+      auth.mode: oidc
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: aud
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_CA_FILE')]
+      - notExists:
+          path: spec.template.spec.volumes
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts
+
+  - it: Mounts an OIDC CA bundle from a Secret read-only and points console-api at it
+    template: console-api/deployment.yaml
+    set:
+      auth.mode: oidc
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: aud
+      auth.oidc.caBundle.existingSecret.secretName: keycloak-tls
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_CA_FILE')].value
+          value: /etc/thoras/oidc-ca/ca.crt
+      - equal:
+          path: spec.template.spec.volumes
+          value:
+            - name: oidc-ca-bundle
+              secret:
+                secretName: keycloak-tls
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts
+          value:
+            - name: oidc-ca-bundle
+              mountPath: /etc/thoras/oidc-ca
+              readOnly: true
+
+  # The mounted file name is fixed, so SERVICE_JWT_CA_FILE holds for any key.
+  - it: Mounts an OIDC CA bundle from a ConfigMap key under the fixed file name
+    template: console-api/deployment.yaml
+    set:
+      auth.mode: both
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: aud
+      auth.oidc.caBundle.existingConfigMap.configMapName: oidc-ca
+      auth.oidc.caBundle.existingConfigMap.key: bundle.pem
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_CA_FILE')].value
+          value: /etc/thoras/oidc-ca/ca.crt
+      - equal:
+          path: spec.template.spec.volumes
+          value:
+            - name: oidc-ca-bundle
+              configMap:
+                name: oidc-ca
+                items:
+                  - key: bundle.pem
+                    path: ca.crt
+
+  - it: Ignores the OIDC CA bundle in local mode
+    template: console-api/deployment.yaml
+    set:
+      auth.oidc.caBundle.existingSecret.secretName: keycloak-tls
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_CA_FILE')]
+      - notExists:
+          path: spec.template.spec.volumes
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts
+
+  # Names that YAML would read as numbers or booleans stay strings.
+  - it: Quotes OIDC CA bundle names and keys
+    template: console-api/deployment.yaml
+    set:
+      auth.mode: oidc
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: aud
+      auth.oidc.caBundle.existingConfigMap.configMapName: "0755"
+      auth.oidc.caBundle.existingConfigMap.key: "true"
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes[0].configMap.name
+          value: "0755"
+      - equal:
+          path: spec.template.spec.volumes[0].configMap.items[0].key
+          value: "true"
+
+  - it: Renders a ConfigMap CA bundle when existingSecret is missing from stored values
+    template: console-api/deployment.yaml
+    set:
+      auth.mode: oidc
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: aud
+      auth.oidc.caBundle.existingSecret: null
+      auth.oidc.caBundle.existingConfigMap.configMapName: oidc-ca
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes[0].configMap.name
+          value: oidc-ca
+
+  # helm upgrade --reuse-values renders against values stored before caBundle existed.
+  - it: Renders when auth.oidc.caBundle is missing from stored values
+    template: console-api/deployment.yaml
+    set:
+      auth.mode: oidc
+      auth.oidc.client.id: test-client
+      auth.oidc.issuer: https://id.example.com/
+      auth.oidc.audiences: aud
+      auth.oidc.caBundle: null
+    asserts:
+      - notFailedTemplate: {}
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == 'SERVICE_JWT_CA_FILE')]
+
   - it: Passes the salt as plain config, since it is not secret material
     template: console-api/deployment.yaml
     set:

@@ -91,6 +91,23 @@ auth:
     # Only when the issuer URL is unreachable from inside the cluster.
     jwksUri: ""
 
+    # -- PEM CA certificates console-api trusts for discovery and JWKS, on
+    # top of the system roots. Set one source when the issuer or jwksUri
+    # serves a certificate from a private CA, as an in-cluster Service usually
+    # does. The Secret or ConfigMap must be in the release namespace and should
+    # hold only the CA, not a private key. console-api reads it at startup:
+    # restart it after changing the CA.
+    caBundle:
+      existingSecret:
+        secretName: ""
+        # The data key in that Secret holding the PEM bundle.
+        key: ca.crt
+      # Mutually exclusive with existingSecret.
+      existingConfigMap:
+        configMapName: ""
+        # The data key in that ConfigMap holding the PEM bundle.
+        key: ca.crt
+
     # -- The dashboard's OAuth client. Register https://<dashboard-host>/landing
     # as its callback URL.
     client:

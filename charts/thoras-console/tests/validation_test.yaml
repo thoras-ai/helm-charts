@@ -150,6 +150,36 @@ tests:
       - failedTemplate:
           errorMessage: slack.existingSecret.webhookUrlKey is required when secretName is set
 
+  - it: Rejects an OIDC CA Secret name without its key
+    set:
+      auth.oidc.caBundle.existingSecret.secretName: keycloak-tls
+      auth.oidc.caBundle.existingSecret.key: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: auth.oidc.caBundle.existingSecret.key is required when secretName is set
+
+  - it: Rejects an OIDC CA ConfigMap name without its key
+    set:
+      auth.oidc.caBundle.existingConfigMap.configMapName: oidc-ca
+      auth.oidc.caBundle.existingConfigMap.key: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: auth.oidc.caBundle.existingConfigMap.key is required when configMapName is set
+
+  - it: Rejects an OIDC CA bundle from both a Secret and a ConfigMap
+    set:
+      auth.oidc.caBundle.existingSecret.secretName: keycloak-tls
+      auth.oidc.caBundle.existingConfigMap.configMapName: oidc-ca
+    asserts:
+      - failedTemplate:
+          errorMessage: auth.oidc.caBundle.existingSecret and auth.oidc.caBundle.existingConfigMap are mutually exclusive. Set one source for the CA bundle.
+
+  - it: Validates when auth.oidc.caBundle is missing from stored values
+    set:
+      auth.oidc.caBundle: null
+    asserts:
+      - notFailedTemplate: {}
+
   ############################
   # Mutually exclusive pins
   ############################
