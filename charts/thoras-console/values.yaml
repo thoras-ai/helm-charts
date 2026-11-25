@@ -100,10 +100,12 @@ auth:
     caBundle:
       existingSecret:
         secretName: ""
+        # The data key in that Secret holding the PEM bundle.
         key: ca.crt
       # Mutually exclusive with existingSecret.
       existingConfigMap:
         configMapName: ""
+        # The data key in that ConfigMap holding the PEM bundle.
         key: ca.crt
 
     # -- The dashboard's OAuth client. Register https://<dashboard-host>/landing
