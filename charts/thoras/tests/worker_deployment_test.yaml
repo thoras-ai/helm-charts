@@ -428,6 +428,25 @@ tests:
       - failedTemplate:
           errorMessage: "Error: 'thorasWorker.enableCurIngestion' is true but 'thorasWorker.curExportName' is empty. Set it to the CUR export's name."
 
+  - it: renders default metricCollectionMaxWorkers
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_METRIC_COLLECTION_MAX_WORKERS
+            value: "100"
+
+  - it: renders overridden metricCollectionMaxWorkers
+    set:
+      thorasWorker:
+        metricCollectionMaxWorkers: 50
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_METRIC_COLLECTION_MAX_WORKERS
+            value: "50"
+
   - it: renders SERVICE_ENABLE_MODEL_GROUPS as true when enableModelGroups is true
     set:
       featureFlags:
