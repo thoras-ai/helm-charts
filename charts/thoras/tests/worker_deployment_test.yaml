@@ -447,6 +447,25 @@ tests:
             name: SERVICE_METRIC_COLLECTION_MAX_WORKERS
             value: "50"
 
+  - it: renders default metricCollectionPoolThreshold
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_METRIC_COLLECTION_POOL_THRESHOLD
+            value: "0.75"
+
+  - it: renders overridden metricCollectionPoolThreshold
+    set:
+      thorasWorker:
+        metricCollectionPoolThreshold: 0.5
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SERVICE_METRIC_COLLECTION_POOL_THRESHOLD
+            value: "0.5"
+
   - it: renders SERVICE_ENABLE_MODEL_GROUPS as true when enableModelGroups is true
     set:
       featureFlags:

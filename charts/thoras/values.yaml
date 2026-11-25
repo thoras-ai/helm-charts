@@ -673,6 +673,9 @@ thorasWorker:
   # Maximum concurrent workers for the metric_collection River queue. At ~6000+
   # ASTs, lowering this reduces DB write pressure during collection cycles.
   metricCollectionMaxWorkers: 100
+  # Pool utilization ratio (0 < x < 1) above which metric_collection jobs wait
+  # for DB connection pool headroom before starting. 0 disables the gate.
+  metricCollectionPoolThreshold: 0.75
   forecastJobTimeoutInterval: "2m"
   trainJobTimeoutInterval: "10m"
   # Times a stuck forecast may be fast-tracked to the head of the queue before it
